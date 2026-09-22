@@ -290,6 +290,9 @@ static void testShipRuntime() {
     assert(runtime.systems[0].type == "engines" && runtime.systems[0].power == 2);
     assert(runtime.systems[0].maxPower == 2);
     assert(!runtime.setSystemPower(0, 3));
+    assert(runtime.setDoorOpen(0, true));
+    assert(!runtime.setDoorOpen(0, true));
+    assert(runtime.setDoorOpen(0, false));
     assert(runtime.crew[1].race == "engi");
     runtime.crew[0].room = 0;
     assert(runtime.moveCrew(0, 1));
