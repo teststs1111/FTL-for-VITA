@@ -19,7 +19,7 @@ public:
     }
 
     void update(float dt) override {
-        (void)dt;
+        runtime_.updateEnvironment(dt);
         if (!runtime_.valid || runtime_.content.layout.rooms.empty()) return;
         const int roomCount = static_cast<int>(runtime_.content.layout.rooms.size());
         if (input_.pressed(Button::Left) || input_.pressed(Button::Up))
@@ -66,11 +66,6 @@ public:
             runtime_.repairRoom(runtime_.content.layout.rooms[selectedRoom_].id, 1);
         if (input_.pressed(Button::Square))
             runtime_.damageRoom(runtime_.content.layout.rooms[selectedRoom_].id, 1);
-
-    }
-
-    void update(float dt) {
-        runtime_.updateEnvironment(dt);
     }
 
     void render() override {
