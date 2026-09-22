@@ -3,13 +3,14 @@
 #include "data/ship_content.hpp"
 #include "game/ship_runtime.hpp"
 #include "render/graphics.hpp"
+#include "platform/input.hpp"
 #include <algorithm>
 
 namespace wormhole {
 
 class ShipScene final : public GameState {
 public:
-    ShipScene(Graphics& graphics, const char* archivePath) : graphics_(graphics) {
+    ShipScene(Graphics& graphics, Input& input, const char* archivePath) : graphics_(graphics), input_(input) {
         if (archivePath) {
             content_.open(archivePath);
             content_.loadPlayerShip();
@@ -17,7 +18,29 @@ public:
         }
     }
 
-    void update(float dt) override { (void)dt; }
+    void update(float dt) override {
+        (void)dt;
+        if (!runtime_.valid || runtime_.content.layout.rooms.empty()) return;
+        const int roomCount = static_cast<int>(runtime_.content.layout.rooms.size());
+        if (input_.pressed(Button::Left) || input_.pressed(Button::Up))
+            selectedRoom_ = (selectedRoom_ + roomCount - 1) % roomCount;
+        if (input_.pressed(Button::Right) || input_.pressed(Button::Down))
+            selectedRoom_ = (selectedRoom_ + 1) % roomCount;
+
+        if (input_.pressed(Button::Cross)) {
+            const int roomId = runtime_.content.layout.rooms[selectedRoom_].id;
+            for (int i = 0; i < static_cast<int>(runtime_.systems.size()); ++i) {
+                if (runtime_.systems[i].room == roomId) {
+                    runtime_.setSystemPowered(i, !runtime_.systems[i].powered);
+                    break;
+                }
+            }
+        }
+        if (input_.pressed(Button::Circle))
+            runtime_.repairRoom(runtime_.content.layout.rooms[selectedRoom_].id, 1);
+        if (input_.pressed(Button::Square))
+            runtime_.damageRoom(runtime_.content.layout.rooms[selectedRoom_].id, 1);
+    }
 
     void render() override {
         const LoadedShip* ship = content_.playerShip();
@@ -37,11 +60,28 @@ public:
             const float w = std::max(1, room.w) * scale;
             const float h = std::max(1, room.h) * scale;
 
-            graphics_.fillRect(x, y, w, h, {0.10f, 0.18f, 0.25f, 1.f});
+            const bool selected = room.id == ship->layout.rooms[std::min(selectedRoom_, static_cast<int>(ship->layout.rooms.size()) - 1)].id;
+            const int damage = (room.id >= 0 && room.id < static_cast<int>(runtime_.roomDamage.size()))
+                ? runtime_.roomDamage[room.id] : 0;
+            graphics_.fillRect(x, y, w, h, selected
+                ? Color{0.18f, 0.32f, 0.42f, 1.f}
+                : (damage > 0 ? Color{0.28f, 0.12f, 0.12f, 1.f} : Color{0.10f, 0.18f, 0.25f, 1.f}));
             graphics_.drawLine(x, y, x + w, y, {0.35f, 0.65f, 0.85f, 1.f});
             graphics_.drawLine(x + w, y, x + w, y + h, {0.35f, 0.65f, 0.85f, 1.f});
             graphics_.drawLine(x + w, y + h, x, y + h, {0.35f, 0.65f, 0.85f, 1.f});
             graphics_.drawLine(x, y + h, x, y, {0.35f, 0.65f, 0.85f, 1.f});
+        }
+
+        for (const auto& system : runtime_.systems) {
+            for (const auto& room : ship->layout.rooms) {
+                if (room.id != system.room) continue;
+                const float x = originX + (room.x + ship->layout.xOffset) * scale + 4.f;
+                const float y = originY + (room.y + ship->layout.yOffset) * scale + 4.f;
+                const float w = std::min(18.f, std::max(4.f, static_cast<float>(system.power) * 5.f));
+                graphics_.fillRect(x, y, w, 5.f,
+                    system.powered ? Color{0.25f, 0.9f, 0.45f, 1.f} : Color{0.35f, 0.35f, 0.35f, 1.f});
+                break;
+            }
         }
 
         for (const auto& door : ship->layout.doors) {
@@ -56,16 +96,18 @@ public:
 
 private:
     Graphics& graphics_;
+    Input& input_;
     ShipContent content_;
     ShipRuntime runtime_;
+    int selectedRoom_{0};
 };
 
 MainGame::MainGame() = default;
 MainGame::~MainGame() { shutdown(); }
 
-void MainGame::init(Graphics& graphics, const char* archivePath) {
+void MainGame::init(Graphics& graphics, Input& input, const char* archivePath) {
     if (initialized_) return;
-    state_ = std::make_unique<ShipScene>(graphics, archivePath);
+    state_ = std::make_unique<ShipScene>(graphics, input, archivePath);
     initialized_ = true;
 }
 
