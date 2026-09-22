@@ -1,4 +1,5 @@
 #include "render/png_loader.hpp"
+#include <algorithm>
 #include <cstdio>
 #include <png.h>
 
@@ -80,9 +81,9 @@ bool loadPng(const std::string& path, RgbaImage& out) {
     std::uint8_t buffer[4096];
     while (const auto count = std::fread(buffer, 1, sizeof(buffer), file))
         data.insert(data.end(), buffer, buffer + count);
+    const bool ok = std::ferror(file) == 0;
     std::fclose(file);
-    if (std::ferror(file)) return false;
-    return decodePng(data, out);
+    return ok && decodePng(data, out);
 }
 
 }
