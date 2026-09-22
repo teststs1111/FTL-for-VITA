@@ -114,7 +114,8 @@ public:
         for (const auto& door : ship->layout.doors) {
             const float x = originX + (door.x + ship->layout.xOffset) * scale;
             const float y = originY + (door.y + ship->layout.yOffset) * scale;
-            const Color doorColor = runtime_.doorOpen[&door - ship->layout.doors.data()]
+            const int doorIndex = static_cast<int>(&door - ship->layout.doors.data());
+            const Color doorColor = runtime_.doorOpen[doorIndex]
                 ? Color{0.2f, 0.9f, 0.35f, 1.f}
                 : Color{0.9f, 0.75f, 0.3f, 1.f};
             if (door.vertical)
