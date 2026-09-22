@@ -112,6 +112,22 @@ static void testBlueprintDatabase() {
     std::remove(path.c_str());
 }
 
+static void testLayoutBlueprint() {
+    const std::string layout =
+        "X_OFFSET\n10\nY_OFFSET\n20\nHORIZONTAL\n5\nVERTICAL\n4\n"
+        "ELLIPSE\n100\n50\n2\n3\n"
+        "ROOM\n0\n1\n2\n3\n4\n"
+        "ROOM\n1\n5\n6\n2\n2\n"
+        "DOOR\n4\n5\n0\n1\n1\n";
+    wormhole::LayoutBlueprint parsed;
+    assert(wormhole::parseLayoutBlueprint(layout, parsed));
+    assert(parsed.xOffset == 10 && parsed.yOffset == 20);
+    assert(parsed.rooms.size() == 2);
+    assert(parsed.rooms[1].w == 2 && parsed.rooms[1].h == 2);
+    assert(parsed.doors.size() == 1 && parsed.doors[0].vertical);
+    assert(parsed.doors[0].leftRoom == 0 && parsed.doors[0].rightRoom == 1);
+}
+
 static void testShipBlueprint() {
     wormhole::bxml::Node ship;
     ship.name="shipBlueprint";
@@ -152,6 +168,7 @@ int main() {
     testBxml();
     testFtlDat();
     testAssetStore();
+    testLayoutBlueprint();
     testShipBlueprint();
     testBlueprintDatabase();
     testPng();
