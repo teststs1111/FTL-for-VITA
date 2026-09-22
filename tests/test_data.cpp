@@ -43,16 +43,23 @@ static std::vector<std::uint8_t> makeArchive(const std::string& name, const std:
 }
 
 static void testBxml() {
-    // Minimal BXML fixture: literal root name followed by end-of-element.
-    // Attribute/string parsing is exercised by the typed blueprint tests.
-    const std::vector<std::uint8_t> bxml = {
-        0x00, 0x04, 'r', 'o', 'o', 't', 0x00, 0x02
-    };
-    const auto node = wormhole::bxml::read(bxml);
+    const std::string xml =
+        "<?xml version=\"1.0\"?>"
+        "<root key=\"value &amp; more\">"
+        "hello &lt;world&gt;"
+        "<child id=\"7\">text</child>"
+        "<empty/>"
+        "</root>";
+    const std::vector<std::uint8_t> data(xml.begin(), xml.end());
+    const auto node = wormhole::bxml::read(data);
     assert(node.name == "root");
-    assert(node.attributes.empty());
-    assert(node.text.empty());
-    assert(node.children.empty());
+    assert(node.attributes.at("key") == "value & more");
+    assert(node.text == "hello <world>");
+    assert(node.children.size() == 2);
+    assert(node.children[0].name == "child");
+    assert(node.children[0].attributes.at("id") == "7");
+    assert(node.children[0].text == "text");
+    assert(node.children[1].name == "empty");
 }
 
 static void testFtlDat() {
@@ -85,15 +92,24 @@ static void testAssetStore() {
 
 static void testBlueprintDatabase() {
     const std::string path = "test_blueprints.dat";
-    const std::string name = "blueprints/player.xml";
-    const std::string payload = "placeholder";
-    (void)payload;
-    // The database API is exercised through a synthetic BXML document below.
-    // This test focuses on lookup/storage semantics; archive decoding is covered separately.
+    const std::string name = "data/blueprints.xml";
+    const std::string payload =
+        "<FTL>"
+        "<shipBlueprint name=\"PLAYER_SHIP_HARD\" layout=\"kestrel\" shipName=\"The Kestrel\">"
+        "<systemList><engines room=\"0\" power=\"1\"/></systemList>"
+        "<health amount=\"30\"/><maxPower amount=\"8\"/>"
+        "</shipBlueprint>"
+        "</FTL>";
+    writeFile(path, makeArchive(name, payload));
     wormhole::AssetStore store;
-    (void)store;
+    assert(store.openArchive(path));
     wormhole::BlueprintDatabase database(store);
-    assert(database.findShip("missing") == nullptr);
+    assert(database.loadShipBlueprints(name) == 1);
+    const auto* ship = database.findShip("PLAYER_SHIP_HARD");
+    assert(ship);
+    assert(ship->layout == "kestrel");
+    assert(ship->name == "The Kestrel");
+    std::remove(path.c_str());
 }
 
 static void testShipBlueprint() {
