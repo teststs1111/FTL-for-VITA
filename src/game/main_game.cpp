@@ -48,6 +48,16 @@ public:
                 }
             }
         }
+        if (input_.pressed(Button::Select)) {
+            const int roomId = runtime_.content.layout.rooms[selectedRoom_].id;
+            for (int i = 0; i < static_cast<int>(runtime_.content.layout.doors.size()); ++i) {
+                const auto& door = runtime_.content.layout.doors[i];
+                if (door.leftRoom == roomId || door.rightRoom == roomId) {
+                    runtime_.setDoorOpen(i, !runtime_.doorOpen[i]);
+                    break;
+                }
+            }
+        }
         if (input_.pressed(Button::L) && !runtime_.crew.empty()) {
             const int target = runtime_.content.layout.rooms[selectedRoom_].id;
             runtime_.moveCrew(selectedCrew_, target);
@@ -104,10 +114,13 @@ public:
         for (const auto& door : ship->layout.doors) {
             const float x = originX + (door.x + ship->layout.xOffset) * scale;
             const float y = originY + (door.y + ship->layout.yOffset) * scale;
+            const Color doorColor = runtime_.doorOpen[&door - ship->layout.doors.data()]
+                ? Color{0.2f, 0.9f, 0.35f, 1.f}
+                : Color{0.9f, 0.75f, 0.3f, 1.f};
             if (door.vertical)
-                graphics_.drawLine(x, y, x, y + scale, {0.9f, 0.75f, 0.3f, 1.f});
+                graphics_.drawLine(x, y, x, y + scale, doorColor);
             else
-                graphics_.drawLine(x, y, x + scale, y, {0.9f, 0.75f, 0.3f, 1.f});
+                graphics_.drawLine(x, y, x + scale, y, doorColor);
         }
     }
 
