@@ -35,6 +35,7 @@ struct ShipRuntime {
     bool damageRoom(int roomId, int amount);
     bool repairRoom(int roomId, int amount);
     bool setSystemPowered(int systemIndex, bool powered);
+    bool moveCrew(int crewIndex, int targetRoom);
     int usedReactorPower() const;
     int availableReactorPower() const;
 };
