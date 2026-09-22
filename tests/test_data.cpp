@@ -1,6 +1,8 @@
 #include "data/bxml.hpp"
 #include "data/ftl_dat.hpp"
+#include <algorithm>
 #include <cassert>
+#include <cstdio>
 #include <cstdint>
 #include <fstream>
 #include <string>
@@ -38,7 +40,7 @@ static void testFtlDat() {
     const std::uint32_t nameSize = static_cast<std::uint32_t>(name.size() + 1);
 
     std::vector<std::uint8_t> data(16 + 20 + nameSize + payload.size(), 0);
-    data[0]='P'; data[1]='K'; data[2]='G'; data[3]='\\n';
+    data[0]='P'; data[1]='K'; data[2]='G'; data[3]='\n';
     data[4]=0; data[5]=16; // header size
     data[6]=0; data[7]=20; // entry size
     data[8]=(count >> 24) & 0xff; data[9]=(count >> 16) & 0xff;
