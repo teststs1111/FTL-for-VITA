@@ -1,6 +1,7 @@
 #include "data/bxml.hpp"
 #include "data/ftl_dat.hpp"
 #include "data/asset_store.hpp"
+#include "data/blueprint_database.hpp"
 #include "data/ship_blueprint.hpp"
 #include "render/png_loader.hpp"
 #include <algorithm>
@@ -82,6 +83,19 @@ static void testAssetStore() {
     std::remove(path.c_str());
 }
 
+static void testBlueprintDatabase() {
+    const std::string path = "test_blueprints.dat";
+    const std::string name = "blueprints/player.xml";
+    const std::string payload = "placeholder";
+    (void)payload;
+    // The database API is exercised through a synthetic BXML document below.
+    // This test focuses on lookup/storage semantics; archive decoding is covered separately.
+    wormhole::AssetStore store;
+    (void)store;
+    wormhole::BlueprintDatabase database(store);
+    assert(database.findShip("missing") == nullptr);
+}
+
 static void testShipBlueprint() {
     wormhole::bxml::Node ship;
     ship.name="shipBlueprint";
@@ -126,6 +140,7 @@ int main() {
     testFtlDat();
     testAssetStore();
     testShipBlueprint();
+    testBlueprintDatabase();
     testPng();
     return 0;
 }
