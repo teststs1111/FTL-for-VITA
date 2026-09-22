@@ -11,5 +11,4 @@ struct ShipRuntime {
     void reset();
     bool damageRoom(int roomId, int amount);
     bool repairRoom(int roomId, int amount);
-};
-}
+}; }
