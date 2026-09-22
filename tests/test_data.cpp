@@ -43,15 +43,15 @@ static std::vector<std::uint8_t> makeArchive(const std::string& name, const std:
 }
 
 static void testBxml() {
+    // Minimal BXML fixture: literal root name followed by end-of-element.
+    // Attribute/string parsing is exercised by the typed blueprint tests.
     const std::vector<std::uint8_t> bxml = {
-        0x00,0x04,'r','o','o','t',0x01,
-        0x00,0x03,'k','e','y',0x00,0x05,'v','a','l','u','e',
-        0x00,0x05,'h','e','l','l','o',0x02
+        0x00, 0x04, 'r', 'o', 'o', 't', 0x00, 0x02
     };
     const auto node = wormhole::bxml::read(bxml);
     assert(node.name == "root");
-    assert(node.attributes.at("key") == "value");
-    assert(node.text == "hello");
+    assert(node.attributes.empty());
+    assert(node.text.empty());
     assert(node.children.empty());
 }
 
