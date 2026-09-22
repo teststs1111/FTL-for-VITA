@@ -44,7 +44,7 @@ public:
         if (input_.pressed(Button::Square))
             runtime_.damageRoom(runtime_.content.layout.rooms[selectedRoom_].id, 1);
 
-        if (input_.pressed(Button::L1) && !runtime_.crew.empty()) {
+        if (input_.pressed(Button::L) && !runtime_.crew.empty()) {
             const int target = runtime_.content.layout.rooms[selectedRoom_].id;
             runtime_.moveCrew(selectedCrew_, target);
         }
