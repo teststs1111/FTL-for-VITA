@@ -20,7 +20,7 @@ struct LayoutBlueprint {
     std::vector<DoorBlueprint> doors;
 };
 
-struct SystemSlotBlueprint { std::string system; int room{-1}; int level{0}; };
+struct SystemSlotBlueprint { std::string system; int room{-1}; int level{0}; int startingPower{0}; int maxPower{0}; bool availableByDefault{true}; };
 struct CrewBlueprint { std::string race; std::string name; int room{-1}; };
 
 struct ShipBlueprint {
