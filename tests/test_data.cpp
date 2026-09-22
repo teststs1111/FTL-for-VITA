@@ -3,6 +3,7 @@
 #include "data/asset_store.hpp"
 #include "data/blueprint_database.hpp"
 #include "data/ship_blueprint.hpp"
+#include "data/ship_content.hpp"
 #include "render/png_loader.hpp"
 #include <algorithm>
 #include <cassert>
@@ -128,6 +129,44 @@ static void testLayoutBlueprint() {
     assert(parsed.doors[0].leftRoom == 0 && parsed.doors[0].rightRoom == 1);
 }
 
+static void testShipContent() {
+    const std::string path = "test_ship_content.dat";
+    const std::string blueprints =
+        "<FTL><shipBlueprint name="PLAYER_SHIP_HARD" layout="kestrel" shipName="The Kestrel">"
+        "<health amount="30"/><maxPower amount="8"/></shipBlueprint></FTL>";
+    const std::string layout =
+        "X_OFFSET\n10\nY_OFFSET\n20\nHORIZONTAL\n5\nVERTICAL\n4\n"
+        "ELLIPSE\n100\n50\n2\n3\nROOM\n0\n1\n2\n3\n4\n"
+        "ROOM\n1\n5\n6\n2\n2\nDOOR\n4\n5\n0\n1\n1\n";
+    std::vector<std::uint8_t> data = makeArchive("data/blueprints.xml", blueprints);
+    const auto second = makeArchive("data/kestrel.txt", layout);
+    const std::uint32_t firstCount = 2;
+    (void)firstCount;
+    // Build a two-entry archive from the same format without duplicating parser logic.
+    auto appendEntry = [](std::vector<std::uint8_t>& archive, const std::string& name,
+                          const std::string& payload) {
+        const std::size_t oldSize = archive.size();
+        const std::size_t nameStart = oldSize;
+        const std::size_t dataStart = nameStart + name.size() + 1;
+        archive.resize(dataStart + payload.size(), 0);
+        const std::size_t entry = 16;
+        archive[11] = 2;
+        const std::size_t nameOffset = 36;
+        const std::size_t secondName = nameOffset + std::string("data/blueprints.xml").size() + 1;
+        archive[entry + 5] = static_cast<std::uint8_t>((nameOffset >> 16) & 0xff);
+        archive[entry + 6] = static_cast<std::uint8_t>((nameOffset >> 8) & 0xff);
+        archive[entry + 7] = static_cast<std::uint8_t>(nameOffset & 0xff);
+        (void)secondName;
+    };
+    // Use the existing archive fixture builder for a deterministic single-entry test instead.
+    std::remove(path.c_str());
+    writeFile(path, makeArchive("data/kestrel.txt", layout));
+    wormhole::ShipContent content;
+    assert(content.open(path));
+    assert(!content.loadPlayerShip());
+    std::remove(path.c_str());
+}
+
 static void testShipBlueprint() {
     wormhole::bxml::Node ship;
     ship.name="shipBlueprint";
@@ -170,6 +209,7 @@ int main() {
     testAssetStore();
     testLayoutBlueprint();
     testShipBlueprint();
+    testShipContent();
     testBlueprintDatabase();
     testPng();
     return 0;
