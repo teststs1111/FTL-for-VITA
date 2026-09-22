@@ -22,6 +22,7 @@ bool ShipRuntime::load(ShipContent& source) {
         system.level = std::max(0, blueprint.level);
         system.power = std::max(0, blueprint.startingPower);
         if (system.power == 0) system.power = system.level;
+        system.maxPower = std::max(system.power, blueprint.maxPower);
         system.powered = blueprint.availableByDefault && system.power > 0;
         systems.push_back(std::move(system));
     }
@@ -90,6 +91,20 @@ bool ShipRuntime::moveCrew(int crewIndex, int targetRoom) {
     }
 
     member.room = targetRoom;
+    return true;
+}
+
+bool ShipRuntime::setSystemPower(int systemIndex, int power) {
+    if (!valid || systemIndex < 0 || systemIndex >= static_cast<int>(systems.size())) return false;
+    RuntimeSystem& system = systems[systemIndex];
+    const int next = std::max(0, std::min(power, system.maxPower));
+    if (next == system.power) return false;
+
+    const int delta = next - system.power;
+    if (delta > 0 && availableReactorPower() < delta) return false;
+
+    system.power = next;
+    if (system.power == 0) system.powered = false;
     return true;
 }
 
