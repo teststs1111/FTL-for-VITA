@@ -289,6 +289,8 @@ static void testShipRuntime() {
     assert(runtime.systems.size() == 2 && runtime.crew.size() == 2);
     assert(runtime.systems[0].type == "engines" && runtime.systems[0].power == 2);
     assert(runtime.crew[1].race == "engi");
+    runtime.crew[0].room = 0;
+    assert(!runtime.moveCrew(0, 1));
     assert(runtime.usedReactorPower() == 4);
     assert(runtime.availableReactorPower() == 4);
     assert(runtime.damageRoom(0, 5));
