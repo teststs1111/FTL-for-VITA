@@ -292,7 +292,8 @@ static void testShipRuntime() {
     runtime.crew[0].room = 0;
     assert(runtime.moveCrew(0, 1));
     assert(runtime.crew[0].room == 1);
-    assert(!runtime.moveCrew(0, 0));
+    assert(runtime.moveCrew(0, 0));
+    assert(runtime.crew[0].room == 0);
     assert(runtime.usedReactorPower() == 4);
     assert(runtime.availableReactorPower() == 4);
     assert(runtime.damageRoom(0, 5));
