@@ -13,8 +13,8 @@ struct Node {
     std::vector<Node> children;
 };
 
-// Tachyon-compatible BXML reader.
-// Type IDs: 0=text, 1=child element, 2=end-of-element.
+// Lightweight XML reader for Tachyon/FTL XML assets.
+// The name is retained for compatibility with the existing data layer.
 Node read(const std::vector<std::uint8_t>& data);
 
 }
