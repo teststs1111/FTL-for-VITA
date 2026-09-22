@@ -37,15 +37,29 @@ void collectRooms(const bxml::Node& node, std::vector<RoomBlueprint>& rooms) {
 }
 
 void collectSystems(const bxml::Node& node, std::vector<SystemSlotBlueprint>& systems) {
-    if (node.name == "system" || node.name == "systemList") {
-        if (node.name == "system") {
+    if (node.name == "system") {
+        SystemSlotBlueprint system;
+        system.system = attribute(node, "type");
+        if (system.system.empty()) system.system = attribute(node, "name");
+        system.room = integer(node, "room", -1);
+        system.level = integer(node, "level", integer(node, "power"));
+        systems.push_back(std::move(system));
+    } else if (node.name == "systemList") {
+        // Tachyon's FTL blueprints use the element name itself for the
+        // system type, e.g. <engines room="0" power="1"/>.
+        for (const auto& c : node.children) {
+            if (c.name == "system") {
+                collectSystems(c, systems);
+                continue;
+            }
+            if (c.name.empty()) continue;
             SystemSlotBlueprint system;
-            system.system = attribute(node, "type");
-            if (system.system.empty()) system.system = attribute(node, "name");
-            system.room = integer(node, "room", -1);
-            system.level = integer(node, "level");
+            system.system = c.name;
+            system.room = integer(c, "room", -1);
+            system.level = integer(c, "level", integer(c, "power"));
             systems.push_back(std::move(system));
         }
+        return;
     }
     for (const auto& c : node.children) collectSystems(c, systems);
 }
