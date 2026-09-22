@@ -21,16 +21,20 @@ static std::vector<std::uint8_t> makeArchive(const std::vector<std::pair<std::st
     std::vector<std::uint8_t> data(16 + 20 * count + names + payloads, 0);
     data[0]='P'; data[1]='K'; data[2]='G'; data[3]='\n';
     data[5]=16; data[7]=20;
-    data[11]=static_cast<std::uint8_t>(count >> 24);
-    data[12]=static_cast<std::uint8_t>(count >> 16);
-    data[13]=static_cast<std::uint8_t>(count >> 8);
-    data[14]=static_cast<std::uint8_t>(count);
+    data[8]=static_cast<std::uint8_t>(count >> 24);
+    data[9]=static_cast<std::uint8_t>(count >> 16);
+    data[10]=static_cast<std::uint8_t>(count >> 8);
+    data[11]=static_cast<std::uint8_t>(count);
+    data[12]=static_cast<std::uint8_t>(names >> 24);
+    data[13]=static_cast<std::uint8_t>(names >> 16);
+    data[14]=static_cast<std::uint8_t>(names >> 8);
+    data[15]=static_cast<std::uint8_t>(names);
     std::size_t nameOffset = 16 + 20 * count;
     std::size_t payloadOffset = nameOffset + names;
     for (std::size_t i=0; i<count; ++i) {
         const auto& f = files[i];
         const std::size_t e = 16 + 20 * i;
-        const std::uint32_t no = static_cast<std::uint32_t>(nameOffset);
+        const std::uint32_t no = static_cast<std::uint32_t>(nameOffset - (16 + 20 * count));
         const std::uint32_t po = static_cast<std::uint32_t>(payloadOffset);
         data[e+1]=static_cast<std::uint8_t>(no >> 16); data[e+2]=static_cast<std::uint8_t>(no >> 8); data[e+3]=static_cast<std::uint8_t>(no);
         data[e+4]=static_cast<std::uint8_t>(po >> 16); data[e+5]=static_cast<std::uint8_t>(po >> 8); data[e+6]=static_cast<std::uint8_t>(po);
