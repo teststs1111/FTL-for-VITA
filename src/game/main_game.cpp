@@ -69,6 +69,10 @@ public:
 
     }
 
+    void update(float dt) {
+        runtime_.updateEnvironment(dt);
+    }
+
     void render() override {
         const LoadedShip* ship = content_.playerShip();
         if (!ship) {
