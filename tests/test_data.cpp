@@ -286,6 +286,10 @@ static void testShipRuntime() {
     wormhole::ShipRuntime runtime;
     assert(runtime.load(content));
     assert(runtime.hull == 30 && runtime.reactor == 8);
+    assert(runtime.roomOxygen.size() == 2 && runtime.roomOxygen[0] == 100);
+    assert(runtime.setRoomFire(0, true));
+    runtime.updateEnvironment(5.0f);
+    assert(runtime.roomOxygen[0] == 60 && runtime.roomFire[0]);
     assert(runtime.systems.size() == 2 && runtime.crew.size() == 2);
     assert(runtime.systems[0].type == "engines" && runtime.systems[0].power == 2);
     assert(runtime.systems[0].maxPower == 2);
