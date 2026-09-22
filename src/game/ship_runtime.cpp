@@ -88,7 +88,11 @@ bool ShipRuntime::moveCrew(int crewIndex, int targetRoom) {
             const bool joinsRooms =
                 (door.leftRoom == member.room && door.rightRoom == targetRoom) ||
                 (door.rightRoom == member.room && door.leftRoom == targetRoom);
-            if (joinsRooms) { connected = true; break; }
+            const int doorIndex = static_cast<int>(&door - content.layout.doors.data());
+            if (joinsRooms && doorIndex >= 0 && doorIndex < static_cast<int>(doorOpen.size()) && doorOpen[doorIndex]) {
+                connected = true;
+                break;
+            }
         }
         if (!connected) return false;
     }
