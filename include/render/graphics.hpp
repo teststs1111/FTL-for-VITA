@@ -1,0 +1,11 @@
+#pragma once
+namespace wormhole {
+struct Color { float r{1.f}, g{1.f}, b{1.f}, a{1.f}; };
+class Graphics {
+public:
+    void beginFrame(const Color& clear);
+    void endFrame();
+    void fillRect(float x, float y, float w, float h, const Color& color);
+    void drawLine(float x1, float y1, float x2, float y2, const Color& color);
+};
+}
