@@ -2,14 +2,15 @@
 
 #ifdef __vita__
 #include <vitaGL.h>
+#include <psp2/gxm.h>
 #endif
 
 namespace wormhole {
 
 bool Graphics::init() {
 #ifdef __vita__
-    vglSetParam(VGL_PARAM_BUFFERING_MODE, VGL_MODE_DOUBLE);
-    vglSetParam(VGL_PARAM_SWAP_INTERVAL, 1);
+    vglUseTripleBuffering(GL_FALSE);
+    vglWaitVblankStart(GL_TRUE);
     if (vglInitExtended(0, 960, 544, 0x1800000, SCE_GXM_MULTISAMPLE_NONE) == GL_FALSE)
         return false;
 #endif
@@ -19,7 +20,7 @@ bool Graphics::init() {
 
 void Graphics::shutdown() {
 #ifdef __vita__
-    if (initialized_) vglEnd();
+    // vitaGL does not expose a shutdown routine; resources are released on process exit.
 #endif
     initialized_ = false;
 }
