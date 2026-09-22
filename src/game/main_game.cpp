@@ -39,6 +39,19 @@ public:
                 }
             }
         }
+        if (input_.pressed(Button::R) && !runtime_.systems.empty()) {
+            const int roomId = runtime_.content.layout.rooms[selectedRoom_].id;
+            for (int i = 0; i < static_cast<int>(runtime_.systems.size()); ++i) {
+                if (runtime_.systems[i].room == roomId) {
+                    runtime_.setSystemPower(i, runtime_.systems[i].power + 1);
+                    break;
+                }
+            }
+        }
+        if (input_.pressed(Button::L) && !runtime_.crew.empty()) {
+            const int target = runtime_.content.layout.rooms[selectedRoom_].id;
+            runtime_.moveCrew(selectedCrew_, target);
+        }
         if (input_.pressed(Button::Circle))
             runtime_.repairRoom(runtime_.content.layout.rooms[selectedRoom_].id, 1);
         if (input_.pressed(Button::Square))
