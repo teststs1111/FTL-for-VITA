@@ -10,6 +10,7 @@ struct RuntimeSystem {
     int room{-1};
     int level{0};
     int power{0};
+    int maxPower{0};
     bool powered{false};
 };
 
@@ -35,6 +36,7 @@ struct ShipRuntime {
     bool damageRoom(int roomId, int amount);
     bool repairRoom(int roomId, int amount);
     bool setSystemPowered(int systemIndex, bool powered);
+    bool setSystemPower(int systemIndex, int power);
     bool moveCrew(int crewIndex, int targetRoom);
     int usedReactorPower() const;
     int availableReactorPower() const;
