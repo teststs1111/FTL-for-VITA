@@ -21,6 +21,7 @@ endif()
 add_library(wormhole_core
     src/game/game_state.cpp
     src/game/main_game.cpp
+    src/game/ship_runtime.cpp
     src/render/graphics.cpp
     src/render/texture.cpp
     src/platform/input.cpp
