@@ -30,6 +30,8 @@ struct ShipRuntime {
     std::vector<RuntimeSystem> systems;
     std::vector<RuntimeCrew> crew;
     std::vector<bool> doorOpen;
+    std::vector<int> roomOxygen;
+    std::vector<bool> roomFire;
     bool valid{false};
 
     bool load(ShipContent& source);
@@ -40,6 +42,8 @@ struct ShipRuntime {
     bool setSystemPower(int systemIndex, int power);
     bool moveCrew(int crewIndex, int targetRoom);
     bool setDoorOpen(int doorIndex, bool open);
+    bool setRoomFire(int roomId, bool fire);
+    void updateEnvironment(float dt);
     int usedReactorPower() const;
     int availableReactorPower() const;
 };
