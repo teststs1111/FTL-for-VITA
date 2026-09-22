@@ -1,5 +1,7 @@
 #include "data/ship_blueprint.hpp"
 #include <cstdlib>
+#include <sstream>
+#include <stdexcept>
 
 namespace wormhole {
 namespace {
@@ -94,8 +96,51 @@ bool parseShipBlueprint(const bxml::Node& node, ShipBlueprint& out) {
 
     collectRooms(node, out.rooms);
     collectSystems(node, out.systems);
+    if (const auto* health = child(node, "health")) out.maxHealth = integer(*health, "amount", 0);
+    if (const auto* power = child(node, "maxPower")) out.startingReactorPower = integer(*power, "amount", 0);
     collectCrew(node, out.crew);
     return true;
 }
 
+}
+
+bool parseLayoutBlueprint(const std::string& text, LayoutBlueprint& out) {
+    out = {};
+    std::istringstream in(text);
+    std::string line;
+    auto nextInt = [&](const char* what) {
+        std::string value;
+        if (!std::getline(in, value)) throw std::runtime_error(std::string("layout missing ") + what);
+        return std::stoi(value);
+    };
+    while (std::getline(in, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        if (line.empty()) continue;
+        if (line == "X_OFFSET") out.xOffset = nextInt("X_OFFSET");
+        else if (line == "Y_OFFSET") out.yOffset = nextInt("Y_OFFSET");
+        else if (line == "HORIZONTAL") out.horizontal = nextInt("HORIZONTAL");
+        else if (line == "VERTICAL") out.vertical = nextInt("VERTICAL");
+        else if (line == "ELLIPSE") {
+            out.ellipseW = nextInt("ELLIPSE width"); out.ellipseH = nextInt("ELLIPSE height");
+            out.ellipseX = nextInt("ELLIPSE x"); out.ellipseY = nextInt("ELLIPSE y");
+        } else if (line == "ROOM") {
+            RoomBlueprint room;
+            room.id = nextInt("ROOM id"); room.x = nextInt("ROOM x"); room.y = nextInt("ROOM y");
+            room.w = nextInt("ROOM width"); room.h = nextInt("ROOM height");
+            if (room.id != static_cast<int>(out.rooms.size()))
+                throw std::runtime_error("layout ROOM ids are not contiguous");
+            out.rooms.push_back(room);
+        } else if (line == "DOOR") {
+            DoorBlueprint door;
+            door.x = nextInt("DOOR x"); door.y = nextInt("DOOR y");
+            door.leftRoom = nextInt("DOOR left room"); door.rightRoom = nextInt("DOOR right room");
+            door.vertical = nextInt("DOOR orientation") != 0;
+            out.doors.push_back(door);
+        } else {
+            throw std::runtime_error("unknown layout line: " + line);
+        }
+    }
+    if (out.ellipseW <= 0 || out.ellipseH <= 0)
+        throw std::runtime_error("layout missing ELLIPSE");
+    return true;
 }
