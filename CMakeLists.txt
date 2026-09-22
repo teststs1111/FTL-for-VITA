@@ -33,6 +33,7 @@ add_library(wormhole_core
     src/data/blueprint_database.cpp
     src/data/ship_content.cpp
     src/render/png_loader.cpp
+    src/render/texture_cache.cpp
 )
 target_include_directories(wormhole_core PUBLIC include)
 target_link_libraries(wormhole_core PUBLIC PNG::PNG)
