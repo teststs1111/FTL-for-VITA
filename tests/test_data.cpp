@@ -21,7 +21,10 @@ static std::vector<std::uint8_t> makeArchive(const std::vector<std::pair<std::st
     std::vector<std::uint8_t> data(16 + 20 * count + names + payloads, 0);
     data[0]='P'; data[1]='K'; data[2]='G'; data[3]='\n';
     data[5]=16; data[7]=20;
-    data[11]=static_cast<std::uint8_t>(count);
+    data[11]=static_cast<std::uint8_t>(count >> 24);
+    data[12]=static_cast<std::uint8_t>(count >> 16);
+    data[13]=static_cast<std::uint8_t>(count >> 8);
+    data[14]=static_cast<std::uint8_t>(count);
     std::size_t nameOffset = 16 + 20 * count;
     std::size_t payloadOffset = nameOffset + names;
     for (std::size_t i=0; i<count; ++i) {
