@@ -139,7 +139,7 @@ static std::vector<std::uint8_t> makeArchive2(
     const std::uint32_t offset1 = static_cast<std::uint32_t>(namesStart + nameSize1 + nameSize2);
     const std::uint32_t offset2 = offset1 + static_cast<std::uint32_t>(payload1.size());
     std::vector<std::uint8_t> data(offset2 + payload2.size(), 0);
-    data[0]='P'; data[1]='K'; data[2]='G'; data[3]='\\n';
+    data[0]='P'; data[1]='K'; data[2]='G'; data[3]='\n';
     data[5]=16;
     data[7]=20;
     data[11]=static_cast<std::uint8_t>(count);
@@ -176,9 +176,9 @@ static void testShipContent() {
         "<FTL><shipBlueprint name=\"PLAYER_SHIP_HARD\" layout=\"kestrel\" shipName=\"The Kestrel\">"
         "<health amount=\"30\"/><maxPower amount=\"8\"/></shipBlueprint></FTL>";
     const std::string layout =
-        "X_OFFSET\\n10\\nY_OFFSET\\n20\\nHORIZONTAL\\n5\\nVERTICAL\\n4\\n"
-        "ELLIPSE\\n100\\n50\\n2\\n3\\nROOM\\n0\\n1\\n2\\n3\\n4\\n"
-        "ROOM\\n1\\n5\\n6\\n2\\n2\\nDOOR\\n4\\n5\\n0\\n1\\n1\\n";
+        "X_OFFSET\n10\nY_OFFSET\n20\nHORIZONTAL\n5\nVERTICAL\n4\n"
+        "ELLIPSE\n100\n50\n2\n3\nROOM\n0\n1\n2\n3\n4\n"
+        "ROOM\n1\n5\n6\n2\n2\nDOOR\n4\n5\n0\n1\n1\n";
     writeFile(path, makeArchive2("data/blueprints.xml", blueprints, "data/kestrel.txt", layout));
     wormhole::ShipContent content;
     assert(content.open(path));
