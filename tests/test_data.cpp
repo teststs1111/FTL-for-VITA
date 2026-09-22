@@ -4,6 +4,7 @@
 #include "data/blueprint_database.hpp"
 #include "data/ship_blueprint.hpp"
 #include "data/ship_content.hpp"
+#include "game/ship_runtime.hpp"
 #include "render/png_loader.hpp"
 #include <algorithm>
 #include <cassert>
@@ -230,6 +231,44 @@ static void testPng() {
     assert(image.pixels[0]==0xff && image.pixels[1]==0 && image.pixels[2]==0 && image.pixels[3]==0xff);
 }
 
+
+static void testShipRuntime() {
+    const std::string blueprintXml =
+        "<shipBlueprint name=\"PLAYER_SHIP_HARD\" shipName=\"Kestrel\" layout=\"kestrel\">"
+        "<health amount=\"30\"/><maxPower amount=\"8\"/>"
+        "<systemList><engines room=\"0\" power=\"2\"/><shields room=\"1\" power=\"2\"/></systemList>"
+        "<crew species=\"human\" name=\"Alice\" room=\"0\"/>"
+        "<crew species=\"engi\" name=\"Bob\" room=\"1\"/>"
+        "</shipBlueprint>";
+    const std::string layout =
+        "X_OFFSET\n0\nY_OFFSET\n0\nHORIZONTAL\n5\nVERTICAL\n4\n"
+        "ELLIPSE\n100\n50\n0\n0\nROOM\n0\n0\n0\n2\n2\nROOM\n1\n2\n0\n2\n2\n";
+    const auto archive = makeArchive({{"data/blueprints.xml", blueprintXml}, {"data/kestrel.txt", layout}});
+    const std::string path = "ship_runtime_test.dat";
+    writeFile(path, archive);
+    wormhole::ShipContent content;
+    assert(content.open(path));
+    assert(content.loadPlayerShip());
+    wormhole::ShipRuntime runtime;
+    assert(runtime.load(content));
+    assert(runtime.hull == 30 && runtime.reactor == 8);
+    assert(runtime.systems.size() == 2 && runtime.crew.size() == 2);
+    assert(runtime.systems[0].type == "engines" && runtime.systems[0].power == 2);
+    assert(runtime.crew[1].race == "engi");
+    assert(runtime.usedReactorPower() == 4);
+    assert(runtime.availableReactorPower() == 4);
+    assert(runtime.damageRoom(0, 5));
+    assert(runtime.hull == 25 && runtime.roomDamage[0] == 5);
+    assert(runtime.repairRoom(0, 3));
+    assert(runtime.hull == 28 && runtime.roomDamage[0] == 2);
+    assert(runtime.setSystemPowered(0, false));
+    assert(runtime.usedReactorPower() == 2);
+    assert(runtime.setSystemPowered(0, true));
+    runtime.reset();
+    assert(!runtime.valid && runtime.systems.empty() && runtime.crew.empty());
+    std::remove(path.c_str());
+}
+
 int main() {
     testBxml();
     testFtlDat();
@@ -239,5 +278,6 @@ int main() {
     testShipContent();
     testBlueprintDatabase();
     testPng();
+    testShipRuntime();
     return 0;
 }
