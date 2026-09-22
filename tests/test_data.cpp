@@ -14,6 +14,33 @@
 #include <string>
 #include <vector>
 
+static std::vector<std::uint8_t> makeArchive(const std::vector<std::pair<std::string, std::string>>& files) {
+    const std::size_t count = files.size();
+    std::size_t names = 0, payloads = 0;
+    for (const auto& f : files) { names += f.first.size() + 1; payloads += f.second.size(); }
+    std::vector<std::uint8_t> data(16 + 20 * count + names + payloads, 0);
+    data[0]='P'; data[1]='K'; data[2]='G'; data[3]='\n';
+    data[5]=16; data[7]=20;
+    data[11]=static_cast<std::uint8_t>(count);
+    std::size_t nameOffset = 16 + 20 * count;
+    std::size_t payloadOffset = nameOffset + names;
+    for (std::size_t i=0; i<count; ++i) {
+        const auto& f = files[i];
+        const std::size_t e = 16 + 20 * i;
+        const std::uint32_t no = static_cast<std::uint32_t>(nameOffset);
+        const std::uint32_t po = static_cast<std::uint32_t>(payloadOffset);
+        data[e+1]=static_cast<std::uint8_t>(no >> 16); data[e+2]=static_cast<std::uint8_t>(no >> 8); data[e+3]=static_cast<std::uint8_t>(no);
+        data[e+4]=static_cast<std::uint8_t>(po >> 16); data[e+5]=static_cast<std::uint8_t>(po >> 8); data[e+6]=static_cast<std::uint8_t>(po);
+        const std::uint32_t size = static_cast<std::uint32_t>(f.second.size());
+        data[e+8]=static_cast<std::uint8_t>(size >> 24); data[e+9]=static_cast<std::uint8_t>(size >> 16); data[e+10]=static_cast<std::uint8_t>(size >> 8); data[e+11]=static_cast<std::uint8_t>(size);
+        data[e+12]=data[e+8]; data[e+13]=data[e+9]; data[e+14]=data[e+10]; data[e+15]=data[e+11];
+        std::copy(f.first.begin(), f.first.end(), data.begin()+nameOffset); data[nameOffset+f.first.size()]=0;
+        nameOffset += f.first.size()+1;
+        std::copy(f.second.begin(), f.second.end(), data.begin()+payloadOffset); payloadOffset += f.second.size();
+    }
+    return data;
+}
+
 static void writeFile(const std::string& path, const std::vector<std::uint8_t>& data) {
     std::ofstream out(path, std::ios::binary);
     assert(out);
