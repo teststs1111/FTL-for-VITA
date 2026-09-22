@@ -27,6 +27,8 @@ bool ShipRuntime::load(ShipContent& source) {
         systems.push_back(std::move(system));
     }
 
+    doorOpen.assign(content.layout.doors.size(), false);
+
     crew.clear();
     for (const auto& blueprint : content.blueprint.crew) {
         RuntimeCrew member;
@@ -46,6 +48,7 @@ void ShipRuntime::reset() {
     roomDamage.clear();
     systems.clear();
     crew.clear();
+    doorOpen.clear();
     valid = false;
 }
 
@@ -91,6 +94,13 @@ bool ShipRuntime::moveCrew(int crewIndex, int targetRoom) {
     }
 
     member.room = targetRoom;
+    return true;
+}
+
+bool ShipRuntime::setDoorOpen(int doorIndex, bool open) {
+    if (!valid || doorIndex < 0 || doorIndex >= static_cast<int>(doorOpen.size())) return false;
+    if (doorOpen[doorIndex] == open) return false;
+    doorOpen[doorIndex] = open;
     return true;
 }
 
