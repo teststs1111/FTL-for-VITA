@@ -1,5 +1,6 @@
 #include "data/ship_blueprint.hpp"
 #include <cstdlib>
+#include <algorithm>
 #include <sstream>
 #include <stdexcept>
 
@@ -58,7 +59,10 @@ void collectSystems(const bxml::Node& node, std::vector<SystemSlotBlueprint>& sy
             SystemSlotBlueprint system;
             system.system = c.name;
             system.room = integer(c, "room", -1);
-            system.level = integer(c, "level", integer(c, "power"));
+            system.startingPower = integer(c, "power", integer(c, "level"));
+            system.level = system.startingPower;
+            system.maxPower = integer(c, "max", system.startingPower);
+            system.availableByDefault = attribute(c, "start") != "false";
             systems.push_back(std::move(system));
         }
         return;
@@ -74,6 +78,16 @@ void collectCrew(const bxml::Node& node, std::vector<CrewBlueprint>& crew) {
         member.name = attribute(node, "name");
         member.room = integer(node, "room", -1);
         crew.push_back(std::move(member));
+    } else if (node.name == "crewCount") {
+        const int amount = std::max(0, integer(node, "amount", 0));
+        const std::string race = attribute(node, "class").empty() ? "human" : attribute(node, "class");
+        for (int i = 0; i < amount; ++i) {
+            CrewBlueprint member;
+            member.race = race;
+            member.name = race + "_" + std::to_string(i + 1);
+            member.room = -1;
+            crew.push_back(std::move(member));
+        }
     }
     for (const auto& c : node.children) collectCrew(c, crew);
 }
