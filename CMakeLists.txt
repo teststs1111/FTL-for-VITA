@@ -9,6 +9,8 @@ project(vita_wormhole_prototype LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(PNG REQUIRED)
+
 if(VITA)
     include("$ENV{VITASDK}/share/vita.cmake" REQUIRED)
     set(VITA_APP_NAME "FTL for PS Vita")
@@ -25,8 +27,12 @@ add_library(wormhole_core
     src/platform/platform.cpp
     src/data/ftl_dat.cpp
     src/data/bxml.cpp
+    src/data/asset_store.cpp
+    src/data/ship_blueprint.cpp
+    src/render/png_loader.cpp
 )
 target_include_directories(wormhole_core PUBLIC include)
+target_link_libraries(wormhole_core PUBLIC PNG::PNG)
 
 add_executable(vita_wormhole_prototype src/main.cpp)
 target_link_libraries(vita_wormhole_prototype PRIVATE wormhole_core)
