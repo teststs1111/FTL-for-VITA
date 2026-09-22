@@ -13,9 +13,19 @@ bool ShipRuntime::load(ShipContent& source) {
     return true;
 }
 void ShipRuntime::reset() {
-    content = {};
-    hull = maxHull = reactor = 0;
-    roomDamage.clear();
-    valid = false;
+    content = {}; hull = maxHull = reactor = 0; roomDamage.clear(); valid = false;
+}
+bool ShipRuntime::damageRoom(int roomId, int amount) {
+    if (!valid || roomId < 0 || roomId >= static_cast<int>(roomDamage.size()) || amount <= 0) return false;
+    roomDamage[roomId] += amount;
+    hull = std::max(0, hull - amount);
+    return true;
+}
+bool ShipRuntime::repairRoom(int roomId, int amount) {
+    if (!valid || roomId < 0 || roomId >= static_cast<int>(roomDamage.size()) || amount <= 0) return false;
+    const int restored = std::min(amount, roomDamage[roomId]);
+    roomDamage[roomId] -= restored;
+    hull = std::min(maxHull, hull + restored);
+    return restored > 0;
 }
 }
