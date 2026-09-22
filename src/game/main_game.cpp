@@ -1,6 +1,7 @@
 #include "game/main_game.hpp"
 #include "game/game_state.hpp"
 #include "data/ship_content.hpp"
+#include "game/ship_runtime.hpp"
 #include "render/graphics.hpp"
 #include <algorithm>
 
@@ -12,6 +13,7 @@ public:
         if (archivePath) {
             content_.open(archivePath);
             content_.loadPlayerShip();
+            runtime_.load(content_);
         }
     }
 
@@ -55,6 +57,7 @@ public:
 private:
     Graphics& graphics_;
     ShipContent content_;
+    ShipRuntime runtime_;
 };
 
 MainGame::MainGame() = default;
