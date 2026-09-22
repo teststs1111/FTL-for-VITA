@@ -27,6 +27,9 @@ public:
         if (input_.pressed(Button::Right) || input_.pressed(Button::Down))
             selectedRoom_ = (selectedRoom_ + 1) % roomCount;
 
+        if (input_.pressed(Button::Triangle) && !runtime_.crew.empty())
+            selectedCrew_ = (selectedCrew_ + 1) % static_cast<int>(runtime_.crew.size());
+
         if (input_.pressed(Button::Cross)) {
             const int roomId = runtime_.content.layout.rooms[selectedRoom_].id;
             for (int i = 0; i < static_cast<int>(runtime_.systems.size()); ++i) {
@@ -40,6 +43,11 @@ public:
             runtime_.repairRoom(runtime_.content.layout.rooms[selectedRoom_].id, 1);
         if (input_.pressed(Button::Square))
             runtime_.damageRoom(runtime_.content.layout.rooms[selectedRoom_].id, 1);
+
+        if (input_.pressed(Button::L1) && !runtime_.crew.empty()) {
+            const int target = runtime_.content.layout.rooms[selectedRoom_].id;
+            runtime_.moveCrew(selectedCrew_, target);
+        }
     }
 
     void render() override {
@@ -100,6 +108,7 @@ private:
     ShipContent content_;
     ShipRuntime runtime_;
     int selectedRoom_{0};
+    int selectedCrew_{0};
 };
 
 MainGame::MainGame() = default;
