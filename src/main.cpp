@@ -8,7 +8,7 @@ int main() {
 
     wormhole::Input input;
     wormhole::MainGame game;
-    game.init(graphics);
+    game.init(graphics, input);
 
 #ifdef __vita__
     for (;;) {
