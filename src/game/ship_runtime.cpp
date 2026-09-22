@@ -13,6 +13,8 @@ bool ShipRuntime::load(ShipContent& source) {
     reactor = std::max(0, content.blueprint.startingReactorPower);
 
     roomDamage.assign(content.layout.rooms.size(), 0);
+    roomOxygen.assign(content.layout.rooms.size(), 100);
+    roomFire.assign(content.layout.rooms.size(), false);
 
     systems.clear();
     for (const auto& blueprint : content.blueprint.systems) {
@@ -46,6 +48,8 @@ void ShipRuntime::reset() {
     content = {};
     hull = maxHull = reactor = 0;
     roomDamage.clear();
+    roomOxygen.clear();
+    roomFire.clear();
     systems.clear();
     crew.clear();
     doorOpen.clear();
@@ -120,6 +124,25 @@ bool ShipRuntime::setSystemPower(int systemIndex, int power) {
     system.power = next;
     if (system.power == 0) system.powered = false;
     return true;
+}
+
+bool ShipRuntime::setRoomFire(int roomId, bool fire) {
+    if (!valid || roomId < 0 || roomId >= static_cast<int>(roomFire.size())) return false;
+    if (roomFire[roomId] == fire) return false;
+    roomFire[roomId] = fire;
+    return true;
+}
+
+void ShipRuntime::updateEnvironment(float dt) {
+    if (!valid || dt <= 0.f) return;
+    for (int i = 0; i < static_cast<int>(roomFire.size()); ++i) {
+        if (!roomFire[i]) continue;
+        roomOxygen[i] = std::max(0, roomOxygen[i] - static_cast<int>(dt * 8.f));
+        if (roomOxygen[i] == 0) {
+            roomFire[i] = false;
+            damageRoom(i, 1);
+        }
+    }
 }
 
 int ShipRuntime::usedReactorPower() const {
