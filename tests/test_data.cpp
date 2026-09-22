@@ -295,6 +295,8 @@ static void testShipRuntime() {
     assert(runtime.setDoorOpen(0, false));
     assert(runtime.crew[1].race == "engi");
     runtime.crew[0].room = 0;
+    assert(!runtime.moveCrew(0, 1));
+    assert(runtime.setDoorOpen(0, true));
     assert(runtime.moveCrew(0, 1));
     assert(runtime.crew[0].room == 1);
     assert(runtime.moveCrew(0, 0));
