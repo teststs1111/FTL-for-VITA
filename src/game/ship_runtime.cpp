@@ -20,8 +20,9 @@ bool ShipRuntime::load(ShipContent& source) {
         system.type = blueprint.system;
         system.room = blueprint.room;
         system.level = std::max(0, blueprint.level);
-        system.power = system.level;
-        system.powered = system.power > 0;
+        system.power = std::max(0, blueprint.startingPower);
+        if (system.power == 0) system.power = system.level;
+        system.powered = blueprint.availableByDefault && system.power > 0;
         systems.push_back(std::move(system));
     }
 
