@@ -129,41 +129,67 @@ static void testLayoutBlueprint() {
     assert(parsed.doors[0].leftRoom == 0 && parsed.doors[0].rightRoom == 1);
 }
 
+static std::vector<std::uint8_t> makeArchive2(
+    const std::string& name1, const std::string& payload1,
+    const std::string& name2, const std::string& payload2) {
+    const std::uint32_t count = 2;
+    const std::uint32_t nameSize1 = static_cast<std::uint32_t>(name1.size() + 1);
+    const std::uint32_t nameSize2 = static_cast<std::uint32_t>(name2.size() + 1);
+    const std::size_t namesStart = 16 + 20 * count;
+    const std::uint32_t offset1 = static_cast<std::uint32_t>(namesStart + nameSize1 + nameSize2);
+    const std::uint32_t offset2 = offset1 + static_cast<std::uint32_t>(payload1.size());
+    std::vector<std::uint8_t> data(offset2 + payload2.size(), 0);
+    data[0]='P'; data[1]='K'; data[2]='G'; data[3]='\\n';
+    data[5]=0; data[6]=0; data[7]=20;
+    data[11]=static_cast<std::uint8_t>(count);
+    data[15]=static_cast<std::uint8_t>(nameSize1 + nameSize2);
+
+    auto putEntry = [&](std::size_t entry, std::uint32_t nameOffset,
+                         std::uint32_t offset, std::uint32_t size) {
+        data[entry+5]=(nameOffset >> 16)&0xff;
+        data[entry+6]=(nameOffset >> 8)&0xff;
+        data[entry+7]=nameOffset&0xff;
+        data[entry+8]=(offset >> 24)&0xff; data[entry+9]=(offset >> 16)&0xff;
+        data[entry+10]=(offset >> 8)&0xff; data[entry+11]=offset&0xff;
+        data[entry+12]=(size >> 24)&0xff; data[entry+13]=(size >> 16)&0xff;
+        data[entry+14]=(size >> 8)&0xff; data[entry+15]=size&0xff;
+        data[entry+16]=(size >> 24)&0xff; data[entry+17]=(size >> 16)&0xff;
+        data[entry+18]=(size >> 8)&0xff; data[entry+19]=size&0xff;
+    };
+    const std::uint32_t nameOffset1 = 0;
+    const std::uint32_t nameOffset2 = nameSize1;
+    putEntry(16, nameOffset1, offset1, static_cast<std::uint32_t>(payload1.size()));
+    putEntry(36, nameOffset2, offset2, static_cast<std::uint32_t>(payload2.size()));
+    std::copy(name1.begin(), name1.end(), data.begin()+namesStart);
+    data[namesStart+name1.size()] = 0;
+    std::copy(name2.begin(), name2.end(), data.begin()+namesStart+nameSize1);
+    data[namesStart+nameSize1+name2.size()] = 0;
+    std::copy(payload1.begin(), payload1.end(), data.begin()+offset1);
+    std::copy(payload2.begin(), payload2.end(), data.begin()+offset2);
+    return data;
+}
+
 static void testShipContent() {
     const std::string path = "test_ship_content.dat";
     const std::string blueprints =
-        "<FTL><shipBlueprint name="PLAYER_SHIP_HARD" layout="kestrel" shipName="The Kestrel">"
-        "<health amount="30"/><maxPower amount="8"/></shipBlueprint></FTL>";
+        "<FTL><shipBlueprint name=\"PLAYER_SHIP_HARD\" layout=\"kestrel\" shipName=\"The Kestrel\">"
+        "<health amount=\"30\"/><maxPower amount=\"8\"/></shipBlueprint></FTL>";
     const std::string layout =
-        "X_OFFSET\n10\nY_OFFSET\n20\nHORIZONTAL\n5\nVERTICAL\n4\n"
-        "ELLIPSE\n100\n50\n2\n3\nROOM\n0\n1\n2\n3\n4\n"
-        "ROOM\n1\n5\n6\n2\n2\nDOOR\n4\n5\n0\n1\n1\n";
-    std::vector<std::uint8_t> data = makeArchive("data/blueprints.xml", blueprints);
-    const auto second = makeArchive("data/kestrel.txt", layout);
-    const std::uint32_t firstCount = 2;
-    (void)firstCount;
-    // Build a two-entry archive from the same format without duplicating parser logic.
-    auto appendEntry = [](std::vector<std::uint8_t>& archive, const std::string& name,
-                          const std::string& payload) {
-        const std::size_t oldSize = archive.size();
-        const std::size_t nameStart = oldSize;
-        const std::size_t dataStart = nameStart + name.size() + 1;
-        archive.resize(dataStart + payload.size(), 0);
-        const std::size_t entry = 16;
-        archive[11] = 2;
-        const std::size_t nameOffset = 36;
-        const std::size_t secondName = nameOffset + std::string("data/blueprints.xml").size() + 1;
-        archive[entry + 5] = static_cast<std::uint8_t>((nameOffset >> 16) & 0xff);
-        archive[entry + 6] = static_cast<std::uint8_t>((nameOffset >> 8) & 0xff);
-        archive[entry + 7] = static_cast<std::uint8_t>(nameOffset & 0xff);
-        (void)secondName;
-    };
-    // Use the existing archive fixture builder for a deterministic single-entry test instead.
-    std::remove(path.c_str());
-    writeFile(path, makeArchive("data/kestrel.txt", layout));
+        "X_OFFSET\\n10\\nY_OFFSET\\n20\\nHORIZONTAL\\n5\\nVERTICAL\\n4\\n"
+        "ELLIPSE\\n100\\n50\\n2\\n3\\nROOM\\n0\\n1\\n2\\n3\\n4\\n"
+        "ROOM\\n1\\n5\\n6\\n2\\n2\\nDOOR\\n4\\n5\\n0\\n1\\n1\\n";
+    writeFile(path, makeArchive2("data/blueprints.xml", blueprints, "data/kestrel.txt", layout));
     wormhole::ShipContent content;
     assert(content.open(path));
-    assert(!content.loadPlayerShip());
+    assert(content.loadPlayerShip());
+    const auto* ship = content.playerShip();
+    assert(ship);
+    assert(ship->blueprint.name == "The Kestrel");
+    assert(ship->blueprint.maxHealth == 30);
+    assert(ship->blueprint.startingReactorPower == 8);
+    assert(ship->layout.rooms.size() == 2);
+    assert(ship->layout.doors.size() == 1);
+    assert(ship->layout.ellipseW == 100 && ship->layout.ellipseH == 50);
     std::remove(path.c_str());
 }
 
