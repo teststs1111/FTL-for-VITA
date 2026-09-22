@@ -71,6 +71,28 @@ bool ShipRuntime::setSystemPowered(int systemIndex, bool powered) {
     return true;
 }
 
+bool ShipRuntime::moveCrew(int crewIndex, int targetRoom) {
+    if (!valid || crewIndex < 0 || crewIndex >= static_cast<int>(crew.size())) return false;
+    if (targetRoom < 0 || targetRoom >= static_cast<int>(content.layout.rooms.size())) return false;
+
+    RuntimeCrew& member = crew[crewIndex];
+    if (!member.alive || member.room == targetRoom) return false;
+
+    if (member.room >= 0) {
+        bool connected = false;
+        for (const auto& door : content.layout.doors) {
+            const bool joinsRooms =
+                (door.leftRoom == member.room && door.rightRoom == targetRoom) ||
+                (door.rightRoom == member.room && door.leftRoom == targetRoom);
+            if (joinsRooms) { connected = true; break; }
+        }
+        if (!connected) return false;
+    }
+
+    member.room = targetRoom;
+    return true;
+}
+
 int ShipRuntime::usedReactorPower() const {
     int used = 0;
     for (const auto& system : systems)
