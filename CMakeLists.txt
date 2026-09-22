@@ -29,6 +29,7 @@ add_library(wormhole_core
     src/data/bxml.cpp
     src/data/asset_store.cpp
     src/data/ship_blueprint.cpp
+    src/data/blueprint_database.cpp
     src/render/png_loader.cpp
 )
 target_include_directories(wormhole_core PUBLIC include)
