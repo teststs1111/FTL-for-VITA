@@ -8,7 +8,7 @@ int main() {
 
     wormhole::Input input;
     wormhole::MainGame game;
-    game.init();
+    game.init(graphics);
 
 #ifdef __vita__
     for (;;) {
@@ -18,9 +18,7 @@ int main() {
             break;
 
         graphics.beginFrame({0.035f, 0.045f, 0.065f, 1.f});
-        graphics.fillRect(40.f, 40.f, 880.f, 464.f, {0.08f, 0.10f, 0.14f, 1.f});
-        graphics.drawLine(40.f, 40.f, 920.f, 40.f, {0.2f, 0.7f, 1.f, 1.f});
-        game.update(1.0f / 60.0f);
+                game.update(1.0f / 60.0f);
         game.render();
         graphics.endFrame();
     }
