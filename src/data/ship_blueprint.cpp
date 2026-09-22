@@ -104,7 +104,7 @@ bool parseShipBlueprint(const bxml::Node& node, ShipBlueprint& out) {
 
 }
 
-bool parseLayoutBlueprint(const std::string& text, LayoutBlueprint& out) {
+bool wormhole::parseLayoutBlueprint(const std::string& text, wormhole::LayoutBlueprint& out) {
     out = {};
     std::istringstream in(text);
     std::string line;
@@ -124,14 +124,14 @@ bool parseLayoutBlueprint(const std::string& text, LayoutBlueprint& out) {
             out.ellipseW = nextInt("ELLIPSE width"); out.ellipseH = nextInt("ELLIPSE height");
             out.ellipseX = nextInt("ELLIPSE x"); out.ellipseY = nextInt("ELLIPSE y");
         } else if (line == "ROOM") {
-            RoomBlueprint room;
+            wormhole::RoomBlueprint room;
             room.id = nextInt("ROOM id"); room.x = nextInt("ROOM x"); room.y = nextInt("ROOM y");
             room.w = nextInt("ROOM width"); room.h = nextInt("ROOM height");
             if (room.id != static_cast<int>(out.rooms.size()))
                 throw std::runtime_error("layout ROOM ids are not contiguous");
             out.rooms.push_back(room);
         } else if (line == "DOOR") {
-            DoorBlueprint door;
+            wormhole::DoorBlueprint door;
             door.x = nextInt("DOOR x"); door.y = nextInt("DOOR y");
             door.leftRoom = nextInt("DOOR left room"); door.rightRoom = nextInt("DOOR right room");
             door.vertical = nextInt("DOOR orientation") != 0;
