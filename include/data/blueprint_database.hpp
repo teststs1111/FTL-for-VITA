@@ -11,6 +11,7 @@ public:
     explicit BlueprintDatabase(AssetStore& assets) : assets_(assets) {}
 
     bool loadShipBlueprint(const std::string& assetPath);
+    std::size_t loadShipBlueprints(const std::string& assetPath);
     const ShipBlueprint* findShip(const std::string& id) const;
     void clear();
 
