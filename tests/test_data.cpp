@@ -140,7 +140,8 @@ static std::vector<std::uint8_t> makeArchive2(
     const std::uint32_t offset2 = offset1 + static_cast<std::uint32_t>(payload1.size());
     std::vector<std::uint8_t> data(offset2 + payload2.size(), 0);
     data[0]='P'; data[1]='K'; data[2]='G'; data[3]='\\n';
-    data[5]=0; data[6]=0; data[7]=20;
+    data[5]=16;
+    data[7]=20;
     data[11]=static_cast<std::uint8_t>(count);
     data[15]=static_cast<std::uint8_t>(nameSize1 + nameSize2);
 
