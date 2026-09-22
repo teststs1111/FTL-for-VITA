@@ -36,11 +36,11 @@ static std::vector<std::uint8_t> makeArchive(const std::vector<std::pair<std::st
         const std::size_t e = 16 + 20 * i;
         const std::uint32_t no = static_cast<std::uint32_t>(nameOffset - (16 + 20 * count));
         const std::uint32_t po = static_cast<std::uint32_t>(payloadOffset);
-        data[e+1]=static_cast<std::uint8_t>(no >> 16); data[e+2]=static_cast<std::uint8_t>(no >> 8); data[e+3]=static_cast<std::uint8_t>(no);
-        data[e+4]=static_cast<std::uint8_t>(po >> 16); data[e+5]=static_cast<std::uint8_t>(po >> 8); data[e+6]=static_cast<std::uint8_t>(po);
+        data[e+5]=static_cast<std::uint8_t>(no >> 16); data[e+6]=static_cast<std::uint8_t>(no >> 8); data[e+7]=static_cast<std::uint8_t>(no);
+        data[e+8]=static_cast<std::uint8_t>(po >> 24); data[e+9]=static_cast<std::uint8_t>(po >> 16); data[e+10]=static_cast<std::uint8_t>(po >> 8); data[e+11]=static_cast<std::uint8_t>(po);
         const std::uint32_t size = static_cast<std::uint32_t>(f.second.size());
-        data[e+8]=static_cast<std::uint8_t>(size >> 24); data[e+9]=static_cast<std::uint8_t>(size >> 16); data[e+10]=static_cast<std::uint8_t>(size >> 8); data[e+11]=static_cast<std::uint8_t>(size);
-        data[e+12]=data[e+8]; data[e+13]=data[e+9]; data[e+14]=data[e+10]; data[e+15]=data[e+11];
+        data[e+12]=static_cast<std::uint8_t>(size >> 24); data[e+13]=static_cast<std::uint8_t>(size >> 16); data[e+14]=static_cast<std::uint8_t>(size >> 8); data[e+15]=static_cast<std::uint8_t>(size);
+        data[e+16]=data[e+12]; data[e+17]=data[e+13]; data[e+18]=data[e+14]; data[e+19]=data[e+15];
         std::copy(f.first.begin(), f.first.end(), data.begin()+nameOffset); data[nameOffset+f.first.size()]=0;
         nameOffset += f.first.size()+1;
         std::copy(f.second.begin(), f.second.end(), data.begin()+payloadOffset); payloadOffset += f.second.size();
