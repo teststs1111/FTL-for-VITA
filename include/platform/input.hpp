@@ -8,6 +8,7 @@ enum class Button { Left, Right, Up, Down, Cross, Circle, Square, Triangle, L, R
 class Input {
 public:
     void beginFrame();
+    void poll();
     void setButton(Button button, bool down);
     bool down(Button button) const;
     bool pressed(Button button) const;
