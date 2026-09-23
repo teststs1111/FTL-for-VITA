@@ -148,6 +148,14 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
         }
         if (weapon.systemDamage > 0)
             result.systemDamage += target.damageSystemInRoom(room, weapon.systemDamage);
+        if (weapon.personnelDamage > 0) {
+            for (auto& crew : target.crew) {
+                if (!crew.alive || crew.room != room) continue;
+                crew.health = std::max(0, crew.health - weapon.personnelDamage);
+                result.personnelDamage += weapon.personnelDamage;
+                if (crew.health == 0) crew.alive = false;
+            }
+        }
         if (target.hull <= 0) break;
     }
 
