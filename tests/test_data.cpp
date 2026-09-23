@@ -432,6 +432,14 @@ static void testShipRuntime() {
     assert(piercingResult.hullDamage == 2);
     assert(combat.enemy.hull == piercedHull - 2);
 
+    assert(combat.load(content, enemyForCombat));
+    assert(combat.enemy.setSystemPowered(2, true));
+    combat.enemy.updateWeapons(2.5f);
+    const int playerHullBeforeEnemyShot = combat.player.hull;
+    combat.update(0.1f);
+    assert(combat.player.hull < playerHullBeforeEnemyShot);
+    assert(!combat.enemy.weapons[0].ready);
+
     runtime.reset();
     assert(!runtime.valid && runtime.systems.empty() && runtime.crew.empty());
     assert(runtime.shieldLayers == 0 && runtime.maxShieldLayers == 0);
