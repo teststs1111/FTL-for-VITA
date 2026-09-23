@@ -254,6 +254,35 @@ bool ShipRuntime::moveCrew(int crewIndex, int targetRoom) {
     return false;
 }
 
+int ShipRuntime::damageCrewInRoom(int roomId, int amount) {
+    if (!valid || roomId < 0 || amount <= 0) return 0;
+
+    int applied = 0;
+    for (auto& member : crew) {
+        if (!member.alive || member.room != roomId) continue;
+        const int damage = std::min(amount, member.health);
+        member.health -= damage;
+        applied += damage;
+        if (member.health <= 0) {
+            member.health = 0;
+            member.alive = false;
+        }
+    }
+    return applied;
+}
+
+int ShipRuntime::healCrew(int crewIndex, int amount) {
+    if (!valid || crewIndex < 0 || crewIndex >= static_cast<int>(crew.size()) || amount <= 0)
+        return 0;
+
+    RuntimeCrew& member = crew[crewIndex];
+    if (!member.alive || member.health >= member.maxHealth) return 0;
+
+    const int healed = std::min(amount, member.maxHealth - member.health);
+    member.health += healed;
+    return healed;
+}
+
 bool ShipRuntime::extinguishFire(int crewIndex) {
     if (!valid || crewIndex < 0 || crewIndex >= static_cast<int>(crew.size())) return false;
     const RuntimeCrew& member = crew[crewIndex];
