@@ -73,7 +73,7 @@ std::size_t BlueprintDatabase::loadShipBlueprints(const std::string& assetPath) 
             drone.weaponBlueprint = value("weaponBlueprint");
             drone.cost = toInt(value("cost"), 0);
             if (!drone.name.empty()) drones_[drone.name] = std::move(drone);
-        } else f (node.name == "weaponBlueprint") {
+        } else if (node.name == "weaponBlueprint") {
             WeaponBlueprint weapon;
             const auto getText = [&](const char* name) -> std::string {
                 for (const auto& child : node.children)
