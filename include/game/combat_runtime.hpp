@@ -3,7 +3,9 @@
 
 namespace wormhole {
 
-enum class CombatOutcome { Ongoing, PlayerDestroyed, EnemyDestroyed };\n\nstruct CombatResult {
+enum class CombatOutcome { Ongoing, PlayerDestroyed, EnemyDestroyed };
+
+struct CombatResult {
     bool fired{false};
     int shotsFired{0};
     int shieldsAbsorbed{0};
@@ -18,7 +20,8 @@ public:
     ShipRuntime enemy;
     int targetRoom{-1};
     int selectedWeapon{0};
-    int enemyTargetRoom{0};\n    CombatOutcome outcome{CombatOutcome::Ongoing};
+    int enemyTargetRoom{0};
+    CombatOutcome outcome{CombatOutcome::Ongoing};
 
     bool load(ShipContent& content, const LoadedShip& enemyShip);
     void update(float dt);
