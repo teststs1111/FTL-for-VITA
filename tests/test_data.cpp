@@ -408,7 +408,7 @@ static void testShipRuntime() {
     assert(!combat.enemy.systems[0].powered);
     assert(combat.player.missiles == 6);
     assert(!combat.player.weapons[0].ready);
-    combat.player.updateWeapons(2.4f);
+    combat.player.updateWeapons(2.2f);
     assert(!combat.player.weapons[0].ready);
     combat.player.updateWeapons(0.1f);
     assert(combat.player.weapons[0].ready);
