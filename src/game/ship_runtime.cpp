@@ -49,6 +49,20 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         }
     }
 
+    drones.clear();
+    for (const auto& blueprint : content.initialDroneBlueprints) {
+        RuntimeDrone drone;
+        drone.type = blueprint.type;
+        drone.name = blueprint.name;
+        drone.power = std::max(1, blueprint.power);
+        drone.speed = std::max(0, blueprint.speed);
+        drone.cooldown = std::max(0, blueprint.cooldown);
+        drone.charge = 0;
+        drone.powered = false;
+        drone.active = false;
+        drones.push_back(std::move(drone));
+    }
+
     weapons.clear();
     for (const auto& blueprint : content.initialWeaponBlueprints) {
         RuntimeWeapon weapon;
