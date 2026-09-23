@@ -21,7 +21,7 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
 }
 
 void CombatRuntime::update(float dt) {
-    if (dt <= 0.0f) return;
+    if (dt <= 0.0f || outcome != CombatOutcome::Ongoing) return;
     player.updateWeapons(dt);
     enemy.updateWeapons(dt);
     player.updateShields(dt);
