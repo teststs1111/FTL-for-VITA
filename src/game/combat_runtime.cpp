@@ -9,6 +9,7 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     targetRoom = -1;
     selectedWeapon = 0;
     enemyTargetRoom = 0;
+    outcome = CombatOutcome::Ongoing;
 
     const LoadedShip* playerShip = contentSource.playerShip();
     if (!playerShip) return false;
@@ -17,6 +18,23 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
 
     if (!enemy.content.layout.rooms.empty())
         targetRoom = 0;
+
+    // Enemy AI prototype: prefer the player weapon room, then engines, then room 0.
+    enemyTargetRoom = 0;
+    for (const auto& system : player.systems) {
+        if (system.type == "weapons" && system.room >= 0) {
+            enemyTargetRoom = system.room;
+            break;
+        }
+    }
+    if (enemyTargetRoom == 0) {
+        for (const auto& system : player.systems) {
+            if (system.type == "engines" && system.room >= 0) {
+                enemyTargetRoom = system.room;
+                break;
+            }
+        }
+    }
     return true;
 }
 
@@ -35,6 +53,10 @@ void CombatRuntime::update(float dt) {
             if (!enemy.weapons[i].ready) continue;
             if (!enemy.fireWeapon(i)) continue;
             auto result = resolveWeapon(enemy, player, enemy.weapons[i], enemyTargetRoom);
+            if (result.targetDestroyed) {
+                outcome = CombatOutcome::PlayerDestroyed;
+                break;
+            }
             if (result.fired) break;
         }
     }
@@ -93,6 +115,8 @@ CombatResult CombatRuntime::fireWeapon(int weaponIndex) {
         return result;
 
     result = resolveWeapon(player, enemy, weapon, targetRoom);
+    if (result.targetDestroyed)
+        outcome = CombatOutcome::EnemyDestroyed;
     if (!result.fired) {
         // The weapon was consumed/reset before resolution. This path is only
         // reachable for an invalid target, so leave the shot spent rather than
