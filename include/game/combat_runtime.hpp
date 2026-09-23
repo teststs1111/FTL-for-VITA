@@ -1,5 +1,6 @@
 #pragma once
 #include "game/ship_runtime.hpp"
+#include <deque>
 #include <vector>
 
 namespace wormhole {
@@ -50,6 +51,7 @@ private:
     void enqueueWeapon(bool fromPlayer, int weaponIndex, const RuntimeWeapon& weapon,
                        int targetRoom);
     std::vector<CombatShot> shots_;
+    std::deque<CombatResult> impactResults_;
     CombatResult lastImpactResult_{};
     bool hasImpactResult_{false};
 };
