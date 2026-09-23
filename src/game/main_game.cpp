@@ -6,6 +6,7 @@
 #include "render/graphics.hpp"
 #include "platform/input.hpp"
 #include <algorithm>
+#include <utility>
 
 namespace wormhole {
 
