@@ -443,7 +443,7 @@ static void testShipRuntime() {
     assert(combat.outcome == wormhole::CombatOutcome::Ongoing);
 
     assert(combat.load(content, enemyForCombat));
-    assert(combat.enemy.setSystemPowered(2, true));
+    assert(combat.enemy.setSystemPowered(1, true));
     combat.enemy.updateWeapons(2.5f);
     combat.player.hull = 1;
     combat.update(0.1f);
