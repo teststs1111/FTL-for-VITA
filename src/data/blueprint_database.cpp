@@ -66,11 +66,11 @@ std::size_t BlueprintDatabase::loadShipBlueprints(const std::string& assetPath) 
             weapon.shots = toInt(value("shots"), 1);
             weapon.damage = toInt(value("damage"), 0);
             weapon.systemDamage = toInt(value("sysDamage"), 0);
-            weapon.ionDamage = toInt(value("ion"), 0);
+            weapon.ionDamage = toInt(value("ionDamage"), toInt(value("ion"), 0));
             weapon.shieldPiercing = toInt(value("sp"), 0);
             weapon.missilesUsed = toInt(value("missiles"), 0);
             weapon.speed = toInt(value("speed"), 0);
-            weapon.personnelDamage = toInt(value("persDamage"), 0);
+            weapon.personnelDamage = toInt(value("personnelDamage"), toInt(value("persDamage"), 0));
             weapon.hullBust = toInt(value("hullBust"), 0);
             weapon.fireChance = toInt(value("fireChance"), 0);
             weapon.breachChance = toInt(value("breachChance"), 0);
