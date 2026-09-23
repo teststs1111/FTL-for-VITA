@@ -403,6 +403,30 @@ static void testShipRuntime() {
     assert(combat.enemy.systems[0].power == 0);
     assert(!combat.enemy.systems[0].powered);
 
+    assert(combat.load(content, enemyForCombat));
+    assert(combat.setTargetRoom(0));
+    assert(combat.player.setSystemPowered(2, true));
+    combat.player.weapons[0].shieldPiercing = 0;
+    combat.player.updateWeapons(2.5f);
+    combat.enemy.shieldLayers = 1;
+    const int shieldedHull = combat.enemy.hull;
+    auto shieldResult = combat.fireSelectedWeapon();
+    assert(shieldResult.shieldsAbsorbed == 1);
+    assert(shieldResult.hullDamage == 1);
+    assert(combat.enemy.hull == shieldedHull - 1);
+
+    assert(combat.load(content, enemyForCombat));
+    assert(combat.setTargetRoom(0));
+    assert(combat.player.setSystemPowered(2, true));
+    combat.player.weapons[0].shieldPiercing = 1;
+    combat.player.updateWeapons(2.5f);
+    combat.enemy.shieldLayers = 1;
+    const int piercedHull = combat.enemy.hull;
+    auto piercingResult = combat.fireSelectedWeapon();
+    assert(piercingResult.shieldsAbsorbed == 0);
+    assert(piercingResult.hullDamage == 2);
+    assert(combat.enemy.hull == piercedHull - 2);
+
     runtime.reset();
     assert(!runtime.valid && runtime.systems.empty() && runtime.crew.empty());
     assert(runtime.shieldLayers == 0 && runtime.maxShieldLayers == 0);
