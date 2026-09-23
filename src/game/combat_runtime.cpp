@@ -71,6 +71,18 @@ void CombatRuntime::update(float dt) {
     player.updateEnvironment(dt);
     enemy.updateEnvironment(dt);
 
+    // Enemy AI prototype: launch at the selected player room when a weapon is ready.
+    if (enemy.valid && enemyTargetRoom >= 0 &&
+        enemyTargetRoom < static_cast<int>(player.content.layout.rooms.size())) {
+        for (int i = 0; i < static_cast<int>(enemy.weapons.size()); ++i) {
+            if (!enemy.weapons[i].ready) continue;
+            RuntimeWeapon firedWeapon = enemy.weapons[i];
+            if (!enemy.fireWeapon(i)) continue;
+            enqueueWeapon(false, i, firedWeapon, enemyTargetRoom);
+            break;
+        }
+    }
+
     // Resolve projectiles only after their flight time has elapsed.
     for (auto it = shots_.begin(); it != shots_.end();) {
         it->elapsed += dt;
@@ -98,17 +110,7 @@ void CombatRuntime::update(float dt) {
 
     if (outcome != CombatOutcome::Ongoing) return;
 
-    // Enemy AI prototype: launch at the selected player room when a weapon is ready.
-    if (enemy.valid && enemyTargetRoom >= 0 &&
-        enemyTargetRoom < static_cast<int>(player.content.layout.rooms.size())) {
-        for (int i = 0; i < static_cast<int>(enemy.weapons.size()); ++i) {
-            if (!enemy.weapons[i].ready) continue;
-            RuntimeWeapon firedWeapon = enemy.weapons[i];
-            if (!enemy.fireWeapon(i)) continue;
-            enqueueWeapon(false, i, firedWeapon, enemyTargetRoom);
-            break;
-        }
-    }
+
 }
 
 bool CombatRuntime::setTargetRoom(int roomId) {
