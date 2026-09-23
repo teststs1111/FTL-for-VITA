@@ -42,11 +42,6 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
 void CombatRuntime::enqueueWeapon(bool fromPlayer, int weaponIndex,
                                   const RuntimeWeapon& weapon, int room) {
     const int projectileCount = std::max(1, weapon.shots);
-    const float speed = std::max(1.0f, weapon.cooldown > 0.0f ? weapon.power * 10.0f : 10.0f);
-    const float duration = std::max(0.1f, 10.0f / speed);
-
-    // Keep one CombatShot per projectile so the renderer can animate them
-    // independently later, while retaining the same weapon stats for impact.
     for (int i = 0; i < projectileCount; ++i) {
         CombatShot shot;
         shot.fromPlayer = fromPlayer;
@@ -54,7 +49,8 @@ void CombatRuntime::enqueueWeapon(bool fromPlayer, int weaponIndex,
         shot.weapon = weapon;
         shot.weapon.shots = 1;
         shot.targetRoom = room;
-        shot.duration = duration + static_cast<float>(i) * 0.03f;
+        // Placeholder flight time until the renderer has real ship/projectile coordinates.
+        shot.duration = 0.25f + static_cast<float>(i) * 0.03f;
         shots_.push_back(std::move(shot));
     }
 }
@@ -81,12 +77,12 @@ void CombatRuntime::update(float dt) {
         ShipRuntime& target = it->fromPlayer ? enemy : player;
         CombatResult result = resolveWeapon(attacker, target, it->weapon, it->targetRoom);
         const bool targetDestroyed = result.targetDestroyed;
+        const bool hitEnemy = it->fromPlayer;
         it = shots_.erase(it);
 
         if (targetDestroyed) {
-            outcome = it == shots_.end() && attacker.valid && (&target == &enemy)
-                ? CombatOutcome::EnemyDestroyed
-                : CombatOutcome::PlayerDestroyed;
+            outcome = hitEnemy ? CombatOutcome::EnemyDestroyed
+                               : CombatOutcome::PlayerDestroyed;
             break;
         }
     }
