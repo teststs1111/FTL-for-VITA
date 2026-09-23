@@ -56,6 +56,7 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         weapon.type = blueprint.type;
         weapon.power = std::max(1, blueprint.power);
         weapon.cooldown = std::max(0.1f, blueprint.cooldown);
+        weapon.speed = std::max(0, blueprint.speed);
         weapon.shots = std::max(1, blueprint.shots);
         weapon.damage = std::max(0, blueprint.damage);
         weapon.systemDamage = std::max(0, blueprint.systemDamage);
