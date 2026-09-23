@@ -41,6 +41,7 @@ struct ShipRuntime {
     bool setSystemPowered(int systemIndex, bool powered);
     bool setSystemPower(int systemIndex, int power);
     bool moveCrew(int crewIndex, int targetRoom);
+    bool extinguishFire(int crewIndex);
     bool setDoorOpen(int doorIndex, bool open);
     bool setRoomFire(int roomId, bool fire);
     void updateEnvironment(float dt);
