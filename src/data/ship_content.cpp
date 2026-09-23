@@ -8,10 +8,10 @@ bool ShipContent::open(const std::string& archivePath) {
     return assets_.openArchive(archivePath);
 }
 
-bool ShipContent::loadPlayerShip(const std::string& blueprintPath,
-                                  const std::string& shipId) {
-    loaded_ = false;
+bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
+                             const std::string& blueprintPath) {
     database_.clear();
+    out = {};
 
     if (database_.loadShipBlueprints(blueprintPath) == 0) return false;
     const ShipBlueprint* blueprint = database_.findShip(shipId);
@@ -24,13 +24,21 @@ bool ShipContent::loadPlayerShip(const std::string& blueprintPath,
     const std::string text(layoutBytes->begin(), layoutBytes->end());
     if (!parseLayoutBlueprint(text, layout)) return false;
 
-    ship_.blueprint = *blueprint;
-    ship_.layout = std::move(layout);
-    ship_.initialWeaponBlueprints.clear();
-    for (const auto& weaponId : ship_.blueprint.initialWeapons) {
+    out.blueprint = *blueprint;
+    out.layout = std::move(layout);
+    for (const auto& weaponId : out.blueprint.initialWeapons) {
         if (const auto* weapon = database_.findWeapon(weaponId))
-            ship_.initialWeaponBlueprints.push_back(*weapon);
+            out.initialWeaponBlueprints.push_back(*weapon);
     }
+    return true;
+}
+
+bool ShipContent::loadPlayerShip(const std::string& blueprintPath,
+                                  const std::string& shipId) {
+    loaded_ = false;
+    LoadedShip loaded;
+    if (!loadShip(shipId, loaded, blueprintPath)) return false;
+    ship_ = std::move(loaded);
     loaded_ = true;
     return true;
 }
