@@ -30,6 +30,12 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
         if (const auto* weapon = database_.findWeapon(weaponId))
             out.initialWeaponBlueprints.push_back(*weapon);
     }
+    for (const auto& droneId : out.blueprint.initialDrones) {
+        // Drone blueprints are loaded from the same database and copied into
+        // the runtime ship just like starting weapons.
+        const auto* drone = database_.findDrone(droneId);
+        if (drone) out.initialDroneBlueprints.push_back(*drone);
+    }
     return true;
 }
 
