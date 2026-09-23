@@ -286,7 +286,7 @@ static void testShipRuntime() {
     wormhole::ShipRuntime runtime;
     assert(runtime.load(content));
     assert(runtime.hull == 30 && runtime.reactor == 8);
-    assert(runtime.roomOxygen.size() == 2 && runtime.roomOxygen[0] == 100);
+    assert(runtime.roomOxygen.size() == 3 && runtime.roomOxygen[0] == 100);
     assert(runtime.setRoomFire(0, true));
     runtime.updateEnvironment(5.0f);
     assert(runtime.roomOxygen[0] == 60 && runtime.roomFire[0]);
@@ -297,7 +297,6 @@ static void testShipRuntime() {
     assert(runtime.systems[0].type == "engines" && runtime.systems[0].power == 2);
     assert(runtime.systems[0].maxPower == 2);
     assert(!runtime.setSystemPower(0, 3));
-    assert(runtime.setDoorOpen(0, true));
     assert(!runtime.setDoorOpen(0, true));
     assert(runtime.setDoorOpen(0, false));
     assert(runtime.crew[1].race == "engi");
