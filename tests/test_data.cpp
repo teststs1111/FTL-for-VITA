@@ -300,7 +300,7 @@ static void testShipRuntime() {
         "ELLIPSE\n100\n50\n0\n0\nROOM\n0\n0\n0\n2\n2\nROOM\n1\n2\n0\n2\n2\nROOM\n2\n4\n0\n2\n2\nDOOR\n2\n0\n0\n1\n0\nDOOR\n4\n0\n1\n2\n0\n";
     const std::string enemyXml =
         "<shipBlueprint name=\"ENEMY_SHIP\" shipName=\"Enemy\" layout=\"kestrel\"><health amount=\"10\"/>"
-        "<systemList><engines room=\"0\" power=\"2\"/></systemList></shipBlueprint>";
+        "<systemList><engines room=\"0\" power=\"2\"/><weapons room=\"2\" power=\"1\"/></systemList><weaponList missiles=\"2\"><weapon name=\"LASER_TEST\"/></weaponList></shipBlueprint>";
     const std::string weaponXml =
         "<weaponBlueprint name=\"LASER_TEST\" type=\"LASER\" weaponArt=\"laser\" image=\"laser\" "
         "shots=\"2\" damage=\"1\" sysDamage=\"1\" sp=\"0\" missiles=\"1\" speed=\"10\" "
