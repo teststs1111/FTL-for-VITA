@@ -39,33 +39,42 @@ public:
                 }
             }
         }
+
+        const int selectedRoomId = runtime_.content.layout.rooms[selectedRoom_].id;
         if (input_.pressed(Button::R) && !runtime_.systems.empty()) {
-            const int roomId = runtime_.content.layout.rooms[selectedRoom_].id;
             for (int i = 0; i < static_cast<int>(runtime_.systems.size()); ++i) {
-                if (runtime_.systems[i].room == roomId) {
+                if (runtime_.systems[i].room == selectedRoomId) {
                     runtime_.setSystemPower(i, runtime_.systems[i].power + 1);
                     break;
                 }
             }
         }
+        if (input_.pressed(Button::Start) && !runtime_.systems.empty()) {
+            for (int i = 0; i < static_cast<int>(runtime_.systems.size()); ++i) {
+                if (runtime_.systems[i].room == selectedRoomId) {
+                    runtime_.setSystemPower(i, runtime_.systems[i].power - 1);
+                    break;
+                }
+            }
+        }
+
         if (input_.pressed(Button::Select)) {
-            const int roomId = runtime_.content.layout.rooms[selectedRoom_].id;
             for (int i = 0; i < static_cast<int>(runtime_.content.layout.doors.size()); ++i) {
                 const auto& door = runtime_.content.layout.doors[i];
-                if (door.leftRoom == roomId || door.rightRoom == roomId) {
+                if (door.leftRoom == selectedRoomId || door.rightRoom == selectedRoomId) {
                     runtime_.setDoorOpen(i, !runtime_.doorOpen[i]);
                     break;
                 }
             }
         }
+
         if (input_.pressed(Button::L) && !runtime_.crew.empty()) {
-            const int target = runtime_.content.layout.rooms[selectedRoom_].id;
-            runtime_.moveCrew(selectedCrew_, target);
+            runtime_.moveCrew(selectedCrew_, selectedRoomId);
         }
         if (input_.pressed(Button::Circle))
-            runtime_.repairRoom(runtime_.content.layout.rooms[selectedRoom_].id, 1);
+            runtime_.repairRoom(selectedRoomId, 1);
         if (input_.pressed(Button::Square))
-            runtime_.damageRoom(runtime_.content.layout.rooms[selectedRoom_].id, 1);
+            runtime_.damageRoom(selectedRoomId, 1);
     }
 
     void render() override {
@@ -96,6 +105,11 @@ public:
             graphics_.drawLine(x + w, y, x + w, y + h, {0.35f, 0.65f, 0.85f, 1.f});
             graphics_.drawLine(x + w, y + h, x, y + h, {0.35f, 0.65f, 0.85f, 1.f});
             graphics_.drawLine(x, y + h, x, y, {0.35f, 0.65f, 0.85f, 1.f});
+
+            if (room.id >= 0 && room.id < static_cast<int>(runtime_.roomFire.size()) && runtime_.roomFire[room.id]) {
+                graphics_.fillRect(x + w * 0.38f, y + h * 0.28f, w * 0.24f, h * 0.44f,
+                    {1.f, 0.45f, 0.08f, 0.9f});
+            }
         }
 
         for (const auto& system : runtime_.systems) {
@@ -110,10 +124,24 @@ public:
             }
         }
 
+        for (const auto& crew : runtime_.crew) {
+            if (!crew.alive || crew.room < 0) continue;
+            for (const auto& room : ship->layout.rooms) {
+                if (room.id != crew.room) continue;
+                const float x = originX + (room.x + ship->layout.xOffset) * scale + scale * 0.5f;
+                const float y = originY + (room.y + ship->layout.yOffset) * scale + scale * 0.5f;
+                const float size = 5.f;
+                graphics_.fillRect(x - size * 0.5f, y - size * 0.5f, size, size,
+                    {0.9f, 0.9f, 0.35f, 1.f});
+                break;
+            }
+        }
+
         for (const auto& door : ship->layout.doors) {
             const float x = originX + (door.x + ship->layout.xOffset) * scale;
             const float y = originY + (door.y + ship->layout.yOffset) * scale;
             const int doorIndex = static_cast<int>(&door - ship->layout.doors.data());
+            if (doorIndex < 0 || doorIndex >= static_cast<int>(runtime_.doorOpen.size())) continue;
             const Color doorColor = runtime_.doorOpen[doorIndex]
                 ? Color{0.2f, 0.9f, 0.35f, 1.f}
                 : Color{0.9f, 0.75f, 0.3f, 1.f};
