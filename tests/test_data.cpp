@@ -306,8 +306,7 @@ static void testShipRuntime() {
         "shots=\"2\" damage=\"1\" sysDamage=\"1\" sp=\"0\" missiles=\"1\" speed=\"10\" "
         "power=\"1\" cooldown=\"2.5\"/>";
     const std::string fullBlueprints =
-        "<FTL>" + blueprintXml.substr(0, blueprintXml.size() - std::string("</shipBlueprint>").size()) +
-        weaponXml + enemyXml + "</shipBlueprint></FTL>";
+        "<FTL>" + blueprintXml + weaponXml + enemyXml + "</FTL>";
     const auto archive = makeArchive({{"data/blueprints.xml", fullBlueprints}, {"data/kestrel.txt", layout}});
     const std::string path = "ship_runtime_test.dat";
     writeFile(path, archive);
