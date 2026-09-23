@@ -218,6 +218,10 @@ static void testShipContent() {
     wormhole::ShipContent content;
     assert(content.open(path));
     assert(content.loadPlayerShip());
+    wormhole::LoadedShip enemy;
+    assert(content.loadShip("ENEMY_SHIP", enemy));
+    assert(enemy.blueprint.name == "Enemy");
+    assert(enemy.layout.rooms.size() == 3);
     const auto* ship = content.playerShip();
     assert(ship);
     assert(ship->blueprint.name == "The Kestrel");
@@ -297,13 +301,15 @@ static void testShipRuntime() {
     const std::string layout =
         "X_OFFSET\n0\nY_OFFSET\n0\nHORIZONTAL\n5\nVERTICAL\n4\n"
         "ELLIPSE\n100\n50\n0\n0\nROOM\n0\n0\n0\n2\n2\nROOM\n1\n2\n0\n2\n2\nROOM\n2\n4\n0\n2\n2\nDOOR\n2\n0\n0\n1\n0\nDOOR\n4\n0\n1\n2\n0\n";
+    const std::string enemyXml =
+        "<shipBlueprint name=\"ENEMY_SHIP\" shipName=\"Enemy\" layout=\"kestrel\"><health amount=\"10\"/></shipBlueprint>";
     const std::string weaponXml =
         "<weaponBlueprint name=\"LASER_TEST\" type=\"LASER\" weaponArt=\"laser\" image=\"laser\" "
         "shots=\"2\" damage=\"1\" sysDamage=\"1\" sp=\"0\" missiles=\"1\" speed=\"10\" "
         "power=\"1\" cooldown=\"2.5\"/>";
     const std::string fullBlueprints =
         "<FTL>" + blueprintXml.substr(0, blueprintXml.size() - std::string("</shipBlueprint>").size()) +
-        weaponXml + "</shipBlueprint></FTL>";
+        weaponXml + enemyXml + "</shipBlueprint></FTL>";
     const auto archive = makeArchive({{"data/blueprints.xml", fullBlueprints}, {"data/kestrel.txt", layout}});
     const std::string path = "ship_runtime_test.dat";
     writeFile(path, archive);
