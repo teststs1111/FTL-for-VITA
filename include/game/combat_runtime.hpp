@@ -41,6 +41,7 @@ public:
     std::size_t pendingShotCount() const { return shots_.size(); }
     const std::vector<CombatShot>& pendingShots() const { return shots_; }
     const CombatResult& lastImpactResult() const { return lastImpactResult_; }
+    bool consumeImpactResult(CombatResult& result);
 
 private:
     CombatResult resolveWeapon(ShipRuntime& attacker, ShipRuntime& target,
@@ -50,6 +51,7 @@ private:
                        int targetRoom);
     std::vector<CombatShot> shots_;
     CombatResult lastImpactResult_{};
+    bool hasImpactResult_{false};
 };
 
 } 
