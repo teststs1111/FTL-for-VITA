@@ -289,14 +289,22 @@ static void testShipRuntime() {
     const std::string blueprintXml =
         "<shipBlueprint name=\"PLAYER_SHIP_HARD\" shipName=\"Kestrel\" layout=\"kestrel\">"
         "<health amount=\"30\"/><maxPower amount=\"8\"/>"
-        "<systemList><engines room=\"0\" power=\"2\"/><shields room=\"1\" power=\"2\"/></systemList>"
+        "<weaponList missiles=\"7\"><weapon name=\"LASER_TEST\"/></weaponList>"
+        "<systemList><engines room=\"0\" power=\"2\"/><shields room=\"1\" power=\"2\"/><weapons room=\"0\" power=\"1\"/></systemList>"
         "<crew species=\"human\" name=\"Alice\" room=\"0\"/>"
         "<crew species=\"engi\" name=\"Bob\" room=\"1\"/>"
         "</shipBlueprint>";
     const std::string layout =
         "X_OFFSET\n0\nY_OFFSET\n0\nHORIZONTAL\n5\nVERTICAL\n4\n"
         "ELLIPSE\n100\n50\n0\n0\nROOM\n0\n0\n0\n2\n2\nROOM\n1\n2\n0\n2\n2\nROOM\n2\n4\n0\n2\n2\nDOOR\n2\n0\n0\n1\n0\nDOOR\n4\n0\n1\n2\n0\n";
-    const auto archive = makeArchive({{"data/blueprints.xml", blueprintXml}, {"data/kestrel.txt", layout}});
+    const std::string weaponXml =
+        "<weaponBlueprint name=\"LASER_TEST\" type=\"LASER\" weaponArt=\"laser\" image=\"laser\" "
+        "shots=\"2\" damage=\"1\" sysDamage=\"1\" sp=\"0\" missiles=\"1\" speed=\"10\" "
+        "power=\"1\" cooldown=\"2.5\"/>";
+    const std::string fullBlueprints =
+        "<FTL>" + blueprintXml.substr(0, blueprintXml.size() - std::string("</shipBlueprint>").size()) +
+        weaponXml + "</shipBlueprint></FTL>";
+    const auto archive = makeArchive({{"data/blueprints.xml", fullBlueprints}, {"data/kestrel.txt", layout}});
     const std::string path = "ship_runtime_test.dat";
     writeFile(path, archive);
     wormhole::ShipContent content;
@@ -305,6 +313,22 @@ static void testShipRuntime() {
     wormhole::ShipRuntime runtime;
     assert(runtime.load(content));
     assert(runtime.hull == 30 && runtime.reactor == 8);
+    assert(runtime.missiles == 7);
+    assert(runtime.weapons.size() == 1);
+    assert(runtime.weapons[0].name == "LASER_TEST");
+    assert(runtime.weapons[0].damage == 1 && runtime.weapons[0].systemDamage == 1);
+    assert(runtime.weapons[0].cooldown == 2.5f);
+    assert(!runtime.weapons[0].ready);
+    runtime.updateWeapons(2.0f);
+    assert(!runtime.weapons[0].ready);
+    runtime.updateWeapons(0.5f);
+    assert(runtime.weapons[0].ready);
+    assert(runtime.fireWeapon(0));
+    assert(runtime.missiles == 6);
+    assert(!runtime.weapons[0].ready);
+    assert(!runtime.fireWeapon(0));
+    runtime.updateWeapons(2.5f);
+    assert(runtime.weapons[0].ready);
     assert(runtime.roomOxygen.size() == 3 && runtime.roomOxygen[0] == 100);
     assert(runtime.setRoomFire(0, true));
     runtime.updateEnvironment(5.0f);
