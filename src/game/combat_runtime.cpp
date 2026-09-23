@@ -72,7 +72,7 @@ void CombatRuntime::update(float dt) {
     // Resolve projectiles only after their flight time has elapsed.
     for (auto it = shots_.begin(); it != shots_.end();) {
         it->elapsed += dt;
-        if (it->elapsed < it->duration) {
+        if (it->elapsed + 0.00001f < it->duration) {
             ++it;
             continue;
         }
