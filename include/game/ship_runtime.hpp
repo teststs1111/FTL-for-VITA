@@ -32,6 +32,17 @@ struct RuntimeWeapon {
     bool ready{false};
 };
 
+struct RuntimeDrone {
+    DroneBlueprint::Type type{DroneBlueprint::Type::Unknown};
+    std::string name;
+    int power{1};
+    int speed{0};
+    int cooldown{0};
+    int charge{0};
+    bool powered{false};
+    bool active{false};
+};
+
 struct RuntimeCrew {
     std::string race;
     std::string name;
@@ -49,6 +60,7 @@ struct ShipRuntime {
     std::vector<int> roomDamage;
     std::vector<RuntimeSystem> systems;
     std::vector<RuntimeCrew> crew;
+    std::vector<RuntimeDrone> drones;
     std::vector<RuntimeWeapon> weapons;
     int missiles{0};
     int shieldLayers{0};
