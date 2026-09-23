@@ -17,8 +17,9 @@ public:
             content_.loadPlayerShip();
             runtime_.load(content_);
             LoadedShip enemy;
-            if (content_.loadShip("ENEMY_SHIP", enemy))
-                combat_.load(content_, enemy);
+            if (!content_.loadShip("ENEMY_SHIP", enemy))
+                enemy = *content_.playerShip();
+            combat_.load(content_, enemy);
         }
     }
 
@@ -74,15 +75,6 @@ public:
             return;
         }
 
-        if (input_.pressed(Button::Select)) {
-            for (int i = 0; i < static_cast<int>(runtime_.content.layout.doors.size()); ++i) {
-                const auto& door = runtime_.content.layout.doors[i];
-                if (door.leftRoom == selectedRoomId || door.rightRoom == selectedRoomId) {
-                    runtime_.setDoorOpen(i, !runtime_.doorOpen[i]);
-                    break;
-                }
-            }
-        }
 
         if (input_.pressed(Button::L) && !runtime_.crew.empty()) {
             runtime_.moveCrew(selectedCrew_, selectedRoomId);
