@@ -113,6 +113,26 @@ bool parseShipBlueprint(const bxml::Node& node, ShipBlueprint& out) {
     if (const auto* health = child(node, "health")) out.maxHealth = integer(*health, "amount", 0);
     if (const auto* power = child(node, "maxPower")) out.startingReactorPower = integer(*power, "amount", 0);
     collectCrew(node, out.crew);
+
+    if (const auto* weapons = child(node, "weaponList")) {
+        out.startingMissiles = integer(*weapons, "missiles", 0);
+        for (const auto& entry : weapons->children) {
+            const std::string name = attribute(entry, "name");
+            if (!name.empty()) out.initialWeapons.push_back(name);
+        }
+    }
+    if (const auto* drones = child(node, "droneList")) {
+        for (const auto& entry : drones->children) {
+            const std::string name = attribute(entry, "name");
+            if (!name.empty()) out.initialDrones.push_back(name);
+        }
+    }
+    if (const auto* weaponSlots = child(node, "weaponSlots"))
+        out.weaponSlots = integer(*weaponSlots, "amount", integer(*weaponSlots, "value", 0));
+    else out.weaponSlots = integer(node, "weaponSlots", 0);
+    if (const auto* droneSlots = child(node, "droneSlots"))
+        out.droneSlots = integer(*droneSlots, "amount", integer(*droneSlots, "value", 0));
+    else out.droneSlots = integer(node, "droneSlots", 0);
     return true;
 }
 
