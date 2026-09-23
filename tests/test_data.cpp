@@ -326,6 +326,16 @@ static void testShipRuntime() {
     assert(runtime.weapons[0].name == "LASER_TEST");
     assert(runtime.weapons[0].damage == 1 && runtime.weapons[0].systemDamage == 1);
     assert(runtime.weapons[0].personnelDamage == 20);
+    assert(runtime.crew.size() == 2);
+    assert(runtime.damageCrewInRoom(0, 30) == 30);
+    assert(runtime.crew[0].health == 70 && runtime.crew[0].alive);
+    assert(runtime.healCrew(0, 20) == 20);
+    assert(runtime.crew[0].health == 90);
+    assert(runtime.healCrew(0, 20) == 10);
+    assert(runtime.crew[0].health == 100);
+    assert(runtime.damageCrewInRoom(0, 100) == 100);
+    assert(runtime.crew[0].health == 0 && !runtime.crew[0].alive);
+    assert(runtime.healCrew(0, 100) == 0);
     assert(runtime.maxShieldLayers == 2 && runtime.shieldLayers == 2);
     assert(runtime.setSystemPowered(2, true));
     assert(!runtime.damageShields(1) == false);
