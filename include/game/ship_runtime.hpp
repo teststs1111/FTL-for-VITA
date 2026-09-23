@@ -14,6 +14,21 @@ struct RuntimeSystem {
     bool powered{false};
 };
 
+struct RuntimeWeapon {
+    std::string name;
+    std::string type;
+    int power{1};
+    float cooldown{5.0f};
+    float charge{0.0f};
+    int shots{1};
+    int damage{0};
+    int systemDamage{0};
+    int ionDamage{0};
+    int shieldPiercing{0};
+    int missilesUsed{0};
+    bool ready{false};
+};
+
 struct RuntimeCrew {
     std::string race;
     std::string name;
@@ -29,6 +44,8 @@ struct ShipRuntime {
     std::vector<int> roomDamage;
     std::vector<RuntimeSystem> systems;
     std::vector<RuntimeCrew> crew;
+    std::vector<RuntimeWeapon> weapons;
+    int missiles{0};
     std::vector<bool> doorOpen;
     std::vector<int> roomOxygen;
     std::vector<bool> roomFire;
@@ -47,6 +64,8 @@ struct ShipRuntime {
     void updateEnvironment(float dt);
     int usedReactorPower() const;
     int availableReactorPower() const;
+    void updateWeapons(float dt);
+    bool fireWeapon(int weaponIndex);
 };
 
 }
