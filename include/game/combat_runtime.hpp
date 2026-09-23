@@ -18,6 +18,7 @@ public:
     ShipRuntime enemy;
     int targetRoom{-1};
     int selectedWeapon{0};
+    int enemyTargetRoom{0};
 
     bool load(ShipContent& content, const LoadedShip& enemyShip);
     void update(float dt);
@@ -27,7 +28,7 @@ public:
 
 private:
     CombatResult resolveWeapon(ShipRuntime& attacker, ShipRuntime& target,
-                               RuntimeWeapon& weapon);
+                               RuntimeWeapon& weapon, int targetRoom);
 };
 
 } 
