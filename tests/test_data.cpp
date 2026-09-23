@@ -324,7 +324,8 @@ static void testShipRuntime() {
     assert(runtime.missiles == 7);
     assert(runtime.weapons.size() == 1);
     assert(runtime.weapons[0].name == "LASER_TEST");
-    assert(runtime.weapons[0].damage == 1 && runtime.weapons[0].systemDamage == 1);\n    assert(runtime.weapons[0].personnelDamage == 20);
+    assert(runtime.weapons[0].damage == 1 && runtime.weapons[0].systemDamage == 1);
+    assert(runtime.weapons[0].personnelDamage == 20);
     assert(runtime.maxShieldLayers == 2 && runtime.shieldLayers == 2);
     assert(runtime.setSystemPowered(2, true));
     assert(!runtime.damageShields(1) == false);
@@ -408,9 +409,13 @@ static void testShipRuntime() {
     wormhole::CombatResult impact1;
     wormhole::CombatResult impact2;
     assert(combat.consumeImpactResult(impact1));
-    assert(impact1.hullDamage == 1);\n    assert(impact1.personnelDamage == 20);\n    assert(combat.enemy.crew[0].health == 80);
+    assert(impact1.hullDamage == 1);
+    assert(impact1.personnelDamage == 20);
+    assert(combat.enemy.crew[0].health == 80);
     assert(combat.consumeImpactResult(impact2));
-    assert(impact2.hullDamage == 1);\n    assert(impact2.personnelDamage == 20);\n    assert(combat.enemy.crew[0].health == 60);
+    assert(impact2.hullDamage == 1);
+    assert(impact2.personnelDamage == 20);
+    assert(combat.enemy.crew[0].health == 60);
     assert(!combat.consumeImpactResult(impact2));
     assert(combat.enemy.systems[0].power == 0);
     assert(!combat.enemy.systems[0].powered);
