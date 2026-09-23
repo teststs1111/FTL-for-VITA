@@ -401,6 +401,12 @@ static void testShipRuntime() {
     assert(combat.enemy.systems[0].damage == 2);
     assert(combat.enemy.systems[0].power == 0);
     assert(!combat.enemy.systems[0].powered);
+    assert(combat.player.missiles == 6);
+    assert(!combat.player.weapons[0].ready);
+    combat.player.updateWeapons(2.4f);
+    assert(!combat.player.weapons[0].ready);
+    combat.player.updateWeapons(0.1f);
+    assert(combat.player.weapons[0].ready);
 
     assert(combat.load(content, enemyForCombat));
     assert(combat.setTargetRoom(0));
