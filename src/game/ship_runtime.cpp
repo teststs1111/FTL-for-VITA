@@ -1,5 +1,7 @@
 #include "game/ship_runtime.hpp"
 #include <algorithm>
+#include <queue>
+#include <vector>
 
 namespace wormhole {
 
@@ -85,23 +87,47 @@ bool ShipRuntime::moveCrew(int crewIndex, int targetRoom) {
 
     RuntimeCrew& member = crew[crewIndex];
     if (!member.alive || member.room == targetRoom) return false;
-
-    if (member.room >= 0) {
-        bool connected = false;
-        for (const auto& door : content.layout.doors) {
-            const bool joinsRooms =
-                (door.leftRoom == member.room && door.rightRoom == targetRoom) ||
-                (door.rightRoom == member.room && door.leftRoom == targetRoom);
-            const int doorIndex = static_cast<int>(&door - content.layout.doors.data());
-            if (joinsRooms && doorIndex >= 0 && doorIndex < static_cast<int>(doorOpen.size()) && doorOpen[doorIndex]) {
-                connected = true;
-                break;
-            }
-        }
-        if (!connected) return false;
+    if (member.room < 0) {
+        member.room = targetRoom;
+        return true;
     }
 
-    member.room = targetRoom;
+    const int roomCount = static_cast<int>(content.layout.rooms.size());
+    std::vector<bool> visited(roomCount, false);
+    std::vector<int> queue;
+    queue.reserve(roomCount);
+    queue.push_back(member.room);
+    if (member.room >= 0 && member.room < roomCount) visited[member.room] = true;
+
+    for (std::size_t head = 0; head < queue.size(); ++head) {
+        const int current = queue[head];
+        for (int i = 0; i < static_cast<int>(content.layout.doors.size()); ++i) {
+            const auto& door = content.layout.doors[i];
+            if (i >= static_cast<int>(doorOpen.size()) || !doorOpen[i]) continue;
+
+            int next = -1;
+            if (door.leftRoom == current) next = door.rightRoom;
+            else if (door.rightRoom == current) next = door.leftRoom;
+            if (next < 0 || next >= roomCount || visited[next]) continue;
+
+            visited[next] = true;
+            if (next == targetRoom) {
+                member.room = targetRoom;
+                return true;
+            }
+            queue.push_back(next);
+        }
+    }
+    return false;
+}
+
+bool ShipRuntime::extinguishFire(int crewIndex) {
+    if (!valid || crewIndex < 0 || crewIndex >= static_cast<int>(crew.size())) return false;
+    const RuntimeCrew& member = crew[crewIndex];
+    if (!member.alive || member.room < 0 || member.room >= static_cast<int>(roomFire.size())) return false;
+    if (!roomFire[member.room]) return false;
+    roomFire[member.room] = false;
+    roomOxygen[member.room] = std::max(roomOxygen[member.room], 20);
     return true;
 }
 
@@ -135,6 +161,7 @@ bool ShipRuntime::setRoomFire(int roomId, bool fire) {
 
 void ShipRuntime::updateEnvironment(float dt) {
     if (!valid || dt <= 0.f) return;
+
     for (int i = 0; i < static_cast<int>(roomFire.size()); ++i) {
         if (!roomFire[i]) continue;
         roomOxygen[i] = std::max(0, roomOxygen[i] - static_cast<int>(dt * 8.f));
@@ -142,6 +169,22 @@ void ShipRuntime::updateEnvironment(float dt) {
             roomFire[i] = false;
             damageRoom(i, 1);
         }
+    }
+
+    // Fire can spread through open doors into oxygenated rooms.
+    const std::vector<bool> fireBefore = roomFire;
+    for (int i = 0; i < static_cast<int>(content.layout.doors.size()); ++i) {
+        if (i >= static_cast<int>(doorOpen.size()) || !doorOpen[i]) continue;
+        const auto& door = content.layout.doors[i];
+        if (door.leftRoom < 0 || door.rightRoom < 0) continue;
+        if (door.leftRoom >= static_cast<int>(roomFire.size()) || door.rightRoom >= static_cast<int>(roomFire.size())) continue;
+
+        const bool leftFire = fireBefore[door.leftRoom];
+        const bool rightFire = fireBefore[door.rightRoom];
+        if (leftFire && roomOxygen[door.rightRoom] > 0)
+            roomFire[door.rightRoom] = true;
+        if (rightFire && roomOxygen[door.leftRoom] > 0)
+            roomFire[door.leftRoom] = true;
     }
 }
 
