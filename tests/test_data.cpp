@@ -303,9 +303,9 @@ static void testShipRuntime() {
     runtime.crew[0].room = 0;
     assert(!runtime.moveCrew(0, 2));
     assert(runtime.setDoorOpen(0, true));
+    assert(runtime.setDoorOpen(1, true));
     assert(runtime.moveCrew(0, 2));
     assert(runtime.crew[0].room == 2);
-    assert(runtime.setDoorOpen(1, true));
     assert(runtime.moveCrew(0, 1));
     assert(runtime.crew[0].room == 1);
     assert(runtime.extinguishFire(0));
