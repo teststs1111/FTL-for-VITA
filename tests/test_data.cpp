@@ -290,6 +290,9 @@ static void testShipRuntime() {
     assert(runtime.setRoomFire(0, true));
     runtime.updateEnvironment(5.0f);
     assert(runtime.roomOxygen[0] == 60 && runtime.roomFire[0]);
+    assert(runtime.setDoorOpen(0, true));
+    runtime.updateEnvironment(1.0f);
+    assert(runtime.roomFire[1]);
     assert(runtime.systems.size() == 2 && runtime.crew.size() == 2);
     assert(runtime.systems[0].type == "engines" && runtime.systems[0].power == 2);
     assert(runtime.systems[0].maxPower == 2);
@@ -300,9 +303,13 @@ static void testShipRuntime() {
     assert(runtime.crew[1].race == "engi");
     runtime.crew[0].room = 0;
     assert(!runtime.moveCrew(0, 1));
-    assert(runtime.setDoorOpen(0, true));
+    assert(runtime.moveCrew(0, 2));
+    assert(runtime.crew[0].room == 2);
+    assert(runtime.setDoorOpen(1, true));
     assert(runtime.moveCrew(0, 1));
     assert(runtime.crew[0].room == 1);
+    assert(runtime.extinguishFire(0));
+    assert(!runtime.roomFire[1]);
     assert(runtime.moveCrew(0, 0));
     assert(runtime.crew[0].room == 0);
     assert(runtime.usedReactorPower() == 4);
