@@ -29,6 +29,11 @@ struct ShipBlueprint {
     std::string layout;
     int maxHealth{0};
     int startingReactorPower{0};
+    int weaponSlots{0};
+    int droneSlots{0};
+    int startingMissiles{0};
+    std::vector<std::string> initialWeapons;
+    std::vector<std::string> initialDrones;
     std::vector<RoomBlueprint> rooms;
     std::vector<DoorBlueprint> doors;
     std::vector<SystemSlotBlueprint> systems;
