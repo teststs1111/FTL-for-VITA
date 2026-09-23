@@ -7,9 +7,13 @@ namespace wormhole {
 
 bool ShipRuntime::load(ShipContent& source) {
     const LoadedShip* loaded = source.playerShip();
-    if (!loaded) return false;
+    return loaded ? load(*loaded) : false;
+}
 
-    content = *loaded;
+bool ShipRuntime::load(const LoadedShip& loaded) {
+    reset();
+
+    content = loaded;
     maxHull = std::max(0, content.blueprint.maxHealth);
     hull = maxHull;
     reactor = std::max(0, content.blueprint.startingReactorPower);
@@ -27,6 +31,7 @@ bool ShipRuntime::load(ShipContent& source) {
         system.power = std::max(0, blueprint.startingPower);
         if (system.power == 0) system.power = system.level;
         system.maxPower = std::max(system.power, blueprint.maxPower);
+        system.damage = 0;
         system.powered = blueprint.availableByDefault && system.power > 0;
         systems.push_back(std::move(system));
     }
@@ -43,6 +48,7 @@ bool ShipRuntime::load(ShipContent& source) {
             if (system.powered) shieldLayers = maxShieldLayers;
         }
     }
+
     weapons.clear();
     for (const auto& blueprint : content.initialWeaponBlueprints) {
         RuntimeWeapon weapon;
@@ -168,6 +174,23 @@ bool ShipRuntime::damageRoom(int roomId, int amount) {
     roomDamage[roomId] += amount;
     hull = std::max(0, hull - amount);
     return true;
+}
+
+int ShipRuntime::damageSystemInRoom(int roomId, int amount) {
+    if (!valid || roomId < 0 || amount <= 0) return 0;
+    int applied = 0;
+    for (auto& system : systems) {
+        if (system.room != roomId || system.maxPower <= 0) continue;
+        const int remaining = std::max(0, system.maxPower - system.damage);
+        const int hit = std::min(amount - applied, remaining);
+        if (hit <= 0) continue;
+        system.damage += hit;
+        system.power = std::min(system.power, std::max(0, system.maxPower - system.damage));
+        if (system.power == 0) system.powered = false;
+        applied += hit;
+        if (applied >= amount) break;
+    }
+    return applied;
 }
 
 bool ShipRuntime::repairRoom(int roomId, int amount) {
