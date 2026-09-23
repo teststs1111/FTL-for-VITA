@@ -245,7 +245,22 @@ static void testShipBlueprint() {
     wormhole::bxml::Node crew;
     crew.name="crew";
     crew.attributes["race"]="human"; crew.attributes["name"]="Alice"; crew.attributes["room"]="3";
-    ship.children={room,system,crew};
+    wormhole::bxml::Node weaponList;
+    weaponList.name = "weaponList";
+    weaponList.attributes["missiles"] = "7";
+    wormhole::bxml::Node weapon;
+    weapon.name = "weapon";
+    weapon.attributes["name"] = "LASER_BURST_2";
+    weaponList.children.push_back(weapon);
+    wormhole::bxml::Node droneList;
+    droneList.name = "droneList";
+    wormhole::bxml::Node drone;
+    drone.name = "drone";
+    drone.attributes["name"] = "DEFENSE_1";
+    droneList.children.push_back(drone);
+    ship.attributes["weaponSlots"] = "4";
+    ship.attributes["droneSlots"] = "3";
+    ship.children={room,system,crew,weaponList,droneList};
 
     wormhole::ShipBlueprint out;
     assert(wormhole::parseShipBlueprint(ship,out));
@@ -253,6 +268,10 @@ static void testShipBlueprint() {
     assert(out.rooms.size()==1 && out.rooms[0].id==3 && out.rooms[0].w==2);
     assert(out.systems.size()==1 && out.systems[0].system=="engines" && out.systems[0].level==2);
     assert(out.crew.size()==1 && out.crew[0].race=="human");
+    assert(out.weaponSlots == 4 && out.droneSlots == 3);
+    assert(out.startingMissiles == 7);
+    assert(out.initialWeapons.size() == 1 && out.initialWeapons[0] == "LASER_BURST_2");
+    assert(out.initialDrones.size() == 1 && out.initialDrones[0] == "DEFENSE_1");
 }
 
 static void testPng() {
