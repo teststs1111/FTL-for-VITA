@@ -416,16 +416,15 @@ static void testShipRuntime() {
     combat.update(0.03f);
     assert(combat.enemy.hull == enemyHullBefore - 2);
     assert(combat.enemy.systems[0].damage == 2);
+    assert(combat.enemy.crew[0].health == 60);
     wormhole::CombatResult impact1;
     wormhole::CombatResult impact2;
     assert(combat.consumeImpactResult(impact1));
     assert(impact1.hullDamage == 1);
     assert(impact1.personnelDamage == 20);
-    assert(combat.enemy.crew[0].health == 80);
     assert(combat.consumeImpactResult(impact2));
     assert(impact2.hullDamage == 1);
     assert(impact2.personnelDamage == 20);
-    assert(combat.enemy.crew[0].health == 60);
     assert(!combat.consumeImpactResult(impact2));
     assert(combat.enemy.systems[0].power == 0);
     assert(!combat.enemy.systems[0].powered);
