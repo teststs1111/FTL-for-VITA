@@ -39,6 +39,8 @@ public:
     CombatResult fireSelectedWeapon();
     CombatResult fireWeapon(int weaponIndex);
     std::size_t pendingShotCount() const { return shots_.size(); }
+    const std::vector<CombatShot>& pendingShots() const { return shots_; }
+    const CombatResult& lastImpactResult() const { return lastImpactResult_; }
 
 private:
     CombatResult resolveWeapon(ShipRuntime& attacker, ShipRuntime& target,
@@ -47,6 +49,7 @@ private:
     void enqueueWeapon(bool fromPlayer, int weaponIndex, const RuntimeWeapon& weapon,
                        int targetRoom);
     std::vector<CombatShot> shots_;
+    CombatResult lastImpactResult_{};
 };
 
 } 
