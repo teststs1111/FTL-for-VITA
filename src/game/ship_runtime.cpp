@@ -61,6 +61,8 @@ bool ShipRuntime::load(ShipContent& source) {
 
     valid = true;
     return true;
+}
+
 void ShipRuntime::updateWeapons(float dt) {
     if (!valid || dt <= 0.f) return;
 
