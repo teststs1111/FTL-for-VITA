@@ -3,12 +3,14 @@
 #include "data/blueprint_database.hpp"
 #include "data/ship_blueprint.hpp"
 #include <string>
+#include <vector>
 
 namespace wormhole {
 
 struct LoadedShip {
     ShipBlueprint blueprint;
     LayoutBlueprint layout;
+    std::vector<WeaponBlueprint> initialWeaponBlueprints;
 };
 
 class ShipContent {
