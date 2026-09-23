@@ -12,6 +12,7 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     outcome = CombatOutcome::Ongoing;
     shots_.clear();
     lastImpactResult_ = {};
+    hasImpactResult_ = false;
 
     const LoadedShip* playerShip = contentSource.playerShip();
     if (!playerShip) return false;
@@ -83,6 +84,7 @@ void CombatRuntime::update(float dt) {
         const bool targetDestroyed = result.targetDestroyed;
         const bool hitEnemy = it->fromPlayer;
         lastImpactResult_ = result;
+        hasImpactResult_ = true;
         it = shots_.erase(it);
 
         if (targetDestroyed) {
@@ -170,4 +172,13 @@ CombatResult CombatRuntime::fireSelectedWeapon() {
     return fireWeapon(selectedWeapon);
 }
 
+}
+
+
+bool CombatRuntime::consumeImpactResult(CombatResult& result) {
+    if (!hasImpactResult_) return false;
+    result = lastImpactResult_;
+    hasImpactResult_ = false;
+    lastImpactResult_ = {};
+    return true;
 }
