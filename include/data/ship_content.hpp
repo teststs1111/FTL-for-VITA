@@ -11,6 +11,7 @@ struct LoadedShip {
     ShipBlueprint blueprint;
     LayoutBlueprint layout;
     std::vector<WeaponBlueprint> initialWeaponBlueprints;
+    std::vector<DroneBlueprint> initialDroneBlueprints;
 };
 
 class ShipContent {
