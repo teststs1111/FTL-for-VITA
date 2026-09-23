@@ -5,6 +5,7 @@
 #include "data/ship_blueprint.hpp"
 #include "data/ship_content.hpp"
 #include "game/ship_runtime.hpp"
+#include "game/combat_runtime.hpp"
 #include "render/png_loader.hpp"
 #include <algorithm>
 #include <cassert>
@@ -298,7 +299,8 @@ static void testShipRuntime() {
         "X_OFFSET\n0\nY_OFFSET\n0\nHORIZONTAL\n5\nVERTICAL\n4\n"
         "ELLIPSE\n100\n50\n0\n0\nROOM\n0\n0\n0\n2\n2\nROOM\n1\n2\n0\n2\n2\nROOM\n2\n4\n0\n2\n2\nDOOR\n2\n0\n0\n1\n0\nDOOR\n4\n0\n1\n2\n0\n";
     const std::string enemyXml =
-        "<shipBlueprint name=\"ENEMY_SHIP\" shipName=\"Enemy\" layout=\"kestrel\"><health amount=\"10\"/></shipBlueprint>";
+        "<shipBlueprint name=\"ENEMY_SHIP\" shipName=\"Enemy\" layout=\"kestrel\"><health amount=\"10\"/>"
+        "<systemList><engines room=\"0\" power=\"1\"/></systemList></shipBlueprint>";
     const std::string weaponXml =
         "<weaponBlueprint name=\"LASER_TEST\" type=\"LASER\" weaponArt=\"laser\" image=\"laser\" "
         "shots=\"2\" damage=\"1\" sysDamage=\"1\" sp=\"0\" missiles=\"1\" speed=\"10\" "
@@ -382,6 +384,25 @@ static void testShipRuntime() {
     assert(runtime.setSystemPowered(0, false));
     assert(runtime.usedReactorPower() == 2);
     assert(runtime.setSystemPowered(0, true));
+
+    wormhole::CombatRuntime combat;
+    wormhole::LoadedShip enemyForCombat;
+    assert(content.loadShip("ENEMY_SHIP", enemyForCombat));
+    assert(combat.load(content, enemyForCombat));
+    assert(combat.setTargetRoom(0));
+    assert(combat.player.setSystemPowered(2, true));
+    combat.player.updateWeapons(2.5f);
+    assert(combat.player.weapons[0].ready);
+    const int enemyHullBefore = combat.enemy.hull;
+    auto combatResult = combat.fireSelectedWeapon();
+    assert(combatResult.fired);
+    assert(combatResult.shotsFired == 2);
+    assert(combatResult.hullDamage == 2);
+    assert(combat.enemy.hull == enemyHullBefore - 2);
+    assert(combat.enemy.systems[0].damage == 2);
+    assert(combat.enemy.systems[0].power == 0);
+    assert(!combat.enemy.systems[0].powered);
+
     runtime.reset();
     assert(!runtime.valid && runtime.systems.empty() && runtime.crew.empty());
     assert(runtime.shieldLayers == 0 && runtime.maxShieldLayers == 0);
