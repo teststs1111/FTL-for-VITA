@@ -46,6 +46,21 @@ struct WeaponBlueprint {
     int cost{0};
 };
 
+struct DroneBlueprint {
+    enum class Type { Combat, ShipRepair, Defense, Repair, Battle, Boarding, Hacking, Shield, Unknown };
+    std::string name;
+    Type type{Type::Unknown};
+    int power{1};
+    int speed{0};
+    std::string droneImage;
+    std::string iconImage;
+    int cooldown{0};
+    std::string defenceTarget;
+    int dodge{0};
+    std::string weaponBlueprint;
+    int cost{0};
+};
+
 struct ShipBlueprint {
     std::string id;
     std::string name;
