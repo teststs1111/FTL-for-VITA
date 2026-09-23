@@ -133,7 +133,7 @@ static void testBlueprintDatabase() {
     const std::string payload =
         "<FTL>"
         "<shipBlueprint name=\"PLAYER_SHIP_HARD\" layout=\"kestrel\" shipName=\"The Kestrel\">"
-        "<systemList><engines room=\"0\" power=\"1\"/></systemList>"
+        "<systemList><engines room=\"0\" power=\"2\"/></systemList>"
         "<health amount=\"30\"/><maxPower amount=\"8\"/>"
         "</shipBlueprint>"
         "</FTL>";
