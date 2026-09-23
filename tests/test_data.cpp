@@ -324,7 +324,8 @@ static void testShipRuntime() {
     assert(runtime.weapons.size() == 1);
     assert(runtime.weapons[0].name == "LASER_TEST");
     assert(runtime.weapons[0].damage == 1 && runtime.weapons[0].systemDamage == 1);
-    assert(runtime.maxShieldLayers == 2 && runtime.shieldLayers == 2);\n    assert(runtime.setSystemPowered(2, true));
+    assert(runtime.maxShieldLayers == 2 && runtime.shieldLayers == 2);
+    assert(runtime.setSystemPowered(2, true));
     assert(!runtime.damageShields(1) == false);
     assert(runtime.shieldLayers == 1);
     runtime.updateShields(1.0f);
@@ -352,7 +353,8 @@ static void testShipRuntime() {
     assert(runtime.roomFire[1]);
     assert(runtime.systems.size() == 3 && runtime.crew.size() == 2);
     assert(runtime.systems[0].type == "engines" && runtime.systems[0].power == 2);
-    assert(runtime.systems[0].maxPower == 2);\n    assert(runtime.systems[2].type == "weapons" && runtime.systems[2].power == 1);
+    assert(runtime.systems[0].maxPower == 2);
+    assert(runtime.systems[2].type == "weapons" && runtime.systems[2].power == 1);
     assert(!runtime.setSystemPower(0, 3));
     assert(!runtime.setDoorOpen(0, true));
     assert(runtime.setDoorOpen(0, false));
