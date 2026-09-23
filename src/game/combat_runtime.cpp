@@ -33,6 +33,7 @@ void CombatRuntime::update(float dt) {
         enemyTargetRoom < static_cast<int>(player.content.layout.rooms.size())) {
         for (int i = 0; i < static_cast<int>(enemy.weapons.size()); ++i) {
             if (!enemy.weapons[i].ready) continue;
+            if (!enemy.fireWeapon(i)) continue;
             auto result = resolveWeapon(enemy, player, enemy.weapons[i], enemyTargetRoom);
             if (result.fired) break;
         }
