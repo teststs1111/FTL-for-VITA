@@ -21,6 +21,7 @@ struct RuntimeWeapon {
     int power{1};
     float cooldown{5.0f};
     float charge{0.0f};
+    int speed{0};
     int shots{1};
     int damage{0};
     int systemDamage{0};
