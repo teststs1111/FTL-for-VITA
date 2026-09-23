@@ -147,6 +147,44 @@ public:
         drawShip(combat_.player, leftX, false);
         drawShip(combat_.enemy, rightX, true);
 
+        auto roomCenter = [&](const ShipRuntime& ship, float originX, int roomId) {
+            for (const auto& room : ship.content.layout.rooms) {
+                if (room.id != roomId) continue;
+                const float x = originX + room.x * scale;
+                const float y = originY + room.y * scale;
+                const float w = std::max(1, room.w) * scale;
+                const float h = std::max(1, room.h) * scale;
+                return std::pair<float, float>{x + w * 0.5f, y + h * 0.5f};
+            }
+            return std::pair<float, float>{originX, originY};
+        };
+
+        for (const auto& shot : combat_.pendingShots()) {
+            const ShipRuntime& attacker = shot.fromPlayer ? combat_.player : combat_.enemy;
+            const ShipRuntime& target = shot.fromPlayer ? combat_.enemy : combat_.player;
+            const float attackerOrigin = shot.fromPlayer ? leftX : rightX;
+            const float targetOrigin = shot.fromPlayer ? rightX : leftX;
+
+            int weaponRoom = shot.fromPlayer ? 0 : 0;
+            for (const auto& system : attacker.systems) {
+                if (system.type == "weapons" && system.room >= 0) {
+                    weaponRoom = system.room;
+                    break;
+                }
+            }
+
+            const auto start = roomCenter(attacker, attackerOrigin, weaponRoom);
+            const auto end = roomCenter(target, targetOrigin, shot.targetRoom);
+            const float t = shot.duration > 0.f
+                ? std::min(1.f, std::max(0.f, shot.elapsed / shot.duration)) : 1.f;
+            const float x = start.first + (end.first - start.first) * t;
+            const float y = start.second + (end.second - start.second) * t;
+            const float size = 8.f;
+            graphics_.fillRect(x - size * 0.5f, y - size * 0.5f, size, size,
+                shot.fromPlayer ? Color{1.f, 0.85f, 0.25f, 1.f}
+                                 : Color{1.f, 0.3f, 0.2f, 1.f});
+        }
+
         const float playerHull = combat_.player.maxHull > 0
             ? static_cast<float>(combat_.player.hull) / combat_.player.maxHull : 0.f;
         const float enemyHull = combat_.enemy.maxHull > 0
@@ -168,6 +206,18 @@ public:
             graphics_.fillRect(leftX, 140.f, 280.f * ratio, 8.f,
                 weapon.ready ? Color{0.95f, 0.8f, 0.2f, 1.f}
                               : Color{0.3f, 0.65f, 0.9f, 1.f});
+        }
+
+        if (combat_.lastImpactResult().fired) {
+            const auto& impact = combat_.lastImpactResult();
+            const float feedbackX = impact.targetDestroyed ? rightX + 55.f : rightX + 35.f;
+            const float feedbackW = impact.shieldsAbsorbed > 0 ? 8.f : 14.f;
+            graphics_.fillRect(feedbackX, 158.f, feedbackW, 8.f,
+                impact.shieldsAbsorbed > 0
+                    ? Color{0.25f, 0.7f, 1.f, 1.f}
+                    : (impact.targetDestroyed
+                        ? Color{1.f, 0.8f, 0.2f, 1.f}
+                        : Color{0.9f, 0.3f, 0.2f, 1.f}));
         }
 
         if (lastCombatResult_.fired) {
