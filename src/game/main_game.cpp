@@ -27,6 +27,10 @@ public:
         if (combatMode_) {
             combat_.update(dt);
             updateCombat();
+            if (combat_.outcome == CombatOutcome::EnemyDestroyed) {
+                runtime_.hull = combat_.player.hull;
+                combatMode_ = false;
+            }
             return;
         }
 
@@ -71,6 +75,7 @@ public:
 
         if (input_.pressed(Button::Select)) {
             combatMode_ = true;
+            combatTargetRoom_ = selectedRoomId;
             combat_.setTargetRoom(selectedRoomId);
             return;
         }
