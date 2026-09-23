@@ -392,6 +392,7 @@ static void testShipRuntime() {
     assert(combat.player.setSystemPowered(2, true));
     combat.player.updateWeapons(2.5f);
     assert(combat.player.weapons[0].ready);
+    assert(combat.player.weapons[0].speed == 10);
     const int enemyHullBefore = combat.enemy.hull;
     auto combatResult = combat.fireSelectedWeapon();
     assert(combatResult.fired);
