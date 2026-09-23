@@ -53,7 +53,7 @@ std::size_t BlueprintDatabase::loadShipBlueprints(const std::string& assetPath) 
                 const auto it = node.attributes.find(name);
                 return it == node.attributes.end() ? std::string{} : it->second;
             };
-            const value = [&](const char* name) -> std::string {
+            const auto value = [&](const char* name) -> std::string {
                 const auto text = getText(name);
                 if (!text.empty()) return text;
                 return attr(name);
