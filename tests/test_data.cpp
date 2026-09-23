@@ -396,7 +396,12 @@ static void testShipRuntime() {
     auto combatResult = combat.fireSelectedWeapon();
     assert(combatResult.fired);
     assert(combatResult.shotsFired == 2);
-    assert(combatResult.hullDamage == 2);
+    assert(combatResult.hullDamage == 0);
+    assert(combat.enemy.hull == enemyHullBefore);
+    assert(combat.pendingShotCount() == 2);
+    combat.update(0.25f);
+    assert(combat.enemy.hull == enemyHullBefore - 1);
+    combat.update(0.03f);
     assert(combat.enemy.hull == enemyHullBefore - 2);
     assert(combat.enemy.systems[0].damage == 2);
     assert(combat.enemy.systems[0].power == 0);
@@ -416,9 +421,13 @@ static void testShipRuntime() {
     combat.enemy.shieldLayers = 1;
     const int shieldedHull = combat.enemy.hull;
     auto shieldResult = combat.fireSelectedWeapon();
-    assert(shieldResult.shieldsAbsorbed == 1);
-    assert(shieldResult.hullDamage == 1);
+    assert(shieldResult.shieldsAbsorbed == 0);
+    assert(shieldResult.hullDamage == 0);
+    assert(combat.enemy.hull == shieldedHull);
+    combat.update(0.25f);
+    assert(combat.enemy.shieldLayers == 0);
     assert(combat.enemy.hull == shieldedHull - 1);
+    assert(combat.pendingShotCount() == 1);
 
     assert(combat.load(content, enemyForCombat));
     assert(combat.setTargetRoom(0));
@@ -429,7 +438,11 @@ static void testShipRuntime() {
     const int piercedHull = combat.enemy.hull;
     auto piercingResult = combat.fireSelectedWeapon();
     assert(piercingResult.shieldsAbsorbed == 0);
-    assert(piercingResult.hullDamage == 2);
+    assert(piercingResult.hullDamage == 0);
+    assert(combat.enemy.hull == piercedHull);
+    combat.update(0.25f);
+    assert(combat.enemy.hull == piercedHull - 1);
+    combat.update(0.03f);
     assert(combat.enemy.hull == piercedHull - 2);
 
     assert(combat.load(content, enemyForCombat));
@@ -439,7 +452,12 @@ static void testShipRuntime() {
     combat.player.shieldLayers = 0;
     const int playerHullBeforeEnemyShot = combat.player.hull;
     combat.update(0.1f);
-    assert(combat.player.hull < playerHullBeforeEnemyShot);
+    assert(combat.player.hull == playerHullBeforeEnemyShot);
+    assert(combat.pendingShotCount() == 2);
+    combat.update(0.15f);
+    assert(combat.player.hull == playerHullBeforeEnemyShot - 1);
+    combat.update(0.03f);
+    assert(combat.player.hull == playerHullBeforeEnemyShot - 2);
     assert(!combat.enemy.weapons[0].ready);
     assert(combat.outcome == wormhole::CombatOutcome::Ongoing);
 
@@ -448,7 +466,7 @@ static void testShipRuntime() {
     combat.enemy.updateWeapons(2.5f);
     combat.player.shieldLayers = 0;
     combat.player.hull = 1;
-    combat.update(0.1f);
+    combat.update(0.25f);
     assert(combat.outcome == wormhole::CombatOutcome::PlayerDestroyed);
 
     assert(combat.load(content, enemyForCombat));
@@ -457,7 +475,9 @@ static void testShipRuntime() {
     assert(combat.player.setSystemPowered(2, true));
     combat.player.updateWeapons(2.5f);
     auto killResult = combat.fireSelectedWeapon();
-    assert(killResult.targetDestroyed);
+    assert(!killResult.targetDestroyed);
+    assert(combat.outcome == wormhole::CombatOutcome::Ongoing);
+    combat.update(0.25f);
     assert(combat.outcome == wormhole::CombatOutcome::EnemyDestroyed);
 
     runtime.reset();
