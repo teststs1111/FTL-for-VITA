@@ -276,7 +276,7 @@ static void testShipRuntime() {
         "</shipBlueprint>";
     const std::string layout =
         "X_OFFSET\n0\nY_OFFSET\n0\nHORIZONTAL\n5\nVERTICAL\n4\n"
-        "ELLIPSE\n100\n50\n0\n0\nROOM\n0\n0\n0\n2\n2\nROOM\n1\n2\n0\n2\n2\nDOOR\n2\n0\n0\n1\n0\n";
+        "ELLIPSE\n100\n50\n0\n0\nROOM\n0\n0\n0\n2\n2\nROOM\n1\n2\n0\n2\n2\nROOM\n2\n4\n0\n2\n2\nDOOR\n2\n0\n0\n1\n0\nDOOR\n4\n0\n1\n2\n0\n";
     const auto archive = makeArchive({{"data/blueprints.xml", blueprintXml}, {"data/kestrel.txt", layout}});
     const std::string path = "ship_runtime_test.dat";
     writeFile(path, archive);
