@@ -436,6 +436,7 @@ static void testShipRuntime() {
     assert(combat.enemyTargetRoom == 0);
     assert(combat.enemy.setSystemPowered(1, true));
     combat.enemy.updateWeapons(2.5f);
+    combat.player.shieldLayers = 0;
     const int playerHullBeforeEnemyShot = combat.player.hull;
     combat.update(0.1f);
     assert(combat.player.hull < playerHullBeforeEnemyShot);
@@ -445,6 +446,7 @@ static void testShipRuntime() {
     assert(combat.load(content, enemyForCombat));
     assert(combat.enemy.setSystemPowered(1, true));
     combat.enemy.updateWeapons(2.5f);
+    combat.player.shieldLayers = 0;
     combat.player.hull = 1;
     combat.update(0.1f);
     assert(combat.outcome == wormhole::CombatOutcome::PlayerDestroyed);
