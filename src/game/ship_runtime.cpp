@@ -33,6 +33,23 @@ bool ShipRuntime::load(ShipContent& source) {
 
     doorOpen.assign(content.layout.doors.size(), false);
 
+    missiles = std::max(0, content.blueprint.startingMissiles);
+    weapons.clear();
+    for (const auto& blueprint : content.initialWeaponBlueprints) {
+        RuntimeWeapon weapon;
+        weapon.name = blueprint.name;
+        weapon.type = blueprint.type;
+        weapon.power = std::max(1, blueprint.power);
+        weapon.cooldown = std::max(0.1f, blueprint.cooldown);
+        weapon.shots = std::max(1, blueprint.shots);
+        weapon.damage = std::max(0, blueprint.damage);
+        weapon.systemDamage = std::max(0, blueprint.systemDamage);
+        weapon.ionDamage = std::max(0, blueprint.ionDamage);
+        weapon.shieldPiercing = std::max(0, blueprint.shieldPiercing);
+        weapon.missilesUsed = std::max(0, blueprint.missilesUsed);
+        weapons.push_back(std::move(weapon));
+    }
+
     crew.clear();
     for (const auto& blueprint : content.blueprint.crew) {
         RuntimeCrew member;
@@ -43,6 +60,40 @@ bool ShipRuntime::load(ShipContent& source) {
     }
 
     valid = true;
+    return true;
+void ShipRuntime::updateWeapons(float dt) {
+    if (!valid || dt <= 0.f) return;
+
+    int weaponSystemPower = 0;
+    for (const auto& system : systems) {
+        if (system.type == "weapons" && system.powered)
+            weaponSystemPower = std::max(weaponSystemPower, system.power);
+    }
+    if (weaponSystemPower <= 0) return;
+
+    for (auto& weapon : weapons) {
+        if (weapon.power > weaponSystemPower || weapon.ready) continue;
+        weapon.charge = std::min(weapon.cooldown, weapon.charge + dt);
+        if (weapon.charge >= weapon.cooldown) weapon.ready = true;
+    }
+}
+
+bool ShipRuntime::fireWeapon(int weaponIndex) {
+    if (!valid || weaponIndex < 0 || weaponIndex >= static_cast<int>(weapons.size())) return false;
+    RuntimeWeapon& weapon = weapons[weaponIndex];
+    if (!weapon.ready) return false;
+
+    int weaponSystemPower = 0;
+    for (const auto& system : systems) {
+        if (system.type == "weapons" && system.powered)
+            weaponSystemPower = std::max(weaponSystemPower, system.power);
+    }
+    if (weaponSystemPower < weapon.power) return false;
+    if (weapon.missilesUsed > missiles) return false;
+
+    missiles -= weapon.missilesUsed;
+    weapon.charge = 0.0f;
+    weapon.ready = false;
     return true;
 }
 
@@ -55,6 +106,8 @@ void ShipRuntime::reset() {
     systems.clear();
     crew.clear();
     doorOpen.clear();
+    weapons.clear();
+    missiles = 0;
     valid = false;
 }
 
