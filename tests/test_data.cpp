@@ -433,12 +433,30 @@ static void testShipRuntime() {
     assert(combat.enemy.hull == piercedHull - 2);
 
     assert(combat.load(content, enemyForCombat));
+    assert(combat.enemyTargetRoom == 2);
     assert(combat.enemy.setSystemPowered(2, true));
     combat.enemy.updateWeapons(2.5f);
     const int playerHullBeforeEnemyShot = combat.player.hull;
     combat.update(0.1f);
     assert(combat.player.hull < playerHullBeforeEnemyShot);
     assert(!combat.enemy.weapons[0].ready);
+    assert(combat.outcome == wormhole::CombatOutcome::Ongoing);
+
+    assert(combat.load(content, enemyForCombat));
+    assert(combat.enemy.setSystemPowered(2, true));
+    combat.enemy.updateWeapons(2.5f);
+    combat.player.hull = 1;
+    combat.update(0.1f);
+    assert(combat.outcome == wormhole::CombatOutcome::PlayerDestroyed);
+
+    assert(combat.load(content, enemyForCombat));
+    combat.enemy.hull = 1;
+    assert(combat.setTargetRoom(0));
+    assert(combat.player.setSystemPowered(2, true));
+    combat.player.updateWeapons(2.5f);
+    auto killResult = combat.fireSelectedWeapon();
+    assert(killResult.targetDestroyed);
+    assert(combat.outcome == wormhole::CombatOutcome::EnemyDestroyed);
 
     runtime.reset();
     assert(!runtime.valid && runtime.systems.empty() && runtime.crew.empty());
