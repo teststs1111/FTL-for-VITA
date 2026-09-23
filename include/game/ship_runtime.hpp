@@ -28,6 +28,7 @@ struct RuntimeWeapon {
     int ionDamage{0};
     int shieldPiercing{0};
     int missilesUsed{0};
+    int personnelDamage{0};
     bool ready{false};
 };
 
@@ -35,6 +36,8 @@ struct RuntimeCrew {
     std::string race;
     std::string name;
     int room{-1};
+    int health{100};
+    int maxHealth{100};
     bool alive{true};
 };
 
