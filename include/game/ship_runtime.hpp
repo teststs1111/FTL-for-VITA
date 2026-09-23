@@ -46,6 +46,9 @@ struct ShipRuntime {
     std::vector<RuntimeCrew> crew;
     std::vector<RuntimeWeapon> weapons;
     int missiles{0};
+    int shieldLayers{0};
+    int maxShieldLayers{0};
+    float shieldCharge{0.0f};
     std::vector<bool> doorOpen;
     std::vector<int> roomOxygen;
     std::vector<bool> roomFire;
@@ -65,6 +68,8 @@ struct ShipRuntime {
     int usedReactorPower() const;
     int availableReactorPower() const;
     void updateWeapons(float dt);
+    void updateShields(float dt);
+    bool damageShields(int amount);
     bool fireWeapon(int weaponIndex);
 };
 
