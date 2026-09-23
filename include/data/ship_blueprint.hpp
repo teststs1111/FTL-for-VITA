@@ -23,6 +23,29 @@ struct LayoutBlueprint {
 struct SystemSlotBlueprint { std::string system; int room{-1}; int level{0}; int startingPower{0}; int maxPower{0}; bool availableByDefault{true}; };
 struct CrewBlueprint { std::string race; std::string name; int room{-1}; };
 
+struct WeaponBlueprint {
+    std::string name;
+    std::string type;
+    std::string launcher;
+    std::string projectile;
+    int shots{1};
+    int damage{0};
+    int systemDamage{0};
+    int ionDamage{0};
+    int shieldPiercing{0};
+    int missilesUsed{0};
+    int speed{0};
+    int personnelDamage{0};
+    int hullBust{0};
+    int fireChance{0};
+    int breachChance{0};
+    int stunChance{0};
+    int stunDuration{0};
+    int power{1};
+    float cooldown{5.0f};
+    int cost{0};
+};
+
 struct ShipBlueprint {
     std::string id;
     std::string name;
