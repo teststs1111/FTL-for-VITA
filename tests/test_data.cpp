@@ -433,7 +433,7 @@ static void testShipRuntime() {
     assert(combat.enemy.hull == piercedHull - 2);
 
     assert(combat.load(content, enemyForCombat));
-    assert(combat.enemyTargetRoom == 2);
+    assert(combat.enemyTargetRoom == 0);
     assert(combat.enemy.setSystemPowered(2, true));
     combat.enemy.updateWeapons(2.5f);
     const int playerHullBeforeEnemyShot = combat.player.hull;
