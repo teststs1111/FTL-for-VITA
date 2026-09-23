@@ -34,6 +34,15 @@ bool ShipRuntime::load(ShipContent& source) {
     doorOpen.assign(content.layout.doors.size(), false);
 
     missiles = std::max(0, content.blueprint.startingMissiles);
+    shieldLayers = 0;
+    maxShieldLayers = 0;
+    shieldCharge = 0.0f;
+    for (const auto& system : systems) {
+        if (system.type == "shields") {
+            maxShieldLayers = std::max(maxShieldLayers, system.power);
+            if (system.powered) shieldLayers = maxShieldLayers;
+        }
+    }
     weapons.clear();
     for (const auto& blueprint : content.initialWeaponBlueprints) {
         RuntimeWeapon weapon;
@@ -80,6 +89,44 @@ void ShipRuntime::updateWeapons(float dt) {
     }
 }
 
+void ShipRuntime::updateShields(float dt) {
+    if (!valid || dt <= 0.0f) return;
+
+    int targetLayers = 0;
+    bool powered = false;
+    for (const auto& system : systems) {
+        if (system.type != "shields") continue;
+        targetLayers = std::max(targetLayers, system.power);
+        powered = powered || system.powered;
+    }
+    maxShieldLayers = std::max(0, targetLayers);
+    if (!powered || maxShieldLayers <= 0) {
+        shieldLayers = 0;
+        shieldCharge = 0.0f;
+        return;
+    }
+    if (shieldLayers > maxShieldLayers) shieldLayers = maxShieldLayers;
+    if (shieldLayers >= maxShieldLayers) {
+        shieldCharge = 0.0f;
+        return;
+    }
+
+    shieldCharge += dt;
+    constexpr float rechargeSeconds = 2.0f;
+    while (shieldCharge >= rechargeSeconds && shieldLayers < maxShieldLayers) {
+        shieldCharge -= rechargeSeconds;
+        ++shieldLayers;
+    }
+}
+
+bool ShipRuntime::damageShields(int amount) {
+    if (!valid || amount <= 0 || shieldLayers <= 0) return false;
+    const int absorbed = std::min(amount, shieldLayers);
+    shieldLayers -= absorbed;
+    shieldCharge = 0.0f;
+    return absorbed > 0;
+}
+
 bool ShipRuntime::fireWeapon(int weaponIndex) {
     if (!valid || weaponIndex < 0 || weaponIndex >= static_cast<int>(weapons.size())) return false;
     RuntimeWeapon& weapon = weapons[weaponIndex];
@@ -110,6 +157,9 @@ void ShipRuntime::reset() {
     doorOpen.clear();
     weapons.clear();
     missiles = 0;
+    shieldLayers = 0;
+    maxShieldLayers = 0;
+    shieldCharge = 0.0f;
     valid = false;
 }
 
