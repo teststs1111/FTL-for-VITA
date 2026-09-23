@@ -41,7 +41,7 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
                                           ShipRuntime& target,
                                           RuntimeWeapon& weapon) {
     CombatResult result;
-    if (!attacker.valid || !target.valid || !weapon.ready || targetRoom < 0)
+    if (!attacker.valid || !target.valid || targetRoom < 0)
         return result;
     if (targetRoom >= static_cast<int>(target.content.layout.rooms.size()))
         return result;
@@ -51,20 +51,11 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
 
     int shieldPiercing = std::max(0, weapon.shieldPiercing);
     for (int shot = 0; shot < weapon.shots; ++shot) {
-        int piercing = shieldPiercing;
-        if (target.shieldLayers > 0) {
-            if (piercing > 0) {
-                const int pierced = std::min(piercing, target.shieldLayers);
-                target.shieldLayers -= pierced;
-                piercing -= pierced;
-                result.shieldsAbsorbed += pierced;
-            }
-            if (target.shieldLayers > 0 && piercing == 0) {
-                --target.shieldLayers;
-                target.shieldCharge = 0.0f;
-                ++result.shieldsAbsorbed;
-                continue;
-            }
+        if (target.shieldLayers > shieldPiercing) {
+            --target.shieldLayers;
+            target.shieldCharge = 0.0f;
+            ++result.shieldsAbsorbed;
+            continue;
         }
 
         if (weapon.damage > 0) {
