@@ -26,6 +26,11 @@ bool ShipContent::loadPlayerShip(const std::string& blueprintPath,
 
     ship_.blueprint = *blueprint;
     ship_.layout = std::move(layout);
+    ship_.initialWeaponBlueprints.clear();
+    for (const auto& weaponId : ship_.blueprint.initialWeapons) {
+        if (const auto* weapon = database_.findWeapon(weaponId))
+            ship_.initialWeaponBlueprints.push_back(*weapon);
+    }
     loaded_ = true;
     return true;
 }
