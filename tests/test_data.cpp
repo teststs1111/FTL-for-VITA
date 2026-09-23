@@ -273,6 +273,8 @@ static void testShipBlueprint() {
     assert(out.startingMissiles == 7);
     assert(out.initialWeapons.size() == 1 && out.initialWeapons[0] == "LASER_BURST_2");
     assert(out.initialDrones.size() == 1 && out.initialDrones[0] == "DEFENSE_1");
+    assert(out.initialDroneBlueprints.size() == 1 && out.initialDroneBlueprints[0].name == "DEFENSE_1");
+
 }
 
 static void testPng() {
