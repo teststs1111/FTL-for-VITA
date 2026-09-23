@@ -1,5 +1,6 @@
 #pragma once
 #include "game/ship_runtime.hpp"
+#include <vector>
 
 namespace wormhole {
 
@@ -12,6 +13,15 @@ struct CombatResult {
     int hullDamage{0};
     int systemDamage{0};
     bool targetDestroyed{false};
+};
+
+struct CombatShot {
+    bool fromPlayer{true};
+    int weaponIndex{-1};
+    RuntimeWeapon weapon;
+    int targetRoom{-1};
+    float elapsed{0.0f};
+    float duration{0.25f};
 };
 
 class CombatRuntime {
@@ -28,10 +38,15 @@ public:
     bool setTargetRoom(int roomId);
     CombatResult fireSelectedWeapon();
     CombatResult fireWeapon(int weaponIndex);
+    std::size_t pendingShotCount() const { return shots_.size(); }
 
 private:
     CombatResult resolveWeapon(ShipRuntime& attacker, ShipRuntime& target,
-                               RuntimeWeapon& weapon, int targetRoom);
+                               const RuntimeWeapon& weapon, int targetRoom);
+
+    void enqueueWeapon(bool fromPlayer, int weaponIndex, const RuntimeWeapon& weapon,
+                       int targetRoom);
+    std::vector<CombatShot> shots_;
 };
 
 } 
