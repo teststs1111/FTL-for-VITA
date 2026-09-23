@@ -304,7 +304,7 @@ static void testShipRuntime() {
     const std::string weaponXml =
         "<weaponBlueprint name=\"LASER_TEST\" type=\"LASER\" weaponArt=\"laser\" image=\"laser\" "
         "shots=\"2\" damage=\"1\" sysDamage=\"1\" sp=\"0\" missiles=\"1\" speed=\"10\" "
-        "power=\"1\" cooldown=\"2.5\"/>";
+        "power=\"1\" cooldown=\"2.5\" personnelDamage=\"20\"/>";
     const std::string fullBlueprints =
         "<FTL>" + blueprintXml + weaponXml + enemyXml + "</FTL>";
     const auto archive = makeArchive({{"data/blueprints.xml", fullBlueprints}, {"data/kestrel.txt", layout}});
