@@ -8,6 +8,7 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     enemy.reset();
     targetRoom = -1;
     selectedWeapon = 0;
+    enemyTargetRoom = 0;
 
     const LoadedShip* playerShip = contentSource.playerShip();
     if (!playerShip) return false;
@@ -27,6 +28,15 @@ void CombatRuntime::update(float dt) {
     enemy.updateShields(dt);
     player.updateEnvironment(dt);
     enemy.updateEnvironment(dt);
+
+    if (enemy.valid && enemyTargetRoom >= 0 &&
+        enemyTargetRoom < static_cast<int>(player.content.layout.rooms.size())) {
+        for (int i = 0; i < static_cast<int>(enemy.weapons.size()); ++i) {
+            if (!enemy.weapons[i].ready) continue;
+            auto result = resolveWeapon(enemy, player, enemy.weapons[i], enemyTargetRoom);
+            if (result.fired) break;
+        }
+    }
 }
 
 bool CombatRuntime::setTargetRoom(int roomId) {
@@ -39,7 +49,7 @@ bool CombatRuntime::setTargetRoom(int roomId) {
 
 CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
                                           ShipRuntime& target,
-                                          RuntimeWeapon& weapon) {
+                                          RuntimeWeapon& weapon, int targetRoom) {
     CombatResult result;
     if (!attacker.valid || !target.valid || targetRoom < 0)
         return result;
@@ -81,7 +91,7 @@ CombatResult CombatRuntime::fireWeapon(int weaponIndex) {
     if (!player.fireWeapon(weaponIndex))
         return result;
 
-    result = resolveWeapon(player, enemy, weapon);
+    result = resolveWeapon(player, enemy, weapon, targetRoom);
     if (!result.fired) {
         // The weapon was consumed/reset before resolution. This path is only
         // reachable for an invalid target, so leave the shot spent rather than
