@@ -63,6 +63,7 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         weapon.ionDamage = std::max(0, blueprint.ionDamage);
         weapon.shieldPiercing = std::max(0, blueprint.shieldPiercing);
         weapon.missilesUsed = std::max(0, blueprint.missilesUsed);
+        weapon.personnelDamage = std::max(0, blueprint.personnelDamage);
         weapons.push_back(std::move(weapon));
     }
 
@@ -72,6 +73,9 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         member.race = blueprint.race;
         member.name = blueprint.name;
         member.room = blueprint.room;
+        member.maxHealth = 100;
+        member.health = member.maxHealth;
+        member.alive = true;
         crew.push_back(std::move(member));
     }
 
