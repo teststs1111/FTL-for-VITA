@@ -317,6 +317,13 @@ static void testShipRuntime() {
     assert(runtime.weapons.size() == 1);
     assert(runtime.weapons[0].name == "LASER_TEST");
     assert(runtime.weapons[0].damage == 1 && runtime.weapons[0].systemDamage == 1);
+    assert(runtime.maxShieldLayers == 2 && runtime.shieldLayers == 2);
+    assert(!runtime.damageShields(1) == false);
+    assert(runtime.shieldLayers == 1);
+    runtime.updateShields(1.0f);
+    assert(runtime.shieldLayers == 1);
+    runtime.updateShields(1.0f);
+    assert(runtime.shieldLayers == 2);
     assert(runtime.weapons[0].cooldown == 2.5f);
     assert(!runtime.weapons[0].ready);
     runtime.updateWeapons(2.0f);
@@ -366,6 +373,7 @@ static void testShipRuntime() {
     assert(runtime.setSystemPowered(0, true));
     runtime.reset();
     assert(!runtime.valid && runtime.systems.empty() && runtime.crew.empty());
+    assert(runtime.shieldLayers == 0 && runtime.maxShieldLayers == 0);
     std::remove(path.c_str());
 }
 
