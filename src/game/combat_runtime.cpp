@@ -10,6 +10,7 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     selectedWeapon = 0;
     enemyTargetRoom = 0;
     outcome = CombatOutcome::Ongoing;
+    shots_.clear();
 
     const LoadedShip* playerShip = contentSource.playerShip();
     if (!playerShip) return false;
@@ -38,8 +39,29 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     return true;
 }
 
+void CombatRuntime::enqueueWeapon(bool fromPlayer, int weaponIndex,
+                                  const RuntimeWeapon& weapon, int room) {
+    const int projectileCount = std::max(1, weapon.shots);
+    const float speed = std::max(1.0f, weapon.cooldown > 0.0f ? weapon.power * 10.0f : 10.0f);
+    const float duration = std::max(0.1f, 10.0f / speed);
+
+    // Keep one CombatShot per projectile so the renderer can animate them
+    // independently later, while retaining the same weapon stats for impact.
+    for (int i = 0; i < projectileCount; ++i) {
+        CombatShot shot;
+        shot.fromPlayer = fromPlayer;
+        shot.weaponIndex = weaponIndex;
+        shot.weapon = weapon;
+        shot.weapon.shots = 1;
+        shot.targetRoom = room;
+        shot.duration = duration + static_cast<float>(i) * 0.03f;
+        shots_.push_back(std::move(shot));
+    }
+}
+
 void CombatRuntime::update(float dt) {
     if (dt <= 0.0f || outcome != CombatOutcome::Ongoing) return;
+
     player.updateWeapons(dt);
     enemy.updateWeapons(dt);
     player.updateShields(dt);
@@ -47,17 +69,39 @@ void CombatRuntime::update(float dt) {
     player.updateEnvironment(dt);
     enemy.updateEnvironment(dt);
 
+    // Resolve projectiles only after their flight time has elapsed.
+    for (auto it = shots_.begin(); it != shots_.end();) {
+        it->elapsed += dt;
+        if (it->elapsed < it->duration) {
+            ++it;
+            continue;
+        }
+
+        ShipRuntime& attacker = it->fromPlayer ? player : enemy;
+        ShipRuntime& target = it->fromPlayer ? enemy : player;
+        CombatResult result = resolveWeapon(attacker, target, it->weapon, it->targetRoom);
+        const bool targetDestroyed = result.targetDestroyed;
+        it = shots_.erase(it);
+
+        if (targetDestroyed) {
+            outcome = it == shots_.end() && attacker.valid && (&target == &enemy)
+                ? CombatOutcome::EnemyDestroyed
+                : CombatOutcome::PlayerDestroyed;
+            break;
+        }
+    }
+
+    if (outcome != CombatOutcome::Ongoing) return;
+
+    // Enemy AI prototype: launch at the selected player room when a weapon is ready.
     if (enemy.valid && enemyTargetRoom >= 0 &&
         enemyTargetRoom < static_cast<int>(player.content.layout.rooms.size())) {
         for (int i = 0; i < static_cast<int>(enemy.weapons.size()); ++i) {
             if (!enemy.weapons[i].ready) continue;
+            RuntimeWeapon firedWeapon = enemy.weapons[i];
             if (!enemy.fireWeapon(i)) continue;
-            auto result = resolveWeapon(enemy, player, enemy.weapons[i], enemyTargetRoom);
-            if (result.targetDestroyed) {
-                outcome = CombatOutcome::PlayerDestroyed;
-                break;
-            }
-            if (result.fired) break;
+            enqueueWeapon(false, i, firedWeapon, enemyTargetRoom);
+            break;
         }
     }
 }
@@ -72,17 +116,17 @@ bool CombatRuntime::setTargetRoom(int roomId) {
 
 CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
                                           ShipRuntime& target,
-                                          RuntimeWeapon& weapon, int targetRoom) {
+                                          const RuntimeWeapon& weapon, int room) {
     CombatResult result;
-    if (!attacker.valid || !target.valid || targetRoom < 0)
+    if (!attacker.valid || !target.valid || room < 0)
         return result;
-    if (targetRoom >= static_cast<int>(target.content.layout.rooms.size()))
+    if (room >= static_cast<int>(target.content.layout.rooms.size()))
         return result;
 
     result.fired = true;
     result.shotsFired = weapon.shots;
 
-    int shieldPiercing = std::max(0, weapon.shieldPiercing);
+    const int shieldPiercing = std::max(0, weapon.shieldPiercing);
     for (int shot = 0; shot < weapon.shots; ++shot) {
         if (target.shieldLayers > shieldPiercing) {
             --target.shieldLayers;
@@ -92,11 +136,11 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
         }
 
         if (weapon.damage > 0) {
-            target.damageRoom(targetRoom, weapon.damage);
+            target.damageRoom(room, weapon.damage);
             result.hullDamage += weapon.damage;
         }
         if (weapon.systemDamage > 0)
-            result.systemDamage += target.damageSystemInRoom(targetRoom, weapon.systemDamage);
+            result.systemDamage += target.damageSystemInRoom(room, weapon.systemDamage);
         if (target.hull <= 0) break;
     }
 
@@ -114,14 +158,10 @@ CombatResult CombatRuntime::fireWeapon(int weaponIndex) {
     if (!player.fireWeapon(weaponIndex))
         return result;
 
-    result = resolveWeapon(player, enemy, weapon, targetRoom);
-    if (result.targetDestroyed)
-        outcome = CombatOutcome::EnemyDestroyed;
-    if (!result.fired) {
-        // The weapon was consumed/reset before resolution. This path is only
-        // reachable for an invalid target, so leave the shot spent rather than
-        // attempting to rewind combat state.
-    }
+    const RuntimeWeapon firedWeapon = weapon;
+    result.fired = true;
+    result.shotsFired = std::max(1, firedWeapon.shots);
+    enqueueWeapon(true, weaponIndex, firedWeapon, targetRoom);
     return result;
 }
 
