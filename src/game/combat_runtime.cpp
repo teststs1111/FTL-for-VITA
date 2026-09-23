@@ -49,8 +49,11 @@ void CombatRuntime::enqueueWeapon(bool fromPlayer, int weaponIndex,
         shot.weapon = weapon;
         shot.weapon.shots = 1;
         shot.targetRoom = room;
-        // Placeholder flight time until the renderer has real ship/projectile coordinates.
-        shot.duration = 0.25f + static_cast<float>(i) * 0.03f;
+        // Convert FTL's projectile speed into a stable gameplay flight time until
+        // the renderer has the exact ship/projectile coordinates available.
+        const float speed = static_cast<float>(std::max(1, weapon.speed));
+        const float baseFlight = std::clamp(2.5f / speed, 0.12f, 0.75f);
+        shot.duration = baseFlight + static_cast<float>(i) * 0.03f;
         shots_.push_back(std::move(shot));
     }
 }
