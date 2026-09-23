@@ -290,7 +290,7 @@ static void testShipRuntime() {
         "<shipBlueprint name=\"PLAYER_SHIP_HARD\" shipName=\"Kestrel\" layout=\"kestrel\">"
         "<health amount=\"30\"/><maxPower amount=\"8\"/>"
         "<weaponList missiles=\"7\"><weapon name=\"LASER_TEST\"/></weaponList>"
-        "<systemList><engines room=\"0\" power=\"2\"/><shields room=\"1\" power=\"2\"/><weapons room=\"0\" power=\"1\"/></systemList>"
+        "<systemList><engines room=\"0\" power=\"2\"/><shields room=\"1\" power=\"2\"/><weapons room=\"0\" power=\"1\" start=\"false\"/></systemList>"
         "<crew species=\"human\" name=\"Alice\" room=\"0\"/>"
         "<crew species=\"engi\" name=\"Bob\" room=\"1\"/>"
         "</shipBlueprint>";
@@ -324,7 +324,7 @@ static void testShipRuntime() {
     assert(runtime.weapons.size() == 1);
     assert(runtime.weapons[0].name == "LASER_TEST");
     assert(runtime.weapons[0].damage == 1 && runtime.weapons[0].systemDamage == 1);
-    assert(runtime.maxShieldLayers == 2 && runtime.shieldLayers == 2);
+    assert(runtime.maxShieldLayers == 2 && runtime.shieldLayers == 2);\n    assert(runtime.setSystemPowered(2, true));
     assert(!runtime.damageShields(1) == false);
     assert(runtime.shieldLayers == 1);
     runtime.updateShields(1.0f);
@@ -350,9 +350,9 @@ static void testShipRuntime() {
     assert(runtime.setDoorOpen(0, true));
     runtime.updateEnvironment(1.0f);
     assert(runtime.roomFire[1]);
-    assert(runtime.systems.size() == 2 && runtime.crew.size() == 2);
+    assert(runtime.systems.size() == 3 && runtime.crew.size() == 2);
     assert(runtime.systems[0].type == "engines" && runtime.systems[0].power == 2);
-    assert(runtime.systems[0].maxPower == 2);
+    assert(runtime.systems[0].maxPower == 2);\n    assert(runtime.systems[2].type == "weapons" && runtime.systems[2].power == 1);
     assert(!runtime.setSystemPower(0, 3));
     assert(!runtime.setDoorOpen(0, true));
     assert(runtime.setDoorOpen(0, false));
@@ -375,6 +375,7 @@ static void testShipRuntime() {
     assert(runtime.hull == 25 && runtime.roomDamage[0] == 5);
     assert(runtime.repairRoom(0, 3));
     assert(runtime.hull == 28 && runtime.roomDamage[0] == 2);
+    assert(runtime.setSystemPowered(2, false));
     assert(runtime.setSystemPowered(0, false));
     assert(runtime.usedReactorPower() == 2);
     assert(runtime.setSystemPowered(0, true));
