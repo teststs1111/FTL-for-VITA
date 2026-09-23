@@ -218,10 +218,6 @@ static void testShipContent() {
     wormhole::ShipContent content;
     assert(content.open(path));
     assert(content.loadPlayerShip());
-    wormhole::LoadedShip enemy;
-    assert(content.loadShip("ENEMY_SHIP", enemy));
-    assert(enemy.blueprint.name == "Enemy");
-    assert(enemy.layout.rooms.size() == 3);
     const auto* ship = content.playerShip();
     assert(ship);
     assert(ship->blueprint.name == "The Kestrel");
@@ -315,6 +311,11 @@ static void testShipRuntime() {
     writeFile(path, archive);
     wormhole::ShipContent content;
     assert(content.open(path));
+    assert(content.loadPlayerShip());
+    wormhole::LoadedShip enemy;
+    assert(content.loadShip("ENEMY_SHIP", enemy));
+    assert(enemy.blueprint.name == "Enemy");
+    assert(enemy.layout.rooms.size() == 3);
     assert(content.loadPlayerShip());
     wormhole::ShipRuntime runtime;
     assert(runtime.load(content));
