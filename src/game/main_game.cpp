@@ -2,6 +2,7 @@
 #include "game/game_state.hpp"
 #include "data/ship_content.hpp"
 #include "game/ship_runtime.hpp"
+#include "game/combat_runtime.hpp"
 #include "render/graphics.hpp"
 #include "platform/input.hpp"
 #include <algorithm>
@@ -15,10 +16,19 @@ public:
             content_.open(archivePath);
             content_.loadPlayerShip();
             runtime_.load(content_);
+            LoadedShip enemy;
+            if (content_.loadShip("ENEMY_SHIP", enemy))
+                combat_.load(content_, enemy);
         }
     }
 
     void update(float dt) override {
+        if (combatMode_) {
+            combat_.update(dt);
+            updateCombat();
+            return;
+        }
+
         runtime_.updateEnvironment(dt);
         if (!runtime_.valid || runtime_.content.layout.rooms.empty()) return;
         const int roomCount = static_cast<int>(runtime_.content.layout.rooms.size());
@@ -59,6 +69,12 @@ public:
         }
 
         if (input_.pressed(Button::Select)) {
+            combatMode_ = true;
+            combat_.setTargetRoom(selectedRoomId);
+            return;
+        }
+
+        if (input_.pressed(Button::Select)) {
             for (int i = 0; i < static_cast<int>(runtime_.content.layout.doors.size()); ++i) {
                 const auto& door = runtime_.content.layout.doors[i];
                 if (door.leftRoom == selectedRoomId || door.rightRoom == selectedRoomId) {
@@ -77,7 +93,100 @@ public:
             runtime_.damageRoom(selectedRoomId, 1);
     }
 
+    void updateCombat() {
+        if (!combat_.enemy.valid || combat_.enemy.content.layout.rooms.empty()) {
+            combatMode_ = false;
+            return;
+        }
+
+        const int roomCount = static_cast<int>(combat_.enemy.content.layout.rooms.size());
+        if (input_.pressed(Button::Left) || input_.pressed(Button::Up))
+            combatTargetRoom_ = (combatTargetRoom_ + roomCount - 1) % roomCount;
+        if (input_.pressed(Button::Right) || input_.pressed(Button::Down))
+            combatTargetRoom_ = (combatTargetRoom_ + 1) % roomCount;
+
+        if (input_.pressed(Button::L) && !combat_.player.weapons.empty())
+            combat_.selectedWeapon = (combat_.selectedWeapon +
+                static_cast<int>(combat_.player.weapons.size()) - 1) %
+                static_cast<int>(combat_.player.weapons.size());
+        if (input_.pressed(Button::R) && !combat_.player.weapons.empty())
+            combat_.selectedWeapon = (combat_.selectedWeapon + 1) %
+                static_cast<int>(combat_.player.weapons.size());
+
+        combat_.setTargetRoom(combatTargetRoom_);
+        if (input_.pressed(Button::Cross))
+            lastCombatResult_ = combat_.fireSelectedWeapon();
+
+        if (input_.pressed(Button::Circle))
+            combatMode_ = false;
+    }
+
+    void renderCombat() {
+        constexpr float scale = 28.f;
+        constexpr float leftX = 120.f;
+        constexpr float rightX = 580.f;
+        constexpr float originY = 170.f;
+
+        auto drawShip = [&](const ShipRuntime& ship, float originX, bool selectedSide) {
+            for (const auto& room : ship.content.layout.rooms) {
+                const float x = originX + room.x * scale;
+                const float y = originY + room.y * scale;
+                const float w = std::max(1, room.w) * scale;
+                const float h = std::max(1, room.h) * scale;
+                const bool selected = selectedSide && room.id == combatTargetRoom_;
+                const int damage = (room.id >= 0 && room.id < static_cast<int>(ship.roomDamage.size()))
+                    ? ship.roomDamage[room.id] : 0;
+                graphics_.fillRect(x, y, w, h, selected
+                    ? Color{0.25f, 0.38f, 0.48f, 1.f}
+                    : (damage > 0 ? Color{0.30f, 0.12f, 0.12f, 1.f}
+                                  : Color{0.10f, 0.18f, 0.25f, 1.f}));
+                graphics_.drawLine(x, y, x + w, y, {0.35f, 0.65f, 0.85f, 1.f});
+                graphics_.drawLine(x + w, y, x + w, y + h, {0.35f, 0.65f, 0.85f, 1.f});
+                graphics_.drawLine(x + w, y + h, x, y + h, {0.35f, 0.65f, 0.85f, 1.f});
+                graphics_.drawLine(x, y + h, x, y, {0.35f, 0.65f, 0.85f, 1.f});
+            }
+        };
+
+        drawShip(combat_.player, leftX, false);
+        drawShip(combat_.enemy, rightX, true);
+
+        const float playerHull = combat_.player.maxHull > 0
+            ? static_cast<float>(combat_.player.hull) / combat_.player.maxHull : 0.f;
+        const float enemyHull = combat_.enemy.maxHull > 0
+            ? static_cast<float>(combat_.enemy.hull) / combat_.enemy.maxHull : 0.f;
+        graphics_.fillRect(leftX, 100.f, 280.f, 12.f, {0.15f, 0.15f, 0.15f, 1.f});
+        graphics_.fillRect(leftX, 100.f, 280.f * playerHull, 12.f, {0.2f, 0.8f, 0.35f, 1.f});
+        graphics_.fillRect(rightX, 100.f, 280.f, 12.f, {0.15f, 0.15f, 0.15f, 1.f});
+        graphics_.fillRect(rightX, 100.f, 280.f * enemyHull, 12.f, {0.85f, 0.25f, 0.25f, 1.f});
+
+        for (int i = 0; i < combat_.enemy.shieldLayers; ++i)
+            graphics_.fillRect(rightX + i * 14.f, 125.f, 10.f, 6.f, {0.25f, 0.65f, 0.95f, 1.f});
+
+        if (combat_.selectedWeapon >= 0 &&
+            combat_.selectedWeapon < static_cast<int>(combat_.player.weapons.size())) {
+            const auto& weapon = combat_.player.weapons[combat_.selectedWeapon];
+            const float ratio = weapon.cooldown > 0.f
+                ? std::min(1.f, weapon.charge / weapon.cooldown) : 1.f;
+            graphics_.fillRect(leftX, 140.f, 280.f, 8.f, {0.15f, 0.15f, 0.15f, 1.f});
+            graphics_.fillRect(leftX, 140.f, 280.f * ratio, 8.f,
+                weapon.ready ? Color{0.95f, 0.8f, 0.2f, 1.f}
+                              : Color{0.3f, 0.65f, 0.9f, 1.f});
+        }
+
+        if (lastCombatResult_.fired) {
+            graphics_.fillRect(rightX + 20.f, 140.f, 12.f, 12.f,
+                lastCombatResult_.targetDestroyed
+                    ? Color{1.f, 0.8f, 0.2f, 1.f}
+                    : Color{0.9f, 0.3f, 0.2f, 1.f});
+        }
+    }
+
     void render() override {
+        if (combatMode_) {
+            renderCombat();
+            return;
+        }
+
         const LoadedShip* ship = content_.playerShip();
         if (!ship) {
             graphics_.fillRect(60.f, 70.f, 840.f, 400.f, {0.10f, 0.11f, 0.15f, 1.f});
@@ -157,6 +266,10 @@ private:
     Input& input_;
     ShipContent content_;
     ShipRuntime runtime_;
+    CombatRuntime combat_;
+    CombatResult lastCombatResult_{};
+    bool combatMode_{false};
+    int combatTargetRoom_{0};
     int selectedRoom_{0};
     int selectedCrew_{0};
 };
