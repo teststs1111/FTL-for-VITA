@@ -174,13 +174,17 @@ CombatResult CombatRuntime::fireSelectedWeapon() {
     return fireWeapon(selectedWeapon);
 }
 
-}
-
 
 bool CombatRuntime::consumeImpactResult(CombatResult& result) {
-    if (!hasImpactResult_) return false;
-    result = lastImpactResult_;
-    hasImpactResult_ = false;
-    lastImpactResult_ = {};
+    if (impactResults_.empty()) {
+        hasImpactResult_ = false;
+        return false;
+    }
+    result = impactResults_.front();
+    impactResults_.pop_front();
+    hasImpactResult_ = !impactResults_.empty();
+    lastImpactResult_ = hasImpactResult_ ? impactResults_.back() : CombatResult{};
     return true;
+}
+
 }
