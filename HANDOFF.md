@@ -11,17 +11,34 @@
 - Target: a Vita-native playable FTL-style runtime reconstructed from the open-source Tachyon implementation
 - Proprietary FTL source/assets are **not** stored in this repository.
 
-## Current state — 2026-09-24
+## Current state — 2026-09-25
 
-### Latest commit
+### Latest commits
 
-- `27d7710d21b89b5ff99d6be6fe6e92c9e6cc58fc`
-- Message: `Select live ship texture from blueprint artwork`
-- CI run #303 is green.
+- `4ece88fd42df2b6cd4c2ff576b4360ca172a1587` — `Treat native Vita resolution as successful vitaGL init`
+- `645dade5ca9d0fe1d41654c3c41ea5f200451f98` — `Build vitaGL without splashscreen for Vita startup stability`
+- `fe3d37b16a2e35c6f4e235f15d92c9bdf106160c` — `Set Vita application title to FTL: Faster Than Light`
 
 ### CI state
 
-The latest GitHub Actions Host build/test run (#303) is **successful**. The live ship-texture integration and the preceding blueprint-artwork commits all passed host build/test.
+- Vita Build #24: **successful**
+- Host Build #332: **successful**
+- Vita VPK artifact is available and not expired.
+- Artifact size: 1,056,989 bytes
+- Artifact SHA-256: `0693d0783a06d63bbc9c7cb71bbbe7f7d67120aa7150d4fe92a5756ffd9ea407`
+
+### Startup/crash milestone
+
+The previous crash dump showed a `vitaGL Splashscreen` thread with a GXM data-abort around the vitaGL startup path. The Vita workflow now builds a fresh vitaGL with `HAVE_SBRK=1 NO_SPLASHSCREEN=1`.
+
+The renderer also no longer treats `vglInitExtended(960,544,...)` returning `GL_FALSE` as failure. In current vitaGL, native 960x544 initialization can return `GL_FALSE` because the return value indicates resolution fallback rather than generic initialization success.
+
+This removes two identified startup hazards, but **real-device runtime success is not yet verified**.
+
+### Vita application metadata
+
+The VPK application name is now:
+`FTL: Faster Than Light`
 
 ## What is already implemented
 
