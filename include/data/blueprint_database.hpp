@@ -15,6 +15,8 @@ public:
     const ShipBlueprint* findShip(const std::string& id) const;
     const WeaponBlueprint* findWeapon(const std::string& id) const;
     const DroneBlueprint* findDrone(const std::string& id) const;
+    const std::unordered_map<std::string, WeaponBlueprint>& weapons() const { return weapons_; }
+    const std::unordered_map<std::string, DroneBlueprint>& drones() const { return drones_; }
     void clear();
 
 private:
