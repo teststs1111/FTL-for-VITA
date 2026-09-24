@@ -226,6 +226,7 @@ void ShipRuntime::reset() {
     roomFire.clear();
     systems.clear();
     crew.clear();
+    drones.clear();
     doorOpen.clear();
     weapons.clear();
     missiles = 0;
