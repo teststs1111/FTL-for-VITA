@@ -48,9 +48,17 @@ if(VITA)
     target_link_libraries(wormhole_core PUBLIC ScePvf_stub)
     target_link_libraries(vita_wormhole_prototype PRIVATE
         vitaGL
+        vitashark
+        SceShaccCgExt
+        mathneon
+        m
+        SceAppMgr_stub
+        SceCommonDialog_stub
         SceCtrl_stub
         SceDisplay_stub
         SceGxm_stub
+        SceKernelDmacMgr_stub
+        SceShaccCg_stub
         SceTouch_stub
         ScePvf_stub
     )
