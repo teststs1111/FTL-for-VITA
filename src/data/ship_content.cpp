@@ -34,7 +34,21 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
         // Drone blueprints are loaded from the same database and copied into
         // the runtime ship just like starting weapons.
         const auto* drone = database_.findDrone(droneId);
-        if (drone) out.initialDroneBlueprints.push_back(*drone);
+        if (drone) {
+            DroneBlueprint resolved = *drone;
+            if (!resolved.weaponBlueprint.empty()) {
+                if (const auto* weapon = database_.findWeapon(resolved.weaponBlueprint)) {
+                    resolved.weaponCooldown = weapon->cooldown;
+                    resolved.weaponShots = weapon->shots;
+                    resolved.weaponDamage = weapon->damage;
+                    resolved.weaponSystemDamage = weapon->systemDamage;
+                    resolved.weaponIonDamage = weapon->ionDamage;
+                    resolved.weaponShieldPiercing = weapon->shieldPiercing;
+                    resolved.weaponPersonnelDamage = weapon->personnelDamage;
+                }
+            }
+            out.initialDroneBlueprints.push_back(std::move(resolved));
+        }
     }
     return true;
 }
