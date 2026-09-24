@@ -50,6 +50,7 @@ if(VITA)
         vitaGL
         vitashark
         SceShaccCgExt
+        taihen_stub
         mathneon
         m
         SceAppMgr_stub
