@@ -6,14 +6,23 @@ The upstream Tachyon tree contains 224 source files below `xyz/znix/xftl`:
 ## Completed slices
 
 ### Data layer
-The C++ prototype implements the uncompressed `ftl.dat` container format used by Tachyon:
-- `PKG\\n` header
+The C++ prototype supports two archive layouts:
+
+Tachyon's reconstructed `PKG\\n` container:
 - 16-byte header
 - 20-byte entries
 - 3-byte name offsets
 - big-endian integer fields
 - uncompressed entry validation
 - direct file reads
+
+Vanilla FTL `.dat`:
+- little-endian file-slot count
+- 32-bit file offsets
+- per-file 32-bit size and filename length
+- UTF-8 filename followed by raw file data
+
+The vanilla layout is independently documented by the CC0 Kaitai Struct specification and existing `ftldat` implementations.
 
 It also implements Tachyon's BXML wire format:
 - document-local string table
