@@ -1,4 +1,5 @@
 #include "data/ftl_dat.hpp"
+#include <algorithm>
 #include <fstream>
 
 namespace wormhole {
