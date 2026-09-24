@@ -421,6 +421,18 @@ static void testShipRuntime() {
     assert(combat.player.setDronePowered(0, false));
     assert(combat.player.setDronePowered(1, false));
     assert(combat.setTargetRoom(0));
+    assert(combat.load(content, enemyForCombat));
+    assert(combat.player.setDronePowered(1, true));
+    combat.enemy.setSystemPowered(1, true);
+    combat.enemy.updateWeapons(2.5f);
+    combat.player.shieldLayers = 0;
+    const int defenseHullBefore = combat.player.hull;
+    combat.update(0.1f);
+    assert(combat.player.drones[1].active);
+    combat.update(0.01f);
+    assert(combat.player.hull == defenseHullBefore);
+    assert(combat.pendingShotCount() == 0);
+    assert(combat.setTargetRoom(0));
     assert(combat.player.setSystemPowered(2, true));
     combat.player.updateWeapons(2.5f);
     assert(combat.player.weapons[0].ready);
