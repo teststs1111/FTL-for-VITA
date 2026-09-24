@@ -39,13 +39,13 @@ The current Vita scene is an early playable-systems prototype and is **not yet t
 The remaining work is being done in dependency order:
 1. Validate real user-supplied `ftl.dat` contents and Japanese resource paths
 2. PNG/texture loading from `ftl.dat`
-2. Blueprint/database layer
-3. Ship rooms, doors and systems
-4. Crew/weapons/projectiles and combat simulation
-5. Sector/beacon/event flow
-6. FTL UI, Japanese text rendering and touch controls
-7. audio
-8. save/load
+3. Blueprint/database layer
+4. Ship rooms, doors and systems
+5. Crew/weapons/projectiles and combat simulation
+6. Sector/beacon/event flow
+7. FTL UI, Japanese text rendering and touch controls
+8. audio
+9. save/load
 10. mod support
 
 FTL game assets are not distributed by this repository. The runtime expects a user-supplied `ftl.dat` and never embeds it in the repository.
