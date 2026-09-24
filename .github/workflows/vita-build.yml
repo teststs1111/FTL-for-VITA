@@ -12,6 +12,8 @@ jobs:
       image: vitasdk/vitasdk:2026.08
     steps:
       - uses: actions/checkout@v4
+      - name: Install modern vitaGL dependencies
+        run: vdpm install vitaShaRK libmathneon SceShaccCgExt
       - name: Configure Vita build
         run: cmake -S . -B build-vita -DCMAKE_TOOLCHAIN_FILE=$VITASDK/share/vita.toolchain.cmake -DBUILD_TESTS=OFF
       - name: Build Vita VPK
