@@ -430,6 +430,9 @@ static void testShipRuntime() {
     combat.update(0.15f);
     assert(combat.enemy.hull == droneHullBefore);
     combat.update(0.10f);
+    assert(combat.lastImpactResult().fired);
+    assert(combat.lastImpactResult().shotsFired == 1);
+    assert(combat.lastImpactResult().hullDamage == 1);
     assert(combat.enemy.hull == droneHullBefore - 1);
     assert(combat.player.setDronePowered(0, false));
     assert(combat.player.setDronePowered(1, false));
