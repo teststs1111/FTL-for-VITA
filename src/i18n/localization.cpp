@@ -1,4 +1,5 @@
 #include "i18n/localization.hpp"
+#include "data/bxml.hpp"
 
 namespace wormhole {
 
@@ -109,6 +110,26 @@ Localization::Localization() {
         {"combat.miss", "Attack missed"},
         {"combat.shield_block", "Blocked by shields"},
     };
+}
+
+bool Localization::loadFtlTextXml(const std::vector<std::uint8_t>& data) {
+    try {
+        const auto root = bxml::read(data);
+        if (root.name != "FTL") return false;
+        std::size_t loaded = 0;
+        for (const auto& child : root.children) {
+            if (child.name != "text") continue;
+            const auto nameIt = child.attributes.find("name");
+            if (nameIt == child.attributes.end() || nameIt->second.empty()) continue;
+            const auto langIt = child.attributes.find("language");
+            if (langIt != child.attributes.end() && langIt->second != "ja") continue;
+            japanese_[nameIt->second] = child.text;
+            ++loaded;
+        }
+        return loaded != 0;
+    } catch (...) {
+        return false;
+    }
 }
 
 void Localization::setLocale(Locale locale) {
