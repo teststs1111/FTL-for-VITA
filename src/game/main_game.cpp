@@ -33,14 +33,35 @@ public:
     }
 
     void discoverShipTexture() {
+        const LoadedShip* ship = content_.playerShip();
+        if (!ship) return;
+
+        // FTL's blueprints explicitly identify the ship artwork stem via img=.
+        // Prefer that exact asset before falling back to a deterministic scan.
+        std::vector<std::string> candidates;
+        if (!ship->blueprint.image.empty()) {
+            candidates.push_back("img/ship/" + ship->blueprint.image + "_base.png");
+            candidates.push_back("img/ship/" + ship->blueprint.image + ".png");
+        }
+        if (!ship->blueprint.layout.empty())
+            candidates.push_back("img/ship/" + ship->blueprint.layout + "_base.png");
+
+        for (const auto& candidate : candidates) {
+            if (textures_.load(graphics_, content_.assets(), candidate)) {
+                shipTextureName_ = candidate;
+                return;
+            }
+        }
+
         std::string best;
         for (const auto& name : content_.assets().fileNames()) {
             std::string lower = name;
             for (char& ch : lower)
                 ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
             if (lower.size() < 4 || lower.substr(lower.size() - 4) != ".png") continue;
-            if (lower.find("ship") == std::string::npos) continue;
-            if (lower.find("icon") != std::string::npos || lower.find("button") != std::string::npos) continue;
+            if (lower.find("/ship/") == std::string::npos) continue;
+            if (lower.find("_base.png") == std::string::npos) continue;
+            if (lower.find("gib") != std::string::npos) continue;
             best = name;
             break;
         }
