@@ -99,6 +99,33 @@ static void testBxml() {
     assert(node.children[1].name == "empty");
 }
 
+static std::vector<std::uint8_t> makeVanillaArchive(const std::string& name, const std::string& payload) {
+    const std::uint32_t count = 1;
+    const std::uint32_t meta = 4 + 4 + static_cast<std::uint32_t>(name.size()) + static_cast<std::uint32_t>(payload.size());
+    std::vector<std::uint8_t> data(4 + 4 + meta, 0);
+    std::copy(reinterpret_cast<const std::uint8_t*>(&count), reinterpret_cast<const std::uint8_t*>(&count) + 4, data.begin());
+    const std::uint32_t offset = 8;
+    std::copy(reinterpret_cast<const std::uint8_t*>(&offset), reinterpret_cast<const std::uint8_t*>(&offset) + 4, data.begin() + 4);
+    const std::uint32_t len = static_cast<std::uint32_t>(payload.size());
+    const std::uint32_t nameLen = static_cast<std::uint32_t>(name.size());
+    std::copy(reinterpret_cast<const std::uint8_t*>(&len), reinterpret_cast<const std::uint8_t*>(&len) + 4, data.begin() + 8);
+    std::copy(reinterpret_cast<const std::uint8_t*>(&nameLen), reinterpret_cast<const std::uint8_t*>(&nameLen) + 4, data.begin() + 12);
+    std::copy(name.begin(), name.end(), data.begin() + 16);
+    std::copy(payload.begin(), payload.end(), data.begin() + 16 + name.size());
+    return data;
+}
+
+static void testVanillaFtlDat() {
+    const std::string path = "test_vanilla_ftl.dat";
+    writeFile(path, makeVanillaArchive("data/strings.xml", u8"こんにちは")); 
+    wormhole::FtlDat archive;
+    assert(archive.open(path));
+    assert(archive.contains("data/strings.xml"));
+    const auto read = archive.readFile("data/strings.xml");
+    assert(std::string(read.begin(), read.end()) == u8"こんにちは");
+    std::remove(path.c_str());
+}
+
 static void testFtlDat() {
     const std::string path = "test_ftl.dat";
     const std::string name = "hello.txt";
@@ -564,6 +591,7 @@ static void testShipRuntime() {
 int main() {
     testBxml();
     testFtlDat();
+    testVanillaFtlDat();
     testAssetStore();
     testLayoutBlueprint();
     testShipBlueprint();
