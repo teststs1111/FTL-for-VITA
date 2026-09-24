@@ -15,13 +15,13 @@
 
 ### Latest commit
 
-- `8f9c1aaf66f206b4c13465288ea87fb6025006c9`
-- Message: `Fix defense volley flight timing`
-- This adjusted a combat regression test after confirming that the second projectile in a volley needs more simulated flight time.
+- `0c460f07c3e7af53693edfc8f8a4e3e462cb31c6`
+- Message: `Test PNG loading through AssetStore`
+- CI run #298 is green.
 
 ### CI state
 
-The latest GitHub Actions Host build run associated with the latest commit is currently **failed**.
+The latest GitHub Actions Host build/test run (#298) is **successful**. The defense-volley regression is also green in run #297.
 
 Important: do not assume the previous defense-volley timing fix is sufficient. The next action is to inspect the failed job/log, identify the exact assertion or build failure, fix the root cause, and rerun CI.
 
@@ -121,15 +121,8 @@ Do not jump to polish while a lower-level dependency is broken.
 
 ## Immediate next actions
 
-### 1. Fix CI first
-Inspect the failed Host build run for commit `8f9c1aaf66f206b4c13465288ea87fb6025006c9`.
-
-Previous related regression:
-- defense drone intercepts one projectile from a multi-projectile volley
-- the remaining projectile must have enough simulated flight time to hit
-- an enemy fire delay was added to prevent an unrelated immediate second volley during tiny test updates
-
-Do not blindly increase timing again. Check the actual failing assertion/log first.
+### 1. Continue rendering/data integration
+The PNG/texture pipeline is now covered through PNG decoding, AssetStore byte caching, deterministic file enumeration, and a regression test that reads PNG bytes from a synthetic archive through AssetStore.
 
 ### 2. After CI is green
 Continue with real-data compatibility:
@@ -144,7 +137,8 @@ Continue with real-data compatibility:
 ### 3. Rendering
 After data validation:
 - load PNGs from the archive
-- connect texture cache to the renderer
+- connect texture cache to the live ShipScene
+- use AssetStore::fileNames() against a user-supplied archive to identify real ship/background PNG paths
 - establish a real ship/background scene
 - add Vita Japanese text rendering using the Vita font/PVF facilities
 - then build the FTL HUD/menu layer
@@ -168,11 +162,11 @@ Suggested tracking:
 
 | Area | State |
 |---|---|
-| Host build/test | Active — latest run currently failing |
+| Host build/test | Green — run #298 |
 | Archive reader | Implemented; real `ftl.dat` validation pending |
 | BXML | Implemented/tested |
-| PNG/texture pipeline | Next major slice |
-| Blueprint/data integration | In progress / next after assets |
+| PNG/texture pipeline | Implemented/tested; live asset hookup next |
+| Blueprint/data integration | Prototype implemented |
 | Ship/runtime simulation | Prototype implemented |
 | Combat | Prototype implemented; regression tests active |
 | Vita renderer | Bring-up stage |
