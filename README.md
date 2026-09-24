@@ -37,7 +37,8 @@ This is the localization foundation; the remaining UI renderer work will connect
 The current Vita scene is an early playable-systems prototype and is **not yet the complete FTL game**.
 
 The remaining work is being done in dependency order:
-1. PNG/texture loading from `ftl.dat`
+1. Validate real user-supplied `ftl.dat` contents and Japanese resource paths
+2. PNG/texture loading from `ftl.dat`
 2. Blueprint/database layer
 3. Ship rooms, doors and systems
 4. Crew/weapons/projectiles and combat simulation
@@ -45,11 +46,20 @@ The remaining work is being done in dependency order:
 6. FTL UI, Japanese text rendering and touch controls
 7. audio
 8. save/load
-9. mod support
+10. mod support
 
-FTL game assets are not distributed by this repository. Put your legally obtained `ftl.dat` at:
+FTL game assets are not distributed by this repository. The runtime expects a user-supplied `ftl.dat` and never embeds it in the repository.
 
-`ux0:data/wormhole/ftl.dat`
+- Vita: `ux0:data/wormhole/ftl.dat`
+- Host: set `FTL_DAT_PATH` to your local `ftl.dat`, or place it at `./ftl.dat`
+
+For example:
+
+```sh
+FTL_DAT_PATH=/path/to/your/ftl.dat ./build/vita_wormhole_prototype
+```
+
+The archive reader supports both the Tachyon prototype `PKG\\n` container and the vanilla FTL `.dat` layout. The latter uses a little-endian file-slot table followed by per-file size, filename length, UTF-8 filename and file body.
 
 ## Vita build
 
