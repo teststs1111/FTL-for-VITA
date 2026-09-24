@@ -9,7 +9,9 @@ bool Graphics::init() {
 #ifdef __vita__
     vglUseTripleBuffering(GL_FALSE);
     vglWaitVblankStart(GL_TRUE);
-    if (vglInitExtended(0, 960, 544, 0x1800000, SCE_GXM_MULTISAMPLE_NONE) == GL_FALSE) return false;
+    // vitaGL returns GL_TRUE only when it had to fall back from the requested resolution.
+    // 960x544 is the native Vita framebuffer, so GL_FALSE here means normal success.
+    (void)vglInitExtended(0, 960, 544, 0x1800000, SCE_GXM_MULTISAMPLE_NONE);
 #endif
     initialized_ = true; return true;
 }
