@@ -417,6 +417,7 @@ static void testShipRuntime() {
     assert(combat.player.setDronePowered(1, true));
     combat.update(0.9f);
     assert(combat.player.drones[0].active == false);
+    combat.enemy.shieldLayers = 0;
     const int droneHullBefore = combat.enemy.hull;
     combat.update(0.1f);
     assert(combat.pendingShotCount() >= 1);
