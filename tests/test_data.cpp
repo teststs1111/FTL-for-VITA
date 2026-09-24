@@ -528,6 +528,10 @@ static void testShipRuntime() {
     assert(combat.load(content, enemyForCombat));
     assert(combat.setTargetRoom(0));
     assert(combat.player.setSystemPowered(2, true));
+    for (auto& weapon : combat.enemy.weapons) {
+        weapon.ready = false;
+        weapon.charge = 0.0f;
+    }
     combat.player.weapons[0].shieldPiercing = 0;
     combat.player.updateWeapons(2.5f);
     combat.enemy.shieldLayers = 1;
