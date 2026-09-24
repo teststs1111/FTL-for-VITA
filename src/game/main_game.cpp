@@ -38,6 +38,18 @@ public:
         text_.shutdown(graphics_);
     }
 
+    void discoverRoomTextures() {
+        const LoadedShip* ship = content_.playerShip();
+        if (!ship) return;
+        roomTextureNames_.clear();
+        for (const auto& system : ship->blueprint.systems) {
+            if (system.room < 0 || system.system.empty()) continue;
+            const std::string candidate = "img/ship/interior/room_" + system.system + ".png";
+            if (textures_.load(graphics_, content_.assets(), candidate))
+                roomTextureNames_[system.room] = candidate;
+        }
+    }
+
     void discoverShipTexture() {
         const LoadedShip* ship = content_.playerShip();
         if (!ship) return;
@@ -306,9 +318,16 @@ public:
             const bool selected = room.id == ship->layout.rooms[std::min(selectedRoom_, static_cast<int>(ship->layout.rooms.size()) - 1)].id;
             const int damage = (room.id >= 0 && room.id < static_cast<int>(runtime_.roomDamage.size()))
                 ? runtime_.roomDamage[room.id] : 0;
-            graphics_.fillRect(x, y, w, h, selected
-                ? Color{0.18f, 0.32f, 0.42f, 1.f}
-                : (damage > 0 ? Color{0.28f, 0.12f, 0.12f, 1.f} : Color{0.10f, 0.18f, 0.25f, 1.f}));
+            const auto textureIt = roomTextureNames_.find(room.id);
+            const Texture* roomTexture = textureIt == roomTextureNames_.end()
+                ? nullptr : textures_.get(textureIt->second);
+            if (roomTexture && roomTexture->width() > 0 && roomTexture->height() > 0) {
+                graphics_.drawTexture(*roomTexture, x, y, w, h);
+            } else {
+                graphics_.fillRect(x, y, w, h, selected
+                    ? Color{0.18f, 0.32f, 0.42f, 1.f}
+                    : (damage > 0 ? Color{0.28f, 0.12f, 0.12f, 1.f} : Color{0.10f, 0.18f, 0.25f, 1.f}));
+            }
             graphics_.drawLine(x, y, x + w, y, {0.35f, 0.65f, 0.85f, 1.f});
             graphics_.drawLine(x + w, y, x + w, y + h, {0.35f, 0.65f, 0.85f, 1.f});
             graphics_.drawLine(x + w, y + h, x, y + h, {0.35f, 0.65f, 0.85f, 1.f});
