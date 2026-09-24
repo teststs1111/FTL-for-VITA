@@ -105,9 +105,9 @@ static std::vector<std::uint16_t> utf8ToUtf16(std::string_view text) {
     return out;
 }
 
-static ScePvfFontId selectFont(TextRenderer::Impl& impl, std::uint16_t codepoint) {
-    if (codepoint >= 0x3000) return impl.japanese ? impl.japanese : impl.latin;
-    return impl.latin ? impl.latin : impl.japanese;
+static ScePvfFontId selectFont(ScePvfFontId japanese, ScePvfFontId latin, std::uint16_t codepoint) {
+    if (codepoint >= 0x3000) return japanese ? japanese : latin;
+    return latin ? latin : japanese;
 }
 #endif
 
@@ -125,7 +125,7 @@ void TextRenderer::draw(Graphics& graphics, std::string_view text, float x, floa
         int maxHeight = size;
 
         for (const auto code : chars) {
-            auto font = selectFont(*impl_, code);
+            auto font = selectFont(impl_->japanese, impl_->latin, code);
             if (!font) continue;
             if (scePvfSetCharSize(font, static_cast<float>(size), static_cast<float>(size)) < 0)
                 continue;
