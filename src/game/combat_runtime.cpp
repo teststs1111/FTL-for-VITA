@@ -66,6 +66,8 @@ void CombatRuntime::update(float dt) {
 
     player.updateWeapons(dt);
     enemy.updateWeapons(dt);
+    player.updateDrones(dt);
+    enemy.updateDrones(dt);
     player.updateShields(dt);
     enemy.updateShields(dt);
     player.updateEnvironment(dt);
@@ -111,6 +113,21 @@ void CombatRuntime::update(float dt) {
     if (outcome != CombatOutcome::Ongoing) return;
 
 
+}
+
+bool CombatRuntime::selectWeapon(int weaponIndex) {
+    if (weaponIndex < 0 || weaponIndex >= static_cast<int>(player.weapons.size()))
+        return false;
+    selectedWeapon = weaponIndex;
+    return true;
+}
+
+bool CombatRuntime::setEnemyTargetRoom(int roomId) {
+    if (!player.valid || roomId < 0 ||
+        roomId >= static_cast<int>(player.content.layout.rooms.size()))
+        return false;
+    enemyTargetRoom = roomId;
+    return true;
 }
 
 bool CombatRuntime::setTargetRoom(int roomId) {
