@@ -36,6 +36,7 @@ add_library(wormhole_core
     src/data/ship_content.cpp
     src/render/png_loader.cpp
     src/render/texture_cache.cpp
+    src/render/text_renderer.cpp
 )
 target_include_directories(wormhole_core PUBLIC include)
 target_link_libraries(wormhole_core PUBLIC PNG::PNG)
@@ -44,6 +45,7 @@ add_executable(vita_wormhole_prototype src/main.cpp)
 target_link_libraries(vita_wormhole_prototype PRIVATE wormhole_core)
 
 if(VITA)
+    target_link_libraries(wormhole_core PUBLIC ScePvf_stub)
     target_link_libraries(vita_wormhole_prototype PRIVATE
         vitaGL
         SceCtrl_stub
