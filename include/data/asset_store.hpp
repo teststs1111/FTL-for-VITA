@@ -12,7 +12,7 @@ public:
     bool openArchive(const std::string& path);
     bool isOpen() const { return archive_.isOpen(); }
 
-    const std::vector<std::uint8_t>* getBytes(const std::string& name);
+    const std::vector<std::uint8_t>* getBytes(const std::string& name);\n    std::vector<std::string> fileNames() const;
     void clearCache();
 
 private:
