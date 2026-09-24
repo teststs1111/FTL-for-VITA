@@ -13,7 +13,7 @@ find_package(PNG REQUIRED)
 
 if(VITA)
     include("$ENV{VITASDK}/share/vita.cmake" REQUIRED)
-    set(VITA_APP_NAME "FTL for PS Vita")
+    set(VITA_APP_NAME "FTL: Faster Than Light")
     set(VITA_TITLEID "FTLV00001")
     set(VITA_VERSION "01.00")
 endif()
