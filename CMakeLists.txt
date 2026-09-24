@@ -50,6 +50,7 @@ if(VITA)
         SceDisplay_stub
         SceGxm_stub
         SceTouch_stub
+        ScePvf_stub
     )
     vita_create_self(eboot.bin vita_wormhole_prototype UNSAFE)
     vita_create_vpk(FTL-for-VITA.vpk ${VITA_TITLEID} eboot.bin
