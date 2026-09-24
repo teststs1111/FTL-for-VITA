@@ -23,6 +23,7 @@ add_library(wormhole_core
     src/game/main_game.cpp
     src/game/ship_runtime.cpp
     src/game/combat_runtime.cpp
+    src/i18n/localization.cpp
     src/render/graphics.cpp
     src/render/texture.cpp
     src/platform/input.cpp
@@ -67,4 +68,8 @@ if(BUILD_TESTS AND NOT VITA)
     add_executable(test_input tests/test_input.cpp)
     target_link_libraries(test_input PRIVATE wormhole_core)
     add_test(NAME input COMMAND test_input)
+
+    add_executable(test_localization tests/test_localization.cpp)
+    target_link_libraries(test_localization PRIVATE wormhole_core)
+    add_test(NAME localization COMMAND test_localization)
 endif()
