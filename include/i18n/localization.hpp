@@ -2,6 +2,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 namespace wormhole {
 
@@ -18,6 +19,7 @@ public:
     Locale locale() const { return locale_; }
 
     std::string_view tr(std::string_view key) const;
+    bool loadFtlTextXml(const std::vector<std::uint8_t>& data);
 
 private:
     Locale locale_{Locale::Japanese};
