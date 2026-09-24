@@ -473,6 +473,10 @@ static void testShipRuntime() {
     assert(combat.setTargetRoom(0));
     assert(combat.load(content, enemyForCombat));
     assert(combat.player.setDronePowered(1, true));
+    for (auto& weapon : combat.enemy.weapons) {
+        weapon.ready = false;
+        weapon.charge = 0.0f;
+    }
     combat.enemy.setSystemPowered(1, true);
     combat.enemy.updateWeapons(2.5f);
     combat.player.shieldLayers = 0;
