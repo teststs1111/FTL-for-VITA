@@ -417,6 +417,10 @@ static void testShipRuntime() {
     assert(combat.player.drones[0].weaponCooldown == 1.0f);
     assert(combat.player.setDronePowered(0, true));
     assert(combat.player.setDronePowered(1, true));
+    for (auto& weapon : combat.enemy.weapons) {
+        weapon.ready = false;
+        weapon.charge = 0.0f;
+    }
     combat.update(0.9f);
     assert(combat.player.drones[0].active == false);
     combat.enemy.shieldLayers = 0;
