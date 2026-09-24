@@ -87,7 +87,7 @@ void CombatRuntime::update(float dt) {
 
     // Defense drones intercept one eligible incoming projectile when charged.
     for (auto it = shots_.begin(); it != shots_.end();) {
-        ShipRuntime& defender = it->fromPlayer ? player : enemy;
+        ShipRuntime& defender = it->fromPlayer ? enemy : player;
         bool intercepted = false;
         for (auto& drone : defender.drones) {
             if (drone.type != DroneBlueprint::Type::Defense || !drone.powered || !drone.active)
