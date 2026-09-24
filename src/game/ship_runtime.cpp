@@ -171,6 +171,37 @@ bool ShipRuntime::fireWeapon(int weaponIndex) {
     return true;
 }
 
+void ShipRuntime::updateDrones(float dt) {
+    if (!valid || dt <= 0.f) return;
+    for (auto& drone : drones) {
+        if (!drone.powered) {
+            drone.active = false;
+            continue;
+        }
+        if (drone.cooldown <= 0) {
+            drone.active = true;
+            continue;
+        }
+        drone.charge = std::min(drone.cooldown, drone.charge + static_cast<int>(dt * 1000.0f));
+        if (drone.charge >= drone.cooldown) drone.active = true;
+    }
+}
+
+bool ShipRuntime::setDronePowered(int droneIndex, bool powered) {
+    if (!valid || droneIndex < 0 || droneIndex >= static_cast<int>(drones.size())) return false;
+    RuntimeDrone& drone = drones[droneIndex];
+    if (drone.powered == powered) return false;
+    if (powered) {
+        int used = usedReactorPower();
+        for (const auto& other : drones)
+            if (other.powered) used += std::max(1, other.power);
+        if (reactor - used < std::max(1, drone.power)) return false;
+    }
+    drone.powered = powered;
+    if (!powered) drone.active = false;
+    return true;
+}
+
 void ShipRuntime::reset() {
     content = {};
     hull = maxHull = reactor = 0;
@@ -372,7 +403,12 @@ int ShipRuntime::usedReactorPower() const {
 }
 
 int ShipRuntime::availableReactorPower() const {
-    return std::max(0, reactor - usedReactorPower());
+    int used = 0;
+    for (const auto& system : systems)
+        if (system.powered) used += std::max(0, system.power);
+    for (const auto& drone : drones)
+        if (drone.powered) used += std::max(1, drone.power);
+    return std::max(0, reactor - used);
 }
 
 }
