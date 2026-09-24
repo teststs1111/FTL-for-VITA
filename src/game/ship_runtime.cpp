@@ -58,6 +58,15 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         drone.speed = std::max(0, blueprint.speed);
         drone.cooldown = std::max(0, blueprint.cooldown);
         drone.dodge = std::clamp(blueprint.dodge, 0, 100);
+        drone.weaponCooldown = std::max(0.1f, blueprint.weaponCooldown);
+        drone.weaponShots = std::max(1, blueprint.weaponShots);
+        drone.weaponDamage = std::max(0, blueprint.weaponDamage);
+        drone.weaponSystemDamage = std::max(0, blueprint.weaponSystemDamage);
+        drone.weaponIonDamage = std::max(0, blueprint.weaponIonDamage);
+        drone.weaponShieldPiercing = std::max(0, blueprint.weaponShieldPiercing);
+        drone.weaponPersonnelDamage = std::max(0, blueprint.weaponPersonnelDamage);
+        drone.weaponSpeed = std::max(0, blueprint.speed);
+        drone.weaponCharge = 0.0f;
         drone.charge = 0;
         drone.powered = false;
         drone.active = false;
@@ -179,12 +188,20 @@ void ShipRuntime::updateDrones(float dt) {
             drone.active = false;
             continue;
         }
-        if (drone.cooldown <= 0) {
+        const bool combatDrone = drone.type == DroneBlueprint::Type::Combat;
+        const float cooldownSeconds = combatDrone ? drone.weaponCooldown
+                                                  : static_cast<float>(std::max(0, drone.cooldown)) / 1000.0f;
+        if (cooldownSeconds <= 0.0f) {
             drone.active = true;
             continue;
         }
-        drone.charge = std::min(drone.cooldown, drone.charge + static_cast<int>(dt * 1000.0f));
-        if (drone.charge >= drone.cooldown) drone.active = true;
+        if (combatDrone) {
+            drone.weaponCharge = std::min(cooldownSeconds, drone.weaponCharge + dt);
+            drone.active = drone.weaponCharge >= cooldownSeconds;
+        } else {
+            drone.charge = std::min(drone.cooldown, drone.charge + static_cast<int>(dt * 1000.0f));
+            drone.active = drone.charge >= drone.cooldown; 
+        }
     }
 }
 
@@ -197,7 +214,7 @@ bool ShipRuntime::setDronePowered(int droneIndex, bool powered) {
         if (reactor - used < std::max(1, drone.power)) return false;
     }
     drone.powered = powered;
-    if (!powered) drone.active = false;
+    if (!powered) { drone.active = false; drone.weaponCharge = 0.0f; }
     return true;
 }
 
