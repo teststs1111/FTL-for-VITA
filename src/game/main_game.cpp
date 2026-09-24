@@ -30,6 +30,7 @@ public:
                 combat_.load(content_, enemy);
             discoverRoomTextures();
             discoverWeaponAndDroneTextures();
+            discoverCrewTextures();
             discoverShipTexture();
             text_.init();
         }
@@ -97,6 +98,23 @@ public:
                     droneTextureNames_[drone.first] = candidate;
                     if (!drone.second.name.empty())
                         droneTextureNames_[drone.second.name] = candidate;
+                    break;
+                }
+            }
+        }
+    }
+
+    void discoverCrewTextures() {
+        crewTextureNames_.clear();
+        for (const auto& crew : content_.playerShip()->blueprint.crew) {
+            if (crew.race.empty()) continue;
+            const std::vector<std::string> candidates = {
+                "img/people/" + crew.race + "_base.png",
+                "img/people/" + crew.race + ".png"
+            };
+            for (const auto& candidate : candidates) {
+                if (textures_.load(graphics_, content_.assets(), candidate)) {
+                    crewTextureNames_[crew.race] = candidate;
                     break;
                 }
             }
@@ -455,9 +473,18 @@ public:
                 if (room.id != crew.room) continue;
                 const float x = originX + (room.x + ship->layout.xOffset) * scale + scale * 0.5f;
                 const float y = originY + (room.y + ship->layout.yOffset) * scale + scale * 0.5f;
-                const float size = 5.f;
-                graphics_.fillRect(x - size * 0.5f, y - size * 0.5f, size, size,
-                    {0.9f, 0.9f, 0.35f, 1.f});
+                const auto it = crewTextureNames_.find(crew.race);
+                const Texture* texture = it == crewTextureNames_.end() ? nullptr : textures_.get(it->second);
+                if (texture && texture->width() > 0 && texture->height() > 0) {
+                    const float w = 13.f;
+                    const float h = w * static_cast<float>(texture->height()) / texture->width();
+                    graphics_.drawTexture(*texture, x - w * 0.5f, y - std::min(20.f, h) * 0.5f,
+                        w, std::min(20.f, h));
+                } else {
+                    const float size = 5.f;
+                    graphics_.fillRect(x - size * 0.5f, y - size * 0.5f, size, size,
+                        {0.9f, 0.9f, 0.35f, 1.f});
+                }
                 break;
             }
         }
@@ -514,6 +541,7 @@ private:
     std::unordered_map<int, std::string> roomTextureNames_;
     std::unordered_map<std::string, std::string> weaponTextureNames_;
     std::unordered_map<std::string, std::string> droneTextureNames_;
+    std::unordered_map<std::string, std::string> crewTextureNames_;
     std::string shipTextureName_;
 };
 
