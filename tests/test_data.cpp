@@ -414,6 +414,7 @@ static void testShipRuntime() {
     assert(combat.player.drones[0].weaponDamage == 1);
     assert(combat.player.drones[0].weaponSystemDamage == 1);
     assert(combat.player.drones[0].weaponSpeed == 10);
+    assert(combat.player.drones[0].weaponCooldown == 1.0f);
     assert(combat.player.setDronePowered(0, true));
     assert(combat.player.setDronePowered(1, true));
     combat.update(0.9f);
