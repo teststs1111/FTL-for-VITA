@@ -65,6 +65,8 @@ public:
                 for (const auto& candidate : candidates) {
                     if (textures_.load(graphics_, content_.assets(), candidate)) {
                         dst[weapon.first] = candidate;
+                        if (!weapon.second.name.empty())
+                            dst[weapon.second.name] = candidate;
                         break;
                     }
                 }
@@ -80,6 +82,8 @@ public:
             for (const auto& candidate : candidates) {
                 if (textures_.load(graphics_, content_.assets(), candidate)) {
                     droneTextureNames_[drone.first] = candidate;
+                    if (!drone.second.name.empty())
+                        droneTextureNames_[drone.second.name] = candidate;
                     break;
                 }
             }
