@@ -5,6 +5,7 @@
 #include "game/combat_runtime.hpp"
 #include "render/graphics.hpp"
 #include "render/texture_cache.hpp"
+#include "render/text_renderer.hpp"
 #include "platform/input.hpp"
 #include <algorithm>
 #include <cctype>
@@ -25,11 +26,13 @@ public:
             if (!enemy.blueprint.id.empty())
                 combat_.load(content_, enemy);
             discoverShipTexture();
+            text_.init();
         }
     }
 
     ~ShipScene() override {
         textures_.clear(graphics_);
+        text_.shutdown(graphics_);
     }
 
     void discoverShipTexture() {
@@ -339,6 +342,9 @@ public:
             }
         }
 
+        text_.draw(graphics_, "FTL", 60.f, 35.f, 28.f, {0.85f, 0.9f, 1.f, 1.f});
+        text_.draw(graphics_, "艦内システム", 60.f, 68.f, 20.f, {0.7f, 0.85f, 1.f, 1.f});
+
         if (!shipTextureName_.empty()) {
             const Texture* texture = textures_.get(shipTextureName_);
             if (texture && texture->width() > 0 && texture->height() > 0) {
@@ -383,6 +389,7 @@ private:
     int selectedRoom_{0};
     int selectedCrew_{0};
     TextureCache textures_;
+    TextRenderer text_;
     std::string shipTextureName_;
 };
 
