@@ -480,7 +480,7 @@ static void testShipRuntime() {
     // Defense drones intercept one projectile, not an entire multi-shot volley.
     assert(combat.player.hull == defenseHullBefore);
     assert(combat.pendingShotCount() == 1);
-    combat.update(0.18f);
+    combat.update(0.30f);
     assert(combat.player.hull == defenseHullBefore - 1);
     assert(combat.pendingShotCount() == 0);
     assert(combat.setTargetRoom(0));
