@@ -14,6 +14,7 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     impactResults_.clear();
     lastImpactResult_ = {};
     hasImpactResult_ = false;
+    enemyFireDelay_ = 0.0f;
 
     const LoadedShip* playerShip = contentSource.playerShip();
     if (!playerShip) return false;
