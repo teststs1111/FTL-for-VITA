@@ -477,7 +477,11 @@ static void testShipRuntime() {
     combat.update(0.1f);
     // The defense drone intercepts the incoming laser on this update and immediately spends its charge.\n    assert(combat.player.drones[1].active == false);
     combat.update(0.01f);
+    // Defense drones intercept one projectile, not an entire multi-shot volley.
     assert(combat.player.hull == defenseHullBefore);
+    assert(combat.pendingShotCount() == 1);
+    combat.update(0.14f);
+    assert(combat.player.hull == defenseHullBefore - 1);
     assert(combat.pendingShotCount() == 0);
     assert(combat.setTargetRoom(0));
     assert(combat.player.setSystemPowered(2, true));
