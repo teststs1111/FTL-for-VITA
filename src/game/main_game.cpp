@@ -28,6 +28,8 @@ public:
             }
             if (!enemy.blueprint.id.empty())
                 combat_.load(content_, enemy);
+            discoverRoomTextures();
+            discoverWeaponAndDroneTextures();
             discoverShipTexture();
             text_.init();
         }
@@ -283,6 +285,51 @@ public:
                                  : Color{1.f, 0.3f, 0.2f, 1.f});
         }
 
+
+        // Use the real FTL weapon/drone artwork discovered from the blueprints.
+        auto drawRuntimeArtwork = [&](const ShipRuntime& ship, float originX) {
+            int weaponRoom = -1;
+            for (const auto& system : ship.systems) {
+                if (system.type == "weapons" && system.room >= 0) {
+                    weaponRoom = system.room;
+                    break;
+                }
+            }
+            if (weaponRoom >= 0) {
+                for (const auto& weapon : ship.weapons) {
+                    const auto it = weaponTextureNames_.find(weapon.name);
+                    if (it == weaponTextureNames_.end()) continue;
+                    const Texture* texture = textures_.get(it->second);
+                    if (!texture || texture->width() <= 0 || texture->height() <= 0) continue;
+                    const auto center = roomCenter(ship, originX, weaponRoom);
+                    const float aspect = static_cast<float>(texture->width()) / texture->height();
+                    const float w = 28.f;
+                    const float h = w / std::max(0.1f, aspect);
+                    graphics_.drawTexture(*texture, center.first - w * 0.5f,
+                        center.second - h * 0.5f, w, h);
+                    break;
+                }
+            }
+
+            int droneSlot = 0;
+            for (const auto& drone : ship.drones) {
+                const auto it = droneTextureNames_.find(drone.name);
+                if (it == droneTextureNames_.end()) continue;
+                const Texture* texture = textures_.get(it->second);
+                if (!texture || texture->width() <= 0 || texture->height() <= 0) continue;
+                const float x = originX + 18.f + droneSlot * 34.f;
+                const float y = originY - 42.f;
+                const float aspect = static_cast<float>(texture->width()) / texture->height();
+                const float w = 24.f;
+                const float h = w / std::max(0.1f, aspect);
+                graphics_.drawTexture(*texture, x - w * 0.5f, y - h * 0.5f, w, h);
+                ++droneSlot;
+            }
+        };
+
+        drawRuntimeArtwork(combat_.player, leftX);
+        drawRuntimeArtwork(combat_.enemy, rightX);
+
         const float playerHull = combat_.player.maxHull > 0
             ? static_cast<float>(combat_.player.hull) / combat_.player.maxHull : 0.f;
         const float enemyHull = combat_.enemy.maxHull > 0
@@ -447,6 +494,9 @@ private:
     int selectedCrew_{0};
     TextureCache textures_;
     TextRenderer text_;
+    std::unordered_map<int, std::string> roomTextureNames_;
+    std::unordered_map<std::string, std::string> weaponTextureNames_;
+    std::unordered_map<std::string, std::string> droneTextureNames_;
     std::string shipTextureName_;
 };
 
