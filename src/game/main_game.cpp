@@ -15,8 +15,11 @@ namespace wormhole {
 
 class ShipScene final : public GameState {
 public:
-    ShipScene(Graphics& graphics, Input& input, const char* archivePath) : graphics_(graphics), input_(input) {
-        if (archivePath && content_.open(archivePath) && content_.loadPlayerShip()) {
+    ShipScene(Graphics& graphics, Input& input, Localization& localization, const char* archivePath) : graphics_(graphics), input_(input), localization_(localization) {
+        if (archivePath && content_.open(archivePath)) {
+            if (const auto* bytes = content_.assets().getBytes("data/text-ja.xml"))
+                localization_.loadFtlTextXml(*bytes);
+            if (!content_.loadPlayerShip()) return;
             runtime_.load(content_);
             LoadedShip enemy;
             if (!content_.loadShip("ENEMY_SHIP", enemy)) {
@@ -380,6 +383,7 @@ public:
 private:
     Graphics& graphics_;
     Input& input_;
+    Localization& localization_;
     ShipContent content_;
     ShipRuntime runtime_;
     CombatRuntime combat_;
@@ -398,7 +402,7 @@ MainGame::~MainGame() { shutdown(); }
 
 void MainGame::init(Graphics& graphics, Input& input, const char* archivePath) {
     if (initialized_) return;
-    state_ = std::make_unique<ShipScene>(graphics, input, archivePath);
+    state_ = std::make_unique<ShipScene>(graphics, input, localization_, archivePath);
     initialized_ = true;
 }
 
