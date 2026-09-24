@@ -78,7 +78,7 @@ bool FtlDat::open(const std::string& path) {
         in.read(reinterpret_cast<char*>(&len), 4);
         in.read(reinterpret_cast<char*>(&nameLen), 4);
         if (!in || nameLen == 0 || std::uint64_t(offset) + 8ull + nameLen + len > size) return false;
-        std::string name(nameLen, '\\0');
+        std::string name(nameLen, '\0');
         in.read(name.data(), static_cast<std::streamsize>(nameLen));
         if (!in) return false;
         const auto bodyOffset = static_cast<std::uint32_t>(offset + 8ull + nameLen);
