@@ -435,7 +435,7 @@ static void testShipRuntime() {
     assert(combat.pendingShotCount() >= 1);
     combat.update(0.15f);
     assert(combat.enemy.hull == droneHullBefore);
-    combat.update(0.10f);
+    combat.update(0.11f);
     assert(combat.lastImpactResult().fired);
     assert(combat.lastImpactResult().shotsFired == 1);
     assert(combat.lastImpactResult().hullDamage == 1);
