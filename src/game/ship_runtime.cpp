@@ -192,9 +192,7 @@ bool ShipRuntime::setDronePowered(int droneIndex, bool powered) {
     RuntimeDrone& drone = drones[droneIndex];
     if (drone.powered == powered) return false;
     if (powered) {
-        int used = usedReactorPower();
-        for (const auto& other : drones)
-            if (other.powered) used += std::max(1, other.power);
+        const int used = usedReactorPower();
         if (reactor - used < std::max(1, drone.power)) return false;
     }
     drone.powered = powered;
