@@ -50,6 +50,40 @@ public:
         }
     }
 
+    void discoverWeaponAndDroneTextures() {
+        weaponTextureNames_.clear();
+        droneTextureNames_.clear();
+        for (const auto& weapon : content_.blueprints().weapons()) {
+            const auto add = [&](std::unordered_map<std::string, std::string>& dst, const std::string& stem) {
+                if (stem.empty()) return;
+                const std::vector<std::string> candidates = {
+                    "img/weapons/" + stem + ".png",
+                    "img/weapon/" + stem + ".png"
+                };
+                for (const auto& candidate : candidates) {
+                    if (textures_.load(graphics_, content_.assets(), candidate)) {
+                        dst[weapon.first] = candidate;
+                        break;
+                    }
+                }
+            };
+            add(weaponTextureNames_, weapon.second.projectile);
+        }
+        for (const auto& drone : content_.blueprints().drones()) {
+            if (drone.second.droneImage.empty()) continue;
+            const std::vector<std::string> candidates = {
+                "img/drones/" + drone.second.droneImage + ".png",
+                "img/drone/" + drone.second.droneImage + ".png"
+            };
+            for (const auto& candidate : candidates) {
+                if (textures_.load(graphics_, content_.assets(), candidate)) {
+                    droneTextureNames_[drone.first] = candidate;
+                    break;
+                }
+            }
+        }
+    }
+
     void discoverShipTexture() {
         const LoadedShip* ship = content_.playerShip();
         if (!ship) return;
