@@ -21,47 +21,70 @@ bool FtlDat::open(const std::string& path) {
     std::ifstream in(path, std::ios::binary | std::ios::ate);
     if (!in) return false;
     const auto size = static_cast<std::uint64_t>(in.tellg());
-    if (size < 16) return false;
+    if (size < 8) return false;
 
+    // Tachyon's reconstructed PKG container is kept for the existing prototype.
     in.seekg(0);
-    std::vector<std::uint8_t> header(16);
-    in.read(reinterpret_cast<char*>(header.data()), 16);
-    if (header[0] != 'P' || header[1] != 'K' || header[2] != 'G' || header[3] != '\n') return false;
-    if (be16(&header[4]) != 16 || be16(&header[6]) != 20) return false;
-
-    const std::uint32_t count = be32(&header[8]);
-    const std::uint32_t nameSize = be32(&header[12]);
-    const std::uint64_t entriesEnd = 16ull + 20ull * count;
-    const std::uint64_t namesEnd = entriesEnd + nameSize;
-    if (entriesEnd > size || namesEnd > size) return false;
-
-    std::vector<std::uint8_t> entries(20ull * count), names(nameSize);
-    in.read(reinterpret_cast<char*>(entries.data()), static_cast<std::streamsize>(entries.size()));
-    in.read(reinterpret_cast<char*>(names.data()), static_cast<std::streamsize>(names.size()));
-    if (!in) return false;
-
-    for (std::uint32_t i = 0; i < count; ++i) {
-        const auto* e = entries.data() + i * 20;
-        if (e[4] != 0) return false; // Tachyon currently rejects compressed entries.
-
-        const auto nameOffset = be24(e + 5);
-        if (nameOffset >= names.size()) return false;
-        std::size_t end = nameOffset;
-        while (end < names.size() && names[end] != 0) ++end;
-        if (end == names.size()) return false;
-
-        std::string name(reinterpret_cast<const char*>(names.data() + nameOffset), end - nameOffset);
-        const auto offset = be32(e + 8);
-        const auto compressedSize = be32(e + 12);
-        const auto decompressedSize = be32(e + 16);
-        if (compressedSize != decompressedSize) return false;
-        if (std::uint64_t(offset) + decompressedSize > size) return false;
-
-        files_[std::move(name)] = Entry{offset, decompressedSize};
+    std::uint8_t magic[16]{};
+    in.read(reinterpret_cast<char*>(magic), static_cast<std::streamsize>(std::min<std::uint64_t>(16, size)));
+    if (size >= 16 && magic[0] == 'P' && magic[1] == 'K' && magic[2] == 'G' && magic[3] == '\n' &&
+        be16(&magic[4]) == 16 && be16(&magic[6]) == 20) {
+        const std::uint32_t count = be32(&magic[8]);
+        const std::uint32_t nameSize = be32(&magic[12]);
+        const std::uint64_t entriesEnd = 16ull + 20ull * count;
+        const std::uint64_t namesEnd = entriesEnd + nameSize;
+        if (entriesEnd > size || namesEnd > size) return false;
+        std::vector<std::uint8_t> entries(20ull * count), names(nameSize);
+        in.seekg(16);
+        in.read(reinterpret_cast<char*>(entries.data()), static_cast<std::streamsize>(entries.size()));
+        in.read(reinterpret_cast<char*>(names.data()), static_cast<std::streamsize>(names.size()));
+        if (!in) return false;
+        for (std::uint32_t i = 0; i < count; ++i) {
+            const auto* e = entries.data() + i * 20;
+            if (e[4] != 0) return false;
+            const auto nameOffset = be24(e + 5);
+            if (nameOffset >= names.size()) return false;
+            std::size_t end = nameOffset;
+            while (end < names.size() && names[end] != 0) ++end;
+            if (end == names.size()) return false;
+            std::string name(reinterpret_cast<const char*>(names.data() + nameOffset), end - nameOffset);
+            const auto offset = be32(e + 8);
+            const auto compressedSize = be32(e + 12);
+            const auto decompressedSize = be32(e + 16);
+            if (compressedSize != decompressedSize || std::uint64_t(offset) + decompressedSize > size) return false;
+            files_[std::move(name)] = Entry{offset, decompressedSize};
+        }
+        open_ = true;
+        return true;
     }
 
-    open_ = true;
-    return true;
+    // Vanilla FTL 1.6+ ftl.dat: little-endian file-slot table with UTF-8 names.
+    in.seekg(0);
+    std::uint32_t countBytes[1]{};
+    in.read(reinterpret_cast<char*>(countBytes), 4);
+    const std::uint32_t count = countBytes[0];
+    if (!in || count == 0 || count > 100000) return false;
+    if (8ull * count + 4ull > size) return false;
+    std::vector<std::uint32_t> offsets(count);
+    in.seekg(4);
+    in.read(reinterpret_cast<char*>(offsets.data()), static_cast<std::streamsize>(4ull * count));
+    if (!in) return false;
+    for (const auto offset : offsets) {
+        if (offset == 0) continue;
+        if (std::uint64_t(offset) + 8ull > size) return false;
+        in.seekg(offset);
+        std::uint32_t len = 0, nameLen = 0;
+        in.read(reinterpret_cast<char*>(&len), 4);
+        in.read(reinterpret_cast<char*>(&nameLen), 4);
+        if (!in || nameLen == 0 || std::uint64_t(offset) + 8ull + nameLen + len > size) return false;
+        std::string name(nameLen, '\\0');
+        in.read(name.data(), static_cast<std::streamsize>(nameLen));
+        if (!in) return false;
+        const auto bodyOffset = static_cast<std::uint32_t>(offset + 8ull + nameLen);
+        files_[std::move(name)] = Entry{bodyOffset, len};
+    }
+    open_ = !files_.empty();
+    return open_;
 }
 
 std::vector<std::uint8_t> FtlDat::readFile(const std::string& name) const {
