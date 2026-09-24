@@ -17,9 +17,24 @@ This repository is the working port tree. User-owned FTL assets such as `ftl.dat
 - vitaGL 960x544 bring-up renderer
 - PS Vita controller polling
 - Start+Select exit path for hardware bring-up
+- Japanese localization foundation with Japanese as the default Vita locale
+- English fallback catalog for development/testing
+- Localization regression tests
+
+### Localization
+
+The project now has a built-in localization service under `include/i18n/` and `src/i18n/`.
+
+- Default locale: **Japanese**
+- English remains available as a development fallback
+- Game/UI code uses stable translation keys instead of hard-coded Japanese strings
+- Missing Japanese entries fall back to English rather than rendering an empty label
+- The catalog already covers core FTL UI terms such as crew, weapons, shields, engines, oxygen, drones, hull, resources, map, beacon, sector, event, store, save/load, combat results, and touch controls
+
+This is the localization foundation; the remaining UI renderer work will connect these strings to the actual Vita HUD/menu screens. Japanese text rendering itself will be added as part of the Vita UI layer so UTF-8 Japanese is displayed correctly on hardware.
 
 ### Not yet implemented
-The current Vita scene is a renderer/input smoke test. It is **not yet the FTL game**.
+The current Vita scene is an early playable-systems prototype and is **not yet the complete FTL game**.
 
 The remaining work is being done in dependency order:
 1. PNG/texture loading from `ftl.dat`
@@ -27,7 +42,7 @@ The remaining work is being done in dependency order:
 3. Ship rooms, doors and systems
 4. Crew/weapons/projectiles and combat simulation
 5. Sector/beacon/event flow
-6. FTL UI and touch controls
+6. FTL UI, Japanese text rendering and touch controls
 7. audio
 8. save/load
 9. mod support
