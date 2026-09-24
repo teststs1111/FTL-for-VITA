@@ -13,7 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install modern vitaGL dependencies
-        run: vdpm install vitaShaRK libmathneon SceShaccCgExt
+        run: |
+          vdpm install vitaShaRK libmathneon SceShaccCgExt
+          git clone --depth 1 https://github.com/Rinnegatamante/vitaGL.git /tmp/vitaGL
+          make -C /tmp/vitaGL HAVE_SBRK=1 NO_SPLASHSCREEN=1 -j2
+          make -C /tmp/vitaGL install
       - name: Configure Vita build
         run: cmake -S . -B build-vita -DCMAKE_TOOLCHAIN_FILE=$VITASDK/share/vita.toolchain.cmake -DBUILD_TESTS=OFF
       - name: Build Vita VPK
