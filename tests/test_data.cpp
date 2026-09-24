@@ -335,7 +335,7 @@ static void testShipRuntime() {
         "power=\"1\" cooldown=\"2.5\" personnelDamage=\"20\"/>"
         "<weaponBlueprint name=\"DRONE_LASER\" type=\"LASER\" weaponArt=\"laser\" image=\"laser\" shots=\"1\" damage=\"1\" sysDamage=\"1\" speed=\"10\" power=\"1\" cooldown=\"1.0\"/>"
         "<droneBlueprint name=\"COMBAT_TEST\"><type>COMBAT</type><power>1</power><speed>10</speed><weaponBlueprint>DRONE_LASER</weaponBlueprint></droneBlueprint>"
-        "<droneBlueprint name=\"DEFENSE_TEST\"><type>DEFENSE</type><power>1</power><cooldown>1000</cooldown><target>LASERS</target></droneBlueprint>"
+        "<droneBlueprint name=\"DEFENSE_TEST\"><type>DEFENSE</type><power>1</power><cooldown>100</cooldown><target>LASERS</target></droneBlueprint>"
         ;
     const std::string fullBlueprints =
         "<FTL>" + blueprintXml + weaponXml + enemyXml + "</FTL>";
