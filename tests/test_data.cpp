@@ -144,13 +144,16 @@ static void testAssetStore() {
     const std::string path = "test_asset_store.dat";
     const std::string name = "hello.txt";
     const std::string payload = "cached";
-    writeFile(path, makeArchive(name, payload));
+    writeFile(path, makeArchive({{"zeta.txt", "z"}, {name, payload}}));
     wormhole::AssetStore store;
     assert(store.openArchive(path));
     const auto* first = store.getBytes(name);
     const auto* second = store.getBytes(name);
     assert(first && first == second);
     assert(std::string(first->begin(), first->end()) == payload);
+    const auto names = store.fileNames();
+    assert(names.size() == 2);
+    assert(names[0] == "hello.txt" && names[1] == "zeta.txt");
     std::remove(path.c_str());
 }
 
@@ -473,7 +476,7 @@ static void testShipRuntime() {
     combat.enemy.setSystemPowered(1, true);
     combat.enemy.updateWeapons(2.5f);
     combat.player.shieldLayers = 0;
-    const int defenseHullBefore = combat.player.hull;
+    // Start fully charged so this regression test isolates interception behavior.\n    combat.player.drones[1].charge = combat.player.drones[1].cooldown;\n    combat.player.drones[1].active = true;\n    const int defenseHullBefore = combat.player.hull;
     combat.update(0.1f);
     // The defense drone intercepts the incoming laser on this update and immediately spends its charge.\n    assert(combat.player.drones[1].active == false);
     combat.update(0.01f);
