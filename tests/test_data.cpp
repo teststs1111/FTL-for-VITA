@@ -493,6 +493,10 @@ static void testShipRuntime() {
     combat.update(0.30f);
     assert(combat.player.hull == defenseHullBefore - 1);
     assert(combat.pendingShotCount() == 0);
+    wormhole::CombatResult defenseImpact;
+    assert(combat.consumeImpactResult(defenseImpact));
+    assert(defenseImpact.hullDamage == 1);
+    assert(defenseImpact.personnelDamage == 0);
     assert(combat.setTargetRoom(0));
     assert(combat.player.setSystemPowered(2, true));
     combat.player.updateWeapons(2.5f);
