@@ -57,6 +57,7 @@ private:
     std::deque<CombatResult> impactResults_;
     CombatResult lastImpactResult_{};
     bool hasImpactResult_{false};
+    float enemyFireDelay_{0.0f};
 };
 
 } 
