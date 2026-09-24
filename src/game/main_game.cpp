@@ -4,8 +4,10 @@
 #include "game/ship_runtime.hpp"
 #include "game/combat_runtime.hpp"
 #include "render/graphics.hpp"
+#include "render/texture_cache.hpp"
 #include "platform/input.hpp"
 #include <algorithm>
+#include <cctype>
 #include <utility>
 
 namespace wormhole {
@@ -22,7 +24,28 @@ public:
             }
             if (!enemy.blueprint.id.empty())
                 combat_.load(content_, enemy);
+            discoverShipTexture();
         }
+    }
+
+    ~ShipScene() override {
+        textures_.clear(graphics_);
+    }
+
+    void discoverShipTexture() {
+        std::string best;
+        for (const auto& name : content_.assets().fileNames()) {
+            std::string lower = name;
+            for (char& ch : lower)
+                ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+            if (lower.size() < 4 || lower.substr(lower.size() - 4) != ".png") continue;
+            if (lower.find("ship") == std::string::npos) continue;
+            if (lower.find("icon") != std::string::npos || lower.find("button") != std::string::npos) continue;
+            best = name;
+            break;
+        }
+        if (!best.empty() && textures_.load(graphics_, content_.assets(), best))
+            shipTextureName_ = best;
     }
 
     void update(float dt) override {
@@ -295,6 +318,23 @@ public:
             }
         }
 
+        if (!shipTextureName_.empty()) {
+            const Texture* texture = textures_.get(shipTextureName_);
+            if (texture && texture->width() > 0 && texture->height() > 0) {
+                constexpr float maxW = 300.f;
+                constexpr float maxH = 220.f;
+                const float aspect = static_cast<float>(texture->width()) / texture->height();
+                float w = maxW;
+                float h = w / aspect;
+                if (h > maxH) {
+                    h = maxH;
+                    w = h * aspect;
+                }
+                graphics_.drawTexture(*texture, 620.f + (maxW - w) * 0.5f,
+                    285.f + (maxH - h) * 0.5f, w, h);
+            }
+        }
+
         for (const auto& door : ship->layout.doors) {
             const float x = originX + (door.x + ship->layout.xOffset) * scale;
             const float y = originY + (door.y + ship->layout.yOffset) * scale;
@@ -321,6 +361,8 @@ private:
     int combatTargetRoom_{0};
     int selectedRoom_{0};
     int selectedCrew_{0};
+    TextureCache textures_;
+    std::string shipTextureName_;
 };
 
 MainGame::MainGame() = default;
