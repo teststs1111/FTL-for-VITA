@@ -85,6 +85,55 @@ void CombatRuntime::update(float dt) {
         }
     }
 
+    // Defense drones can intercept one incoming projectile when charged.
+    for (auto& shot : shots_) {
+        ShipRuntime& defender = shot.fromPlayer ? player : enemy;
+        bool intercepted = false;
+        for (auto& drone : defender.drones) {
+            if (drone.type != DroneBlueprint::Type::Defense || !drone.powered || !drone.active)
+                continue;
+            const bool laserTarget = drone.defenceTarget.empty() || drone.defenceTarget == "LASERS";
+            if (!laserTarget) continue;
+            drone.active = false;
+            drone.charge = 0;
+            intercepted = true;
+            break;
+        }
+        if (intercepted) {
+            shot.elapsed = shot.duration;
+            shot.weapon.damage = 0;
+            shot.weapon.systemDamage = 0;
+            shot.weapon.personnelDamage = 0;
+            shot.weapon.shots = 0;
+        }
+    }
+
+    // Charged combat drones launch their configured weapon at the selected room.
+    auto launchCombatDrone = [&](ShipRuntime& owner, int targetRoom, bool fromPlayer) {
+        for (auto& drone : owner.drones) {
+            if (drone.type != DroneBlueprint::Type::Combat || !drone.powered || !drone.active)
+                continue;
+            RuntimeWeapon weapon;
+            weapon.name = drone.name + "_DRONE_WEAPON";
+            weapon.type = "LASER";
+            weapon.power = 0;
+            weapon.speed = drone.weaponSpeed;
+            weapon.shots = drone.weaponShots;
+            weapon.damage = drone.weaponDamage;
+            weapon.systemDamage = drone.weaponSystemDamage;
+            weapon.ionDamage = drone.weaponIonDamage;
+            weapon.shieldPiercing = drone.weaponShieldPiercing;
+            weapon.personnelDamage = drone.weaponPersonnelDamage;
+            weapon.cooldown = drone.weaponCooldown;
+            drone.active = false;
+            drone.weaponCharge = 0.0f;
+            enqueueWeapon(fromPlayer, -1, weapon, targetRoom);
+            break;
+        }
+    };
+    launchCombatDrone(player, targetRoom, true);
+    launchCombatDrone(enemy, enemyTargetRoom, false);
+
     // Resolve projectiles only after their flight time has elapsed.
     for (auto it = shots_.begin(); it != shots_.end();) {
         it->elapsed += dt;
