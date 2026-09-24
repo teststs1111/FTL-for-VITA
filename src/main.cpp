@@ -1,6 +1,7 @@
 #include "game/main_game.hpp"
 #include "platform/input.hpp"
 #include "render/graphics.hpp"
+#include <cstdlib>
 
 int main() {
     wormhole::Graphics graphics;
@@ -8,7 +9,12 @@ int main() {
 
     wormhole::Input input;
     wormhole::MainGame game;
+#ifndef __vita__
+    const char* archivePath = std::getenv("FTL_DAT_PATH");
+    game.init(graphics, input, archivePath ? archivePath : "ftl.dat");
+#else
     game.init(graphics, input);
+#endif
 
 #ifdef __vita__
     for (;;) {
