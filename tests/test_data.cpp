@@ -448,7 +448,7 @@ static void testShipRuntime() {
     combat.player.shieldLayers = 0;
     const int defenseHullBefore = combat.player.hull;
     combat.update(0.1f);
-    assert(combat.player.drones[1].active);
+    // The defense drone intercepts the incoming laser on this update and immediately spends its charge.\n    assert(combat.player.drones[1].active == false);
     combat.update(0.01f);
     assert(combat.player.hull == defenseHullBefore);
     assert(combat.pendingShotCount() == 0);
