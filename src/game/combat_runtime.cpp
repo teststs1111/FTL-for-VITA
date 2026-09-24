@@ -64,6 +64,7 @@ void CombatRuntime::enqueueWeapon(bool fromPlayer, int weaponIndex,
 void CombatRuntime::update(float dt) {
     if (dt <= 0.0f || outcome != CombatOutcome::Ongoing) return;
 
+    enemyFireDelay_ = std::max(0.0f, enemyFireDelay_ - dt);
     player.updateWeapons(dt);
     enemy.updateWeapons(dt);
     player.updateDrones(dt);
@@ -76,6 +77,7 @@ void CombatRuntime::update(float dt) {
     // Enemy AI prototype: launch at the selected player room when a weapon is ready.
     if (enemy.valid && enemyTargetRoom >= 0 &&
         enemyTargetRoom < static_cast<int>(player.content.layout.rooms.size()) &&
+        enemyFireDelay_ <= 0.0f &&
         std::none_of(shots_.begin(), shots_.end(), [](const CombatShot& shot) {
             return !shot.fromPlayer;
         })) {
@@ -84,6 +86,7 @@ void CombatRuntime::update(float dt) {
             RuntimeWeapon firedWeapon = enemy.weapons[i];
             if (!enemy.fireWeapon(i)) continue;
             enqueueWeapon(false, i, firedWeapon, enemyTargetRoom);
+            enemyFireDelay_ = 0.25f;
             break;
         }
     }
