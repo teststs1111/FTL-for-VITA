@@ -92,18 +92,21 @@ void CombatRuntime::update(float dt) {
         }
     }
 
-    // Defense drones intercept one eligible incoming projectile when charged.
+    // Defense drones intercept at most one eligible incoming projectile per update.
+    bool defenseInterceptedThisUpdate = false;
     for (auto it = shots_.begin(); it != shots_.end();) {
         ShipRuntime& defender = it->fromPlayer ? enemy : player;
         bool intercepted = false;
         for (auto& drone : defender.drones) {
-            if (drone.type != DroneBlueprint::Type::Defense || !drone.powered || !drone.active)
+            if (defenseInterceptedThisUpdate ||
+                drone.type != DroneBlueprint::Type::Defense || !drone.powered || !drone.active)
                 continue;
             const bool laserTarget = drone.defenceTarget.empty() || drone.defenceTarget == "LASERS";
             if (!laserTarget) continue;
             drone.active = false;
             drone.charge = 0;
             intercepted = true;
+            defenseInterceptedThisUpdate = true;
             break;
         }
         if (intercepted)
