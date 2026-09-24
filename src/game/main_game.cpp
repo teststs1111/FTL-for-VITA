@@ -13,14 +13,15 @@ namespace wormhole {
 class ShipScene final : public GameState {
 public:
     ShipScene(Graphics& graphics, Input& input, const char* archivePath) : graphics_(graphics), input_(input) {
-        if (archivePath) {
-            content_.open(archivePath);
-            content_.loadPlayerShip();
+        if (archivePath && content_.open(archivePath) && content_.loadPlayerShip()) {
             runtime_.load(content_);
             LoadedShip enemy;
-            if (!content_.loadShip("ENEMY_SHIP", enemy))
-                enemy = *content_.playerShip();
-            combat_.load(content_, enemy);
+            if (!content_.loadShip("ENEMY_SHIP", enemy)) {
+                const LoadedShip* player = content_.playerShip();
+                if (player) enemy = *player;
+            }
+            if (!enemy.blueprint.id.empty())
+                combat_.load(content_, enemy);
         }
     }
 
