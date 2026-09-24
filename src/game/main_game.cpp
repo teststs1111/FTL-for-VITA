@@ -58,10 +58,18 @@ public:
         for (const auto& weapon : content_.blueprints().weapons()) {
             const auto add = [&](std::unordered_map<std::string, std::string>& dst, const std::string& stem) {
                 if (stem.empty()) return;
-                const std::vector<std::string> candidates = {
+                std::vector<std::string> candidates = {
                     "img/weapons/" + stem + ".png",
-                    "img/weapon/" + stem + ".png"
+                    "img/weapons/" + stem + "_base.png",
+                    "img/weapon/" + stem + ".png",
+                    "img/weapon/" + stem + "_base.png"
                 };
+                for (const auto& name : content_.assets().fileNames()) {
+                    const std::string prefix = "img/weapons/" + stem + "_";
+                    if (name.rfind(prefix, 0) == 0 && name.size() >= 4 &&
+                        name.compare(name.size() - 4, 4, ".png") == 0)
+                        candidates.push_back(name);
+                }
                 for (const auto& candidate : candidates) {
                     if (textures_.load(graphics_, content_.assets(), candidate)) {
                         dst[weapon.first] = candidate;
@@ -75,9 +83,14 @@ public:
         }
         for (const auto& drone : content_.blueprints().drones()) {
             if (drone.second.droneImage.empty()) continue;
+            const std::string stem = drone.second.droneImage;
             const std::vector<std::string> candidates = {
-                "img/drones/" + drone.second.droneImage + ".png",
-                "img/drone/" + drone.second.droneImage + ".png"
+                "img/ship/drones/" + stem + ".png",
+                "img/ship/drones/" + stem + "_base.png",
+                "img/drones/" + stem + ".png",
+                "img/drones/" + stem + "_base.png",
+                "img/drone/" + stem + ".png",
+                "img/drone/" + stem + "_base.png"
             };
             for (const auto& candidate : candidates) {
                 if (textures_.load(graphics_, content_.assets(), candidate)) {
