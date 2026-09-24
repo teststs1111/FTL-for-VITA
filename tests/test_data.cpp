@@ -421,12 +421,7 @@ static void testShipRuntime() {
         weapon.ready = false;
         weapon.charge = 0.0f;
     }
-    for (auto& drone : combat.enemy.drones) {
-        drone.powered = false;
-        drone.active = false;
-        drone.weaponCharge = 0.0f;
-        drone.charge = 0;
-    }
+    combat.enemy.drones.clear();
     combat.update(0.9f);
     assert(combat.player.drones[0].active == false);
     combat.enemy.shieldLayers = 0;
@@ -435,6 +430,7 @@ static void testShipRuntime() {
     assert(combat.pendingShotCount() >= 1);
     combat.update(0.15f);
     assert(combat.enemy.hull == droneHullBefore);
+    assert(combat.pendingShotCount() == 1);
     combat.update(0.11f);
     wormhole::CombatResult droneImpact;
     assert(combat.consumeImpactResult(droneImpact));
