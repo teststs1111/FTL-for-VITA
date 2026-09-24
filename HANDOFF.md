@@ -15,15 +15,13 @@
 
 ### Latest commit
 
-- `0c460f07c3e7af53693edfc8f8a4e3e462cb31c6`
-- Message: `Test PNG loading through AssetStore`
-- CI run #298 is green.
+- `27d7710d21b89b5ff99d6be6fe6e92c9e6cc58fc`
+- Message: `Select live ship texture from blueprint artwork`
+- CI run #303 is green.
 
 ### CI state
 
-The latest GitHub Actions Host build/test run (#298) is **successful**. The defense-volley regression is also green in run #297.
-
-Important: do not assume the previous defense-volley timing fix is sufficient. The next action is to inspect the failed job/log, identify the exact assertion or build failure, fix the root cause, and rerun CI.
+The latest GitHub Actions Host build/test run (#303) is **successful**. The live ship-texture integration and the preceding blueprint-artwork commits all passed host build/test.
 
 ## What is already implemented
 
@@ -122,17 +120,23 @@ Do not jump to polish while a lower-level dependency is broken.
 ## Immediate next actions
 
 ### 1. Continue rendering/data integration
-The PNG/texture pipeline is now covered through PNG decoding, AssetStore byte caching, deterministic file enumeration, and a regression test that reads PNG bytes from a synthetic archive through AssetStore.
+The PNG/texture pipeline is now covered through PNG decoding, AssetStore byte caching, deterministic file enumeration, and a regression test that reads PNG bytes from a synthetic archive through AssetStore. The live renderer now prefers the exact ship artwork stem declared by the FTL blueprint (img=), instead of choosing an arbitrary ship PNG.
 
-### 2. After CI is green
-Continue with real-data compatibility:
-- inspect the user's real `ftl.dat` when supplied
-- enumerate relevant resource paths without committing the asset
-- identify Japanese text resources
-- identify PNG/texture paths
-- validate BXML parsing against real files
-- add host tests using synthetic/minimal fixtures where possible
-- only then wire real asset loading into the runtime
+### 2. Real-data validation completed for the supplied archive
+The user supplied a local `ftl.dat` for validation. It is **not committed** to GitHub.
+- Archive header: reconstructed `PKG\\n` container, 3,219 entries
+- Archive size: 280,573,482 bytes
+- PNG resources: 2,837
+- Japanese text resource: `data/text-ja.xml` (UTF-8, about 920 KB)
+- Player blueprint: `PLAYER_SHIP_HARD`, `layout="kestral"`, `img="kestral"`
+- Exact player hull artwork: `img/ship/kestral_base.png`
+- The current renderer now resolves that artwork from the blueprint metadata.
+
+Next real-data work:
+- validate BXML parsing against selected real XML resources
+- connect the original Japanese resource into the localization layer
+- inspect room/interior/weapon/projectile artwork paths
+- establish background and HUD asset selection without embedding the archive
 
 ### 3. Rendering
 After data validation:
@@ -162,10 +166,10 @@ Suggested tracking:
 
 | Area | State |
 |---|---|
-| Host build/test | Green — run #298 |
+| Host build/test | Green — run #303 |
 | Archive reader | Implemented; real `ftl.dat` validation pending |
 | BXML | Implemented/tested |
-| PNG/texture pipeline | Implemented/tested; live asset hookup next |
+| PNG/texture pipeline | Implemented/tested; live blueprint-driven ship asset hookup is green |
 | Blueprint/data integration | Prototype implemented |
 | Ship/runtime simulation | Prototype implemented |
 | Combat | Prototype implemented; regression tests active |
