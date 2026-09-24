@@ -144,7 +144,7 @@ static void testAssetStore() {
     const std::string path = "test_asset_store.dat";
     const std::string name = "hello.txt";
     const std::string payload = "cached";
-    writeFile(path, makeArchive(name, payload));
+    writeFile(path, makeArchive({{"zeta.txt", "z"}, {name, payload}}));
     wormhole::AssetStore store;
     assert(store.openArchive(path));
     const auto* first = store.getBytes(name);
