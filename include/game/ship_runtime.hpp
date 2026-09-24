@@ -40,6 +40,15 @@ struct RuntimeDrone {
     int cooldown{0};
     int charge{0};
     int dodge{0};
+    float weaponCooldown{5.0f};
+    int weaponShots{1};
+    int weaponDamage{0};
+    int weaponSystemDamage{0};
+    int weaponIonDamage{0};
+    int weaponShieldPiercing{0};
+    int weaponPersonnelDamage{0};
+    int weaponSpeed{0};
+    float weaponCharge{0.0f};
     bool powered{false};
     bool active{false};
 };
