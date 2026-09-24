@@ -1,4 +1,5 @@
 #include "data/asset_store.hpp"
+#include <algorithm>
 
 namespace wormhole {
 
@@ -20,7 +21,13 @@ const std::vector<std::uint8_t>* AssetStore::getBytes(const std::string& name) {
     return &it->second;
 }
 
-std::vector<std::string> AssetStore::fileNames() const {\n    auto names = archive_.fileNames();\n    std::sort(names.begin(), names.end());\n    return names;\n}\n\nvoid AssetStore::clearCache() {
+std::vector<std::string> AssetStore::fileNames() const {
+    auto names = archive_.fileNames();
+    std::sort(names.begin(), names.end());
+    return names;
+}
+
+void AssetStore::clearCache() {
     byteCache_.clear();
 }
 
