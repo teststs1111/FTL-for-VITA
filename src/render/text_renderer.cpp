@@ -141,7 +141,7 @@ void TextRenderer::draw(Graphics& graphics, std::string_view text, float x, floa
 
         int penX = 0;
         for (const auto code : chars) {
-            auto font = selectFont(*impl_, code);
+            auto font = selectFont(impl_->japanese, impl_->latin, code);
             if (!font) continue;
             if (scePvfSetCharSize(font, static_cast<float>(size), static_cast<float>(size)) < 0)
                 continue;
