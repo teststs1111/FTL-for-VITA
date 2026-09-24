@@ -421,6 +421,8 @@ static void testShipRuntime() {
     combat.update(0.1f);
     assert(combat.pendingShotCount() >= 1);
     combat.update(0.15f);
+    assert(combat.enemy.hull == droneHullBefore);
+    combat.update(0.10f);
     assert(combat.enemy.hull == droneHullBefore - 1);
     assert(combat.player.setDronePowered(0, false));
     assert(combat.player.setDronePowered(1, false));
