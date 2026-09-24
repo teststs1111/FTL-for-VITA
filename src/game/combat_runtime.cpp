@@ -85,9 +85,9 @@ void CombatRuntime::update(float dt) {
         }
     }
 
-    // Defense drones can intercept one incoming projectile when charged.
-    for (auto& shot : shots_) {
-        ShipRuntime& defender = shot.fromPlayer ? player : enemy;
+    // Defense drones intercept one eligible incoming projectile when charged.
+    for (auto it = shots_.begin(); it != shots_.end();) {
+        ShipRuntime& defender = it->fromPlayer ? player : enemy;
         bool intercepted = false;
         for (auto& drone : defender.drones) {
             if (drone.type != DroneBlueprint::Type::Defense || !drone.powered || !drone.active)
@@ -99,13 +99,10 @@ void CombatRuntime::update(float dt) {
             intercepted = true;
             break;
         }
-        if (intercepted) {
-            shot.elapsed = shot.duration;
-            shot.weapon.damage = 0;
-            shot.weapon.systemDamage = 0;
-            shot.weapon.personnelDamage = 0;
-            shot.weapon.shots = 0;
-        }
+        if (intercepted)
+            it = shots_.erase(it);
+        else
+            ++it;
     }
 
     // Charged combat drones launch their configured weapon at the selected room.
