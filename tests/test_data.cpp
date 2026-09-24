@@ -20,8 +20,7 @@ static std::vector<std::uint8_t> makeArchive(const std::vector<std::pair<std::st
     std::size_t names = 0, payloads = 0;
     for (const auto& f : files) { names += f.first.size() + 1; payloads += f.second.size(); }
     std::vector<std::uint8_t> data(16 + 20 * count + names + payloads, 0);
-    data[0]='P'; data[1]='K'; data[2]='G'; data[3]='
-';
+    data[0]='P'; data[1]='K'; data[2]='G'; data[3]='\n';
     data[5]=16; data[7]=20;
     data[8]=static_cast<std::uint8_t>(count >> 24);
     data[9]=static_cast<std::uint8_t>(count >> 16);
@@ -60,8 +59,7 @@ static std::vector<std::uint8_t> makeArchive(const std::string& name, const std:
     const std::uint32_t count = 1;
     const std::uint32_t nameSize = static_cast<std::uint32_t>(name.size() + 1);
     std::vector<std::uint8_t> data(16 + 20 + nameSize + payload.size(), 0);
-    data[0]='P'; data[1]='K'; data[2]='G'; data[3]='
-';
+    data[0]='P'; data[1]='K'; data[2]='G'; data[3]='\n';
     data[5]=16; data[7]=20;
     data[11]=static_cast<std::uint8_t>(count);
     data[15]=static_cast<std::uint8_t>(nameSize);
@@ -132,7 +130,7 @@ static void testFtlDat() {
     const std::string path = "test_ftl.dat";
     const std::string name = "hello.txt";
     const std::string payload = "hello";
-    writeFile(path, makeArchive(name, payload));
+    writeFile(path, makeArchive({{"zeta.txt", "z"}, {name, payload}}));
     wormhole::FtlDat archive;
     assert(archive.open(path));
     assert(archive.contains(name));
@@ -146,7 +144,7 @@ static void testAssetStore() {
     const std::string path = "test_asset_store.dat";
     const std::string name = "hello.txt";
     const std::string payload = "cached";
-    writeFile(path, makeArchive({{"zeta.txt", "z"}, {name, payload}}));
+    writeFile(path, makeArchive(name, payload));
     wormhole::AssetStore store;
     assert(store.openArchive(path));
     const auto* first = store.getBytes(name);
@@ -183,42 +181,11 @@ static void testBlueprintDatabase() {
 
 static void testLayoutBlueprint() {
     const std::string layout =
-        "X_OFFSET
-10
-Y_OFFSET
-20
-HORIZONTAL
-5
-VERTICAL
-4
-"
-        "ELLIPSE
-100
-50
-2
-3
-"
-        "ROOM
-0
-1
-2
-3
-4
-"
-        "ROOM
-1
-5
-6
-2
-2
-"
-        "DOOR
-4
-5
-0
-1
-1
-";
+        "X_OFFSET\n10\nY_OFFSET\n20\nHORIZONTAL\n5\nVERTICAL\n4\n"
+        "ELLIPSE\n100\n50\n2\n3\n"
+        "ROOM\n0\n1\n2\n3\n4\n"
+        "ROOM\n1\n5\n6\n2\n2\n"
+        "DOOR\n4\n5\n0\n1\n1\n";
     wormhole::LayoutBlueprint parsed;
     assert(wormhole::parseLayoutBlueprint(layout, parsed));
     assert(parsed.xOffset == 10 && parsed.yOffset == 20);
@@ -238,8 +205,7 @@ static std::vector<std::uint8_t> makeArchive2(
     const std::uint32_t offset1 = static_cast<std::uint32_t>(namesStart + nameSize1 + nameSize2);
     const std::uint32_t offset2 = offset1 + static_cast<std::uint32_t>(payload1.size());
     std::vector<std::uint8_t> data(offset2 + payload2.size(), 0);
-    data[0]='P'; data[1]='K'; data[2]='G'; data[3]='
-';
+    data[0]='P'; data[1]='K'; data[2]='G'; data[3]='\n';
     data[5]=16;
     data[7]=20;
     data[11]=static_cast<std::uint8_t>(count);
@@ -276,40 +242,9 @@ static void testShipContent() {
         "<FTL><shipBlueprint name=\"PLAYER_SHIP_HARD\" layout=\"kestrel\" shipName=\"The Kestrel\">"
         "<health amount=\"30\"/><maxPower amount=\"8\"/></shipBlueprint></FTL>";
     const std::string layout =
-        "X_OFFSET
-10
-Y_OFFSET
-20
-HORIZONTAL
-5
-VERTICAL
-4
-"
-        "ELLIPSE
-100
-50
-2
-3
-ROOM
-0
-1
-2
-3
-4
-"
-        "ROOM
-1
-5
-6
-2
-2
-DOOR
-4
-5
-0
-1
-1
-";
+        "X_OFFSET\n10\nY_OFFSET\n20\nHORIZONTAL\n5\nVERTICAL\n4\n"
+        "ELLIPSE\n100\n50\n2\n3\nROOM\n0\n1\n2\n3\n4\n"
+        "ROOM\n1\n5\n6\n2\n2\nDOOR\n4\n5\n0\n1\n1\n";
     writeFile(path, makeArchive2("data/blueprints.xml", blueprints, "data/kestrel.txt", layout));
     wormhole::ShipContent content;
     assert(content.open(path));
@@ -392,51 +327,8 @@ static void testShipRuntime() {
         "<crew species=\"engi\" name=\"Bob\" room=\"1\"/>"
         "</shipBlueprint>";
     const std::string layout =
-        "X_OFFSET
-0
-Y_OFFSET
-0
-HORIZONTAL
-5
-VERTICAL
-4
-"
-        "ELLIPSE
-100
-50
-0
-0
-ROOM
-0
-0
-0
-2
-2
-ROOM
-1
-2
-0
-2
-2
-ROOM
-2
-4
-0
-2
-2
-DOOR
-2
-0
-0
-1
-0
-DOOR
-4
-0
-1
-2
-0
-";
+        "X_OFFSET\n0\nY_OFFSET\n0\nHORIZONTAL\n5\nVERTICAL\n4\n"
+        "ELLIPSE\n100\n50\n0\n0\nROOM\n0\n0\n0\n2\n2\nROOM\n1\n2\n0\n2\n2\nROOM\n2\n4\n0\n2\n2\nDOOR\n2\n0\n0\n1\n0\nDOOR\n4\n0\n1\n2\n0\n";
     const std::string enemyXml =
         "<shipBlueprint name=\"ENEMY_SHIP\" shipName=\"Enemy\" layout=\"kestrel\"><health amount=\"10\"/><maxPower amount=\"8\"/>"
         "<systemList><engines room=\"0\" power=\"2\"/><weapons room=\"2\" power=\"1\"/></systemList><crew species=\"human\" name=\"EnemyAlice\" room=\"0\"/><weaponList missiles=\"2\"><weapon name=\"LASER_TEST\"/></weaponList></shipBlueprint>";
@@ -589,8 +481,7 @@ DOOR
     combat.player.drones[1].active = true;
     const int defenseHullBefore = combat.player.hull;
     combat.update(0.1f);
-    // The defense drone intercepts the incoming laser on this update and immediately spends its charge.
-    assert(combat.player.drones[1].active == false);
+    // The defense drone intercepts the incoming laser on this update and immediately spends its charge.\n    assert(combat.player.drones[1].active == false);
     combat.update(0.01f);
     // Defense drones intercept one projectile, not an entire multi-shot volley.
     assert(combat.player.hull == defenseHullBefore);
