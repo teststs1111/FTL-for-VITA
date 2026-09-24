@@ -158,6 +158,29 @@ public:
             shipTextureName_ = best;
     }
 
+    std::string localized(const std::string& key, const std::string& fallback) const {
+        const std::string value(localization_.tr(key));
+        return value.empty() || value == key ? fallback : value;
+    }
+
+    std::string systemLabel(const RuntimeSystem& system) const {
+        return localized("system_" + system.type + "_title", system.type);
+    }
+
+    std::string crewLabel(const RuntimeCrew& crew) const {
+        return localized("crew_" + crew.race + "_title", crew.name.empty() ? crew.race : crew.name);
+    }
+
+    std::string weaponLabel(const RuntimeWeapon& weapon) const {
+        const std::string byName = localized("weapon_" + weapon.name + "_title", "");
+        return byName.empty() ? weapon.name : byName;
+    }
+
+    std::string droneLabel(const RuntimeDrone& drone) const {
+        const std::string byName = localized("drone_" + drone.name + "_title", "");
+        return byName.empty() ? drone.name : byName;
+    }
+
     void update(float dt) override {
         if (combatMode_) {
             combat_.update(dt);
@@ -342,6 +365,8 @@ public:
                     const float h = w / std::max(0.1f, aspect);
                     graphics_.drawTexture(*texture, center.first - w * 0.5f,
                         center.second - h * 0.5f, w, h);
+                    text_.draw(graphics_, weaponLabel(weapon), center.first - 42.f,
+                        center.second + 17.f, 11.f, {0.92f, 0.86f, 0.62f, 1.f});
                     break;
                 }
             }
@@ -358,6 +383,8 @@ public:
                 const float w = 24.f;
                 const float h = w / std::max(0.1f, aspect);
                 graphics_.drawTexture(*texture, x - w * 0.5f, y - h * 0.5f, w, h);
+                text_.draw(graphics_, droneLabel(drone), x - 22.f, y + 15.f, 10.f,
+                    {0.78f, 0.88f, 0.95f, 1.f});
                 ++droneSlot;
             }
         };
@@ -463,6 +490,8 @@ public:
                 const float w = std::min(18.f, std::max(4.f, static_cast<float>(system.power) * 5.f));
                 graphics_.fillRect(x, y, w, 5.f,
                     system.powered ? Color{0.25f, 0.9f, 0.45f, 1.f} : Color{0.35f, 0.35f, 0.35f, 1.f});
+                text_.draw(graphics_, systemLabel(system), x, y + 8.f, 13.f,
+                    system.powered ? Color{0.75f, 0.95f, 0.82f, 1.f} : Color{0.65f, 0.68f, 0.72f, 1.f});
                 break;
             }
         }
@@ -485,6 +514,8 @@ public:
                     graphics_.fillRect(x - size * 0.5f, y - size * 0.5f, size, size,
                         {0.9f, 0.9f, 0.35f, 1.f});
                 }
+                text_.draw(graphics_, crewLabel(crew), x + 8.f, y - 7.f, 11.f,
+                    {0.92f, 0.92f, 0.78f, 1.f});
                 break;
             }
         }
