@@ -428,10 +428,10 @@ static void testShipRuntime() {
     const int droneHullBefore = combat.enemy.hull;
     combat.update(0.1f);
     assert(combat.pendingShotCount() >= 1);
-    combat.update(0.15f);
+    combat.update(0.14f);
     assert(combat.enemy.hull == droneHullBefore);
     assert(combat.pendingShotCount() == 1);
-    combat.update(0.11f);
+    combat.update(0.02f);
     wormhole::CombatResult droneImpact;
     assert(combat.consumeImpactResult(droneImpact));
     assert(droneImpact.fired);
