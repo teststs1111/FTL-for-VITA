@@ -314,6 +314,19 @@ static void testPng() {
     assert(wormhole::decodePng(png,image));
     assert(image.width==1 && image.height==1 && image.pixels.size()==4);
     assert(image.pixels[0]==0xff && image.pixels[1]==0 && image.pixels[2]==0 && image.pixels[3]==0xff);
+
+    const std::string path = "test_png_asset_store.dat";
+    writeFile(path, makeArchive("img/test.png",
+        std::string(reinterpret_cast<const char*>(png.data()), png.size())));
+    wormhole::AssetStore store;
+    assert(store.openArchive(path));
+    const auto* bytes = store.getBytes("img/test.png");
+    assert(bytes && bytes->size() == png.size());
+    wormhole::RgbaImage archivedImage;
+    assert(wormhole::decodePng(*bytes, archivedImage));
+    assert(archivedImage.width == 1 && archivedImage.height == 1);
+    assert(archivedImage.pixels == image.pixels);
+    std::remove(path.c_str());
 }
 
 
