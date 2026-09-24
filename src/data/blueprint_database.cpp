@@ -67,6 +67,7 @@ std::size_t BlueprintDatabase::loadShipBlueprints(const std::string& assetPath) 
             drone.speed = toInt(value("speed"), 0);
             drone.droneImage = value("droneImage");
             drone.iconImage = value("iconImage");
+            if (drone.droneImage.empty()) drone.droneImage = value("image");
             drone.cooldown = toInt(value("cooldown"), 0);
             drone.defenceTarget = value("target");
             drone.dodge = toInt(value("dodge"), 0);
@@ -102,6 +103,7 @@ std::size_t BlueprintDatabase::loadShipBlueprints(const std::string& assetPath) 
             weapon.launcher = attr("weaponArt");
             if (weapon.launcher.empty()) weapon.launcher = value("weaponArt");
             weapon.projectile = value("image");
+            if (weapon.projectile.empty()) weapon.projectile = value("projectile");
             weapon.shots = toInt(value("shots"), 1);
             weapon.damage = toInt(value("damage"), 0);
             weapon.systemDamage = toInt(value("sysDamage"), 0);
