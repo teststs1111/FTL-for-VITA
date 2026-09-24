@@ -44,6 +44,8 @@ public:
     const std::vector<CombatShot>& pendingShots() const { return shots_; }
     const CombatResult& lastImpactResult() const { return lastImpactResult_; }
     bool consumeImpactResult(CombatResult& result);
+    bool selectWeapon(int weaponIndex);
+    bool setEnemyTargetRoom(int roomId);
 
 private:
     CombatResult resolveWeapon(ShipRuntime& attacker, ShipRuntime& target,
