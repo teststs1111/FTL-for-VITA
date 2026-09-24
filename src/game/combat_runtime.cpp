@@ -75,7 +75,10 @@ void CombatRuntime::update(float dt) {
 
     // Enemy AI prototype: launch at the selected player room when a weapon is ready.
     if (enemy.valid && enemyTargetRoom >= 0 &&
-        enemyTargetRoom < static_cast<int>(player.content.layout.rooms.size())) {
+        enemyTargetRoom < static_cast<int>(player.content.layout.rooms.size()) &&
+        std::none_of(shots_.begin(), shots_.end(), [](const CombatShot& shot) {
+            return !shot.fromPlayer;
+        })) {
         for (int i = 0; i < static_cast<int>(enemy.weapons.size()); ++i) {
             if (!enemy.weapons[i].ready) continue;
             RuntimeWeapon firedWeapon = enemy.weapons[i];
