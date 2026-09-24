@@ -39,6 +39,7 @@ struct RuntimeDrone {
     int speed{0};
     int cooldown{0};
     int charge{0};
+    int dodge{0};
     bool powered{false};
     bool active{false};
 };
