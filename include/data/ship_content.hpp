@@ -25,6 +25,8 @@ public:
     const LoadedShip* playerShip() const { return loaded_ ? &ship_ : nullptr; }
     AssetStore& assets() { return assets_; }
     const AssetStore& assets() const { return assets_; }
+    BlueprintDatabase& blueprints() { return database_; }
+    const BlueprintDatabase& blueprints() const { return database_; }
 
 private:
     AssetStore assets_;
