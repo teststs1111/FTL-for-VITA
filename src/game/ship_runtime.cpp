@@ -57,6 +57,7 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         drone.power = std::max(1, blueprint.power);
         drone.speed = std::max(0, blueprint.speed);
         drone.cooldown = std::max(0, blueprint.cooldown);
+        drone.dodge = std::clamp(blueprint.dodge, 0, 100);
         drone.charge = 0;
         drone.powered = false;
         drone.active = false;
