@@ -35,6 +35,7 @@ add_library(wormhole_core
     src/data/blueprint_database.cpp
     src/data/ship_content.cpp
     src/data/event_database.cpp
+    src/data/sector_database.cpp
     src/render/png_loader.cpp
     src/render/texture_cache.cpp
     src/render/text_renderer.cpp
