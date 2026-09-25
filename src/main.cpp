@@ -13,7 +13,9 @@ int main() {
     const char* archivePath = std::getenv("FTL_DAT_PATH");
     game.init(graphics, input, archivePath ? archivePath : "ftl.dat");
 #else
-    game.init(graphics, input);
+    // Keep the runtime archive path explicit on Vita. The VPK contains the
+    // executable, while the user-provided FTL data archive lives outside it.
+    game.init(graphics, input, "ux0:data/wormhole/ftl.dat");
 #endif
 
 #ifdef __vita__
