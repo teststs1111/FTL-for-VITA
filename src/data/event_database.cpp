@@ -162,6 +162,27 @@ bool EventDatabase::load() {
     return !events_.empty();
 }
 
+EventDatabase::BeaconType EventDatabase::classify(const std::string& id) const {
+    const auto* event = find(id);
+    if (!event) return BeaconType::Empty;
+    if (event->store) return BeaconType::Store;
+    std::string lower = id;
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    if (lower.find("exit") != std::string::npos ||
+        lower.find("base") != std::string::npos ||
+        lower.find("final") != std::string::npos)
+        return BeaconType::Exit;
+    if (lower.find("quest") != std::string::npos ||
+        lower.find("mission") != std::string::npos)
+        return BeaconType::Quest;
+    if (lower.find("distress") != std::string::npos ||
+        lower.find("rescue") != std::string::npos)
+        return BeaconType::Distress;
+    if (event->hostile) return BeaconType::Hostile;
+    return BeaconType::Empty;
+}
+
 const EventDefinition* EventDatabase::find(const std::string& id) const {
     const auto it = events_.find(id);
     return it == events_.end() ? nullptr : &it->second;
