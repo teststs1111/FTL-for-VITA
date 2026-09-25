@@ -404,7 +404,9 @@ public:
                                : Color{0.12f, 0.16f, 0.22f, 1.f});
                 }
             }
-            const float charge = std::clamp(ship.shieldCharge, 0.f, 1.f);
+            constexpr float shieldRechargeSeconds = 2.0f;
+            const float charge = std::clamp(
+                ship.shieldCharge / shieldRechargeSeconds, 0.f, 1.f);
             graphics_.fillRect(x, y + 11.f, width, 4.f, {0.10f, 0.12f, 0.16f, 1.f});
             if (charge > 0.f)
                 graphics_.fillRect(x, y + 11.f, width * charge, 4.f,
@@ -415,6 +417,31 @@ public:
         };
         drawShieldHud(combat_.player, leftX, false);
         drawShieldHud(combat_.enemy, rightX, true);
+
+        // Highlight the exact enemy room selected by the combat runtime.
+        for (const auto& room : combat_.enemy.content.layout.rooms) {
+            if (room.id != combatTargetRoom_) continue;
+            const float x = rightX + room.x * scale;
+            const float y = originY + room.y * scale;
+            const float w = std::max(1, room.w) * scale;
+            const float h = std::max(1, room.h) * scale;
+            const float corner = 12.f;
+            graphics_.drawLine(x, y, x + std::min(w, corner), y, {1.f, 0.82f, 0.25f, 1.f});
+            graphics_.drawLine(x, y, x, y + std::min(h, corner), {1.f, 0.82f, 0.25f, 1.f});
+            graphics_.drawLine(x + w, y + h, x + w - std::min(w, corner), y + h,
+                {1.f, 0.82f, 0.25f, 1.f});
+            graphics_.drawLine(x + w, y + h, x + w, y + h - std::min(h, corner),
+                {1.f, 0.82f, 0.25f, 1.f});
+            break;
+        }
+
+        if (combat_.selectedWeapon >= 0 &&
+            combat_.selectedWeapon < static_cast<int>(combat_.player.weapons.size())) {
+            const auto& weapon = combat_.player.weapons[combat_.selectedWeapon];
+            text_.draw(graphics_, weaponLabel(weapon), leftX, 152.f, 12.f,
+                weapon.ready ? Color{1.f, 0.88f, 0.45f, 1.f}
+                             : Color{0.72f, 0.82f, 0.92f, 1.f});
+        }
 
         auto roomCenter = [&](const ShipRuntime& ship, float originX, int roomId) {
             for (const auto& room : ship.content.layout.rooms) {
