@@ -21,6 +21,7 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
     roomDamage.assign(content.layout.rooms.size(), 0);
     roomOxygen.assign(content.layout.rooms.size(), 100);
     roomFire.assign(content.layout.rooms.size(), false);
+    roomBreach.assign(content.layout.rooms.size(), false);
 
     systems.clear();
     for (const auto& blueprint : content.blueprint.systems) {
@@ -35,6 +36,8 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         system.ionDamage = 0;
         system.ionTimer = 0.0f;
         system.ionDisabled = false;
+        system.stunTimer = 0.0f;
+        system.breached = false;
         system.powered = blueprint.availableByDefault && system.power > 0;
         systems.push_back(std::move(system));
     }
@@ -93,6 +96,10 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         weapon.missilesUsed = std::max(0, blueprint.missilesUsed);
         weapon.personnelDamage = std::max(0, blueprint.personnelDamage);
         weapon.hullBust = std::max(0, blueprint.hullBust);
+        weapon.fireChance = std::clamp(blueprint.fireChance, 0, 100);
+        weapon.breachChance = std::clamp(blueprint.breachChance, 0, 100);
+        weapon.stunChance = std::clamp(blueprint.stunChance, 0, 100);
+        weapon.stunDuration = std::max(0, blueprint.stunDuration);
         weapons.push_back(std::move(weapon));
     }
 
@@ -117,7 +124,7 @@ void ShipRuntime::updateWeapons(float dt) {
 
     int weaponSystemPower = 0;
     for (const auto& system : systems) {
-        if (system.type == "weapons" && system.powered)
+        if (system.type == "weapons" && system.powered && system.stunTimer <= 0.0f)
             weaponSystemPower = std::max(weaponSystemPower, system.power);
     }
     if (weaponSystemPower <= 0) return;
@@ -229,6 +236,7 @@ void ShipRuntime::reset() {
     roomDamage.clear();
     roomOxygen.clear();
     roomFire.clear();
+    roomBreach.clear();
     systems.clear();
     crew.clear();
     drones.clear();
@@ -364,6 +372,17 @@ int ShipRuntime::damageCrewInRoom(int roomId, int amount) {
     return applied;
 }
 
+int ShipRuntime::stunSystemsInRoom(int roomId, float seconds) {
+    if (!valid || roomId < 0 || seconds <= 0.0f) return 0;
+    int affected = 0;
+    for (auto& system : systems) {
+        if (system.room != roomId) continue;
+        system.stunTimer = std::max(system.stunTimer, seconds);
+        ++affected;
+    }
+    return affected;
+}
+
 int ShipRuntime::healCrew(int crewIndex, int amount) {
     if (!valid || crewIndex < 0 || crewIndex >= static_cast<int>(crew.size()) || amount <= 0)
         return 0;
@@ -407,6 +426,15 @@ bool ShipRuntime::setSystemPower(int systemIndex, int power) {
     return true;
 }
 
+bool ShipRuntime::setRoomBreach(int roomId, bool breached) {
+    if (!valid || roomId < 0 || roomId >= static_cast<int>(roomBreach.size())) return false;
+    if (roomBreach[roomId] == breached) return false;
+    roomBreach[roomId] = breached;
+    for (auto& system : systems)
+        if (system.room == roomId) system.breached = breached;
+    return true;
+}
+
 bool ShipRuntime::setRoomFire(int roomId, bool fire) {
     if (!valid || roomId < 0 || roomId >= static_cast<int>(roomFire.size())) return false;
     if (roomFire[roomId] == fire) return false;
@@ -419,6 +447,8 @@ void ShipRuntime::updateEnvironment(float dt) {
 
     // Ion damage temporarily removes system power for five seconds.
     for (auto& system : systems) {
+        if (system.stunTimer > 0.0f)
+            system.stunTimer = std::max(0.0f, system.stunTimer - dt);
         if (system.ionDamage <= 0 || system.ionTimer <= 0.0f) continue;
         system.ionTimer = std::max(0.0f, system.ionTimer - dt);
         if (system.ionTimer > 0.0f) continue;
