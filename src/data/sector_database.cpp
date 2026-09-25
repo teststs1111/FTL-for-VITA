@@ -64,7 +64,6 @@ const SectorDefinition* SectorDatabase::select(int sector,std::size_t variant) c
     std::vector<const SectorDefinition*> candidates;
     for(const auto& s:sectors_) {
         if(s.name=="FINAL" || s.events.empty() || s.minSector>sector) continue;
-        if(s.unique && sector<2) continue;
         candidates.push_back(&s);
     }
     if(candidates.empty()) return nullptr;
