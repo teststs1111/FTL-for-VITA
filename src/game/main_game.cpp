@@ -228,6 +228,24 @@ public:
     void update(float dt) override {
         if (combatMode_) {
             combat_.update(dt);
+            CombatResult impact;
+            while (combat_.consumeImpactResult(impact)) {
+                if (impact.shieldsAbsorbed > 0 && impact.hullDamage == 0) {
+                    combatFeedback_ = "シールドが攻撃を吸収";
+                } else if (impact.targetDestroyed) {
+                    combatFeedback_ = "敵艦撃沈";
+                } else if (impact.hullDamage > 0) {
+                    combatFeedback_ = "船体ダメージ " + std::to_string(impact.hullDamage);
+                } else if (impact.systemDamage > 0) {
+                    combatFeedback_ = "システムダメージ " + std::to_string(impact.systemDamage);
+                } else if (impact.personnelDamage > 0) {
+                    combatFeedback_ = "クルーダメージ " + std::to_string(impact.personnelDamage);
+                } else if (impact.fired) {
+                    combatFeedback_ = "攻撃命中";
+                }
+                combatFeedbackTimer_ = 1.4f;
+            }
+            combatFeedbackTimer_ = std::max(0.0f, combatFeedbackTimer_ - dt);
             updateCombat();
             if (combat_.outcome == CombatOutcome::EnemyDestroyed) {
                 runtime_.hull = combat_.player.hull;
@@ -316,8 +334,11 @@ public:
         if (input_.pressed(Button::Cross))
             lastCombatResult_ = combat_.fireSelectedWeapon();
 
-        if (input_.pressed(Button::Circle))
+        if (input_.pressed(Button::Circle)) {
             combatMode_ = false;
+            combatFeedback_.clear();
+            combatFeedbackTimer_ = 0.0f;
+        }
     }
 
     void renderCombat() {
@@ -566,6 +587,11 @@ public:
                               : Color{0.3f, 0.65f, 0.9f, 1.f});
         }
 
+        if (combatFeedbackTimer_ > 0.0f && !combatFeedback_.empty()) {
+            text_.draw(graphics_, combatFeedback_, 360.f, 505.f, 14.f,
+                {1.f, 0.88f, 0.52f, 1.f});
+        }
+
         if (combat_.lastImpactResult().fired) {
             const auto& impact = combat_.lastImpactResult();
             const float feedbackX = impact.targetDestroyed ? rightX + 55.f : rightX + 35.f;
@@ -739,6 +765,8 @@ private:
     std::unordered_map<std::string, std::string> crewTextureNames_;
     std::string shipTextureName_;
     std::string startupError_;
+    std::string combatFeedback_;
+    float combatFeedbackTimer_{0.0f};
 };
 
 MainGame::MainGame() = default;
