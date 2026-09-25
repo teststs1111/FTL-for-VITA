@@ -2,6 +2,7 @@
 #include "game/game_state.hpp"
 #include "data/ship_content.hpp"
 #include "data/event_database.hpp"
+#include "data/sector_database.hpp"
 #include "game/ship_runtime.hpp"
 #include "game/combat_runtime.hpp"
 #include "render/graphics.hpp"
@@ -59,6 +60,7 @@ public:
                 localization_.loadFtlTextXml(*bytes);
             eventDatabase_.load();
             eventOrder_ = eventDatabase_.ids();
+            sectorDatabase_.load();
             if (!content_.loadPlayerShip()) {
                 startupError_ = "Player ship blueprint could not be loaded";
                 return;
@@ -267,8 +269,16 @@ public:
         // Pick from the real event table deterministically for now. The next
         // step will replace this with sectorDescription beacon weighting.
         if (eventOrder_.empty()) return false;
-        const std::size_t index = static_cast<std::size_t>((sector_ * 5 + beacon) % eventOrder_.size());
-        activeEventId_ = eventOrder_[index];
+        activeEventId_.clear();
+        if (const auto* sector = sectorDatabase_.select(sector_, static_cast<std::size_t>(beacon))) {
+            if (!sector->events.empty()) {
+                const auto& pool = sector->events[static_cast<std::size_t>(beacon) % sector->events.size()];
+                activeEventId_ = pool.name;
+            }
+            if (activeEventId_.empty()) activeEventId_ = sector->startEvent;
+        }
+        if (activeEventId_.empty())
+            activeEventId_ = eventOrder_[static_cast<std::size_t>((sector_ * 5 + beacon) % eventOrder_.size())];
         const auto* event = eventDatabase_.find(activeEventId_);
         if (!event) return false;
         activeEventChoice_ = 0;
@@ -1081,6 +1091,7 @@ private:
     Localization& localization_;
     ShipContent content_;
     EventDatabase eventDatabase_{content_.assets()};
+    SectorDatabase sectorDatabase_{content_.assets()};
     ShipRuntime runtime_;
     CombatRuntime combat_;
     CombatResult lastCombatResult_{};
