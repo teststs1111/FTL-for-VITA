@@ -260,6 +260,9 @@ public:
     enum class SceneMode { SectorMap, Ship, Event, Combat, Pause, GameOver, Victory };
 
     void enterCombatFromBeacon() {
+        // Keep the persistent ship state in sync when entering combat. Combat
+        // owns a working copy while the player is in the combat scene.
+        combat_.player = runtime_;
         combatMode_ = true;
         sceneMode_ = SceneMode::Combat;
         combatTargetRoom_ = combat_.enemy.content.layout.rooms.empty()
@@ -532,7 +535,10 @@ public:
             combatFeedbackTimer_ = std::max(0.0f, combatFeedbackTimer_ - dt);
             updateCombat();
             if (combat_.outcome == CombatOutcome::EnemyDestroyed) {
-                runtime_.hull = combat_.player.hull;
+                // Persist all combat-side changes, not just hull damage:
+                // systems, crew, weapons, missiles, shields, fires and breaches
+                // must survive the return to the ship scene.
+                runtime_ = combat_.player;
                 combatMode_ = false;
                 scrap_ += 20 + sector_ * 5;
                 visitedBeacons_++;
