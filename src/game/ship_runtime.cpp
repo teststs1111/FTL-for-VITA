@@ -34,6 +34,7 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         system.damage = 0;
         system.ionDamage = 0;
         system.ionTimer = 0.0f;
+        system.ionDisabled = false;
         system.powered = blueprint.availableByDefault && system.power > 0;
         systems.push_back(std::move(system));
     }
@@ -278,7 +279,10 @@ int ShipRuntime::ionizeSystemInRoom(int roomId, int amount) {
         system.ionTimer = 5.0f;
         system.power = std::min(system.power,
                                 std::max(0, system.maxPower - system.damage - system.ionDamage));
-        if (system.power == 0) system.powered = false;
+        if (system.power == 0) {
+            system.ionDisabled = system.powered;
+            system.powered = false;
+        }
 
         applied += hit;
         if (applied >= amount) break;
@@ -419,10 +423,12 @@ void ShipRuntime::updateEnvironment(float dt) {
         if (system.ionTimer > 0.0f) continue;
 
         const int restored = system.ionDamage;
+        const bool restorePowered = system.ionDisabled;
         system.ionDamage = 0;
+        system.ionDisabled = false;
         const int effectiveMax = std::max(0, system.maxPower - system.damage);
         system.power = std::min(effectiveMax, system.power + restored);
-        if (restored > 0 && system.power > 0)
+        if (restorePowered && system.power > 0)
             system.powered = true;
     }
 
