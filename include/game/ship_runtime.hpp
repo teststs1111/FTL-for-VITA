@@ -12,6 +12,7 @@ struct RuntimeSystem {
     int power{0};
     int maxPower{0};
     int damage{0};
+    int ionDamage{0};
     bool powered{false};
 };
 
@@ -87,6 +88,7 @@ struct ShipRuntime {
     void reset();
     bool damageRoom(int roomId, int amount);
     int damageSystemInRoom(int roomId, int amount);
+    int ionizeSystemInRoom(int roomId, int amount);
     bool repairRoom(int roomId, int amount);
     bool setSystemPowered(int systemIndex, bool powered);
     bool setSystemPower(int systemIndex, int power);
