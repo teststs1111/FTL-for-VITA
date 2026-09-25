@@ -392,20 +392,22 @@ public:
                 }
             }
             if (weaponRoom >= 0) {
+                const auto center = roomCenter(ship, originX, weaponRoom);
+                int weaponSlot = 0;
                 for (const auto& weapon : ship.weapons) {
                     const auto it = weaponTextureNames_.find(weapon.name);
                     if (it == weaponTextureNames_.end()) continue;
                     const Texture* texture = textures_.get(it->second);
                     if (!texture || texture->width() <= 0 || texture->height() <= 0) continue;
-                    const auto center = roomCenter(ship, originX, weaponRoom);
                     const float aspect = static_cast<float>(texture->width()) / texture->height();
-                    const float w = 28.f;
-                    const float h = w / std::max(0.1f, aspect);
-                    graphics_.drawTexture(*texture, center.first - w * 0.5f,
-                        center.second - h * 0.5f, w, h);
-                    text_.draw(graphics_, weaponLabel(weapon), center.first - 42.f,
-                        center.second + 17.f, 11.f, {0.92f, 0.86f, 0.62f, 1.f});
-                    break;
+                    const float w = 24.f;
+                    const float h = std::min(28.f, w / std::max(0.1f, aspect));
+                    const float x = center.first - 32.f + (weaponSlot % 3) * 32.f;
+                    const float y = center.second - 18.f + (weaponSlot / 3) * 32.f;
+                    graphics_.drawTexture(*texture, x - w * 0.5f, y - h * 0.5f, w, h);
+                    text_.draw(graphics_, weaponLabel(weapon), x - 20.f, y + 12.f, 9.f,
+                        {0.92f, 0.86f, 0.62f, 1.f});
+                    ++weaponSlot;
                 }
             }
 
@@ -424,6 +426,26 @@ public:
                 text_.draw(graphics_, droneLabel(drone), x - 22.f, y + 15.f, 10.f,
                     {0.78f, 0.88f, 0.95f, 1.f});
                 ++droneSlot;
+            }
+
+            int crewSlot = 0;
+            for (const auto& crew : ship.crew) {
+                if (!crew.alive || crew.room < 0) continue;
+                const auto textureIt = crewTextureNames_.find(crew.race);
+                const Texture* texture = textureIt == crewTextureNames_.end()
+                    ? nullptr : textures_.get(textureIt->second);
+                const auto center = roomCenter(ship, originX, crew.room);
+                const float x = center.first - 12.f + (crewSlot % 2) * 24.f;
+                const float y = center.second - 10.f + (crewSlot / 2) * 20.f;
+                if (texture && texture->width() > 0 && texture->height() > 0) {
+                    const float w = 11.f;
+                    const float h = std::min(18.f, w * static_cast<float>(texture->height()) / texture->width());
+                    graphics_.drawTexture(*texture, x - w * 0.5f, y - h * 0.5f, w, h);
+                } else {
+                    graphics_.fillRect(x - 3.f, y - 3.f, 6.f, 6.f,
+                        {0.9f, 0.9f, 0.35f, 1.f});
+                }
+                ++crewSlot;
             }
         };
 
