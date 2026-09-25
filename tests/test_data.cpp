@@ -770,6 +770,7 @@ static void testShipRuntime() {
 int main() {
     testBxml();
     testFtlDat();
+    testLayeredFtlDat();
     testVanillaFtlDat();
     testAssetStore();
     testLayoutBlueprint();
