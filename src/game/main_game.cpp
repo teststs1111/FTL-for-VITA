@@ -333,11 +333,7 @@ public:
         scrap_ = std::max(0, scrap_ + choice.scrap);
         fuel_ = std::max(0, fuel_ + choice.fuel);
         combat_.player.missiles = std::max(0, combat_.player.missiles + choice.missiles);
-        for (auto& drone : combat_.player.drones) {
-            if (choice.drones <= 0) break;
-            ++drone.charge;
-            --const_cast<int&>(choice.drones);
-        }
+        droneParts_ = std::max(0, droneParts_ + choice.drones);
         if (choice.load.empty() && !choice.hostile && !choice.store && !choice.repair) {
             ++visitedBeacons_;
             sceneMode_ = SceneMode::SectorMap;
@@ -443,7 +439,8 @@ public:
         text_.draw(graphics_, "セクター " + std::to_string(sector_ + 1) + " / 8", 48.f, 74.f, 15.f, {0.65f,0.75f,0.88f,1.f});
         text_.draw(graphics_, "燃料 " + std::to_string(fuel_) + "   ミサイル " + std::to_string(combat_.player.missiles),
             620.f,42.f,14.f,{0.78f,0.86f,0.94f,1.f});
-        text_.draw(graphics_, "スクラップ " + std::to_string(scrap_),620.f,66.f,14.f,{0.82f,0.76f,0.58f,1.f});
+        text_.draw(graphics_, "スクラップ " + std::to_string(scrap_) +
+            "   ドローン " + std::to_string(droneParts_),620.f,66.f,14.f,{0.82f,0.76f,0.58f,1.f});
 
         const float x0=150.f, dx=105.f, y0=145.f, dy=43.f;
         for (const auto& n : sectorGraph_.nodes()) {
@@ -1167,6 +1164,7 @@ private:
     int visitedBeacons_{0};
     int fuel_{16};
     int scrap_{0};
+    int droneParts_{0};
 };
 
 MainGame::MainGame() = default;
