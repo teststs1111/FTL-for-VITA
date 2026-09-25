@@ -182,7 +182,7 @@ bool ShipRuntime::fireWeapon(int weaponIndex) {
 
     int weaponSystemPower = 0;
     for (const auto& system : systems) {
-        if (system.type == "weapons" && system.powered)
+        if (system.type == "weapons" && system.powered && system.stunTimer <= 0.0f)
             weaponSystemPower = std::max(weaponSystemPower, system.power);
     }
     if (weaponSystemPower < weapon.power) return false;
