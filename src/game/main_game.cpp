@@ -327,8 +327,17 @@ public:
         }
 
         const auto& choice = event->choices[activeEventChoice_];
+        // Apply all resource modifications from the original event data, not
+        // only scrap/fuel. Missiles and drone parts are carried by the combat
+        // runtime, so event rewards immediately affect the actual inventory.
         scrap_ = std::max(0, scrap_ + choice.scrap);
         fuel_ = std::max(0, fuel_ + choice.fuel);
+        combat_.player.missiles = std::max(0, combat_.player.missiles + choice.missiles);
+        for (auto& drone : combat_.player.drones) {
+            if (choice.drones <= 0) break;
+            ++drone.charge;
+            --const_cast<int&>(choice.drones);
+        }
         if (choice.load.empty() && !choice.hostile && !choice.store && !choice.repair) {
             ++visitedBeacons_;
             sceneMode_ = SceneMode::SectorMap;
