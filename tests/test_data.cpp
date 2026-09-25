@@ -712,6 +712,7 @@ static void testShipRuntime() {
     assert(combat.outcome == wormhole::CombatOutcome::EnemyDestroyed);
 
     // Direct room status regression: fire, breach and system stun are temporary/persistent states.
+    assert(runtime.setRoomFire(0, false));
     assert(runtime.setRoomFire(0, true));
     assert(runtime.roomFire[0]);
     assert(runtime.setRoomBreach(0, true));
