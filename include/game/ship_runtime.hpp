@@ -14,6 +14,7 @@ struct RuntimeSystem {
     int damage{0};
     int ionDamage{0};
     float ionTimer{0.0f};
+    bool ionDisabled{false};
     bool powered{false};
 };
 
