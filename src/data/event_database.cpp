@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
 
 namespace wormhole {
 
@@ -110,20 +111,42 @@ void EventDatabase::collectEvents(const bxml::Node& node) {
     } else if (node.name == "eventList") {
         const auto idIt = node.attributes.find("name");
         if (idIt != node.attributes.end()) {
+            EventPool pool;
             for (const auto& c : node.children) {
-                if (c.name == "event") {
-                    addEvent(c, idIt->second);
-                    break;
-                }
+                if (c.name != "event") continue;
+                const auto nameIt = c.attributes.find("name");
+                if (nameIt == c.attributes.end() || nameIt->second.empty()) continue;
+                pool.entries.push_back({nameIt->second, std::max(1, attrInt(c, "weight", 1))});
+                addEvent(c, nameIt->second);
             }
+            if (!pool.entries.empty() && eventPools_.find(idIt->second) == eventPools_.end())
+                eventPools_.emplace(idIt->second, std::move(pool));
         }
     }
     for (const auto& c : node.children) collectEvents(c);
 }
 
+const EventDefinition* EventDatabase::resolve(const std::string& id, std::uint32_t seed) const {
+    if (const auto* direct = find(id)) return direct;
+    const auto it = eventPools_.find(id);
+    if (it == eventPools_.end() || it->second.entries.empty()) return nullptr;
+    std::uint32_t total = 0;
+    for (const auto& entry : it->second.entries)
+        total += static_cast<std::uint32_t>(std::max(1, entry.weight));
+    if (total == 0) return nullptr;
+    std::uint32_t pick = seed % total;
+    for (const auto& entry : it->second.entries) {
+        const auto weight = static_cast<std::uint32_t>(std::max(1, entry.weight));
+        if (pick < weight) return find(entry.id);
+        pick -= weight;
+    }
+    return find(it->second.entries.front().id);
+}
+
 bool EventDatabase::load() {
     events_.clear();
     order_.clear();
+    eventPools_.clear();
 
     for (const auto& name : assets_.fileNames()) {
         if (!startsWithEvents(name)) continue;
