@@ -92,6 +92,7 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         weapon.shieldPiercing = std::max(0, blueprint.shieldPiercing);
         weapon.missilesUsed = std::max(0, blueprint.missilesUsed);
         weapon.personnelDamage = std::max(0, blueprint.personnelDamage);
+        weapon.hullBust = std::max(0, blueprint.hullBust);
         weapons.push_back(std::move(weapon));
     }
 
