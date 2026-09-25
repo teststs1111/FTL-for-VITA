@@ -140,6 +140,23 @@ static void testFtlDat() {
     std::remove(path.c_str());
 }
 
+static void testLayeredFtlDat() {
+    const std::string basePath = "test_ftl_base.dat";
+    const std::string dlcPath = "test_ftl_dlc.dat";
+    writeFile(basePath, makeArchive({{"base.txt", "base"}, {"shared.txt", "base"}}));
+    writeFile(dlcPath, makeArchive({{"dlc.txt", "dlc"}, {"shared.txt", "dlc"}}));
+
+    wormhole::FtlDat archive;
+    assert(archive.openArchives({basePath, dlcPath}));
+    assert(archive.contains("base.txt"));
+    assert(archive.contains("dlc.txt"));
+    const auto shared = archive.readFile("shared.txt");
+    assert(std::string(shared.begin(), shared.end()) == "dlc");
+
+    std::remove(basePath.c_str());
+    std::remove(dlcPath.c_str());
+}
+
 static void testAssetStore() {
     const std::string path = "test_asset_store.dat";
     const std::string name = "hello.txt";
