@@ -33,6 +33,7 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         system.maxPower = std::max(system.power, blueprint.maxPower);
         system.damage = 0;
         system.ionDamage = 0;
+        system.ionTimer = 0.0f;
         system.powered = blueprint.availableByDefault && system.power > 0;
         systems.push_back(std::move(system));
     }
@@ -274,6 +275,7 @@ int ShipRuntime::ionizeSystemInRoom(int roomId, int amount) {
         if (hit <= 0) continue;
 
         system.ionDamage += hit;
+        system.ionTimer = 5.0f;
         system.power = std::min(system.power,
                                 std::max(0, system.maxPower - system.damage - system.ionDamage));
         if (system.power == 0) system.powered = false;
@@ -410,14 +412,17 @@ bool ShipRuntime::setRoomFire(int roomId, bool fire) {
 void ShipRuntime::updateEnvironment(float dt) {
     if (!valid || dt <= 0.f) return;
 
-    // Ion damage temporarily removes system power. Each ion point lasts five seconds.
+    // Ion damage temporarily removes system power for five seconds.
     for (auto& system : systems) {
-        if (system.ionDamage <= 0) continue;
-        static constexpr float ionDurationSeconds = 5.0f;
-        // Reuse the fractional environment tick by storing elapsed time in a
-        // separate accumulator is preferable, but the runtime currently has no
-        // per-system timer. Keep the state deterministic by decaying one point
-        // every five seconds via a compact static-free accumulator below.
+        if (system.ionDamage <= 0 || system.ionTimer <= 0.0f) continue;
+        system.ionTimer = std::max(0.0f, system.ionTimer - dt);
+        if (system.ionTimer > 0.0f) continue;
+
+        system.ionDamage = 0;
+        const int effectiveMax = std::max(0, system.maxPower - system.damage);
+        system.power = std::min(effectiveMax, system.power + 1);
+        if (system.power > 0 && system.powered == false)
+            system.powered = true;
     }
 
     for (int i = 0; i < static_cast<int>(roomFire.size()); ++i) {
