@@ -2,6 +2,7 @@
 #include "data/bxml.hpp"
 #include "data/asset_store.hpp"
 #include <string>
+#include <cstdint>
 #include <vector>
 #include <unordered_map>
 
@@ -34,6 +35,7 @@ public:
     explicit EventDatabase(AssetStore& assets) : assets_(assets) {}
     bool load();
     const EventDefinition* find(const std::string& id) const;
+    const EventDefinition* resolve(const std::string& id, std::uint32_t seed) const;
     const EventDefinition* firstUsable() const;
     const std::vector<std::string>& ids() const { return order_; }
     std::size_t size() const { return events_.size(); }
