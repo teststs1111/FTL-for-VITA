@@ -571,7 +571,7 @@ static void testShipRuntime() {
     assert(combat.enemy.systems[0].ionDamage == 1);
     assert(combat.enemy.systems[0].damage == ionDamageBefore);
     assert(combat.enemy.systems[0].power == ionPowerBefore - 1);
-    combat.update(5.0f);
+    combat.enemy.updateEnvironment(5.0f);
     assert(combat.enemy.systems[0].ionDamage == 0);
     assert(combat.enemy.systems[0].damage == ionDamageBefore);
     assert(combat.enemy.systems[0].power == ionPowerBefore);
