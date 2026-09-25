@@ -17,6 +17,7 @@ struct LoadedShip {
 class ShipContent {
 public:
     bool open(const std::string& archivePath);
+    bool openArchives(const std::vector<std::string>& archivePaths);
     bool loadShip(const std::string& shipId, LoadedShip& out,
                   const std::string& blueprintPath = "data/blueprints.xml");
     bool loadPlayerShip(const std::string& blueprintPath = "data/blueprints.xml",
