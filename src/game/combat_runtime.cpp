@@ -236,7 +236,7 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
         if (weapon.systemDamage > 0)
             result.systemDamage += target.damageSystemInRoom(room, weapon.systemDamage);
         if (weapon.ionDamage > 0)
-            result.ionDamage += target.damageSystemInRoom(room, weapon.ionDamage);
+            result.ionDamage += target.ionizeSystemInRoom(room, weapon.ionDamage);
         if (weapon.personnelDamage > 0)
             result.personnelDamage += target.damageCrewInRoom(room, weapon.personnelDamage);
         if (target.hull <= 0) break;
