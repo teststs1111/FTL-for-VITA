@@ -731,6 +731,7 @@ static void testShipRuntime() {
     runtime.crew[0].alive = true;
     runtime.crew[0].health = runtime.crew[0].maxHealth;
     assert(runtime.setRoomFire(0, false));
+    assert(runtime.setRoomBreach(0, false));
     assert(runtime.setRoomFire(0, true));
     runtime.updateEnvironment(1.0f);
     assert(runtime.crew[0].health == 90);
