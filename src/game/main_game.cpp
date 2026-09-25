@@ -3,6 +3,7 @@
 #include "data/ship_content.hpp"
 #include "data/event_database.hpp"
 #include "data/sector_database.hpp"
+#include "data/sector_graph.hpp"
 #include "game/ship_runtime.hpp"
 #include "game/combat_runtime.hpp"
 #include "render/graphics.hpp"
@@ -61,6 +62,8 @@ public:
             eventDatabase_.load();
             eventOrder_ = eventDatabase_.ids();
             sectorDatabase_.load();
+            sectorGraph_.generate(sector_, seed_);
+            selectedBeacon_ = sectorGraph_.startNode();
             if (!content_.loadPlayerShip()) {
                 startupError_ = "Player ship blueprint could not be loaded";
                 return;
@@ -379,12 +382,29 @@ public:
         // FTL advances through a connected beacon map. The current geometry is
         // still a compact five-beacon stand-in; its encounter data now comes
         // from the original sectorDescription/event XML.
-        if (input_.pressed(Button::Left) || input_.pressed(Button::Up))
-            selectedBeacon_ = std::max(0, selectedBeacon_ - 1);
-        if (input_.pressed(Button::Right) || input_.pressed(Button::Down))
-            selectedBeacon_ = std::min(4, selectedBeacon_ + 1);
-        if (input_.pressed(Button::Cross)) {
-            if (beginBeaconEvent(selectedBeacon_)) return;
+        const auto choices = sectorGraph_.selectable(currentBeacon_);
+        if (!choices.empty()) {
+            auto it = std::find(choices.begin(), choices.end(), selectedBeacon_);
+            int pos = it == choices.end() ? 0 : static_cast<int>(it - choices.begin());
+            if (input_.pressed(Button::Left) || input_.pressed(Button::Up)) pos = std::max(0, pos - 1);
+            if (input_.pressed(Button::Right) || input_.pressed(Button::Down)) pos = std::min(static_cast<int>(choices.size()) - 1, pos + 1);
+            selectedBeacon_ = choices[static_cast<std::size_t>(pos)];
+        }
+        if (input_.pressed(Button::Cross) && !choices.empty()) {
+            if (fuel_ <= 0) return;
+            fuel_--;
+            currentBeacon_ = selectedBeacon_;
+            if (const auto* n = sectorGraph_.node(currentBeacon_)) {
+                if (n->row == sectorGraph_.exitRow()) {
+                    if (sector_ >= 7) { sceneMode_ = SceneMode::Victory; return; }
+                    ++sector_;
+                    sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
+                    currentBeacon_ = -1;
+                    selectedBeacon_ = sectorGraph_.startNode();
+                    return;
+                }
+            }
+            if (beginBeaconEvent(currentBeacon_)) return;
             enterCombatFromBeacon();
             return;
         }
@@ -396,29 +416,30 @@ public:
 
     void renderSectorMap() {
         graphics_.fillRect(0.f, 0.f, 960.f, 544.f, {0.035f, 0.045f, 0.065f, 1.f});
-        text_.draw(graphics_, "FTL: Faster Than Light", 48.f, 42.f, 24.f,
-            {0.88f, 0.92f, 1.f, 1.f});
-        text_.draw(graphics_, "セクター " + std::to_string(sector_ + 1) + " / 8", 48.f, 74.f, 15.f,
-            {0.65f, 0.75f, 0.88f, 1.f});
+        text_.draw(graphics_, "FTL: Faster Than Light", 48.f, 42.f, 24.f, {0.88f,0.92f,1.f,1.f});
+        text_.draw(graphics_, "セクター " + std::to_string(sector_ + 1) + " / 8", 48.f, 74.f, 15.f, {0.65f,0.75f,0.88f,1.f});
         text_.draw(graphics_, "燃料 " + std::to_string(fuel_) + "   ミサイル " + std::to_string(combat_.player.missiles),
-            620.f, 42.f, 14.f, {0.78f, 0.86f, 0.94f, 1.f});
-        text_.draw(graphics_, "スクラップ " + std::to_string(scrap_), 620.f, 66.f, 14.f,
-            {0.82f, 0.76f, 0.58f, 1.f});
+            620.f,42.f,14.f,{0.78f,0.86f,0.94f,1.f});
+        text_.draw(graphics_, "スクラップ " + std::to_string(scrap_),620.f,66.f,14.f,{0.82f,0.76f,0.58f,1.f});
 
-        const std::array<std::pair<float,float>,5> nodes = {{{150.f,300.f},{310.f,225.f},{470.f,330.f},{630.f,210.f},{810.f,300.f}}};
-        for (std::size_t i=1;i<nodes.size();++i)
-            graphics_.drawLine(nodes[i-1].first,nodes[i-1].second,nodes[i].first,nodes[i].second,
-                {0.25f,0.40f,0.55f,1.f});
-        for (std::size_t i=0;i<nodes.size();++i) {
-            const bool selected = static_cast<int>(i)==selectedBeacon_;
-            const float r = selected ? 15.f : 10.f;
-            graphics_.fillRect(nodes[i].first-r,nodes[i].second-r,r*2.f,r*2.f,
-                selected ? Color{0.95f,0.72f,0.20f,1.f} : Color{0.30f,0.55f,0.78f,1.f});
-            text_.draw(graphics_, "" + std::to_string(static_cast<int>(i)+1), nodes[i].first-4.f, nodes[i].second-7.f, 12.f,
-                {0.96f,0.98f,1.f,1.f});
+        const float x0=150.f, dx=105.f, y0=145.f, dy=43.f;
+        for (const auto& n : sectorGraph_.nodes()) {
+            const float x=x0+n.column*dx, y=y0+n.row*dy;
+            for (const int to:n.links) {
+                const auto* dst=sectorGraph_.node(to);
+                if(dst) graphics_.drawLine(x,y,x0+dst->column*dx,y0+dst->row*dy,{0.20f,0.34f,0.46f,1.f});
+            }
         }
-        text_.draw(graphics_, "十字キー: ビーコン選択   ○: 戻る   ×: ジャンプ",
-            48.f, 500.f, 14.f, {0.68f,0.76f,0.86f,1.f});
+        const auto choices=sectorGraph_.selectable(currentBeacon_);
+        for (const auto& n:sectorGraph_.nodes()) {
+            const float x=x0+n.column*dx,y=y0+n.row*dy;
+            const bool selected=n.row==sectorGraph_.exitRow() ? false : n.row==sectorGraph_.node(selectedBeacon_)->row && n.column==sectorGraph_.node(selectedBeacon_)->column;
+            const bool current=static_cast<int>(&n-&sectorGraph_.nodes()[0])==currentBeacon_;
+            const bool reachable=std::find(choices.begin(),choices.end(),static_cast<int>(&n-&sectorGraph_.nodes()[0]))!=choices.end();
+            const float r=current?8.f:(selected?9.f:6.f);
+            graphics_.fillRect(x-r,y-r,r*2.f,r*2.f,current?Color{0.40f,0.90f,0.55f,1.f}:(selected?Color{0.98f,0.75f,0.20f,1.f}:(reachable?Color{0.35f,0.65f,0.85f,1.f}:Color{0.20f,0.30f,0.38f,1.f})));
+        }
+        text_.draw(graphics_,"十字キー: 接続ビーコン選択   ×: ジャンプ   ○: 戻る",48.f,500.f,14.f,{0.68f,0.76f,0.86f,1.f});
     }
 
     void updatePause() {
@@ -1096,6 +1117,7 @@ private:
     ShipContent content_;
     EventDatabase eventDatabase_{content_.assets()};
     SectorDatabase sectorDatabase_{content_.assets()};
+    SectorGraph sectorGraph_;
     ShipRuntime runtime_;
     CombatRuntime combat_;
     CombatResult lastCombatResult_{};
@@ -1120,6 +1142,8 @@ private:
     int activeEventChoice_{0};
     int sector_{0};
     int selectedBeacon_{0};
+    int currentBeacon_{-1};
+    unsigned seed_{0x51f7a21u};
     int visitedBeacons_{0};
     int fuel_{16};
     int scrap_{0};
