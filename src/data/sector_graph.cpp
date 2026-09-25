@@ -43,7 +43,7 @@ std::vector<int> SectorGraph::selectable(int current, int fleetRow) const {
     if(current<0) {
         std::vector<int> out;
         for(int c=0;c<columns_;++c) {
-            if (fleetRow < 0 || 0 > fleetRow) out.push_back(c);
+            if (fleetRow < 0 || c > fleetRow) out.push_back(c);
         }
         return out;
     }
@@ -57,6 +57,20 @@ std::vector<int> SectorGraph::selectable(int current, int fleetRow) const {
         if (!target) continue;
         if (fleetRow >= 0 && target->row <= fleetRow) continue;
         out.push_back(link);
+    }
+
+    // The fleet must never make a sector mathematically unwinnable. If every
+    // connected destination is behind the simplified boundary, retain the
+    // furthest-forward destination as an emergency escape route.
+    if (out.empty() && !n->links.empty()) {
+        int fallback = n->links.front();
+        for (const int link : n->links) {
+            const auto* candidate = node(link);
+            const auto* best = node(fallback);
+            if (candidate && best && candidate->row > best->row)
+                fallback = link;
+        }
+        out.push_back(fallback);
     }
     return out;
 }
