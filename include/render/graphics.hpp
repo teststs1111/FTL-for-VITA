@@ -12,6 +12,7 @@ public:
  Texture createTexture(const std::vector<std::uint8_t>& rgba,int width,int height);
  void destroyTexture(Texture& texture);
  void drawTexture(const Texture& texture,float x,float y,float w,float h,const Color& color={});
+ void drawTextureRegion(const Texture& texture,float x,float y,float w,float h,float u0,float v0,float u1,float v1,const Color& color={});
 private: bool initialized_{false};
 };
 }
