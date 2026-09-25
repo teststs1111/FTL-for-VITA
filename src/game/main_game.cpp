@@ -284,6 +284,9 @@ public:
             activeEventId_ = eventOrder_[static_cast<std::size_t>((sector_ * 5 + beacon) % eventOrder_.size())];
         const auto* event = eventDatabase_.resolve(activeEventId_, seed_ + static_cast<unsigned>(visitedBeacons_) * 53u);
         if (!event) return false;
+        // A sector event pool resolves to a concrete event; keep that concrete
+        // id so update/render operate on the same definition.
+        activeEventId_ = event->id;
         activeEventChoice_ = 0;
         sceneMode_ = SceneMode::Event;
         return true;
@@ -307,6 +310,17 @@ public:
         }
         if (!input_.pressed(Button::Cross)) return;
         if (event->choices.empty()) {
+            if (event->store) {
+                sceneMode_ = SceneMode::Ship;
+                return;
+            }
+            if (event->hostile) {
+                enterCombatFromBeacon();
+                return;
+            }
+            if (event->repair) {
+                runtime_.hull = std::min(runtime_.content.blueprint.maxHealth, runtime_.hull + 2);
+            }
             ++visitedBeacons_;
             sceneMode_ = SceneMode::SectorMap;
             return;
