@@ -389,7 +389,7 @@ public:
                 graphics_.fillRect(x, y + 11.f, width * charge, 4.f,
                     enemySide ? Color{0.35f, 0.55f, 1.f, 0.85f}
                               : Color{0.30f, 0.80f, 1.f, 0.85f});
-            text_.draw(graphics_, "SHIELDS " + std::to_string(shownLayers) + "/" + std::to_string(maxLayers),
+            text_.draw(graphics_, "シールド " + std::to_string(shownLayers) + "/" + std::to_string(maxLayers),
                 x, y - 16.f, 11.f, {0.72f, 0.82f, 0.94f, 1.f});
         };
         drawShieldHud(combat_.player, leftX, false);
@@ -545,6 +545,12 @@ public:
         graphics_.fillRect(leftX, 100.f, 280.f * playerHull, 12.f, {0.2f, 0.8f, 0.35f, 1.f});
         graphics_.fillRect(rightX, 100.f, 280.f, 12.f, {0.15f, 0.15f, 0.15f, 1.f});
         graphics_.fillRect(rightX, 100.f, 280.f * enemyHull, 12.f, {0.85f, 0.25f, 0.25f, 1.f});
+        text_.draw(graphics_, "船体 " + std::to_string(std::max(0, combat_.player.hull)) +
+            "/" + std::to_string(std::max(0, combat_.player.maxHull)),
+            leftX, 86.f, 11.f, {0.72f, 0.92f, 0.78f, 1.f});
+        text_.draw(graphics_, "敵船体 " + std::to_string(std::max(0, combat_.enemy.hull)) +
+            "/" + std::to_string(std::max(0, combat_.enemy.maxHull)),
+            rightX, 86.f, 11.f, {0.96f, 0.72f, 0.72f, 1.f});
 
         for (int i = 0; i < combat_.enemy.shieldLayers; ++i)
             graphics_.fillRect(rightX + i * 14.f, 125.f, 10.f, 6.f, {0.25f, 0.65f, 0.95f, 1.f});
