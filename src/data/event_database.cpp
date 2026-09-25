@@ -52,59 +52,72 @@ int EventDatabase::attrInt(const bxml::Node& node, const char* name, int fallbac
     try { return std::stoi(it->second); } catch (...) { return fallback; }
 }
 
+void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
+    if (id.empty() || node.name != "event") return;
+    EventDefinition event;
+    event.id = id;
+    event.text = nodeText(node);
+    if (const auto* ship = child(node, "ship")) {
+        const auto it = ship->attributes.find("hostile");
+        event.hostile = it != ship->attributes.end() && it->second == "true";
+    }
+    event.store = hasChild(node, "store");
+    event.repair = hasChild(node, "repair");
+
+    for (const auto& c : node.children) {
+        if (c.name != "choice") continue;
+        if (c.attributes.count("hidden") && c.attributes.at("hidden") == "true") continue;
+        EventChoice choice;
+        if (const auto* t = child(c, "text")) choice.text = nodeText(*t);
+        if (const auto* e = child(c, "event")) {
+            const auto it = e->attributes.find("load");
+            if (it != e->attributes.end()) choice.load = it->second;
+            if (const auto* ship = child(*e, "ship")) {
+                const auto hit = ship->attributes.find("hostile");
+                choice.hostile = hit != ship->attributes.end() && hit->second == "true";
+            }
+            choice.store = hasChild(*e, "store");
+            choice.repair = hasChild(*e, "repair");
+            if (const auto* items = child(*e, "item_modify")) {
+                for (const auto& item : items->children) {
+                    if (item.name != "item") continue;
+                    const auto type = item.attributes.find("type");
+                    if (type == item.attributes.end()) continue;
+                    const int amount = attrInt(item, "min", 0);
+                    if (type->second == "scrap") choice.scrap += amount;
+                    else if (type->second == "fuel") choice.fuel += amount;
+                    else if (type->second == "missiles") choice.missiles += amount;
+                    else if (type->second == "drones") choice.drones += amount;
+                }
+            }
+        }
+        if (!choice.text.empty() || !choice.load.empty() || choice.store || choice.hostile)
+            event.choices.push_back(std::move(choice));
+    }
+
+    event.valid = !event.text.empty() || !event.choices.empty() ||
+                  event.hostile || event.store || event.repair;
+    if (event.valid && events_.find(event.id) == events_.end()) {
+        order_.push_back(event.id);
+        events_.emplace(event.id, std::move(event));
+    }
+}
+
 void EventDatabase::collectEvents(const bxml::Node& node) {
     if (node.name == "event") {
         const auto idIt = node.attributes.find("name");
-        if (idIt != node.attributes.end() && !idIt->second.empty()) {
-            EventDefinition event;
-            event.id = idIt->second;
-            event.text = nodeText(node);
-            event.hostile = hasChild(node, "ship") &&
-                child(node, "ship")->attributes.count("hostile") &&
-                child(node, "ship")->attributes.at("hostile") == "true";
-            event.store = hasChild(node, "store");
-            event.repair = hasChild(node, "repair");
-
+        if (idIt != node.attributes.end()) addEvent(node, idIt->second);
+    } else if (node.name == "eventList") {
+        const auto idIt = node.attributes.find("name");
+        if (idIt != node.attributes.end()) {
             for (const auto& c : node.children) {
-                if (c.name != "choice") continue;
-                if (c.attributes.count("hidden") && c.attributes.at("hidden") == "true")
-                    continue;
-                EventChoice choice;
-                if (const auto* t = child(c, "text")) choice.text = nodeText(*t);
-                if (const auto* e = child(c, "event")) {
-                    const auto it = e->attributes.find("load");
-                    if (it != e->attributes.end()) choice.load = it->second;
-                    choice.hostile = hasChild(*e, "ship") &&
-                        child(*e, "ship")->attributes.count("hostile") &&
-                        child(*e, "ship")->attributes.at("hostile") == "true";
-                    choice.store = hasChild(*e, "store");
-                    choice.repair = hasChild(*e, "repair");
-                    if (const auto* items = child(*e, "item_modify")) {
-                        for (const auto& item : items->children) {
-                            if (item.name != "item") continue;
-                            const auto type = item.attributes.find("type");
-                            if (type == item.attributes.end()) continue;
-                            const int amount = attrInt(item, "min", 0);
-                            if (type->second == "scrap") choice.scrap += amount;
-                            else if (type->second == "fuel") choice.fuel += amount;
-                            else if (type->second == "missiles") choice.missiles += amount;
-                            else if (type->second == "drones") choice.drones += amount;
-                        }
-                    }
+                if (c.name == "event") {
+                    addEvent(c, idIt->second);
+                    break;
                 }
-                if (!choice.text.empty() || !choice.load.empty() || choice.store || choice.hostile)
-                    event.choices.push_back(std::move(choice));
-            }
-
-            event.valid = !event.text.empty() || !event.choices.empty() ||
-                          event.hostile || event.store || event.repair;
-            if (event.valid && events_.find(event.id) == events_.end()) {
-                order_.push_back(event.id);
-                events_.emplace(event.id, std::move(event));
             }
         }
     }
-
     for (const auto& c : node.children) collectEvents(c);
 }
 
