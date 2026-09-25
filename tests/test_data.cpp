@@ -596,6 +596,37 @@ static void testShipRuntime() {
     assert(combat.enemy.hull == shieldedHull - 1);
     assert(combat.pendingShotCount() == 1);
 
+    // Projectile evasion: powered engines contribute 5% per power level.
+    assert(combat.load(content, enemyForCombat));
+    assert(combat.setTargetRoom(0));
+    assert(combat.player.setSystemPowered(2, true));
+    combat.enemy.shieldLayers = 0;
+    combat.player.weapons[0].missilesUsed = 0;
+    combat.player.weapons[0].shieldPiercing = 0;
+    combat.player.updateWeapons(2.5f);
+    const int evasionHull = combat.enemy.hull;
+    combat.setRandomSeed(3); // first xorshift value is 811107, which is < 10%.
+    assert(combat.fireSelectedWeapon().fired);
+    combat.update(0.25f);
+    wormhole::CombatResult evasionImpact;
+    assert(combat.consumeImpactResult(evasionImpact));
+    assert(evasionImpact.evaded == 1);
+    assert(evasionImpact.hullDamage == 0);
+    assert(combat.enemy.hull == evasionHull);
+
+    combat.load(content, enemyForCombat);
+    combat.setTargetRoom(0);
+    combat.player.setSystemPowered(2, true);
+    combat.enemy.shieldLayers = 0;
+    combat.player.weapons[0].missilesUsed = 0;
+    combat.player.updateWeapons(2.5f);
+    combat.setRandomSeed(1);
+    assert(combat.fireSelectedWeapon().fired);
+    combat.update(0.25f);
+    assert(combat.consumeImpactResult(evasionImpact));
+    assert(evasionImpact.evaded == 0);
+    assert(evasionImpact.hullDamage == 1);
+
     assert(combat.load(content, enemyForCombat));
     assert(combat.setTargetRoom(0));
     assert(combat.player.setSystemPowered(2, true));
