@@ -74,15 +74,21 @@ public:
     }
 
     void discoverRoomTextures() {
-        const LoadedShip* ship = content_.playerShip();
-        if (!ship) return;
         roomTextureNames_.clear();
-        for (const auto& system : ship->blueprint.systems) {
-            if (system.room < 0 || system.system.empty()) continue;
-            const std::string candidate = "img/ship/interior/room_" + system.system + ".png";
-            if (textures_.load(graphics_, content_.assets(), candidate))
-                roomTextureNames_[system.room] = candidate;
-        }
+        enemyRoomTextureNames_.clear();
+
+        auto discover = [&](const LoadedShip* ship, std::unordered_map<int, std::string>& dst) {
+            if (!ship) return;
+            for (const auto& system : ship->blueprint.systems) {
+                if (system.room < 0 || system.system.empty()) continue;
+                const std::string candidate = "img/ship/interior/room_" + system.system + ".png";
+                if (textures_.load(graphics_, content_.assets(), candidate))
+                    dst[system.room] = candidate;
+            }
+        };
+
+        discover(content_.playerShip(), roomTextureNames_);
+        discover(&combat_.enemy.content, enemyRoomTextureNames_);
     }
 
     void discoverWeaponAndDroneTextures() {
@@ -320,7 +326,8 @@ public:
         constexpr float rightX = 580.f;
         constexpr float originY = 170.f;
 
-        auto drawShip = [&](const ShipRuntime& ship, float originX, bool selectedSide) {
+        auto drawShip = [&](const ShipRuntime& ship, float originX, bool selectedSide,
+                            const std::unordered_map<int, std::string>& roomTextures) {
             for (const auto& room : ship.content.layout.rooms) {
                 const float x = originX + room.x * scale;
                 const float y = originY + room.y * scale;
@@ -329,10 +336,21 @@ public:
                 const bool selected = selectedSide && room.id == combatTargetRoom_;
                 const int damage = (room.id >= 0 && room.id < static_cast<int>(ship.roomDamage.size()))
                     ? ship.roomDamage[room.id] : 0;
-                graphics_.fillRect(x, y, w, h, selected
-                    ? Color{0.25f, 0.38f, 0.48f, 1.f}
-                    : (damage > 0 ? Color{0.30f, 0.12f, 0.12f, 1.f}
-                                  : Color{0.10f, 0.18f, 0.25f, 1.f}));
+                const auto textureIt = roomTextures.find(room.id);
+                const Texture* roomTexture = textureIt == roomTextures.end()
+                    ? nullptr : textures_.get(textureIt->second);
+                if (roomTexture && roomTexture->width() > 0 && roomTexture->height() > 0) {
+                    graphics_.drawTexture(*roomTexture, x, y, w, h);
+                    if (selected)
+                        graphics_.fillRect(x, y, w, h, {0.25f, 0.38f, 0.48f, 0.35f});
+                    else if (damage > 0)
+                        graphics_.fillRect(x, y, w, h, {0.45f, 0.08f, 0.05f, 0.30f});
+                } else {
+                    graphics_.fillRect(x, y, w, h, selected
+                        ? Color{0.25f, 0.38f, 0.48f, 1.f}
+                        : (damage > 0 ? Color{0.30f, 0.12f, 0.12f, 1.f}
+                                      : Color{0.10f, 0.18f, 0.25f, 1.f}));
+                }
                 graphics_.drawLine(x, y, x + w, y, {0.35f, 0.65f, 0.85f, 1.f});
                 graphics_.drawLine(x + w, y, x + w, y + h, {0.35f, 0.65f, 0.85f, 1.f});
                 graphics_.drawLine(x + w, y + h, x, y + h, {0.35f, 0.65f, 0.85f, 1.f});
@@ -340,8 +358,8 @@ public:
             }
         };
 
-        drawShip(combat_.player, leftX, false);
-        drawShip(combat_.enemy, rightX, true);
+        drawShip(combat_.player, leftX, false, roomTextureNames_);
+        drawShip(combat_.enemy, rightX, true, enemyRoomTextureNames_);
 
         auto roomCenter = [&](const ShipRuntime& ship, float originX, int roomId) {
             for (const auto& room : ship.content.layout.rooms) {
@@ -642,6 +660,7 @@ private:
     TextureCache textures_;
     TextRenderer text_;
     std::unordered_map<int, std::string> roomTextureNames_;
+    std::unordered_map<int, std::string> enemyRoomTextureNames_;
     std::unordered_map<std::string, std::string> weaponTextureNames_;
     std::unordered_map<std::string, std::string> droneTextureNames_;
     std::unordered_map<std::string, std::string> crewTextureNames_;
