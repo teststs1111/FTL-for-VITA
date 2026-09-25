@@ -724,6 +724,19 @@ static void testShipRuntime() {
     runtime.updateEnvironment(2.0f);
     for (const auto& system : runtime.systems) assert(system.stunTimer == 0.0f);
 
+    // Fire damages crew over time and a breach drains oxygen independently.
+    runtime.roomOxygen[0] = 100;
+    runtime.crew[0].alive = true;
+    runtime.crew[0].health = runtime.crew[0].maxHealth;
+    assert(runtime.setRoomFire(0, false));
+    assert(runtime.setRoomFire(0, true));
+    runtime.updateEnvironment(1.0f);
+    assert(runtime.crew[0].health == 90);
+    assert(runtime.setRoomFire(0, false));
+    assert(runtime.setRoomBreach(0, true));
+    runtime.updateEnvironment(2.0f);
+    assert(runtime.roomOxygen[0] == 76);
+
     runtime.reset();
     assert(!runtime.valid && runtime.systems.empty() && runtime.crew.empty());
     assert(runtime.shieldLayers == 0 && runtime.maxShieldLayers == 0);
