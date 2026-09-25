@@ -546,6 +546,34 @@ static void testShipRuntime() {
     combat.player.updateWeapons(0.1f);
     assert(combat.player.weapons[0].ready);
 
+    // Ion damage temporarily removes system power without increasing permanent damage.
+    assert(combat.load(content, enemyForCombat));
+    assert(combat.setTargetRoom(0));
+    assert(combat.player.setSystemPowered(2, true));
+    for (auto& weapon : combat.enemy.weapons) {
+        weapon.ready = false;
+        weapon.charge = 0.0f;
+    }
+    combat.enemy.shieldLayers = 0;
+    combat.player.weapons[0].ionDamage = 1;
+    combat.player.updateWeapons(2.5f);
+    assert(combat.player.weapons[0].ready);
+    const int ionDamageBefore = combat.enemy.systems[0].damage;
+    const int ionPowerBefore = combat.enemy.systems[0].power;
+    auto ionShot = combat.fireSelectedWeapon();
+    assert(ionShot.fired);
+    combat.update(0.25f);
+    wormhole::CombatResult ionImpact;
+    assert(combat.consumeImpactResult(ionImpact));
+    assert(ionImpact.ionDamage == 1);
+    assert(combat.enemy.systems[0].ionDamage == 1);
+    assert(combat.enemy.systems[0].damage == ionDamageBefore);
+    assert(combat.enemy.systems[0].power == ionPowerBefore - 1);
+    combat.update(5.0f);
+    assert(combat.enemy.systems[0].ionDamage == 0);
+    assert(combat.enemy.systems[0].damage == ionDamageBefore);
+    assert(combat.enemy.systems[0].power == ionPowerBefore);
+
     assert(combat.load(content, enemyForCombat));
     assert(combat.setTargetRoom(0));
     assert(combat.player.setSystemPowered(2, true));
