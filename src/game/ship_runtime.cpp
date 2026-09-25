@@ -22,6 +22,7 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
     roomOxygen.assign(content.layout.rooms.size(), 100);
     roomFire.assign(content.layout.rooms.size(), false);
     roomBreach.assign(content.layout.rooms.size(), false);
+    roomFireDamageTimer.assign(content.layout.rooms.size(), 0.0f);
 
     systems.clear();
     for (const auto& blueprint : content.blueprint.systems) {
@@ -237,6 +238,7 @@ void ShipRuntime::reset() {
     roomOxygen.clear();
     roomFire.clear();
     roomBreach.clear();
+    roomFireDamageTimer.clear();
     systems.clear();
     crew.clear();
     drones.clear();
@@ -464,12 +466,24 @@ void ShipRuntime::updateEnvironment(float dt) {
     }
 
     for (int i = 0; i < static_cast<int>(roomFire.size()); ++i) {
-        if (!roomFire[i]) continue;
-        roomOxygen[i] = std::max(0, roomOxygen[i] - static_cast<int>(dt * 8.f));
-        if (roomOxygen[i] == 0) {
-            roomFire[i] = false;
-            damageRoom(i, 1);
+        if (roomFire[i]) {
+            roomOxygen[i] = std::max(0, roomOxygen[i] - static_cast<int>(dt * 8.f));
+            roomFireDamageTimer[i] += dt;
+            while (roomFireDamageTimer[i] >= 1.0f) {
+                damageCrewInRoom(i, 10);
+                roomFireDamageTimer[i] -= 1.0f;
+            }
+            if (roomOxygen[i] == 0) {
+                roomFire[i] = false;
+                roomFireDamageTimer[i] = 0.0f;
+                damageRoom(i, 1);
+            }
+        } else {
+            roomFireDamageTimer[i] = 0.0f;
         }
+
+        if (roomBreach[i])
+            roomOxygen[i] = std::max(0, roomOxygen[i] - static_cast<int>(dt * 12.f));
     }
 
     // Fire can spread through open doors into oxygenated rooms.
