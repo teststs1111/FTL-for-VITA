@@ -120,6 +120,8 @@ std::vector<std::string> FtlDat::fileNames() const {
 }
 
 
+
+namespace wormhole {
 bool FtlDat::openArchives(const std::vector<std::string>& paths) {
     open_ = false;
     files_.clear();
@@ -137,4 +139,5 @@ bool FtlDat::openArchives(const std::vector<std::string>& paths) {
     }
     open_ = !files_.empty();
     return open_;
+}
 }
