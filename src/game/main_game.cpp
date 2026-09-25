@@ -11,6 +11,7 @@
 #include <cctype>
 #include <fstream>
 #include <utility>
+#include <vector>
 
 namespace {
 std::vector<std::string> loadArchiveSet(const char* basePath) {
@@ -31,8 +32,6 @@ std::vector<std::string> loadArchiveSet(const char* basePath) {
     return paths;
 }
 }
-
-namespace wormhole {
 
 namespace wormhole {
 
