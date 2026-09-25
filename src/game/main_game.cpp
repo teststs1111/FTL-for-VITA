@@ -512,15 +512,9 @@ public:
             if (combat_.outcome == CombatOutcome::EnemyDestroyed) {
                 runtime_.hull = combat_.player.hull;
                 combatMode_ = false;
-                fuel_ = std::max(0, fuel_ - 1);
                 scrap_ += 20 + sector_ * 5;
-                ++visitedBeacons_;
-                if (visitedBeacons_ >= 5) {
-                    ++sector_;
-                    visitedBeacons_ = 0;
-                    selectedBeacon_ = 0;
-                }
-                sceneMode_ = sector_ >= 8 ? SceneMode::Victory : SceneMode::SectorMap;
+                visitedBeacons_++;
+                sceneMode_ = SceneMode::SectorMap;
             } else if (combat_.outcome == CombatOutcome::PlayerDestroyed) {
                 combatMode_ = false;
                 sceneMode_ = SceneMode::GameOver;
