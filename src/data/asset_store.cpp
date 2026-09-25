@@ -8,6 +8,11 @@ bool AssetStore::openArchive(const std::string& path) {
     return archive_.open(path);
 }
 
+bool AssetStore::openArchives(const std::vector<std::string>& paths) {
+    clearCache();
+    return archive_.openArchives(paths);
+}
+
 const std::vector<std::uint8_t>* AssetStore::getBytes(const std::string& name) {
     if (!archive_.isOpen()) return nullptr;
 
