@@ -39,6 +39,9 @@ public:
     std::size_t size() const { return events_.size(); }
 
 private:
+    struct EventPoolEntry { std::string id; int weight{1}; };
+    struct EventPool { std::vector<EventPoolEntry> entries; };
+
     void collectEvents(const bxml::Node& node);
     void addEvent(const bxml::Node& node, const std::string& id);
     static std::string nodeText(const bxml::Node& node);
