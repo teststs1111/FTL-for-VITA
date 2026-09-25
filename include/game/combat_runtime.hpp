@@ -14,7 +14,6 @@ struct CombatResult {
     int hullDamage{0};
     int systemDamage{0};
     int ionDamage{0};
-    int ionDamage{0};
     int personnelDamage{0};
     bool targetDestroyed{false};
 };
