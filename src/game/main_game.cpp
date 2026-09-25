@@ -236,6 +236,8 @@ public:
                     combatFeedback_ = "敵艦撃沈";
                 } else if (impact.hullDamage > 0) {
                     combatFeedback_ = "船体ダメージ " + std::to_string(impact.hullDamage);
+                } else if (impact.ionDamage > 0) {
+                    combatFeedback_ = "イオンダメージ " + std::to_string(impact.ionDamage);
                 } else if (impact.systemDamage > 0) {
                     combatFeedback_ = "システムダメージ " + std::to_string(impact.systemDamage);
                 } else if (impact.personnelDamage > 0) {
