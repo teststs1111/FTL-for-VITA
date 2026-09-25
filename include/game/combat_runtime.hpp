@@ -12,6 +12,7 @@ struct CombatResult {
     bool fired{false};
     int shotsFired{0};
     int shieldsAbsorbed{0};
+    int evaded{0};
     int hullDamage{0};
     int systemDamage{0};
     int ionDamage{0};
