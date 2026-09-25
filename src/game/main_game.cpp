@@ -393,10 +393,43 @@ public:
                 ? std::min(1.f, std::max(0.f, shot.elapsed / shot.duration)) : 1.f;
             const float x = start.first + (end.first - start.first) * t;
             const float y = start.second + (end.second - start.second) * t;
-            const float size = 8.f;
-            graphics_.fillRect(x - size * 0.5f, y - size * 0.5f, size, size,
-                shot.fromPlayer ? Color{1.f, 0.85f, 0.25f, 1.f}
-                                 : Color{1.f, 0.3f, 0.2f, 1.f});
+            const auto weaponTextureIt = weaponTextureNames_.find(shot.weapon.name);
+            const Texture* weaponTexture = weaponTextureIt == weaponTextureNames_.end()
+                ? nullptr : textures_.get(weaponTextureIt->second);
+            bool drewProjectileFrame = false;
+            if (weaponTexture && weaponTexture->width() > 0 && weaponTexture->height() > 0) {
+                int frameCount = 1;
+                const std::string& assetName = weaponTextureIt->second;
+                const std::size_t stripPos = assetName.rfind("_strip");
+                if (stripPos != std::string::npos) {
+                    std::size_t p = stripPos + 5;
+                    int parsed = 0;
+                    while (p < assetName.size() && std::isdigit(static_cast<unsigned char>(assetName[p]))) {
+                        parsed = parsed * 10 + (assetName[p] - '0');
+                        ++p;
+                    }
+                    if (parsed > 1) frameCount = parsed;
+                }
+                const int frame = frameCount > 1
+                    ? std::min(frameCount - 1, static_cast<int>(t * frameCount)) : 0;
+                const float u0 = static_cast<float>(frame) / frameCount;
+                const float u1 = static_cast<float>(frame + 1) / frameCount;
+                const float aspect = (static_cast<float>(weaponTexture->width()) / frameCount) /
+                                     std::max(1, weaponTexture->height());
+                const float size = 14.f;
+                const float h = std::min(18.f, size / std::max(0.1f, aspect));
+                graphics_.drawTextureRegion(*weaponTexture, x - size * 0.5f, y - h * 0.5f,
+                    size, h, u0, 0.f, u1, 1.f,
+                    shot.fromPlayer ? Color{1.f, 0.95f, 0.65f, 1.f}
+                                    : Color{1.f, 0.55f, 0.45f, 1.f});
+                drewProjectileFrame = true;
+            }
+            if (!drewProjectileFrame) {
+                const float size = 8.f;
+                graphics_.fillRect(x - size * 0.5f, y - size * 0.5f, size, size,
+                    shot.fromPlayer ? Color{1.f, 0.85f, 0.25f, 1.f}
+                                     : Color{1.f, 0.3f, 0.2f, 1.f});
+            }
         }
 
 
