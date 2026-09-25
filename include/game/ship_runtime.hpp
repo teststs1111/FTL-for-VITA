@@ -32,6 +32,7 @@ struct RuntimeWeapon {
     int shieldPiercing{0};
     int missilesUsed{0};
     int personnelDamage{0};
+    int hullBust{0};
     bool ready{false};
 };
 
