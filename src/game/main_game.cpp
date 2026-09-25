@@ -266,8 +266,8 @@ public:
 
     bool beginBeaconEvent(int beacon) {
         if (eventDatabase_.size() == 0) return false;
-        // Pick from the real event table deterministically for now. The next
-        // step will replace this with sectorDescription beacon weighting.
+        // Prefer the original sectorDescription event pools; fall back to the
+        // loaded event table when a data file is unavailable.
         if (eventOrder_.empty()) return false;
         activeEventId_.clear();
         if (const auto* sector = sectorDatabase_.select(sector_, static_cast<std::size_t>(beacon))) {
@@ -302,7 +302,12 @@ public:
             sceneMode_ = SceneMode::SectorMap;
             return;
         }
-        if (!input_.pressed(Button::Cross) || event->choices.empty()) return;
+        if (!input_.pressed(Button::Cross)) return;
+        if (event->choices.empty()) {
+            ++visitedBeacons_;
+            sceneMode_ = SceneMode::SectorMap;
+            return;
+        }
 
         const auto& choice = event->choices[activeEventChoice_];
         scrap_ = std::max(0, scrap_ + choice.scrap);
@@ -371,10 +376,9 @@ public:
     }
 
     void updateSectorMap() {
-        // FTL advances through a connected beacon map rather than entering
-        // combat directly from the ship screen. This prototype uses a compact
-        // deterministic five-beacon route until the full procedural sector
-        // generator is wired to the original event data.
+        // FTL advances through a connected beacon map. The current geometry is
+        // still a compact five-beacon stand-in; its encounter data now comes
+        // from the original sectorDescription/event XML.
         if (input_.pressed(Button::Left) || input_.pressed(Button::Up))
             selectedBeacon_ = std::max(0, selectedBeacon_ - 1);
         if (input_.pressed(Button::Right) || input_.pressed(Button::Down))
