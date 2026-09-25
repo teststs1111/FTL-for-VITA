@@ -272,6 +272,10 @@ public:
             enterCombatFromBeacon();
             return;
         }
+        if (input_.pressed(Button::Circle)) {
+            sceneMode_ = SceneMode::Ship;
+            return;
+        }
     }
 
     void renderSectorMap() {
