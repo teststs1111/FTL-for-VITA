@@ -1152,7 +1152,8 @@ private:
     int activeEventChoice_{0};
     int sector_{0};
     int selectedBeacon_{0};
-    int currentBeacon_{-1};\n    int fleetRow_{-1};
+    int currentBeacon_{-1};
+    int fleetRow_{-1};
     unsigned seed_{0x51f7a21u};
     int visitedBeacons_{0};
     int fuel_{16};
