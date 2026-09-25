@@ -9,7 +9,30 @@
 #include "platform/input.hpp"
 #include <algorithm>
 #include <cctype>
+#include <fstream>
 #include <utility>
+
+namespace {
+std::vector<std::string> loadArchiveSet(const char* basePath) {
+    std::vector<std::string> paths;
+    if (!basePath || !*basePath) return paths;
+    paths.emplace_back(basePath);
+
+    // Optional sidecar manifest. The first archive is always the base game;
+    // following non-empty, non-comment lines are layered on top of it.
+    std::ifstream manifest(std::string(basePath) + ".dlc");
+    std::string line;
+    while (std::getline(manifest, line)) {
+        const auto first = line.find_first_not_of(" \t\r\n");
+        if (first == std::string::npos || line[first] == '#') continue;
+        const auto last = line.find_last_not_of(" \t\r\n");
+        paths.push_back(line.substr(first, last - first + 1));
+    }
+    return paths;
+}
+}
+
+namespace wormhole {
 
 namespace wormhole {
 
@@ -25,7 +48,8 @@ public:
             startupError_ = "FTL archive path is not configured";
             return;
         }
-        if (!content_.open(archivePath)) {
+        const auto archivePaths = loadArchiveSet(archivePath);
+        if (archivePaths.empty() || !content_.openArchives(archivePaths)) {
             startupError_ = "FTL archive not found: " + std::string(archivePath);
             return;
         }
