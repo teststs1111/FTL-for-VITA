@@ -1,6 +1,7 @@
 #include "game/main_game.hpp"
 #include "game/game_state.hpp"
 #include "data/ship_content.hpp"
+#include "data/event_database.hpp"
 #include "game/ship_runtime.hpp"
 #include "game/combat_runtime.hpp"
 #include "render/graphics.hpp"
@@ -56,6 +57,12 @@ public:
         {
             if (const auto* bytes = content_.assets().getBytes("data/text-ja.xml"))
                 localization_.loadFtlTextXml(*bytes);
+            eventDatabase_.load();
+            eventOrder_.clear();
+            // Preserve the database order without exposing its internal map.
+            // The event list is populated below from the first usable entries.
+            if (const auto* firstEvent = eventDatabase_.firstUsable())
+                eventOrder_.push_back(firstEvent->id);
             if (!content_.loadPlayerShip()) {
                 startupError_ = "Player ship blueprint could not be loaded";
                 return;
@@ -249,7 +256,7 @@ public:
         return byName.empty() ? drone.name : byName;
     }
 
-    enum class SceneMode { SectorMap, Ship, Combat, Pause, GameOver, Victory };
+    enum class SceneMode { SectorMap, Ship, Event, Combat, Pause, GameOver, Victory };
 
     void enterCombatFromBeacon() {
         combatMode_ = true;
@@ -257,6 +264,104 @@ public:
         combatTargetRoom_ = combat_.enemy.content.layout.rooms.empty()
             ? 0 : combat_.enemy.content.layout.rooms.front().id;
         combat_.setTargetRoom(combatTargetRoom_);
+    }
+
+    bool beginBeaconEvent(int beacon) {
+        if (eventDatabase_.size() == 0) return false;
+        // Pick from the real event table deterministically for now. The next
+        // step will replace this with sectorDescription beacon weighting.
+        const std::size_t index = static_cast<std::size_t>((sector_ * 5 + beacon) % eventOrder_.size());
+        if (eventOrder_.empty()) return false;
+        activeEventId_ = eventOrder_[index];
+        const auto* event = eventDatabase_.find(activeEventId_);
+        if (!event) return false;
+        activeEventChoice_ = 0;
+        sceneMode_ = SceneMode::Event;
+        return true;
+    }
+
+    void updateEvent() {
+        const auto* event = eventDatabase_.find(activeEventId_);
+        if (!event) {
+            sceneMode_ = SceneMode::SectorMap;
+            return;
+        }
+        if (input_.pressed(Button::Up) || input_.pressed(Button::Left))
+            activeEventChoice_ = std::max(0, activeEventChoice_ - 1);
+        if (input_.pressed(Button::Down) || input_.pressed(Button::Right))
+            activeEventChoice_ = std::min(
+                std::max(0, static_cast<int>(event->choices.size()) - 1),
+                activeEventChoice_ + 1);
+        if (input_.pressed(Button::Circle)) {
+            sceneMode_ = SceneMode::SectorMap;
+            return;
+        }
+        if (!input_.pressed(Button::Cross) || event->choices.empty()) return;
+
+        const auto& choice = event->choices[activeEventChoice_];
+        scrap_ = std::max(0, scrap_ + choice.scrap);
+        fuel_ = std::max(0, fuel_ + choice.fuel);
+        if (choice.load.empty() && !choice.hostile && !choice.store && !choice.repair) {
+            ++visitedBeacons_;
+            sceneMode_ = SceneMode::SectorMap;
+            return;
+        }
+        if (choice.store || event->store) {
+            sceneMode_ = SceneMode::Ship;
+            return;
+        }
+        if (choice.repair || event->repair) {
+            runtime_.hull = std::min(runtime_.content.blueprint.maxHealth, runtime_.hull + 2);
+            sceneMode_ = SceneMode::SectorMap;
+            ++visitedBeacons_;
+            return;
+        }
+        if (!choice.load.empty()) {
+            const auto* next = eventDatabase_.find(choice.load);
+            if (next && next->hostile) {
+                enterCombatFromBeacon();
+                return;
+            }
+            if (next) {
+                activeEventId_ = next->id;
+                activeEventChoice_ = 0;
+                return;
+            }
+        }
+        if (choice.hostile) {
+            enterCombatFromBeacon();
+            return;
+        }
+        ++visitedBeacons_;
+        sceneMode_ = SceneMode::SectorMap;
+    }
+
+    void renderEvent() {
+        const auto* event = eventDatabase_.find(activeEventId_);
+        if (!event) return;
+        graphics_.fillRect(70.f, 55.f, 820.f, 430.f, {0.06f, 0.075f, 0.105f, 1.f});
+        text_.draw(graphics_, "ビーコンイベント", 105.f, 95.f, 24.f, {0.88f, 0.93f, 1.f, 1.f});
+        text_.draw(graphics_, "セクター " + std::to_string(sector_ + 1), 735.f, 95.f, 14.f, {0.65f, 0.75f, 0.88f, 1.f});
+        std::string message = event->text.empty() ? "このビーコンでは特に何も起きなかった。" : event->text;
+        if (message.size() > 110) message.resize(110);
+        text_.draw(graphics_, message, 105.f, 150.f, 16.f, {0.82f, 0.86f, 0.92f, 1.f});
+        if (event->choices.empty()) {
+            text_.draw(graphics_, "×: 続行", 105.f, 410.f, 16.f, {0.95f, 0.82f, 0.42f, 1.f});
+        } else {
+            for (std::size_t i=0;i<event->choices.size() && i<6;++i) {
+                const bool selected = static_cast<int>(i) == activeEventChoice_;
+                const float y = 245.f + static_cast<float>(i) * 38.f;
+                if (selected)
+                    graphics_.fillRect(95.f, y - 20.f, 770.f, 30.f, {0.16f, 0.25f, 0.34f, 1.f});
+                std::string label = event->choices[i].text;
+                if (label.empty()) label = event->choices[i].load.empty() ? "続行" : "次へ";
+                if (label.size() > 90) label.resize(90);
+                text_.draw(graphics_, (selected ? "> " : "  ") + label, 110.f, y, 15.f,
+                    selected ? Color{0.98f,0.86f,0.45f,1.f} : Color{0.78f,0.83f,0.90f,1.f});
+            }
+            text_.draw(graphics_, "十字キー: 選択   ×: 決定   ○: 戻る", 105.f, 455.f, 14.f,
+                {0.64f,0.72f,0.82f,1.f});
+        }
     }
 
     void updateSectorMap() {
@@ -269,6 +374,7 @@ public:
         if (input_.pressed(Button::Right) || input_.pressed(Button::Down))
             selectedBeacon_ = std::min(4, selectedBeacon_ + 1);
         if (input_.pressed(Button::Cross)) {
+            if (beginBeaconEvent(selectedBeacon_)) return;
             enterCombatFromBeacon();
             return;
         }
@@ -333,6 +439,10 @@ public:
         }
         if (sceneMode_ == SceneMode::SectorMap) {
             updateSectorMap();
+            return;
+        }
+        if (sceneMode_ == SceneMode::Event) {
+            updateEvent();
             return;
         }
         if (sceneMode_ == SceneMode::GameOver || sceneMode_ == SceneMode::Victory) return;
@@ -830,6 +940,10 @@ public:
             renderSectorMap();
             return;
         }
+        if (sceneMode_ == SceneMode::Event) {
+            renderEvent();
+            return;
+        }
         if (sceneMode_ == SceneMode::Pause) {
             if (combatMode_) renderCombat();
             else {
@@ -970,6 +1084,7 @@ private:
     Input& input_;
     Localization& localization_;
     ShipContent content_;
+    EventDatabase eventDatabase_{content_.assets()};
     ShipRuntime runtime_;
     CombatRuntime combat_;
     CombatResult lastCombatResult_{};
@@ -989,6 +1104,9 @@ private:
     std::string combatFeedback_;
     float combatFeedbackTimer_{0.0f};
     SceneMode sceneMode_{SceneMode::SectorMap};
+    std::vector<std::string> eventOrder_;
+    std::string activeEventId_;
+    int activeEventChoice_{0};
     int sector_{0};
     int selectedBeacon_{0};
     int visitedBeacons_{0};
