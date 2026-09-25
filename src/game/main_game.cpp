@@ -361,6 +361,40 @@ public:
         drawShip(combat_.player, leftX, false, roomTextureNames_);
         drawShip(combat_.enemy, rightX, true, enemyRoomTextureNames_);
 
+        // Render shield layers as a compact HUD around each combat ship. The
+        // runtime already tracks current/max layers and recharge progress, so
+        // this visual stays tied to actual combat state instead of being a
+        // decorative placeholder.
+        auto drawShieldHud = [&](const ShipRuntime& ship, float originX, bool enemySide) {
+            const float x = originX - 82.f;
+            const float y = 120.f;
+            const float width = 164.f;
+            const float layerW = 22.f;
+            const float gap = 3.f;
+            const int maxLayers = std::max(0, ship.maxShieldLayers);
+            const int shownLayers = std::min(std::max(0, ship.shieldLayers), maxLayers);
+            if (maxLayers > 0) {
+                for (int i = 0; i < maxLayers; ++i) {
+                    const float lx = x + i * (layerW + gap);
+                    const bool active = i < shownLayers;
+                    graphics_.fillRect(lx, y, layerW, 7.f,
+                        active ? (enemySide ? Color{0.35f, 0.55f, 1.f, 1.f}
+                                          : Color{0.30f, 0.80f, 1.f, 1.f})
+                               : Color{0.12f, 0.16f, 0.22f, 1.f});
+                }
+            }
+            const float charge = std::clamp(ship.shieldCharge, 0.f, 1.f);
+            graphics_.fillRect(x, y + 11.f, width, 4.f, {0.10f, 0.12f, 0.16f, 1.f});
+            if (charge > 0.f)
+                graphics_.fillRect(x, y + 11.f, width * charge, 4.f,
+                    enemySide ? Color{0.35f, 0.55f, 1.f, 0.85f}
+                              : Color{0.30f, 0.80f, 1.f, 0.85f});
+            text_.draw(graphics_, "SHIELDS " + std::to_string(shownLayers) + "/" + std::to_string(maxLayers),
+                x, y - 16.f, 11.f, {0.72f, 0.82f, 0.94f, 1.f});
+        };
+        drawShieldHud(combat_.player, leftX, false);
+        drawShieldHud(combat_.enemy, rightX, true);
+
         auto roomCenter = [&](const ShipRuntime& ship, float originX, int roomId) {
             for (const auto& room : ship.content.layout.rooms) {
                 if (room.id != roomId) continue;
