@@ -84,4 +84,17 @@ void Graphics::drawTexture(const Texture& texture,float x,float y,float w,float 
     (void)texture;(void)x;(void)y;(void)w;(void)h;(void)c;
 #endif
 }
+void Graphics::drawTextureRegion(const Texture& texture,float x,float y,float w,float h,
+                                  float u0,float v0,float u1,float v1,const Color& c) {
+    if (!initialized_ || !texture.valid()) return;
+#ifdef __vita__
+    glEnable(GL_TEXTURE_2D); glBindTexture(GL_TEXTURE_2D,static_cast<GLuint>(texture.handle()));
+    glColor4f(c.r,c.g,c.b,c.a); glBegin(GL_QUADS);
+    glTexCoord2f(u0,v0); glVertex2f(x,y); glTexCoord2f(u1,v0); glVertex2f(x+w,y);
+    glTexCoord2f(u1,v1); glVertex2f(x+w,y+h); glTexCoord2f(u0,v1); glVertex2f(x,y+h);
+    glEnd(); glBindTexture(GL_TEXTURE_2D,0); glDisable(GL_TEXTURE_2D);
+#else
+    (void)texture;(void)x;(void)y;(void)w;(void)h;(void)u0;(void)v0;(void)u1;(void)v1;(void)c;
+#endif
+}
 }
