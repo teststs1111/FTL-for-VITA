@@ -41,9 +41,16 @@ const BeaconNode* SectorGraph::node(int index) const {
 
 std::vector<int> SectorGraph::selectable(int current, int fleetRow) const {
     if(current<0) {
+        // The first map selection is always the first graph row. The fleet
+        // boundary is applied only after the player has entered the sector;
+        // fleetRow is a row index, never a column index.
         std::vector<int> out;
         for(int c=0;c<columns_;++c) {
-            if (fleetRow < 0 || c > fleetRow) out.push_back(c);
+            const int index = c;
+            const auto* target = node(index);
+            if (!target) continue;
+            if (fleetRow >= 0 && target->row <= fleetRow) continue;
+            out.push_back(index);
         }
         return out;
     }
