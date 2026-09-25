@@ -30,7 +30,7 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
             }
         }
     }
-    startNode_=static_cast<int>(rng()%columns);
+    startNode_=static_cast<int>(rng()%columns_);
     nodes_[startNode_].visited=true;
 }
 
