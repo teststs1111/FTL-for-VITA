@@ -230,7 +230,9 @@ public:
             combat_.update(dt);
             CombatResult impact;
             while (combat_.consumeImpactResult(impact)) {
-                if (impact.shieldsAbsorbed > 0 && impact.hullDamage == 0) {
+                if (impact.evaded > 0) {
+                    combatFeedback_ = "攻撃を回避";
+                } else if (impact.shieldsAbsorbed > 0 && impact.hullDamage == 0) {
                     combatFeedback_ = "シールドが攻撃を吸収";
                 } else if (impact.targetDestroyed) {
                     combatFeedback_ = "敵艦撃沈";
