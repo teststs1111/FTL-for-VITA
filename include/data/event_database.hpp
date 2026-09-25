@@ -35,6 +35,7 @@ public:
     bool load();
     const EventDefinition* find(const std::string& id) const;
     const EventDefinition* firstUsable() const;
+    const std::vector<std::string>& ids() const { return order_; }
     std::size_t size() const { return events_.size(); }
 
 private:
