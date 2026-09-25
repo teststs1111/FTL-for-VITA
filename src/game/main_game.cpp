@@ -17,7 +17,10 @@ class ShipScene final : public GameState {
 public:
     ShipScene(Graphics& graphics, Input& input, Localization& localization, const char* archivePath) : graphics_(graphics), input_(input), localization_(localization) {
         // Initialize text first so archive failures can be diagnosed on-device.
-        text_.init();
+        if (!text_.init()) {
+            startupError_ = "Text renderer initialization failed";
+            return;
+        }
         if (!archivePath) {
             startupError_ = "FTL archive path is not configured";
             return;
@@ -29,8 +32,14 @@ public:
         {
             if (const auto* bytes = content_.assets().getBytes("data/text-ja.xml"))
                 localization_.loadFtlTextXml(*bytes);
-            if (!content_.loadPlayerShip()) return;
-            runtime_.load(content_);
+            if (!content_.loadPlayerShip()) {
+                startupError_ = "Player ship blueprint could not be loaded";
+                return;
+            }
+            if (!runtime_.load(content_)) {
+                startupError_ = "Ship runtime initialization failed";
+                return;
+            }
             LoadedShip enemy;
             const LoadedShip* player = content_.playerShip();
             std::string enemyId;
@@ -42,8 +51,15 @@ public:
             if (enemyId.empty() || !content_.loadShip(enemyId, enemy)) {
                 if (player) enemy = *player;
             }
-            if (!enemy.blueprint.id.empty())
-                combat_.load(content_, enemy);
+            if (!enemy.blueprint.id.empty()) {
+                if (!combat_.load(content_, enemy)) {
+                    startupError_ = "Combat runtime initialization failed";
+                    return;
+                }
+            } else {
+                startupError_ = "Enemy ship blueprint could not be loaded";
+                return;
+            }
             discoverRoomTextures();
             discoverWeaponAndDroneTextures();
             discoverCrewTextures();
