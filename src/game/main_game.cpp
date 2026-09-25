@@ -335,7 +335,11 @@ public:
         // runtime, so event rewards immediately affect the actual inventory.
         scrap_ = std::max(0, scrap_ + choice.scrap);
         fuel_ = std::max(0, fuel_ + choice.fuel);
-        combat_.player.missiles = std::max(0, combat_.player.missiles + choice.missiles);
+        // Resource rewards belong to the persistent ship state. Combat copies
+        // this state when a fight starts, so updating runtime_ here prevents
+        // event rewards from disappearing on the next combat.
+        runtime_.missiles = std::max(0, runtime_.missiles + choice.missiles);
+        combat_.player.missiles = runtime_.missiles;
         droneParts_ = std::max(0, droneParts_ + choice.drones);
         if (choice.load.empty() && !choice.hostile && !choice.store && !choice.repair) {
             ++visitedBeacons_;
