@@ -12,6 +12,7 @@
 #include <fstream>
 #include <utility>
 #include <vector>
+#include <array>
 
 namespace {
 std::vector<std::string> loadArchiveSet(const char* basePath) {
@@ -248,7 +249,90 @@ public:
         return byName.empty() ? drone.name : byName;
     }
 
+    enum class SceneMode { SectorMap, Ship, Combat, Pause, GameOver, Victory };
+
+    void enterCombatFromBeacon() {
+        combatMode_ = true;
+        sceneMode_ = SceneMode::Combat;
+        combatTargetRoom_ = combat_.enemy.content.layout.rooms.empty()
+            ? 0 : combat_.enemy.content.layout.rooms.front().id;
+        combat_.setTargetRoom(combatTargetRoom_);
+    }
+
+    void updateSectorMap() {
+        // FTL advances through a connected beacon map rather than entering
+        // combat directly from the ship screen. This prototype uses a compact
+        // deterministic five-beacon route until the full procedural sector
+        // generator is wired to the original event data.
+        if (input_.pressed(Button::Left) || input_.pressed(Button::Up))
+            selectedBeacon_ = std::max(0, selectedBeacon_ - 1);
+        if (input_.pressed(Button::Right) || input_.pressed(Button::Down))
+            selectedBeacon_ = std::min(4, selectedBeacon_ + 1);
+        if (input_.pressed(Button::Cross)) {
+            enterCombatFromBeacon();
+            return;
+        }
+    }
+
+    void renderSectorMap() {
+        graphics_.fillRect(0.f, 0.f, 960.f, 544.f, {0.035f, 0.045f, 0.065f, 1.f});
+        text_.draw(graphics_, "FTL: Faster Than Light", 48.f, 42.f, 24.f,
+            {0.88f, 0.92f, 1.f, 1.f});
+        text_.draw(graphics_, "セクター " + std::to_string(sector_ + 1) + " / 8", 48.f, 74.f, 15.f,
+            {0.65f, 0.75f, 0.88f, 1.f});
+        text_.draw(graphics_, "燃料 " + std::to_string(fuel_) + "   ミサイル " + std::to_string(combat_.player.missiles),
+            620.f, 42.f, 14.f, {0.78f, 0.86f, 0.94f, 1.f});
+        text_.draw(graphics_, "スクラップ " + std::to_string(scrap_), 620.f, 66.f, 14.f,
+            {0.82f, 0.76f, 0.58f, 1.f});
+
+        const std::array<std::pair<float,float>,5> nodes = {{{150.f,300.f},{310.f,225.f},{470.f,330.f},{630.f,210.f},{810.f,300.f}}};
+        for (std::size_t i=1;i<nodes.size();++i)
+            graphics_.drawLine(nodes[i-1].first,nodes[i-1].second,nodes[i].first,nodes[i].second,
+                {0.25f,0.40f,0.55f,1.f});
+        for (std::size_t i=0;i<nodes.size();++i) {
+            const bool selected = static_cast<int>(i)==selectedBeacon_;
+            const float r = selected ? 15.f : 10.f;
+            graphics_.fillRect(nodes[i].first-r,nodes[i].second-r,r*2.f,r*2.f,
+                selected ? Color{0.95f,0.72f,0.20f,1.f} : Color{0.30f,0.55f,0.78f,1.f});
+            text_.draw(graphics_, "" + std::to_string(static_cast<int>(i)+1), nodes[i].first-4.f, nodes[i].second-7.f, 12.f,
+                {0.96f,0.98f,1.f,1.f});
+        }
+        text_.draw(graphics_, "十字キー: ビーコン選択   ○: 戻る   ×: ジャンプ",
+            48.f, 500.f, 14.f, {0.68f,0.76f,0.86f,1.f});
+    }
+
+    void updatePause() {
+        if (input_.pressed(Button::Start) || input_.pressed(Button::Circle))
+            sceneMode_ = combatMode_ ? SceneMode::Combat : SceneMode::Ship;
+    }
+
+    void renderPause() {
+        graphics_.fillRect(260.f, 145.f, 440.f, 250.f, {0.06f,0.08f,0.12f,0.97f});
+        graphics_.drawLine(260.f,145.f,700.f,145.f,{0.45f,0.65f,0.82f,1.f});
+        text_.draw(graphics_, "ポーズ", 315.f, 205.f, 28.f, {0.90f,0.94f,1.f,1.f});
+        text_.draw(graphics_, "スタート: 再開", 315.f, 255.f, 17.f, {0.75f,0.82f,0.92f,1.f});
+        text_.draw(graphics_, "○: 再開", 315.f, 290.f, 17.f, {0.75f,0.82f,0.92f,1.f});
+        text_.draw(graphics_, "現在のセクター: " + std::to_string(sector_ + 1), 315.f, 335.f, 15.f,
+            {0.65f,0.72f,0.82f,1.f});
+    }
+
     void update(float dt) override {
+        if (!startupError_.empty()) return;
+
+        if (input_.pressed(Button::Start) && sceneMode_ != SceneMode::Pause) {
+            sceneMode_ = SceneMode::Pause;
+            return;
+        }
+        if (sceneMode_ == SceneMode::Pause) {
+            updatePause();
+            return;
+        }
+        if (sceneMode_ == SceneMode::SectorMap) {
+            updateSectorMap();
+            return;
+        }
+        if (sceneMode_ == SceneMode::GameOver || sceneMode_ == SceneMode::Victory) return;
+
         if (combatMode_) {
             combat_.update(dt);
             CombatResult impact;
@@ -283,6 +367,18 @@ public:
             if (combat_.outcome == CombatOutcome::EnemyDestroyed) {
                 runtime_.hull = combat_.player.hull;
                 combatMode_ = false;
+                fuel_ = std::max(0, fuel_ - 1);
+                scrap_ += 20 + sector_ * 5;
+                ++visitedBeacons_;
+                if (visitedBeacons_ >= 5) {
+                    ++sector_;
+                    visitedBeacons_ = 0;
+                    selectedBeacon_ = 0;
+                }
+                sceneMode_ = sector_ >= 8 ? SceneMode::Victory : SceneMode::SectorMap;
+            } else if (combat_.outcome == CombatOutcome::PlayerDestroyed) {
+                combatMode_ = false;
+                sceneMode_ = SceneMode::GameOver;
             }
             return;
         }
@@ -327,20 +423,22 @@ public:
         }
 
         if (input_.pressed(Button::Select)) {
-            combatMode_ = true;
-            combatTargetRoom_ = selectedRoomId;
-            combat_.setTargetRoom(selectedRoomId);
+            sceneMode_ = SceneMode::SectorMap;
             return;
         }
-
 
         if (input_.pressed(Button::L) && !runtime_.crew.empty()) {
             runtime_.moveCrew(selectedCrew_, selectedRoomId);
         }
-        if (input_.pressed(Button::Circle))
-            runtime_.repairRoom(selectedRoomId, 1);
-        if (input_.pressed(Button::Square))
-            runtime_.damageRoom(selectedRoomId, 1);
+        if (input_.pressed(Button::Square)) {
+            for (int i = 0; i < static_cast<int>(runtime_.content.layout.doors.size()); ++i) {
+                const auto& door = runtime_.content.layout.doors[i];
+                if (door.leftRoom == selectedRoomId || door.rightRoom == selectedRoomId) {
+                    runtime_.setDoorOpen(i, !runtime_.doorOpen[i]);
+                    break;
+                }
+            }
+        }
     }
 
     void updateCombat() {
@@ -724,6 +822,26 @@ public:
                 {0.70f, 0.78f, 0.88f, 1.f});
             return;
         }
+        if (sceneMode_ == SceneMode::SectorMap) {
+            renderSectorMap();
+            return;
+        }
+        if (sceneMode_ == SceneMode::Pause) {
+            if (combatMode_) renderCombat();
+            else {
+                const LoadedShip* ship = content_.playerShip();
+                (void)ship;
+            }
+            renderPause();
+            return;
+        }
+        if (sceneMode_ == SceneMode::GameOver || sceneMode_ == SceneMode::Victory) {
+            graphics_.fillRect(0.f,0.f,960.f,544.f,{0.03f,0.04f,0.06f,1.f});
+            text_.draw(graphics_, sceneMode_ == SceneMode::Victory ? "銀河を脱出した" : "ゲームオーバー",
+                285.f,230.f,30.f, sceneMode_ == SceneMode::Victory ? Color{0.9f,0.85f,0.45f,1.f} : Color{0.95f,0.35f,0.30f,1.f});
+            text_.draw(graphics_, "スタートで終了", 385.f,285.f,16.f,{0.72f,0.78f,0.88f,1.f});
+            return;
+        }
         if (combatMode_) {
             renderCombat();
             return;
@@ -866,6 +984,12 @@ private:
     std::string startupError_;
     std::string combatFeedback_;
     float combatFeedbackTimer_{0.0f};
+    SceneMode sceneMode_{SceneMode::SectorMap};
+    int sector_{0};
+    int selectedBeacon_{0};
+    int visitedBeacons_{0};
+    int fuel_{16};
+    int scrap_{0};
 };
 
 MainGame::MainGame() = default;
