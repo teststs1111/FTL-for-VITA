@@ -58,11 +58,7 @@ public:
             if (const auto* bytes = content_.assets().getBytes("data/text-ja.xml"))
                 localization_.loadFtlTextXml(*bytes);
             eventDatabase_.load();
-            eventOrder_.clear();
-            // Preserve the database order without exposing its internal map.
-            // The event list is populated below from the first usable entries.
-            if (const auto* firstEvent = eventDatabase_.firstUsable())
-                eventOrder_.push_back(firstEvent->id);
+            eventOrder_ = eventDatabase_.ids();
             if (!content_.loadPlayerShip()) {
                 startupError_ = "Player ship blueprint could not be loaded";
                 return;
@@ -270,8 +266,8 @@ public:
         if (eventDatabase_.size() == 0) return false;
         // Pick from the real event table deterministically for now. The next
         // step will replace this with sectorDescription beacon weighting.
-        const std::size_t index = static_cast<std::size_t>((sector_ * 5 + beacon) % eventOrder_.size());
         if (eventOrder_.empty()) return false;
+        const std::size_t index = static_cast<std::size_t>((sector_ * 5 + beacon) % eventOrder_.size());
         activeEventId_ = eventOrder_[index];
         const auto* event = eventDatabase_.find(activeEventId_);
         if (!event) return false;
