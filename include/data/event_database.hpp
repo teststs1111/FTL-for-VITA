@@ -40,6 +40,7 @@ public:
 
 private:
     void collectEvents(const bxml::Node& node);
+    void addEvent(const bxml::Node& node, const std::string& id);
     static std::string nodeText(const bxml::Node& node);
     static bool hasChild(const bxml::Node& node, const std::string& name);
     static const bxml::Node* child(const bxml::Node& node, const std::string& name);
