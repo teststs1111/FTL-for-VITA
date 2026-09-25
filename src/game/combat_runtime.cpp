@@ -208,16 +208,30 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
 
     const int shieldPiercing = std::max(0, weapon.shieldPiercing);
     for (int shot = 0; shot < weapon.shots; ++shot) {
-        if (target.shieldLayers > shieldPiercing) {
+        // Missile/bomb weapons bypass shields in FTL. Laser/beam/ion-style
+        // weapons must first overcome the target's shield layers.
+        const bool shieldBypass = weapon.missilesUsed > 0;
+        if (!shieldBypass && target.shieldLayers > shieldPiercing) {
             --target.shieldLayers;
             target.shieldCharge = 0.0f;
             ++result.shieldsAbsorbed;
             continue;
         }
 
-        if (weapon.damage > 0) {
-            target.damageRoom(room, weapon.damage);
-            result.hullDamage += weapon.damage;
+        int hullDamage = std::max(0, weapon.damage);
+        // Hull-buster beams deal their bonus damage when striking a room
+        // without a system installed.
+        if (weapon.hullBust > 0) {
+            const bool hasSystem = std::any_of(target.systems.begin(), target.systems.end(),
+                [room](const RuntimeSystem& system) {
+                    return system.room == room;
+                });
+            if (!hasSystem)
+                hullDamage += weapon.hullBust;
+        }
+        if (hullDamage > 0) {
+            target.damageRoom(room, hullDamage);
+            result.hullDamage += hullDamage;
         }
         if (weapon.systemDamage > 0)
             result.systemDamage += target.damageSystemInRoom(room, weapon.systemDamage);
