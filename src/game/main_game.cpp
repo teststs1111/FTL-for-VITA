@@ -232,6 +232,12 @@ public:
             while (combat_.consumeImpactResult(impact)) {
                 if (impact.evaded > 0) {
                     combatFeedback_ = "攻撃を回避";
+                } else if (impact.firesStarted > 0) {
+                    combatFeedback_ = "火災発生";
+                } else if (impact.breachesStarted > 0) {
+                    combatFeedback_ = "船体に亀裂";
+                } else if (impact.systemsStunned > 0) {
+                    combatFeedback_ = "システムをスタン";
                 } else if (impact.shieldsAbsorbed > 0 && impact.hullDamage == 0) {
                     combatFeedback_ = "シールドが攻撃を吸収";
                 } else if (impact.targetDestroyed) {
