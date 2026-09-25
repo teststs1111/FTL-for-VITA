@@ -49,7 +49,8 @@ public:
                 }
             }
             if (enemyId.empty() || !content_.loadShip(enemyId, enemy)) {
-                if (player) enemy = *player;
+                startupError_ = "Enemy ship blueprint could not be loaded";
+                return;
             }
             if (!enemy.blueprint.id.empty()) {
                 if (!combat_.load(content_, enemy)) {
