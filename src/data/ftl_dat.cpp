@@ -95,7 +95,8 @@ std::vector<std::uint8_t> FtlDat::readFile(const std::string& name) const {
     const auto it = files_.find(name);
     if (it == files_.end()) return {};
 
-    if (it->second.archiveIndex >= paths_.size()) return {};\n    std::ifstream in(paths_[it->second.archiveIndex], std::ios::binary);
+    if (it->second.archiveIndex >= paths_.size()) return {};
+    std::ifstream in(paths_[it->second.archiveIndex], std::ios::binary);
     if (!in) return {};
     in.seekg(it->second.offset);
 
