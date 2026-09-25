@@ -10,6 +10,7 @@ namespace wormhole {
 class AssetStore {
 public:
     bool openArchive(const std::string& path);
+    bool openArchives(const std::vector<std::string>& paths);
     bool isOpen() const { return archive_.isOpen(); }
 
     const std::vector<std::uint8_t>* getBytes(const std::string& name);
