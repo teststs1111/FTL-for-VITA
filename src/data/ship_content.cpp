@@ -8,6 +8,12 @@ bool ShipContent::open(const std::string& archivePath) {
     return assets_.openArchive(archivePath);
 }
 
+bool ShipContent::openArchives(const std::vector<std::string>& archivePaths) {
+    loaded_ = false;
+    database_.clear();
+    return assets_.openArchives(archivePaths);
+}
+
 bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
                              const std::string& blueprintPath) {
     database_.clear();
