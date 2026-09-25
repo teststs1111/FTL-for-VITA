@@ -1,0 +1,91 @@
+name: Delete old workflow runs
+
+on:
+  workflow_dispatch:
+    inputs:
+      keep_latest:
+        description: "Keep this many newest runs per workflow"
+        required: true
+        default: "10"
+        type: string
+      target_workflow:
+        description: "Workflow file name to target (blank = all workflows)"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old workflow runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KEEP_LATEST: ${{ inputs.keep_latest }}
+          TARGET_WORKFLOW: ${{ inputs.target_workflow }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          keep="${KEEP_LATEST}"
+          if ! [[ "$keep" =~ ^[0-9]+$ ]]; then
+            echo "keep_latest must be a non-negative integer"
+            exit 1
+          fi
+
+          delete_runs() {
+            local workflow="$1"
+            local workflow_name
+            workflow_name="${workflow##*/}"
+            echo "Cleaning workflow: $workflow_name"
+
+            while true; do
+              mapfile -t runs < <(
+                gh api --paginate --slurp \
+                  -H "Accept: application/vnd.github+json" \
+                  "/repos/${REPO}/actions/workflows/${workflow_name}/runs?per_page=100&status=completed" |
+                jq -r 'add | .workflow_runs[] | [.id,.run_number] | @tsv' |
+                head -n 100
+              )
+
+              count=${#runs[@]}
+              if (( count <= keep )); then
+                echo "Nothing more to delete ($count runs remain in this page)."
+                break
+              fi
+
+              delete_count=0
+              for ((i=keep; i<count; i++)); do
+                run_id=$(printf '%s' "${runs[i]}" | cut -f1)
+                run_number=$(printf '%s' "${runs[i]}" | cut -f2)
+                echo "Deleting run #${run_number} (id ${run_id})"
+                gh api --method DELETE \
+                  -H "Accept: application/vnd.github+json" \
+                  "/repos/${REPO}/actions/runs/${run_id}"
+                ((delete_count+=1))
+              done
+
+              echo "Deleted $delete_count run(s); re-reading page 1 to avoid pagination shifts."
+            done
+          }
+
+          if [[ -n "${TARGET_WORKFLOW}" ]]; then
+            delete_runs "${TARGET_WORKFLOW}"
+          else
+            mapfile -t workflows < <(
+              gh api --paginate --slurp \
+                -H "Accept: application/vnd.github+json" \
+                "/repos/${REPO}/actions/workflows?per_page=100" |
+              jq -r 'add | .workflows[] | select(.state == "active") | .path'
+            )
+
+            for workflow in "${workflows[@]}"; do
+              delete_runs "${workflow}"
+            done
+          fi
+
+          echo "Workflow history cleanup completed."
