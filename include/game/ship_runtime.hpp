@@ -91,6 +91,7 @@ struct ShipRuntime {
     std::vector<int> roomOxygen;
     std::vector<bool> roomFire;
     std::vector<bool> roomBreach;
+    std::vector<float> roomFireDamageTimer;
     bool valid{false};
 
     bool load(ShipContent& source);
