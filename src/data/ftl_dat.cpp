@@ -17,7 +17,7 @@ std::uint32_t be24(const std::uint8_t* p) {
 bool FtlDat::open(const std::string& path) {
     open_ = false;
     files_.clear();
-    path_ = path;
+    paths_.clear();
 
     std::ifstream in(path, std::ios::binary | std::ios::ate);
     if (!in) return false;
@@ -53,9 +53,10 @@ bool FtlDat::open(const std::string& path) {
             const auto compressedSize = be32(e + 12);
             const auto decompressedSize = be32(e + 16);
             if (compressedSize != decompressedSize || std::uint64_t(offset) + decompressedSize > size) return false;
-            files_[std::move(name)] = Entry{offset, decompressedSize};
+            files_[std::move(name)] = Entry{offset, decompressedSize, 0};
         }
         open_ = true;
+        paths_.push_back(path);
         return true;
     }
 
@@ -82,9 +83,10 @@ bool FtlDat::open(const std::string& path) {
         in.read(name.data(), static_cast<std::streamsize>(nameLen));
         if (!in) return false;
         const auto bodyOffset = static_cast<std::uint32_t>(offset + 8ull + nameLen);
-        files_[std::move(name)] = Entry{bodyOffset, len};
+        files_[std::move(name)] = Entry{bodyOffset, len, 0};
     }
     open_ = !files_.empty();
+    if (open_) paths_.push_back(path);
     return open_;
 }
 
@@ -93,7 +95,7 @@ std::vector<std::uint8_t> FtlDat::readFile(const std::string& name) const {
     const auto it = files_.find(name);
     if (it == files_.end()) return {};
 
-    std::ifstream in(path_, std::ios::binary);
+    if (it->second.archiveIndex >= paths_.size()) return {};\n    std::ifstream in(paths_[it->second.archiveIndex], std::ios::binary);
     if (!in) return {};
     in.seekg(it->second.offset);
 
@@ -115,4 +117,24 @@ std::vector<std::string> FtlDat::fileNames() const {
     return out;
 }
 
+}
+
+
+bool FtlDat::openArchives(const std::vector<std::string>& paths) {
+    open_ = false;
+    files_.clear();
+    paths_.clear();
+    for (const auto& path : paths) {
+        FtlDat pack;
+        if (!pack.open(path)) continue;
+        const auto archiveIndex = static_cast<std::uint32_t>(paths_.size());
+        paths_.push_back(path);
+        for (const auto& name : pack.fileNames()) {
+            const auto it = pack.files_.find(name);
+            if (it != pack.files_.end())
+                files_[name] = Entry{it->second.offset, it->second.length, archiveIndex};
+        }
+    }
+    open_ = !files_.empty();
+    return open_;
 }
