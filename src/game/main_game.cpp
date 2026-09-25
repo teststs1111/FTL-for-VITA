@@ -32,8 +32,14 @@ public:
             if (!content_.loadPlayerShip()) return;
             runtime_.load(content_);
             LoadedShip enemy;
-            if (!content_.loadShip("ENEMY_SHIP", enemy)) {
-                const LoadedShip* player = content_.playerShip();
+            const LoadedShip* player = content_.playerShip();
+            std::string enemyId;
+            if (player) {
+                for (const auto& entry : content_.blueprints().ships()) {
+                    if (entry.first != player->blueprint.id) { enemyId = entry.first; break; }
+                }
+            }
+            if (enemyId.empty() || !content_.loadShip(enemyId, enemy)) {
                 if (player) enemy = *player;
             }
             if (!enemy.blueprint.id.empty())
@@ -115,15 +121,21 @@ public:
 
     void discoverCrewTextures() {
         crewTextureNames_.clear();
-        for (const auto& crew : content_.playerShip()->blueprint.crew) {
-            if (crew.race.empty()) continue;
+        std::vector<std::string> races;
+        if (const auto* player = content_.playerShip()) {
+            for (const auto& crew : player->blueprint.crew)
+                if (!crew.race.empty()) races.push_back(crew.race);
+        }
+        for (const auto& crew : combat_.enemy.crew)
+            if (!crew.race.empty()) races.push_back(crew.race);
+        for (const auto& race : races) {
             const std::vector<std::string> candidates = {
-                "img/people/" + crew.race + "_base.png",
-                "img/people/" + crew.race + ".png"
+                "img/people/" + race + "_base.png",
+                "img/people/" + race + ".png"
             };
             for (const auto& candidate : candidates) {
                 if (textures_.load(graphics_, content_.assets(), candidate)) {
-                    crewTextureNames_[crew.race] = candidate;
+                    crewTextureNames_[race] = candidate;
                     break;
                 }
             }
