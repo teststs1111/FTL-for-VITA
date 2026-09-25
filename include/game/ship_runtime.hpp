@@ -16,6 +16,8 @@ struct RuntimeSystem {
     float ionTimer{0.0f};
     bool ionDisabled{false};
     bool powered{false};
+    float stunTimer{0.0f};
+    bool breached{false};
 };
 
 struct RuntimeWeapon {
@@ -33,6 +35,10 @@ struct RuntimeWeapon {
     int missilesUsed{0};
     int personnelDamage{0};
     int hullBust{0};
+    int fireChance{0};
+    int breachChance{0};
+    int stunChance{0};
+    int stunDuration{0};
     bool ready{false};
 };
 
@@ -84,6 +90,7 @@ struct ShipRuntime {
     std::vector<bool> doorOpen;
     std::vector<int> roomOxygen;
     std::vector<bool> roomFire;
+    std::vector<bool> roomBreach;
     bool valid{false};
 
     bool load(ShipContent& source);
@@ -97,10 +104,12 @@ struct ShipRuntime {
     bool setSystemPower(int systemIndex, int power);
     bool moveCrew(int crewIndex, int targetRoom);
     int damageCrewInRoom(int roomId, int amount);
+    int stunSystemsInRoom(int roomId, float seconds);
     int healCrew(int crewIndex, int amount);
     bool extinguishFire(int crewIndex);
     bool setDoorOpen(int doorIndex, bool open);
     bool setRoomFire(int roomId, bool fire);
+    bool setRoomBreach(int roomId, bool breached);
     void updateEnvironment(float dt);
     int usedReactorPower() const;
     int availableReactorPower() const;
