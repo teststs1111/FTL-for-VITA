@@ -551,12 +551,38 @@ public:
                     graphics_.fillRect(x - 3.f, y - 3.f, 6.f, 6.f,
                         {0.9f, 0.9f, 0.35f, 1.f});
                 }
+                const float health = crew.maxHealth > 0
+                    ? std::clamp(static_cast<float>(crew.health) / crew.maxHealth, 0.f, 1.f) : 0.f;
+                graphics_.fillRect(x - 8.f, y + 10.f, 16.f, 3.f, {0.12f, 0.12f, 0.15f, 1.f});
+                if (health > 0.f)
+                    graphics_.fillRect(x - 8.f, y + 10.f, 16.f * health, 3.f,
+                        health > 0.5f ? Color{0.25f, 0.85f, 0.45f, 1.f}
+                                      : (health > 0.25f ? Color{0.95f, 0.72f, 0.2f, 1.f}
+                                                        : Color{0.9f, 0.25f, 0.2f, 1.f}));
                 ++crewSlot;
             }
         };
 
         drawRuntimeArtwork(combat_.player, leftX);
         drawRuntimeArtwork(combat_.enemy, rightX);
+
+        // Show system damage directly on the room containing the damaged system.
+        // This keeps combat feedback tied to the same runtime values used by
+        // damage resolution, rather than adding a separate visual-only state.
+        auto drawSystemDamage = [&](const ShipRuntime& ship, float originX) {
+            for (const auto& system : ship.systems) {
+                if (system.room < 0 || system.maxPower <= 0 || system.damage <= 0) continue;
+                const auto center = roomCenter(ship, originX, system.room);
+                const float ratio = std::clamp(
+                    static_cast<float>(system.damage) / system.maxPower, 0.f, 1.f);
+                graphics_.fillRect(center.first - 12.f, center.second + 12.f, 24.f, 4.f,
+                    {0.12f, 0.10f, 0.10f, 0.95f});
+                graphics_.fillRect(center.first - 12.f, center.second + 12.f, 24.f * ratio, 4.f,
+                    {0.95f, 0.28f, 0.18f, 0.95f});
+            }
+        };
+        drawSystemDamage(combat_.player, leftX);
+        drawSystemDamage(combat_.enemy, rightX);
 
         const float playerHull = combat_.player.maxHull > 0
             ? static_cast<float>(combat_.player.hull) / combat_.player.maxHull : 0.f;
