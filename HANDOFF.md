@@ -11,18 +11,21 @@
 - Target: a Vita-native playable FTL-style runtime reconstructed from the open-source Tachyon implementation
 - Proprietary FTL source/assets are **not** stored in this repository.
 
-## Current state — 2026-09-25
+## Current state — 2026-09-26
 
 ### Latest commits
 
 - `4ece88fd42df2b6cd4c2ff576b4360ca172a1587` — `Treat native Vita resolution as successful vitaGL init`
 - `645dade5ca9d0fe1d41654c3c41ea5f200451f98` — `Build vitaGL without splashscreen for Vita startup stability`
+- `5b454234140da23b66120a6efd9972b99a77b7aa` — `Allow returning from beacon map to ship management`
+- `2c23d522b7e9ce613c44f31a8372f486c5722c1e` — `Move gameplay flow closer to FTL beacon and pause progression`
 - `fe3d37b16a2e35c6f4e235f15d92c9bdf106160c` — `Set Vita application title to FTL: Faster Than Light`
 
 ### CI state
 
-- Vita Build #24: **successful**
-- Host Build #332: **successful**
+- Latest Vita build for gameplay-flow changes: **in progress** (run #99)
+- Latest Host build for gameplay-flow changes: **in progress** (run #407)
+- Previous known-good Vita/Host builds remain successful; the new run must be green before calling this gameplay-flow change validated.
 - Vita VPK artifact is available and not expired.
 - Artifact size: 1,056,989 bytes
 - Artifact SHA-256: `0693d0783a06d63bbc9c7cb71bbbe7f7d67120aa7150d4fe92a5756ffd9ea407`
@@ -164,6 +167,22 @@ After data validation:
 - add Vita Japanese text rendering using the Vita font/PVF facilities
 - then build the FTL HUD/menu layer
 
+### Gameplay fidelity target
+
+The project should converge toward the actual FTL loop and interaction model, not merely reproduce the look of the ship screen. Prioritize:
+1. sector generation and connected beacon navigation;
+2. event / store / distress / empty / hostile beacon outcomes;
+3. jump fuel consumption and sector progression;
+4. combat encounter entry/exit and rewards;
+5. ship management, power allocation, crew movement, doors, fires, breaches and oxygen;
+6. real FTL HUD, targeting, weapon charge and pause behavior;
+7. sector 8 flagship sequence and final escape;
+8. original Japanese text resources and Vita Japanese glyph rendering;
+9. audio and save/load;
+10. expansion/mod dataset selection.
+
+Do not add convenience/debug controls that bypass the real gameplay loop unless they are behind a development-only build flag.
+
 ## Important implementation constraints
 
 - Keep desktop-only Swing/GLFW tooling out of the first Vita runtime.
@@ -190,11 +209,11 @@ Suggested tracking:
 | Blueprint/data integration | Prototype implemented |
 | Ship/runtime simulation | Prototype implemented |
 | Combat | Prototype implemented; regression tests active |
-| Vita renderer | Bring-up stage |
+| Vita renderer | Bring-up stage; gameplay-flow UI layered on top |
 | Japanese localization | Foundation implemented |
 | Japanese font rendering | Pending |
 | FTL UI/touch | Pending |
-| Sector/event flow | Pending |
+| Sector/event flow | 🟡 Prototype beacon flow added; real sector/event data pending |
 | Audio | Pending |
 | Save/load | Pending |
 | Mod support | Pending |
