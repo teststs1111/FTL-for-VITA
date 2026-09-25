@@ -276,6 +276,26 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
             result.ionDamage += target.ionizeSystemInRoom(room, weapon.ionDamage);
         if (weapon.personnelDamage > 0)
             result.personnelDamage += target.damageCrewInRoom(room, weapon.personnelDamage);
+
+        // FTL weapons can apply secondary effects after a successful impact.
+        // Keep these effects tied to the same projectile resolution so shields,
+        // evasion and damage all use one deterministic hit outcome.
+        if (weapon.fireChance > 0 && target.roomOxygen[room] > 0 &&
+            (nextRandom() % 100u) < static_cast<std::uint32_t>(weapon.fireChance)) {
+            if (target.setRoomFire(room, true))
+                ++result.firesStarted;
+        }
+        if (weapon.breachChance > 0 &&
+            (nextRandom() % 100u) < static_cast<std::uint32_t>(weapon.breachChance)) {
+            if (target.setRoomBreach(room, true))
+                ++result.breachesStarted;
+        }
+        if (weapon.stunChance > 0 && weapon.stunDuration > 0 &&
+            (nextRandom() % 100u) < static_cast<std::uint32_t>(weapon.stunChance)) {
+            result.systemsStunned += target.stunSystemsInRoom(
+                room, static_cast<float>(weapon.stunDuration));
+        }
+
         if (target.hull <= 0) break;
     }
 
