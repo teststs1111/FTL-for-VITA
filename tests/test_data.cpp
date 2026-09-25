@@ -736,6 +736,7 @@ static void testShipRuntime() {
     runtime.updateEnvironment(1.0f);
     assert(runtime.crew[0].health == 90);
     assert(runtime.setRoomFire(0, false));
+    runtime.roomOxygen[0] = 100.0f;
     assert(runtime.setRoomBreach(0, true));
     runtime.updateEnvironment(2.0f);
     assert(runtime.roomOxygen[0] == 76);
