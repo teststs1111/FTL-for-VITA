@@ -418,10 +418,11 @@ void ShipRuntime::updateEnvironment(float dt) {
         system.ionTimer = std::max(0.0f, system.ionTimer - dt);
         if (system.ionTimer > 0.0f) continue;
 
+        const int restored = system.ionDamage;
         system.ionDamage = 0;
         const int effectiveMax = std::max(0, system.maxPower - system.damage);
-        system.power = std::min(effectiveMax, system.power + 1);
-        if (system.power > 0 && system.powered == false)
+        system.power = std::min(effectiveMax, system.power + restored);
+        if (restored > 0 && system.power > 0)
             system.powered = true;
     }
 
