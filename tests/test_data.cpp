@@ -576,6 +576,39 @@ static void testShipRuntime() {
     assert(combat.enemy.systems[0].damage == ionDamageBefore);
     assert(combat.enemy.systems[0].power == ionPowerBefore);
 
+    // Weapon secondary effects: a guaranteed hit should start fire/breach and stun the room.
+    assert(combat.load(content, enemyForCombat));
+    assert(combat.setTargetRoom(0));
+    assert(combat.player.setSystemPowered(2, true));
+    for (auto& weapon : combat.enemy.weapons) {
+        weapon.ready = false;
+        weapon.charge = 0.0f;
+    }
+    combat.enemy.shieldLayers = 0;
+    combat.player.weapons[0].shots = 1;
+    combat.player.weapons[0].damage = 0;
+    combat.player.weapons[0].systemDamage = 0;
+    combat.player.weapons[0].ionDamage = 0;
+    combat.player.weapons[0].fireChance = 100;
+    combat.player.weapons[0].breachChance = 100;
+    combat.player.weapons[0].stunChance = 100;
+    combat.player.weapons[0].stunDuration = 3;
+    combat.player.updateWeapons(2.5f);
+    assert(combat.player.weapons[0].ready);
+    combat.setRandomSeed(1);
+    assert(combat.fireSelectedWeapon().fired);
+    combat.update(0.25f);
+    wormhole::CombatResult statusImpact;
+    assert(combat.consumeImpactResult(statusImpact));
+    assert(statusImpact.firesStarted == 1);
+    assert(statusImpact.breachesStarted == 1);
+    assert(statusImpact.systemsStunned == 1);
+    assert(combat.enemy.roomFire[0]);
+    assert(combat.enemy.roomBreach[0]);
+    assert(combat.enemy.systems[0].stunTimer == 3.0f);
+    combat.enemy.updateEnvironment(3.0f);
+    assert(combat.enemy.systems[0].stunTimer == 0.0f);
+
     assert(combat.load(content, enemyForCombat));
     assert(combat.setTargetRoom(0));
     assert(combat.player.setSystemPowered(2, true));
