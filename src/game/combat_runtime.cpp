@@ -1,5 +1,6 @@
 #include "game/combat_runtime.hpp"
 #include <algorithm>
+#include <cstdint>
 
 namespace wormhole {
 
@@ -60,6 +61,17 @@ void CombatRuntime::enqueueWeapon(bool fromPlayer, int weaponIndex,
         shot.duration = baseFlight + static_cast<float>(i) * 0.03f;
         shots_.push_back(std::move(shot));
     }
+}
+
+std::uint32_t CombatRuntime::nextRandom() {
+    randomState_ ^= randomState_ << 13;
+    randomState_ ^= randomState_ >> 17;
+    randomState_ ^= randomState_ << 5;
+    return randomState_;
+}
+
+void CombatRuntime::setRandomSeed(std::uint32_t seed) {
+    randomState_ = seed == 0 ? 0x6D2B79F5u : seed;
 }
 
 void CombatRuntime::update(float dt) {
@@ -208,9 +220,34 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
 
     const int shieldPiercing = std::max(0, weapon.shieldPiercing);
     for (int shot = 0; shot < weapon.shots; ++shot) {
+        // Missile/bomb weapons bypass shields, and therefore do not use the
+        // normal projectile evasion check here. Other projectiles can be
+        // avoided based on the target's powered engines and manned piloting.
+        const bool shieldBypass = weapon.missilesUsed > 0;
+        if (!shieldBypass) {
+            int dodgeChance = 0;
+            for (const auto& system : target.systems) {
+                if (system.type == "engines" && system.powered)
+                    dodgeChance += system.power * 5;
+            }
+            for (const auto& system : target.systems) {
+                if (system.type != "pilot" || !system.powered || system.room < 0)
+                    continue;
+                const bool piloted = std::any_of(target.crew.begin(), target.crew.end(),
+                    [&system](const RuntimeCrew& crew) {
+                        return crew.alive && crew.room == system.room;
+                    });
+                if (piloted) dodgeChance += 5;
+            }
+            dodgeChance = std::clamp(dodgeChance, 0, 95);
+            if (dodgeChance > 0 && (nextRandom() % 100u) < static_cast<std::uint32_t>(dodgeChance)) {
+                ++result.evaded;
+                continue;
+            }
+        }
+
         // Missile/bomb weapons bypass shields in FTL. Laser/beam/ion-style
         // weapons must first overcome the target's shield layers.
-        const bool shieldBypass = weapon.missilesUsed > 0;
         if (!shieldBypass && target.shieldLayers > shieldPiercing) {
             --target.shieldLayers;
             target.shieldCharge = 0.0f;
