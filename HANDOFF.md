@@ -238,3 +238,10 @@ This file is the durable project memory. Chat history is supplementary.
 - The current five-node map geometry remains a temporary stand-in; the next major gameplay task is the real connected/procedural beacon graph and Rebel fleet pressure.
 - Event parsing currently implements the common event/choice/load/hostile/store/repair/item_modify paths. Complex nested requirements, blue options, quests, multi-stage rewards, and full combat encounter resolution still need to be wired.
 - DLC/mod layering remains archive-profile based: the base `ftl.dat` stays external, with optional sidecar archives layered through `.dlc`.
+
+
+## 2026-09-26 continuation: connected beacon graph
+- Added a deterministic seeded multi-lane sector graph (8 rows × 3 lanes) with branching/converging links.
+- Normal navigation now consumes fuel when jumping to a connected beacon; combat no longer consumes a second fuel unit on victory.
+- Reaching the final row advances to the next sector; sector 8 final-row completion enters the victory state.
+- The graph is still a compatibility/prototype layer; the next fidelity step is to apply original FTL beacon type weighting, Rebel fleet pursuit, and sector-specific graph constraints rather than using the generic 8×3 generator.
