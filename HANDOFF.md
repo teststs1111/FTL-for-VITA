@@ -229,3 +229,12 @@ When a new chat starts with this repository URL, read this file first, then:
 5. update this file after major changes.
 
 This file is the durable project memory. Chat history is supplementary.
+
+
+## 2026-09-26 continuation: original sector/event data path
+- Added `EventDatabase` to scan the loaded FTL archive for `data/events*.xml` and expose named events/eventLists.
+- Added `SectorDatabase` to parse `data/sector_data.xml` (and AE sidecar when present), including sector descriptions, minimum sector, start event, and beacon event pools.
+- Beacon selection now prefers the original sectorDescription event pool instead of always forcing combat. This is the first step toward the actual FTL beacon -> event -> choice -> combat/store/reward loop.
+- The current five-node map geometry remains a temporary stand-in; the next major gameplay task is the real connected/procedural beacon graph and Rebel fleet pressure.
+- Event parsing currently implements the common event/choice/load/hostile/store/repair/item_modify paths. Complex nested requirements, blue options, quests, multi-stage rewards, and full combat encounter resolution still need to be wired.
+- DLC/mod layering remains archive-profile based: the base `ftl.dat` stays external, with optional sidecar archives layered through `.dlc`.
