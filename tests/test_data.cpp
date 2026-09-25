@@ -400,6 +400,8 @@ static void testShipRuntime() {
     runtime.updateWeapons(2.5f);
     assert(runtime.weapons[0].ready);
     assert(runtime.roomOxygen.size() == 3 && runtime.roomOxygen[0] == 100);
+    // Keep the crew member out of the burning room so this legacy fixture remains focused on oxygen/fire spread.
+    runtime.crew[0].room = 2;
     assert(runtime.setRoomFire(0, true));
     runtime.updateEnvironment(5.0f);
     assert(runtime.roomOxygen[0] == 60 && runtime.roomFire[0]);
