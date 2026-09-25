@@ -9,6 +9,7 @@ namespace wormhole {
 class FtlDat {
 public:
     bool open(const std::string& path);
+    bool openArchives(const std::vector<std::string>& paths);
     bool isOpen() const { return open_; }
 
     std::vector<std::uint8_t> readFile(const std::string& name) const;
@@ -16,9 +17,9 @@ public:
     std::vector<std::string> fileNames() const;
 
 private:
-    struct Entry { std::uint32_t offset{}; std::uint32_t length{}; };
+    struct Entry { std::uint32_t offset{}; std::uint32_t length{}; std::uint32_t archiveIndex{}; };
     bool open_{false};
-    std::string path_;
+    std::vector<std::string> paths_;
     std::unordered_map<std::string, Entry> files_;
 };
 
