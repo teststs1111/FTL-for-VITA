@@ -316,11 +316,24 @@ public:
             return;
         }
 
-        const int roomCount = static_cast<int>(combat_.enemy.content.layout.rooms.size());
+        const auto& enemyRooms = combat_.enemy.content.layout.rooms;
+        const int roomCount = static_cast<int>(enemyRooms.size());
+
+        // Room IDs are data identifiers, not guaranteed to be contiguous indices.
+        // Cycle through the actual room list so targeting always points at a
+        // real enemy room, including archives with sparse/non-zero IDs.
+        int targetIndex = 0;
+        for (int i = 0; i < roomCount; ++i) {
+            if (enemyRooms[i].id == combatTargetRoom_) {
+                targetIndex = i;
+                break;
+            }
+        }
         if (input_.pressed(Button::Left) || input_.pressed(Button::Up))
-            combatTargetRoom_ = (combatTargetRoom_ + roomCount - 1) % roomCount;
+            targetIndex = (targetIndex + roomCount - 1) % roomCount;
         if (input_.pressed(Button::Right) || input_.pressed(Button::Down))
-            combatTargetRoom_ = (combatTargetRoom_ + 1) % roomCount;
+            targetIndex = (targetIndex + 1) % roomCount;
+        combatTargetRoom_ = enemyRooms[targetIndex].id;
 
         if (input_.pressed(Button::L) && !combat_.player.weapons.empty())
             combat_.selectedWeapon = (combat_.selectedWeapon +
