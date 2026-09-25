@@ -282,7 +282,7 @@ public:
         }
         if (activeEventId_.empty())
             activeEventId_ = eventOrder_[static_cast<std::size_t>((sector_ * 5 + beacon) % eventOrder_.size())];
-        const auto* event = eventDatabase_.find(activeEventId_);
+        const auto* event = eventDatabase_.resolve(activeEventId_, seed_ + static_cast<unsigned>(visitedBeacons_) * 53u);
         if (!event) return false;
         activeEventChoice_ = 0;
         sceneMode_ = SceneMode::Event;
@@ -331,7 +331,7 @@ public:
             return;
         }
         if (!choice.load.empty()) {
-            const auto* next = eventDatabase_.find(choice.load);
+            const auto* next = eventDatabase_.resolve(choice.load, seed_ + static_cast<unsigned>(activeEventChoice_) * 71u + static_cast<unsigned>(visitedBeacons_));
             if (next && next->hostile) {
                 enterCombatFromBeacon();
                 return;
