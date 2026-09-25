@@ -393,6 +393,9 @@ static void testShipRuntime() {
     assert(!runtime.weapons[0].ready);
     runtime.updateWeapons(0.5f);
     assert(runtime.weapons[0].ready);
+    assert(runtime.stunSystemsInRoom(0, 1.0f) >= 1);
+    assert(!runtime.fireWeapon(0));
+    runtime.updateEnvironment(1.0f);
     assert(runtime.fireWeapon(0));
     assert(runtime.missiles == 6);
     assert(!runtime.weapons[0].ready);
