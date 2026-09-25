@@ -48,6 +48,7 @@ private:
 
     AssetStore& assets_;
     std::unordered_map<std::string, EventDefinition> events_;
+    std::unordered_map<std::string, EventPool> eventPools_;
     std::vector<std::string> order_;
 };
 
