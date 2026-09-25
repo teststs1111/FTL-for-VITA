@@ -39,14 +39,14 @@ const BeaconNode* SectorGraph::node(int index) const {
     return &nodes_[index];
 }
 
-std::vector<int> SectorGraph::selectable(int current) const {
+std::vector<int> SectorGraph::selectable(int current, int fleetRow) const {
     if(current<0) {
         std::vector<int> out;
-        for(int c=0;c<columns_;++c) out.push_back(c);
+        for(int c=0;c<columns_;++c) {\n            if (fleetRow < 0 || 0 > fleetRow) out.push_back(c);\n        }
         return out;
     }
     const auto* n=node(current);
-    return n ? n->links : std::vector<int>{};
+    if (!n) return {};\n    std::vector<int> out;\n    for (const int link : n->links) {\n        const auto* target = node(link);\n        if (!target) continue;\n        if (fleetRow >= 0 && target->row <= fleetRow) continue;\n        out.push_back(link);\n    }\n    return out;
 }
 
 }
