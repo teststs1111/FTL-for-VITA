@@ -16,7 +16,17 @@ namespace wormhole {
 class ShipScene final : public GameState {
 public:
     ShipScene(Graphics& graphics, Input& input, Localization& localization, const char* archivePath) : graphics_(graphics), input_(input), localization_(localization) {
-        if (archivePath && content_.open(archivePath)) {
+        // Initialize text first so archive failures can be diagnosed on-device.
+        text_.init();
+        if (!archivePath) {
+            startupError_ = "FTL archive path is not configured";
+            return;
+        }
+        if (!content_.open(archivePath)) {
+            startupError_ = "FTL archive not found: " + std::string(archivePath);
+            return;
+        }
+        {
             if (const auto* bytes = content_.assets().getBytes("data/text-ja.xml"))
                 localization_.loadFtlTextXml(*bytes);
             if (!content_.loadPlayerShip()) return;
@@ -32,7 +42,6 @@ public:
             discoverWeaponAndDroneTextures();
             discoverCrewTextures();
             discoverShipTexture();
-            text_.init();
         }
     }
 
@@ -436,6 +445,18 @@ public:
     }
 
     void render() override {
+        if (!startupError_.empty()) {
+            graphics_.fillRect(40.f, 40.f, 880.f, 464.f, {0.06f, 0.07f, 0.10f, 1.f});
+            text_.draw(graphics_, "FTL: Faster Than Light", 70.f, 95.f, 30.f,
+                {0.85f, 0.90f, 1.f, 1.f});
+            text_.draw(graphics_, "起動データを読み込めませんでした", 70.f, 145.f, 22.f,
+                {1.f, 0.75f, 0.35f, 1.f});
+            text_.draw(graphics_, startupError_, 70.f, 190.f, 15.f,
+                {0.80f, 0.84f, 0.90f, 1.f});
+            text_.draw(graphics_, "ux0:data/wormhole/ftl.dat を確認してください", 70.f, 235.f, 15.f,
+                {0.70f, 0.78f, 0.88f, 1.f});
+            return;
+        }
         if (combatMode_) {
             renderCombat();
             return;
@@ -574,6 +595,7 @@ private:
     std::unordered_map<std::string, std::string> droneTextureNames_;
     std::unordered_map<std::string, std::string> crewTextureNames_;
     std::string shipTextureName_;
+    std::string startupError_;
 };
 
 MainGame::MainGame() = default;
