@@ -42,7 +42,7 @@ const BeaconNode* SectorGraph::node(int index) const {
 std::vector<int> SectorGraph::selectable(int current) const {
     if(current<0) {
         std::vector<int> out;
-        for(int c=0;c<columns_;++c) out.push_back(columns+c);
+        for(int c=0;c<columns_;++c) out.push_back(c);
         return out;
     }
     const auto* n=node(current);
