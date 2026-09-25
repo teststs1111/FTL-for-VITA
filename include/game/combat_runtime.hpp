@@ -2,6 +2,7 @@
 #include "game/ship_runtime.hpp"
 #include <deque>
 #include <vector>
+#include <cstdint>
 
 namespace wormhole {
 
@@ -47,6 +48,7 @@ public:
     bool consumeImpactResult(CombatResult& result);
     bool selectWeapon(int weaponIndex);
     bool setEnemyTargetRoom(int roomId);
+    void setRandomSeed(std::uint32_t seed);
 
 private:
     CombatResult resolveWeapon(ShipRuntime& attacker, ShipRuntime& target,
@@ -59,6 +61,8 @@ private:
     CombatResult lastImpactResult_{};
     bool hasImpactResult_{false};
     float enemyFireDelay_{0.0f};
+    std::uint32_t randomState_{0x6D2B79F5u};
+    std::uint32_t nextRandom();
 };
 
 } 
