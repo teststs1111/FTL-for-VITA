@@ -313,6 +313,7 @@ void CombatRuntime::update(float dt) {
             weapon.cooldown = drone.weaponCooldown;
             drone.active = false;
             drone.weaponCharge = 0.0f;
+            if (fromPlayer) playerDeployedCombatDrone_ = true;
             enqueueWeapon(fromPlayer, -1, weapon, targetRoom);
             break;
         }
