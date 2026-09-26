@@ -42,6 +42,11 @@ struct EventBoarderEffect {
 
 struct EventAutoReward { std::string level{"MED"}; std::string type{"standard"}; };
 
+struct EventEnvironment {
+    std::string type;
+    std::string target;
+};
+
 struct EventChoice {
     std::string text;
     std::string textKey;
@@ -69,6 +74,10 @@ struct EventChoice {
     std::vector<EventBoarderEffect> boarders;
     bool hasAutoReward{false};
     EventAutoReward autoReward;
+    bool hasEnvironment{false};
+    EventEnvironment environment;
+    bool distressBeacon{false};
+    std::string weaponReward;
 };
 
 struct EventDefinition {
@@ -96,6 +105,10 @@ struct EventDefinition {
     std::vector<EventBoarderEffect> boarders;
     bool hasAutoReward{false};
     EventAutoReward autoReward;
+    bool hasEnvironment{false};
+    EventEnvironment environment;
+    bool distressBeacon{false};
+    std::string weaponReward;
     bool valid{false};
 };
 
