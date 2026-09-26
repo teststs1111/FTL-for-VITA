@@ -1105,11 +1105,27 @@ public:
             }
             const int selectedPlayerRoomId = playerRooms[selectedRoom_].id;
             if (input_.pressed(Button::L) && !combat_.player.crew.empty()) {
-                if (!combat_.player.moveCrew(selectedCrew_, selectedPlayerRoomId)) {
+                RuntimeCrew& crew = combat_.player.crew[selectedCrew_];
+                if (crew.alive && crew.room == selectedPlayerRoomId) {
+                    if (selectedPlayerRoomId >= 0 &&
+                        selectedPlayerRoomId < static_cast<int>(combat_.player.roomFire.size()) &&
+                        combat_.player.roomFire[selectedPlayerRoomId]) {
+                        if (combat_.player.extinguishFire(selectedCrew_))
+                            combatFeedback_ = crewLabel(crew) + "が消火";
+                        else
+                            combatFeedback_ = "消火できない";
+                    } else {
+                        const int repaired = combat_.player.repairSystemInRoom(selectedPlayerRoomId, 1);
+                        combatFeedback_ = repaired > 0
+                            ? crewLabel(crew) + "がシステムを修理"
+                            : "修理するシステムがない";
+                    }
+                    combatFeedbackTimer_ = 1.0f;
+                } else if (!combat_.player.moveCrew(selectedCrew_, selectedPlayerRoomId)) {
                     combatFeedback_ = "クルーはその部屋へ移動できない";
                     combatFeedbackTimer_ = 1.2f;
                 } else {
-                    combatFeedback_ = crewLabel(combat_.player.crew[selectedCrew_]) + "を移動";
+                    combatFeedback_ = crewLabel(crew) + "を移動";
                     combatFeedbackTimer_ = 1.0f;
                 }
             }
