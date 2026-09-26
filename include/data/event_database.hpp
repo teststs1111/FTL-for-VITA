@@ -55,6 +55,7 @@ class EventDatabase {
 public:
     explicit EventDatabase(AssetStore& assets) : assets_(assets) {}
     bool load();
+    void setAdvancedEdition(bool enabled) { advancedEdition_ = enabled; }
     const EventDefinition* find(const std::string& id) const;
     const EventDefinition* resolve(const std::string& id, std::uint32_t seed) const;
     enum class BeaconType { Empty, Hostile, Store, Distress, Quest, Exit };
@@ -78,6 +79,8 @@ private:
     std::unordered_map<std::string, EventDefinition> events_;
     std::unordered_map<std::string, EventPool> eventPools_;
     std::vector<std::string> order_;
+    bool advancedEdition_{true};
+    bool replacingPools_{false};
 };
 
 }
