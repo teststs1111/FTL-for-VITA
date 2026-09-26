@@ -40,6 +40,7 @@ public:
     int selectedWeapon{0};
     int enemyTargetRoom{0};
     CombatOutcome outcome{CombatOutcome::Ongoing};
+    std::vector<RuntimeCrew> boarders;
 
     bool load(ShipContent& content, const LoadedShip& enemyShip);
     void update(float dt);
@@ -66,6 +67,8 @@ private:
     bool hasImpactResult_{false};
     float enemyFireDelay_{0.0f};
     std::uint32_t randomState_{0x6D2B79F5u};
+    float boardingTimer_{0.0f};
+    float boardingFightTimer_{0.0f};
     std::uint32_t nextRandom();
 };
 
