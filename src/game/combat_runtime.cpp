@@ -133,7 +133,7 @@ void CombatRuntime::update(float dt) {
     enemy.updateWeapons(dt);
     player.updateDrones(dt);
     enemy.updateDrones(dt);
-    player.updateShields(dt);
+    player.updateShields(dt, playerShieldRechargeMultiplier_);
     enemy.updateShields(dt);
     player.updateEnvironment(dt);
     enemy.updateEnvironment(dt);
