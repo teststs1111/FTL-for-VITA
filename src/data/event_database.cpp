@@ -144,6 +144,18 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
     }
     event.store = hasChild(node, "store");
     event.repair = hasChild(node, "repair");
+    event.distressBeacon = hasChild(node, "distressBeacon");
+    if (const auto* env = child(node, "environment")) {
+        event.hasEnvironment = true;
+        auto it = env->attributes.find("type");
+        if (it != env->attributes.end()) event.environment.type = it->second;
+        it = env->attributes.find("target");
+        if (it != env->attributes.end()) event.environment.target = it->second;
+    }
+    if (const auto* weapon = child(node, "weapon")) {
+        auto it = weapon->attributes.find("name");
+        if (it != weapon->attributes.end()) event.weaponReward = it->second;
+    }
     if (const auto* reward = child(node, "autoReward")) {
         event.hasAutoReward = true;
         auto it = reward->attributes.find("level");
@@ -203,6 +215,18 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
             }
             choice.store = hasChild(*e, "store");
             choice.repair = hasChild(*e, "repair");
+            choice.distressBeacon = hasChild(*e, "distressBeacon");
+            if (const auto* env = child(*e, "environment")) {
+                choice.hasEnvironment = true;
+                auto it = env->attributes.find("type");
+                if (it != env->attributes.end()) choice.environment.type = it->second;
+                it = env->attributes.find("target");
+                if (it != env->attributes.end()) choice.environment.target = it->second;
+            }
+            if (const auto* weapon = child(*e, "weapon")) {
+                auto it = weapon->attributes.find("name");
+                if (it != weapon->attributes.end()) choice.weaponReward = it->second;
+            }
             if (const auto* reward = child(*e, "autoReward")) {
                 choice.hasAutoReward = true;
                 auto it = reward->attributes.find("level");
