@@ -1089,6 +1089,43 @@ public:
         const auto& enemyRooms = combat_.enemy.content.layout.rooms;
         const int roomCount = static_cast<int>(enemyRooms.size());
 
+        // During combat the player can also manage crew and doors without
+        // leaving the battle view. selectedRoom_ points at a real player room,
+        // while selectedCrew_ identifies the crew member being commanded.
+        const auto& playerRooms = combat_.player.content.layout.rooms;
+        if (!playerRooms.empty()) {
+            const int playerRoomCount = static_cast<int>(playerRooms.size());
+            selectedRoom_ = std::clamp(selectedRoom_, 0, playerRoomCount - 1);
+            if (input_.pressed(Button::Triangle) && !combat_.player.crew.empty())
+                selectedCrew_ = (selectedCrew_ + 1) % static_cast<int>(combat_.player.crew.size());
+            if (input_.pressed(Button::Left)) {
+                selectedRoom_ = (selectedRoom_ + playerRoomCount - 1) % playerRoomCount;
+            } else if (input_.pressed(Button::Right)) {
+                selectedRoom_ = (selectedRoom_ + 1) % playerRoomCount;
+            }
+            const int selectedPlayerRoomId = playerRooms[selectedRoom_].id;
+            if (input_.pressed(Button::L) && !combat_.player.crew.empty()) {
+                if (!combat_.player.moveCrew(selectedCrew_, selectedPlayerRoomId)) {
+                    combatFeedback_ = "クルーはその部屋へ移動できない";
+                    combatFeedbackTimer_ = 1.2f;
+                } else {
+                    combatFeedback_ = crewLabel(combat_.player.crew[selectedCrew_]) + "を移動";
+                    combatFeedbackTimer_ = 1.0f;
+                }
+            }
+            if (input_.pressed(Button::Square)) {
+                for (int i = 0; i < static_cast<int>(combat_.player.content.layout.doors.size()); ++i) {
+                    const auto& door = combat_.player.content.layout.doors[i];
+                    if (door.leftRoom == selectedPlayerRoomId || door.rightRoom == selectedPlayerRoomId) {
+                        if (combat_.player.setDoorOpen(i, !combat_.player.doorOpen[i]))
+                            combatFeedback_ = combat_.player.doorOpen[i] ? "ドアを開いた" : "ドアを閉じた";
+                        combatFeedbackTimer_ = 1.0f;
+                        break;
+                    }
+                }
+            }
+        }
+
         // Room IDs are data identifiers, not guaranteed to be contiguous indices.
         // Cycle through the actual room list so targeting always points at a
         // real enemy room, including archives with sparse/non-zero IDs.
