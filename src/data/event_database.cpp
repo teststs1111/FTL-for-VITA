@@ -58,6 +58,10 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
     EventDefinition event;
     event.id = id;
     event.text = nodeText(node);
+    if (const auto* textNode = child(node, "text")) {
+        const auto idIt = textNode->attributes.find("id");
+        if (idIt != textNode->attributes.end()) event.textKey = idIt->second;
+    }
     if (const auto* ship = child(node, "ship")) {
         const auto it = ship->attributes.find("hostile");
         event.hostile = it != ship->attributes.end() && it->second == "true";
@@ -102,7 +106,11 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
         choice.requirementLevel = attrInt(c, "lvl", 0);
         const auto blueIt = c.attributes.find("blue");
         choice.blue = blueIt != c.attributes.end() && blueIt->second == "true";
-        if (const auto* t = child(c, "text")) choice.text = nodeText(*t);
+        if (const auto* t = child(c, "text")) {
+            choice.text = nodeText(*t);
+            const auto idIt = t->attributes.find("id");
+            if (idIt != t->attributes.end()) choice.textKey = idIt->second;
+        }
         if (const auto* e = child(c, "event")) {
             const auto it = e->attributes.find("load");
             if (it != e->attributes.end()) choice.load = it->second;
