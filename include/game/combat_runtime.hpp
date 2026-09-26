@@ -42,6 +42,7 @@ public:
     int selectedWeapon{0};
     int enemyTargetRoom{0};
     CombatOutcome outcome{CombatOutcome::Ongoing};
+    bool enemyDefeatedByCrew{false};
     std::vector<RuntimeCrew> boarders;
 
     bool load(ShipContent& content, const LoadedShip& enemyShip);
@@ -73,6 +74,7 @@ public:
     float cloakRemaining() const { return std::max(0.0f, cloakTimer_); }
     int superShieldRemaining() const { return superShield_; }
     bool playerDeployedCombatDrone() const { return playerDeployedCombatDrone_; }
+    bool enemyDefeatedByCrewDamage() const { return enemyDefeatedByCrew_; }
 
 private:
     CombatResult resolveWeapon(ShipRuntime& attacker, ShipRuntime& target,
@@ -96,6 +98,7 @@ private:
     bool stealthWeapons_{false};
     float cloakTimer_{0.0f};
     bool playerDeployedCombatDrone_{false};
+    bool enemyDefeatedByCrew_{false};
     CombatEnvironment environment_{CombatEnvironment::None};
     float environmentTimer_{0.0f};
     std::uint32_t nextRandom();
