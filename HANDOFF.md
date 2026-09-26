@@ -231,13 +231,49 @@ When a new chat starts with this repository URL, read this file first, then:
 This file is the durable project memory. Chat history is supplementary.
 
 
+## 2026-09-26 continuation: real ftl.dat / Advanced Edition investigation
+
+- A user-supplied legitimate `ftl.dat` was made available for direct technical inspection. It must remain external and must never be committed or redistributed.
+- Confirmed real archive characteristics from the supplied file:
+  - reconstructed `PKG\\n` archive
+  - 3,219 entries
+  - 280,573,482 bytes
+  - 2,837 PNG resources
+  - `data/text-ja.xml` is present (UTF-8, about 920 KB)
+- Important AE finding: AE data is contained inside the same `ftl.dat`; there is no need for an external `.dlc` archive for the normal game configuration.
+- The archive contains AE-related resources including:
+  - `data/dlcBlueprints.xml`
+  - `data/dlcBlueprintsOverwrite.xml`
+  - `data/dlcPirateBlueprints.xml`
+  - `data/dlcEvents.xml`
+  - `data/dlcEventsOverwrite.xml`
+  - `data/newEvents.xml`
+- Therefore the target behavior is: open one `ftl.dat`, then enable/disable the AE dataset/layers inside that archive. Do **not** revert to the previous external `.dlc` approach.
+- A first implementation pass was made to let blueprint/event loading include those internal AE resources when AE is enabled, including overwrite event-list handling. This pass currently fails Host build #557 and Vita build #249 and is **not validated** yet. Fix the build before treating the AE integration as complete.
+- A further data-fidelity issue was identified: real event data uses forms such as `<event load="...">` extensively, while the current parser primarily assumes `<event name="...">`. This must be corrected so event resolution matches the real FTL data model.
+- Next priorities:
+  1. Fix Host/Vita build failures from the AE-layer pass.
+  2. Correct event/eventList parsing for real `load`-based event references.
+  3. Implement genuine AE OFF filtering and AE ON layering from the single archive.
+  4. Apply blueprint overwrite semantics consistently (base -> AE additions -> AE overwrite).
+  5. Validate sector/event selection against the supplied real data.
+  6. Continue wiring original `data/text-ja.xml` into the runtime localization path.
+- Current user requirement: continue autonomously where possible; ask only when an external input is genuinely required.
+
+## 2026-09-26 continuation: build blocker after AE-layer pass
+
+- Host build #557: **failed during Build step**.
+- Vita build #249: **failed** after the same commit.
+- The failure has not been marked as solved. The next session must inspect/fix the compile error before adding more AE behavior.
+- Do not claim the AE-layer implementation is green until both Host and Vita workflows succeed.
+
 ## 2026-09-26 continuation: original sector/event data path
 - Added `EventDatabase` to scan the loaded FTL archive for `data/events*.xml` and expose named events/eventLists.
 - Added `SectorDatabase` to parse `data/sector_data.xml` (and AE sidecar when present), including sector descriptions, minimum sector, start event, and beacon event pools.
 - Beacon selection now prefers the original sectorDescription event pool instead of always forcing combat. This is the first step toward the actual FTL beacon -> event -> choice -> combat/store/reward loop.
 - The current five-node map geometry remains a temporary stand-in; the next major gameplay task is the real connected/procedural beacon graph and Rebel fleet pressure.
 - Event parsing currently implements the common event/choice/load/hostile/store/repair/item_modify paths. Complex nested requirements, blue options, quests, multi-stage rewards, and full combat encounter resolution still need to be wired.
-- DLC/mod layering remains archive-profile based: the base `ftl.dat` stays external, with optional sidecar archives layered through `.dlc`.
+- AE/mod layering must not assume an external `.dlc` file for the normal AE configuration. The supplied real `ftl.dat` contains the AE resources internally; use internal dataset selection/layering.
 
 
 ## 2026-09-26 continuation: connected beacon graph
