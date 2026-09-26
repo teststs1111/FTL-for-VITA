@@ -144,9 +144,13 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
 
     event.valid = !event.text.empty() || !event.choices.empty() ||
                   event.hostile || event.store || event.repair;
-    if (event.valid && events_.find(event.id) == events_.end()) {
+    if (!event.valid) return;
+    const auto it = events_.find(event.id);
+    if (it == events_.end()) {
         order_.push_back(event.id);
         events_.emplace(event.id, std::move(event));
+    } else if (replacingEvents_) {
+        it->second = std::move(event);
     }
 }
 
@@ -171,8 +175,13 @@ void EventDatabase::collectEvents(const bxml::Node& node) {
                     addEvent(c, nameIt->second);
             }
             if (!pool.entries.empty()) {
-                if (replacingPools_) eventPools_[idIt->second] = std::move(pool);
-                else if (eventPools_.find(idIt->second) == eventPools_.end()) eventPools_.emplace(idIt->second, std::move(pool));
+                std::string poolId = idIt->second;
+                const std::string prefix = "OVERRIDE_";
+                if (poolId.rfind(prefix, 0) == 0) poolId.erase(0, prefix.size());
+                if (replacingPools_ || poolId != idIt->second)
+                    eventPools_[poolId] = std::move(pool);
+                else if (eventPools_.find(poolId) == eventPools_.end())
+                    eventPools_.emplace(poolId, std::move(pool));
             }
         }
     }
@@ -202,6 +211,7 @@ bool EventDatabase::load() {
     eventPools_.clear();
 
     replacingPools_ = false;
+    replacingEvents_ = false;
     for (const auto& name : assets_.fileNames()) {
         if (!startsWithEvents(name)) continue;
         if (!advancedEdition_ && (name == "data/events_ae.xml" || name == "data/events_ae_overwrite.xml")) continue;
@@ -219,7 +229,9 @@ bool EventDatabase::load() {
         const auto* overwrite = assets_.getBytes("data/dlcEventsOverwrite.xml");
         if (overwrite && !overwrite->empty()) {
             replacingPools_ = true;
+            replacingEvents_ = true;
             try { collectEvents(bxml::read(*overwrite)); } catch (...) {}
+            replacingEvents_ = false;
             replacingPools_ = false;
         }
     }
