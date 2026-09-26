@@ -10,6 +10,7 @@ namespace wormhole {
 
 struct EventChoice {
     std::string text;
+    std::string textKey;
     std::string load;
     std::string requirement;
     int requirementLevel{0};
@@ -33,6 +34,7 @@ struct EventChoice {
 struct EventDefinition {
     std::string id;
     std::string text;
+    std::string textKey;
     std::vector<EventChoice> choices;
     bool hostile{false};
     std::string hostileShipId;
