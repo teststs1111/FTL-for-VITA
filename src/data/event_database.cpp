@@ -144,6 +144,12 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
     }
     event.store = hasChild(node, "store");
     event.repair = hasChild(node, "repair");
+    if (const auto* reward = child(node, "autoReward")) {
+        event.hasAutoReward = true;
+        auto it = reward->attributes.find("level");
+        if (it != reward->attributes.end()) event.autoReward.level = it->second;
+        event.autoReward.type = nodeText(*reward);
+    }
     parseCrewEffects(node, event.crewMembers, event.crewRemovals, event.boarders);
 
     // Preserve item_modify directly attached to an event. These effects are
@@ -197,6 +203,12 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
             }
             choice.store = hasChild(*e, "store");
             choice.repair = hasChild(*e, "repair");
+            if (const auto* reward = child(*e, "autoReward")) {
+                choice.hasAutoReward = true;
+                auto it = reward->attributes.find("level");
+                if (it != reward->attributes.end()) choice.autoReward.level = it->second;
+                choice.autoReward.type = nodeText(*reward);
+            }
             parseCrewEffects(*e, choice.crewMembers, choice.crewRemovals, choice.boarders);
             if (const auto* items = child(*e, "item_modify")) {
                 for (const auto& item : items->children) {
