@@ -1461,6 +1461,29 @@ public:
         drawRuntimeArtwork(combat_.player, leftX);
         drawRuntimeArtwork(combat_.enemy, rightX);
 
+        // Boarders are rendered on the player's ship in a distinct hostile marker.
+        int boarderSlot = 0;
+        for (const auto& boarder : combat_.boarders) {
+            if (!boarder.alive) continue;
+            const auto center = roomCenter(combat_.player, leftX, boarder.room);
+            const auto textureIt = crewTextureNames_.find(boarder.race);
+            const Texture* texture = textureIt == crewTextureNames_.end()
+                ? nullptr : textures_.get(textureIt->second);
+            const float x = center.first + (boarderSlot % 2) * 16.f;
+            const float y = center.second + (boarderSlot / 2) * 16.f;
+            if (texture && texture->width() > 0 && texture->height() > 0) {
+                const float w = 12.f;
+                const float h = std::min(18.f, w * static_cast<float>(texture->height()) / texture->width());
+                graphics_.drawTexture(*texture, x - w * 0.5f, y - h * 0.5f, w, h,
+                    {1.f, 0.45f, 0.40f, 1.f});
+            } else {
+                graphics_.fillRect(x - 4.f, y - 4.f, 8.f, 8.f, {0.9f, 0.2f, 0.18f, 1.f});
+            }
+            graphics_.drawLine(x - 7.f, y - 7.f, x + 7.f, y - 7.f, {1.f, 0.25f, 0.2f, 1.f});
+            graphics_.drawLine(x - 7.f, y + 7.f, x + 7.f, y + 7.f, {1.f, 0.25f, 0.2f, 1.f});
+            ++boarderSlot;
+        }
+
         // Combat crew-management cursor: this is deliberately separate from
         // the enemy targeting cursor so crew commands do not change the shot target.
         if (!combat_.player.content.layout.rooms.empty()) {
