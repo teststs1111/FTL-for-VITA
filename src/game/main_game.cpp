@@ -454,18 +454,21 @@ public:
     }
 
     bool saveGame() {
-        if (combatMode_ || sceneMode_ == SceneMode::GameOver || sceneMode_ == SceneMode::Victory)
+        if (combatMode_ || storeOpen_ || sceneMode_ == SceneMode::GameOver || sceneMode_ == SceneMode::Victory)
             return false;
         std::ofstream out(savePath(), std::ios::trunc);
         if (!out) return false;
 
-        out << "FTL_VITA_SAVE 2\n";
+        out << "FTL_VITA_SAVE 3\n";
         out << "ship " << std::quoted(runtime_.content.blueprint.id) << "\n";
         out << "seed " << seed_ << "\n";
         out << "sector " << sector_ << "\n";
         out << "flagship " << flagshipPhase_ << "\n";
         out << "beacon " << currentBeacon_ << ' ' << selectedBeacon_ << "\n";
         out << "fleet " << fleetRow_ << "\n";
+        out << "event_usage " << sectorEventUsage_.size() << "\n";
+        for (const auto& entry : sectorEventUsage_)
+            out << std::quoted(entry.first) << ' ' << entry.second << "\n";
         out << "visited " << visitedBeacons_ << "\n";
         out << "resources " << fuel_ << ' ' << scrap_ << ' ' << droneParts_ << ' ' << runtime_.missiles << "\n";
         out << "hull " << runtime_.hull << "\n";
@@ -508,7 +511,9 @@ public:
 
         std::string header;
         std::getline(in, header);
-        if (header != "FTL_VITA_SAVE 2") return false;
+        const bool legacySave = header == "FTL_VITA_SAVE 2";
+        const bool currentSave = header == "FTL_VITA_SAVE 3";
+        if (!legacySave && !currentSave) return false;
 
         std::string key, shipId;
         in >> key >> std::quoted(shipId);
@@ -519,6 +524,17 @@ public:
         in >> key >> seed_; in >> key >> sector_; in >> key >> flagshipPhase_;
         in >> key >> currentBeacon_ >> selectedBeacon_;
         in >> key >> fleetRow_;
+        sectorEventUsage_.clear();
+        if (currentSave) {
+            in >> key >> count;
+            if (key != "event_usage") return false;
+            for (std::size_t i = 0; i < count; ++i) {
+                std::string eventName;
+                int usage = 0;
+                in >> std::quoted(eventName) >> usage;
+                if (!eventName.empty()) sectorEventUsage_[eventName] = std::max(0, usage);
+            }
+        }
         in >> key >> visitedBeacons_;
         in >> key >> fuel_ >> scrap_ >> droneParts_ >> runtime_.missiles;
         in >> key >> runtime_.hull;
@@ -1143,6 +1159,12 @@ public:
     }
 
     void updatePause() {
+        if (input_.pressed(Button::Triangle)) {
+            if (saveGame())
+                saveFeedback_ = "セーブしました";
+            else
+                saveFeedback_ = combatMode_ ? "戦闘中はセーブできません" : "セーブに失敗しました";
+        }
         if (input_.pressed(Button::Start) || input_.pressed(Button::Circle))
             sceneMode_ = combatMode_ ? SceneMode::Combat : SceneMode::Ship;
     }
@@ -1153,8 +1175,12 @@ public:
         text_.draw(graphics_, "ポーズ", 315.f, 205.f, 28.f, {0.90f,0.94f,1.f,1.f});
         text_.draw(graphics_, "スタート: 再開", 315.f, 255.f, 17.f, {0.75f,0.82f,0.92f,1.f});
         text_.draw(graphics_, "○: 再開", 315.f, 290.f, 17.f, {0.75f,0.82f,0.92f,1.f});
-        text_.draw(graphics_, "現在のセクター: " + std::to_string(sector_ + 1), 315.f, 335.f, 15.f,
+        text_.draw(graphics_, "△: セーブ", 315.f, 325.f, 17.f, {0.75f,0.82f,0.92f,1.f});
+        text_.draw(graphics_, "現在のセクター: " + std::to_string(sector_ + 1), 315.f, 360.f, 15.f,
             {0.65f,0.72f,0.82f,1.f});
+        if (!saveFeedback_.empty())
+            text_.draw(graphics_, saveFeedback_, 315.f, 395.f, 14.f,
+                {1.f,0.84f,0.45f,1.f});
     }
 
     void update(float dt) override {
@@ -1162,6 +1188,7 @@ public:
 
         if (input_.pressed(Button::Start) && sceneMode_ != SceneMode::Pause) {
             sceneMode_ = SceneMode::Pause;
+            saveFeedback_.clear();
             return;
         }
         if (sceneMode_ == SceneMode::Pause) {
@@ -2087,6 +2114,7 @@ private:
     std::string shipTextureName_;
     std::string startupError_;
     std::string combatFeedback_;
+    std::string saveFeedback_;
     float combatFeedbackTimer_{0.0f};
     float jumpCharge_{0.0f};
     bool jumpCharging_{false};
