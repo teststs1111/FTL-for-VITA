@@ -354,3 +354,40 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 - The desired game behavior is a single-archive model matching the real game: base data and AE data are selected/layered internally from the same ftl.dat, not packaged as a separate external DLC archive.
 - If a future continuation needs the archive and it is not already mounted in the current runtime, use the Files/Library retrieval path to materialize the existing Library file. Do not ask the user to provide it again unless the Library copy is genuinely unavailable.
 - This Library source is especially important for validating event effects, choice requirements, ship/weapon/crew data, sector data, Japanese localization, and asset paths against the real game data.
+
+
+## 2026-09-26 continuation — event crew runtime integration
+- Real event XML was inspected from the Library-supplied `ftl.dat` / extracted `data/events.xml`.
+- Confirmed real `crewMember` forms include:
+  - `amount`
+  - `id`
+  - `class`
+  - individual skill attributes such as `pilot`, `engines`, `shields`, `weapons`, `repair`, `combat`
+  - `all_skills="1"`
+- Confirmed `removeCrew` may contain:
+  - `class="..."` to target a specific crew race/class
+  - child `<clone>true|false</clone>`
+  - child `<text id="..."/>` for the outcome text.
+- Added structured `EventCrewMemberEffect` and `EventCrewRemovalEffect` data models.
+- EventDatabase now parses crew effects both on direct events and on nested `<choice><event>...</event></choice>` outcomes.
+- ShipRuntime now supports:
+  - adding event-generated crew with an 8-alive-crew cap;
+  - reusing dead crew slots;
+  - removing a crew member by race/class;
+  - generic crew removal;
+  - clone-aware removal when a powered, undamaged Clone Bay is present.
+- Runtime crew now stores the six basic FTL skill values (pilot/engines/shields/weapons/repair/combat) and `all_skills="1"` is represented as level 2 for those fields.
+- MainGame now applies crew additions/removals together with the already-supported event resource and damage effects.
+- Dynamic crew is now included in save files. Save format advanced to `FTL_VITA_SAVE 4`; versions 2/3 remain readable.
+- Added real-data smoke coverage for `CREW_DEAD_TEST` removal parsing and ShipRuntime add/remove operations.
+- No proprietary FTL data was committed.
+- Latest implementation commit: `89e15bb57cc706e7c7798fadcfbdcb47f42c8038`.
+- GitHub Actions status for that commit has not surfaced yet (`workflow_runs=[]`, `statuses=[]`); **do not call this change CI-green until a new Host/Vita result is available**.
+
+### Next event-fidelity targets
+1. Parse/apply `boarders` into the combat boarding runtime.
+2. Parse `autoReward` and its reward tables instead of treating only explicit item modifications.
+3. Parse `quest` / quest chains more completely, including event completion semantics.
+4. Expand blue-option requirements to actual crew skills and equipment/augment requirements.
+5. Continue with `weapon`, `item_modify`, `environment`, `distressBeacon`, and nested combat outcomes.
+6. Then replace the generic beacon graph with original FTL beacon generation constraints and Rebel Fleet pursuit.
