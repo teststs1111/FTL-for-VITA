@@ -40,6 +40,8 @@ struct EventBoarderEffect {
     int maxGroup{0};
 };
 
+struct EventAutoReward { std::string level{"MED"}; std::string type{"standard"}; };
+
 struct EventChoice {
     std::string text;
     std::string textKey;
@@ -65,6 +67,8 @@ struct EventChoice {
     std::vector<EventCrewMemberEffect> crewMembers;
     std::vector<EventCrewRemovalEffect> crewRemovals;
     std::vector<EventBoarderEffect> boarders;
+    bool hasAutoReward{false};
+    EventAutoReward autoReward;
 };
 
 struct EventDefinition {
@@ -90,6 +94,8 @@ struct EventDefinition {
     std::vector<EventCrewMemberEffect> crewMembers;
     std::vector<EventCrewRemovalEffect> crewRemovals;
     std::vector<EventBoarderEffect> boarders;
+    bool hasAutoReward{false};
+    EventAutoReward autoReward;
     bool valid{false};
 };
 
