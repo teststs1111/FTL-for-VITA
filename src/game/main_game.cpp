@@ -20,13 +20,14 @@
 #include <array>
 #include <unordered_map>
 
+namespace wormhole {
+
 namespace {
 std::vector<std::string> loadArchiveSet(const char* basePath) {
     std::vector<std::string> paths;
     if (basePath && *basePath) paths.emplace_back(basePath);
     return paths;
 }
-namespace wormhole {
 
 class ShipScene final : public GameState {
 public:
@@ -2390,5 +2391,4 @@ void MainGame::setState(std::unique_ptr<GameState> state) {
     state_ = std::move(state);
 }
 
-}
 }
