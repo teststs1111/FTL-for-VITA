@@ -35,6 +35,7 @@ struct EventDefinition {
     std::vector<EventChoice> choices;
     bool hostile{false};
     std::string hostileShipId;
+    std::string questId;
     bool store{false};
     bool repair{false};
     int initialScrap{0};
