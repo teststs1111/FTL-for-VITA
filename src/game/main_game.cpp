@@ -2391,3 +2391,4 @@ void MainGame::setState(std::unique_ptr<GameState> state) {
 }
 
 }
+}
