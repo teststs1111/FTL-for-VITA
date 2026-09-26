@@ -577,6 +577,8 @@ public:
         out << "visited " << visitedBeacons_ << "\n";
         out << "resources " << fuel_ << ' ' << scrap_ << ' ' << droneParts_ << ' ' << runtime_.missiles << "\n";
         out << "hull " << runtime_.hull << "\n";
+        out << "augments " << augmentIds_.size() << "\n";
+        for (const auto& augment : augmentIds_) out << std::quoted(augment) << "\n";
 
         out << "systems " << runtime_.systems.size() << "\n";
         for (const auto& s : runtime_.systems)
