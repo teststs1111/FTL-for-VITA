@@ -1445,6 +1445,24 @@ public:
         drawRuntimeArtwork(combat_.player, leftX);
         drawRuntimeArtwork(combat_.enemy, rightX);
 
+        // Combat crew-management cursor: this is deliberately separate from
+        // the enemy targeting cursor so crew commands do not change the shot target.
+        if (!combat_.player.content.layout.rooms.empty()) {
+            const int roomIndex = std::clamp(selectedRoom_, 0,
+                static_cast<int>(combat_.player.content.layout.rooms.size()) - 1);
+            const auto& room = combat_.player.content.layout.rooms[roomIndex];
+            const float x = leftX + room.x * scale;
+            const float y = originY + room.y * scale;
+            const float w = std::max(1, room.w) * scale;
+            const float h = std::max(1, room.h) * scale;
+            graphics_.drawLine(x, y, x + std::min(w, 10.f), y, {0.45f, 1.f, 0.55f, 1.f});
+            graphics_.drawLine(x, y, x, y + std::min(h, 10.f), {0.45f, 1.f, 0.55f, 1.f});
+            graphics_.drawLine(x + w, y + h, x + w - std::min(w, 10.f), y + h,
+                {0.45f, 1.f, 0.55f, 1.f});
+            graphics_.drawLine(x + w, y + h, x + w, y + h - std::min(h, 10.f),
+                {0.45f, 1.f, 0.55f, 1.f});
+        }
+
         // Show system damage directly on the room containing the damaged system.
         // This keeps combat feedback tied to the same runtime values used by
         // damage resolution, rather than adding a separate visual-only state.
