@@ -282,7 +282,41 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
     }
 }
 
+static EventShipOutcome parseShipOutcome(const bxml::Node& node) {
+    EventShipOutcome outcome;
+    for (const auto& child : node.children) {
+        if (child.name == "text") {
+            const auto it = child.attributes.find("id");
+            if (it != child.attributes.end()) outcome.textKey = it->second;
+        } else if (child.name == "autoReward") {
+            outcome.hasAutoReward = true;
+            const auto it = child.attributes.find("level");
+            if (it != child.attributes.end()) outcome.autoReward.level = it->second;
+            outcome.autoReward.type = child.text;
+        } else if (child.name == "weapon") {
+            const auto it = child.attributes.find("name");
+            if (it != child.attributes.end()) outcome.weaponReward = it->second;
+        }
+    }
+    parseItemModify(node, outcome.scrap, outcome.scrapMax,
+                    outcome.fuel, outcome.fuelMax,
+                    outcome.missiles, outcome.missilesMax,
+                    outcome.drones, outcome.dronesMax);
+    return outcome;
+}
+
 void EventDatabase::collectEvents(const bxml::Node& node) {
+    if (node.name == "ship") {
+        const auto nameIt = node.attributes.find("name");
+        if (nameIt != node.attributes.end() && !nameIt->second.empty()) {
+            for (const auto& child : node.children) {
+                if (child.name == "destroyed")
+                    destroyedOutcomes_[nameIt->second] = parseShipOutcome(child);
+                else if (child.name == "deadCrew")
+                    deadCrewOutcomes_[nameIt->second] = parseShipOutcome(child);
+            }
+        }
+    }
     if (node.name == "event") {
         const auto idIt = node.attributes.find("name");
         if (idIt != node.attributes.end()) addEvent(node, idIt->second);
@@ -318,6 +352,12 @@ void EventDatabase::collectEvents(const bxml::Node& node) {
     for (const auto& c : node.children) collectEvents(c);
 }
 
+const EventShipOutcome* EventDatabase::findShipOutcome(const std::string& shipId, bool deadCrew) const {
+    const auto& outcomes = deadCrew ? deadCrewOutcomes_ : destroyedOutcomes_;
+    const auto it = outcomes.find(shipId);
+    return it == outcomes.end() ? nullptr : &it->second;
+}
+
 const EventDefinition* EventDatabase::resolve(const std::string& id, std::uint32_t seed) const {
     if (const auto* direct = find(id)) return direct;
     const auto it = eventPools_.find(id);
@@ -339,6 +379,8 @@ bool EventDatabase::load() {
     events_.clear();
     order_.clear();
     eventPools_.clear();
+    destroyedOutcomes_.clear();
+    deadCrewOutcomes_.clear();
 
     replacingPools_ = false;
     replacingEvents_ = false;
