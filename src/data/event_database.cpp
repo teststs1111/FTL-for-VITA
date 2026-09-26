@@ -69,6 +69,11 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
         if (c.name != "choice") continue;
         if (c.attributes.count("hidden") && c.attributes.at("hidden") == "true") continue;
         EventChoice choice;
+        const auto reqIt = c.attributes.find("req");
+        if (reqIt != c.attributes.end()) choice.requirement = reqIt->second;
+        choice.requirementLevel = attrInt(c, "lvl", 0);
+        const auto blueIt = c.attributes.find("blue");
+        choice.blue = blueIt != c.attributes.end() && blueIt->second == "true";
         if (const auto* t = child(c, "text")) choice.text = nodeText(*t);
         if (const auto* e = child(c, "event")) {
             const auto it = e->attributes.find("load");
