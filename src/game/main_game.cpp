@@ -844,6 +844,19 @@ public:
         return hasAugment("AUTO_RELOADER") ? 0.90f : 1.0f;
     }
 
+    int applyScrapAugments(int baseReward) {
+        if (baseReward <= 0) return 0;
+        int reward = baseReward;
+        if (hasAugment("SCRAP_ARM"))
+            reward += baseReward / 10;
+        if (hasAugment("REPAIR_ARM") && runtime_.hull < runtime_.maxHull) {
+            const int repair = std::min(2, runtime_.maxHull - runtime_.hull);
+            runtime_.hull += repair;
+            reward = std::max(0, reward * 85 / 100);
+        }
+        return reward;
+    }
+
     void enterCombatFromBeacon(const std::string& enemyShipId = {}) {
         // Start every encounter from a clean CombatRuntime state. This resets
         // the previous outcome, projectile queue, boarding timers and enemy
@@ -1374,7 +1387,7 @@ public:
                 // systems, crew, weapons, missiles, shields, fires and breaches
                 // must survive the return to the ship scene.
                 runtime_ = combat_.player;
-                scrap_ += 20 + sector_ * 5;
+                scrap_ += applyScrapAugments(20 + sector_ * 5);
 
                 if (sector_ >= 7 && flagshipPhase_ > 0 && flagshipPhase_ < 3) {
                     // Flagship phase transition: keep the damaged player ship,
