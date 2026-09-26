@@ -21,6 +21,9 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     boardingTimer_ = 8.0f;
     boardingFightTimer_ = 0.0f;
     boarders.clear();
+    flagshipPhase_ = 0;
+    droneSurgeTimer_ = 0.0f;
+    superShield_ = 0;
 
     const LoadedShip* playerShip = contentSource.playerShip();
     if (!playerShip) return false;
@@ -79,6 +82,12 @@ void CombatRuntime::setRandomSeed(std::uint32_t seed) {
     randomState_ = seed == 0 ? 0x6D2B79F5u : seed;
 }
 
+void CombatRuntime::configureFlagshipPhase(int phase) {
+    flagshipPhase_ = std::clamp(phase, 0, 3);
+    droneSurgeTimer_ = flagshipPhase_ == 2 ? 10.0f : 0.0f;
+    superShield_ = flagshipPhase_ == 3 ? 10 : 0;
+}
+
 void CombatRuntime::update(float dt) {
     if (dt <= 0.0f || outcome != CombatOutcome::Ongoing) return;
 
@@ -91,6 +100,33 @@ void CombatRuntime::update(float dt) {
     enemy.updateShields(dt);
     player.updateEnvironment(dt);
     enemy.updateEnvironment(dt);
+
+    // Rebel Flagship phase 2 periodically triggers the original-style
+    // "drone power surge". Model the surge as several simultaneous drone
+    // projectiles so it remains independent of the enemy ship's normal
+    // reactor allocation and cannot be disabled by ordinary system damage.
+    if (flagshipPhase_ == 2) {
+        droneSurgeTimer_ -= dt;
+        if (droneSurgeTimer_ <= 0.0f && !player.content.layout.rooms.empty()) {
+            const int roomCount = static_cast<int>(player.content.layout.rooms.size());
+            const int surgeCount = 3 + static_cast<int>(nextRandom() % 2u);
+            for (int i = 0; i < surgeCount; ++i) {
+                RuntimeWeapon surge;
+                surge.name = "FLAGSHIP_DRONE_SURGE";
+                surge.type = "LASER";
+                surge.power = 0;
+                surge.speed = 10;
+                surge.shots = 1;
+                surge.damage = 1;
+                surge.systemDamage = 1;
+                surge.cooldown = 1.0f;
+                const int room = player.content.layout.rooms[
+                    static_cast<std::size_t>(nextRandom() % static_cast<std::uint32_t>(roomCount))].id;
+                enqueueWeapon(false, -1, surge, room);
+            }
+            droneSurgeTimer_ = 20.0f;
+        }
+    }
 
     // Boarding-party prototype: after a short delay, an enemy crew member
     // enters the player's weapons room. This uses the same RuntimeCrew model
@@ -338,6 +374,22 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
                 ++result.evaded;
                 continue;
             }
+        }
+
+        // Phase 3 starts with a Zoltan-style super shield. Unlike ordinary
+        // shields it is hit-count based and must be depleted before normal
+        // shields or missile bypass rules can matter.
+        if (!shieldBypass && superShield_ > 0) {
+            --superShield_;
+            target.shieldCharge = 0.0f;
+            ++result.shieldsAbsorbed;
+            continue;
+        }
+        if (shieldBypass && superShield_ > 0) {
+            --superShield_;
+            target.shieldCharge = 0.0f;
+            ++result.shieldsAbsorbed;
+            continue;
         }
 
         // Missile/bomb weapons bypass shields in FTL. Laser/beam/ion-style
