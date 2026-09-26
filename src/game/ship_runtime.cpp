@@ -486,6 +486,24 @@ void ShipRuntime::updateEnvironment(float dt) {
             roomOxygen[i] = std::max(0, roomOxygen[i] - static_cast<int>(dt * 12.f));
     }
 
+    // Crew inside a powered, undamaged medbay recover health over time.
+    // This runs for both normal ship management and combat because the combat
+    // runtime advances the same ShipRuntime environment each frame.
+    for (const auto& system : systems) {
+        if (system.type != "medbay" || !system.powered || system.power <= 0 || system.damage >= system.maxPower)
+            continue;
+        const int roomId = system.room;
+        if (roomId < 0 || roomId >= static_cast<int>(roomFire.size()) ||
+            roomFire[roomId] || roomBreach[roomId] || roomOxygen[roomId] <= 0)
+            continue;
+        constexpr float healPerSecondPerPower = 4.0f;
+        const int healAmount = std::max(1, static_cast<int>(healPerSecondPerPower * system.power * dt));
+        for (int crewIndex = 0; crewIndex < static_cast<int>(crew.size()); ++crewIndex) {
+            if (crew[crewIndex].alive && crew[crewIndex].room == roomId)
+                healCrew(crewIndex, healAmount);
+        }
+    }
+
     // Fire can spread through open doors into oxygenated rooms.
     const std::vector<bool> fireBefore = roomFire;
     for (int i = 0; i < static_cast<int>(content.layout.doors.size()); ++i) {
