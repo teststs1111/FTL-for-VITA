@@ -1352,6 +1352,34 @@ public:
         }
     }
 
+    void applyEventSpecialEffects(const EventSpecialEffects& special) {
+        if (special.modifyPursuit != 0) {
+            const int maxRow = std::max(0, sectorGraph_.exitRow() - 1);
+            fleetRow_ = std::clamp(fleetRow_ + special.modifyPursuit, -1, maxRow);
+        }
+        if (special.revealMap) mapRevealed_ = true;
+        if (special.secretSector) secretSectorPending_ = true;
+
+        if (!special.augmentReward.empty()) {
+            const std::string requested = special.augmentReward;
+            if (augmentIds_.size() >= 3) {
+                combatFeedback_ = "オーグメント枠がいっぱい";
+                combatFeedbackTimer_ = 1.5f;
+                return;
+            }
+            std::vector<std::string> ids;
+            if (requested == "RANDOM") {
+                for (const auto& entry : content_.blueprints().augments())
+                    if (entry.second.cost > 0) ids.push_back(entry.first);
+                std::sort(ids.begin(), ids.end());
+                for (const auto& id : ids) {
+                    if (!hasAugment(id)) { augmentIds_.push_back(id); break; }
+                }
+            } else if (const auto* augment = content_.blueprints().findAugment(requested)) {
+                if (!hasAugment(augment->id)) augmentIds_.push_back(augment->id);
+            }
+        }
+    }
     void applyEventImmediateEffects(const EventDefinition& event) {
         scrap_ = std::max(0, scrap_ + applyScrapAugments(rollEventRange(event.initialScrap, event.initialScrapMax, 0x11u)));
         fuel_ = std::max(0, fuel_ + rollEventRange(event.initialFuel, event.initialFuelMax, 0x23u));
@@ -1364,6 +1392,7 @@ public:
         if (event.hasAutoReward) applyEventAutoReward(event.autoReward);
         applyEventWeaponReward(event.weaponReward);
         if (event.hasEnvironment) pendingEnvironment_ = eventEnvironment(event.environment);
+        applyEventSpecialEffects(event.special);
     }
     }
 
@@ -1533,6 +1562,7 @@ public:
         if (choice.hasAutoReward) applyEventAutoReward(choice.autoReward);
         applyEventWeaponReward(choice.weaponReward);
         if (choice.hasEnvironment) pendingEnvironment_ = eventEnvironment(choice.environment);
+        applyEventSpecialEffects(choice.special);
         if (choice.distressBeacon) { /* classification is retained by EventDatabase */ }
         if (choice.load.empty() && !choice.hostile && !choice.store && !choice.repair) {
             ++visitedBeacons_;
@@ -2755,6 +2785,8 @@ private:
     std::vector<StoreOffer> storeOffers_;
     int storeSelection_{0};
     bool storeOpen_{false};
+    bool mapRevealed_{false};
+    bool secretSectorPending_{false};
 };
 
 } // namespace
