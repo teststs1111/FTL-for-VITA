@@ -1057,7 +1057,28 @@ public:
                     ++flagshipPhase_;
                     combatFeedback_ = "反乱軍旗艦 Phase " + std::to_string(flagshipPhase_);
                     combatFeedbackTimer_ = 2.0f;
-                    enterCombatFromBeacon(flagshipPhase_ == 2 ? "BOSS_2" : "BOSS_3");
+                    LoadedShip nextFlagship;
+                    const std::string nextId = flagshipPhase_ == 2 ? "BOSS_2" : "BOSS_3";
+                    if (content_.loadShip(nextId, nextFlagship) &&
+                        combat_.loadFlagshipPhase(content_, nextFlagship, combat_.enemy.crew)) {
+                        combat_.player = runtime_;
+                        combat_.configureFlagshipPhase(flagshipPhase_);
+                        combatMode_ = true;
+                        jumpCharging_ = false;
+                        jumpCharge_ = 0.0f;
+                        sceneMode_ = SceneMode::Combat;
+                        combatTargetRoom_ = combat_.enemy.content.layout.rooms.empty()
+                            ? 0 : combat_.enemy.content.layout.rooms.front().id;
+                        combat_.setTargetRoom(combatTargetRoom_);
+                        discoverRoomTextures();
+                        discoverWeaponAndDroneTextures();
+                        discoverCrewTextures();
+                    } else {
+                        combatFeedback_ = "旗艦次フェーズの読み込みに失敗";
+                        combatFeedbackTimer_ = 2.0f;
+                        combatMode_ = false;
+                        sceneMode_ = SceneMode::GameOver;
+                    }
                 } else if (sector_ >= 7 && flagshipPhase_ >= 3) {
                     combatMode_ = false;
                     sceneMode_ = SceneMode::Victory;
