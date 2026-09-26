@@ -57,6 +57,7 @@ public:
     bool setEnemyTargetRoom(int roomId);
     void setRandomSeed(std::uint32_t seed);
     void configureFlagshipPhase(int phase);
+    void setPlayerWeaponCooldownMultiplier(float multiplier) { playerWeaponCooldownMultiplier_ = multiplier; }
     int superShieldRemaining() const { return superShield_; }
 
 private:
@@ -76,6 +77,7 @@ private:
     int flagshipPhase_{0};
     float droneSurgeTimer_{0.0f};
     int superShield_{0};
+    float playerWeaponCooldownMultiplier_{1.0f};
     std::uint32_t nextRandom();
 };
 
