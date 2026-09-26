@@ -294,3 +294,42 @@ This file is the durable project memory. Chat history is supplementary.
 - Host #571 exposed a second cloaking compile issue: ShipRuntime has no hasSystem/SystemType API. Replaced it with direct RuntimeSystem type lookup in 7d1647908ce232acc4acd2b2f7fca1dbad6e06ee.
 
 - Host/Vita builds #573/#265 are green on 163bf2c0. AE event overwrite handling was advanced in 618411db: overwrite event definitions can replace existing IDs, and OVERRIDE_ event-list names map back to the base pool ID.
+
+
+## 2026-09-26 continuation: current real-data validation / CI state
+
+- Latest main commit: `e04d0231e349c3567550a15ace01751ac6a3466d` (`Register optional real ftl.dat smoke test`).
+- Latest CI for that commit is green: Host build **#578: success** and Vita build **#270: success**.
+- Added `tests/test_real_ftl_dat.cpp` and registered it as an optional CTest real-data smoke test. It skips cleanly when `FTL_DAT_PATH` is absent, so proprietary data is not required in CI.
+- The user-supplied `ftl.dat` was directly inspected outside the repository: `PKG\\n` archive, 3,219 entries, 280,573,482 bytes, 2,837 PNG resources, and `data/text-ja.xml`.
+- **Correction to older handoff text:** the inspected archive does **not** contain `data/newEvents.xml`. Do not depend on that path. Confirmed AE resources are `data/dlcEvents.xml`, `data/dlcEventsOverwrite.xml`, `data/dlcBlueprints.xml`, `data/dlcBlueprintsOverwrite.xml`, and `data/dlcPirateBlueprints.xml`.
+- Runtime startup now loads `data/text-ja.xml` into the localization layer when the archive is opened. EventDatabase, SectorDatabase, and BlueprintDatabase are all archive-backed.
+- Event parsing now handles named events plus common `event load="..."` references, weighted pools, AE overwrite pools, common item/resource rewards, hostile/store/repair/quest markers, and basic choice requirements. Complex nested requirements, blue options, quest chains, and complete reward semantics remain incomplete.
+- SectorDatabase parses real sector descriptions/event pools, but SectorGraph still uses a deterministic generic 8x3 compatibility graph. Original FTL beacon generation constraints and Rebel fleet pursuit remain.
+- Vita startup/rendering is buildable, but real Vita hardware gameplay verification is still outstanding.
+
+### Current subsystem progress estimate
+
+| Area | Progress |
+|---|---:|
+| Build/toolchain | ~90% |
+| Archive/BXML | ~90% |
+| Real-data ingestion | ~65% |
+| Blueprint/ship data | ~60% |
+| Ship/crew/systems/combat simulation | ~45% |
+| Sector/beacon/event loop | ~40% |
+| Vita renderer/input | ~35% |
+| Japanese text/font/UI | ~25% |
+| Audio | ~0% |
+| Save/load | ~0% |
+| Mod support | ~0% |
+
+Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. This is an engineering progress estimate, not a percentage of code or a completion guarantee.
+
+### Next implementation order
+
+1. Replace remaining prototype event classification with real event-choice execution and runtime state changes.
+2. Replace the generic SectorGraph with FTL-like beacon generation and Rebel fleet pressure.
+3. Wire real ship room/system/weapon/crew data deeper into the playable loop.
+4. Complete original Japanese text lookup and Vita Japanese glyph rendering.
+5. Continue FTL HUD/touch, audio, save/load, and flagship sequence.
