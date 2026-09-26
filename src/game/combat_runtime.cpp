@@ -420,7 +420,15 @@ void CombatRuntime::update(float dt) {
 
     if (outcome != CombatOutcome::Ongoing) return;
 
-
+    // In original FTL, a manned ship can be defeated by eliminating its
+    // entire crew even when the hull is still intact. Automated ships have
+    // no crew and therefore continue to require hull destruction.
+    if (!enemy.crew.empty() &&
+        std::none_of(enemy.crew.begin(), enemy.crew.end(),
+                     [](const RuntimeCrew& crew) { return crew.alive; })) {
+        enemyDefeatedByCrew_ = true;
+        outcome = CombatOutcome::EnemyDestroyed;
+    }
 }
 
 bool CombatRuntime::selectWeapon(int weaponIndex) {
