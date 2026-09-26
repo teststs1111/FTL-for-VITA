@@ -587,3 +587,12 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 3. Verify the exact Crystal Home transition path against the real event data and ensure it occurs only in valid story conditions.
 4. Add dedicated sector/save regression coverage.
 5. Continue real FTL HUD/input fidelity, audio, and save/load completeness.
+
+
+## 2026-09-27 continuation — MainGame augment compile fix
+- Found a concrete type mismatch in `src/game/main_game.cpp`: `hasAugment()` accepted only `const char*`, while real augment IDs from the blueprint database are `std::string` values.
+- This affected calls such as the RANDOM augment reward path and direct blueprint augment lookup.
+- Changed `hasAugment()` to accept `const std::string&`, which also accepts the existing string-literal callers through normal construction.
+- Fix commit: `f63e02379730f7ea7c2d91347eb3d7b482ca596e`.
+- This is a source-level compile fix identified from the latest main branch; GitHub Actions has not yet surfaced a workflow result for this commit, so Host/Vita build success is still not claimed.
+- Next: wait for/inspect the Host and Vita workflow results, then continue with the remaining sector/beacon fidelity work.
