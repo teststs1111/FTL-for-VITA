@@ -412,3 +412,25 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 3. Expand Blue Option requirements to crew skills, augment/equipment and resource conditions.
 4. Continue `weapon`, `item_modify`, `environment`, and `distressBeacon` semantics.
 5. Replace the compatibility beacon graph with original FTL generation constraints and Rebel Fleet pursuit.
+
+
+## 2026-09-26 continuation — real `autoReward` integration
+- Inspected the original event-file comment in the supplied `data/events.xml`, confirming the auto-reward vocabulary: `standard`, `stuff`, `fuel`, `missiles`, `droneparts`, `fuel_only`, `missiles_only`, `droneparts_only`, `weapon`, `augment`, `drone`, and `item`.
+- Added structured `EventAutoReward` data to event definitions and choices.
+- Parser now reads `level="LOW|MED|HIGH|RANDOM"` plus the reward type from original `autoReward` nodes.
+- Runtime now applies the resource/scrap portions of these rewards using the real FTL reward tier ranges for Normal difficulty and sector progression. Resource ranges use the documented fixed FTL low/medium/high tables.
+- `standard` grants tiered scrap plus two distinct resource types; `stuff` grants low scrap plus two tiered resources.
+- `fuel`, `missiles`, and `droneparts` grant their resource plus tiered scrap; the *_only variants grant only that resource.
+- `weapon`, `augment`, `drone`, and mixed `item` rewards now select actual loaded blueprint entries and add them to the runtime when the corresponding slot is available.
+- `RANDOM` tier is resolved deterministically from the existing run seed/state so host tests remain reproducible.
+- This is intentionally implemented against the real archive's data model rather than inventing a separate DLC reward system.
+- Latest auto-reward implementation commit: `577d6e333f81e0b7d1d35e96a14561c16596eea5`.
+- Web cross-check: FTL reward documentation confirms the tier/resource ranges and autoReward categories used here. citeturn0search0turn0search6
+- CI status has not produced a new workflow result for this continuation; do not claim green yet.
+
+### Next target
+1. Verify/expand `autoReward` bonus-item probabilities and exact overwrite behavior.
+2. Implement fuller `quest` chain state and quest-event targeting.
+3. Upgrade Blue Options from race/system presence to actual crew skills and equipment/augment requirements.
+4. Parse/apply `environment`, `distressBeacon`, `weapon`, and `item_modify` semantics more completely.
+5. Replace the compatibility sector graph with original FTL beacon generation and Rebel fleet pressure.
