@@ -21,6 +21,7 @@ public:
 
     bool loadShipBlueprint(const std::string& assetPath);
     std::size_t loadShipBlueprints(const std::string& assetPath);
+    std::size_t loadShipBlueprints(const std::vector<std::string>& assetPaths);
     const ShipBlueprint* findShip(const std::string& id) const;
     const WeaponBlueprint* findWeapon(const std::string& id) const;
     const DroneBlueprint* findDrone(const std::string& id) const;
