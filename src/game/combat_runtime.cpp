@@ -534,7 +534,12 @@ bool CombatRuntime::consumeImpactResult(CombatResult& result) {
 
 
 bool CombatRuntime::activateCloaking() {
-    if (!player.valid || !player.hasSystem(SystemType::Cloaking)) return false;
+    if (!player.valid) return false;
+    bool hasCloaking = false;
+    for (const auto& system : player.systems) {
+        if (system.type == "cloaking" && system.maxPower > 0) { hasCloaking = true; break; }
+    }
+    if (!hasCloaking) return false;
     if (cloakTimer_ > 0.0f) return false;
     cloakTimer_ = 5.0f;
     return true;
