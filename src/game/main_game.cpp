@@ -1287,6 +1287,43 @@ public:
         }
     }
 
+    void applyEventWeaponReward(const std::string& requested) {
+        if (requested.empty()) return;
+        if (static_cast<int>(runtime_.weapons.size()) >= runtime_.content.blueprint.weaponSlots) return;
+
+        std::vector<std::string> ids;
+        if (requested == "RANDOM") {
+            for (const auto& entry : content_.blueprints().weapons()) {
+                if (entry.second.cost > 0) ids.push_back(entry.first);
+            }
+            std::sort(ids.begin(), ids.end());
+            if (ids.empty()) return;
+            const std::size_t start = static_cast<std::size_t>(
+                (seed_ + static_cast<unsigned>(visitedBeacons_ * 17 + currentBeacon_)) % ids.size());
+            for (std::size_t i = 0; i < ids.size(); ++i) {
+                const auto& id = ids[(start + i) % ids.size()];
+                const auto* blueprint = content_.blueprints().findWeapon(id);
+                if (!blueprint) continue;
+                bool owned = false;
+                for (const auto& current : runtime_.weapons)
+                    if (current.name == blueprint->name) { owned = true; break; }
+                if (owned) continue;
+                runtime_.weapons.push_back(makeRuntimeWeapon(*blueprint));
+                combat_.player = runtime_;
+                return;
+            }
+            return;
+        }
+
+        if (const auto* blueprint = content_.blueprints().findWeapon(requested)) {
+            bool owned = false;
+            for (const auto& current : runtime_.weapons)
+                if (current.name == blueprint->name) { owned = true; break; }
+            if (!owned) runtime_.weapons.push_back(makeRuntimeWeapon(*blueprint));
+            combat_.player = runtime_;
+        }
+    }
+
     void applyEventImmediateEffects(const EventDefinition& event) {
         scrap_ = std::max(0, scrap_ + applyScrapAugments(rollEventRange(event.initialScrap, event.initialScrapMax, 0x11u)));
         fuel_ = std::max(0, fuel_ + rollEventRange(event.initialFuel, event.initialFuelMax, 0x23u));
@@ -1297,6 +1334,7 @@ public:
         applyEventCrewEffects(event.crewMembers, event.crewRemovals);
         applyEventBoarders(event.boarders);
         if (event.hasAutoReward) applyEventAutoReward(event.autoReward);
+        applyEventWeaponReward(event.weaponReward);
     }
     }
 
@@ -1459,6 +1497,7 @@ public:
         applyEventCrewEffects(choice.crewMembers, choice.crewRemovals);
         applyEventBoarders(choice.boarders);
         if (choice.hasAutoReward) applyEventAutoReward(choice.autoReward);
+        applyEventWeaponReward(choice.weaponReward);
         if (choice.load.empty() && !choice.hostile && !choice.store && !choice.repair) {
             ++visitedBeacons_;
             sceneMode_ = SceneMode::SectorMap;
