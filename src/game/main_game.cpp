@@ -1098,9 +1098,9 @@ public:
             selectedRoom_ = std::clamp(selectedRoom_, 0, playerRoomCount - 1);
             if (input_.pressed(Button::Triangle) && !combat_.player.crew.empty())
                 selectedCrew_ = (selectedCrew_ + 1) % static_cast<int>(combat_.player.crew.size());
-            if (input_.pressed(Button::Left)) {
+            if (input_.pressed(Button::Up)) {
                 selectedRoom_ = (selectedRoom_ + playerRoomCount - 1) % playerRoomCount;
-            } else if (input_.pressed(Button::Right)) {
+            } else if (input_.pressed(Button::Down)) {
                 selectedRoom_ = (selectedRoom_ + 1) % playerRoomCount;
             }
             const int selectedPlayerRoomId = playerRooms[selectedRoom_].id;
@@ -1136,9 +1136,9 @@ public:
                 break;
             }
         }
-        if (input_.pressed(Button::Left) || input_.pressed(Button::Up))
+        if (input_.pressed(Button::Left))
             targetIndex = (targetIndex + roomCount - 1) % roomCount;
-        if (input_.pressed(Button::Right) || input_.pressed(Button::Down))
+        if (input_.pressed(Button::Right))
             targetIndex = (targetIndex + 1) % roomCount;
         combatTargetRoom_ = enemyRooms[targetIndex].id;
 
@@ -1510,7 +1510,7 @@ public:
                               : Color{0.3f, 0.65f, 0.9f, 1.f});
         }
 
-        text_.draw(graphics_, "←→: 敵ターゲット   L/R: 武器   △: クルー   □: ドア   ○: FTL", 
+        text_.draw(graphics_, "←→: 敵ターゲット   ↑↓: クルー部屋   L/R: 武器   △: クルー   □: ドア   ○: FTL", 
             leftX, 448.f, 11.f, {0.62f, 0.74f, 0.86f, 1.0f});
 
         if (jumpCharging_) {
