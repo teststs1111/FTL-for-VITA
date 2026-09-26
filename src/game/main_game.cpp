@@ -1510,6 +1510,9 @@ public:
                               : Color{0.3f, 0.65f, 0.9f, 1.f});
         }
 
+        text_.draw(graphics_, "←→: 敵ターゲット   L/R: 武器   △: クルー   □: ドア   ○: FTL", 
+            leftX, 448.f, 11.f, {0.62f, 0.74f, 0.86f, 1.0f});
+
         if (jumpCharging_) {
             constexpr float jumpChargeTime = 10.0f;
             const float ratio = std::clamp(jumpCharge_ / jumpChargeTime, 0.0f, 1.0f);
