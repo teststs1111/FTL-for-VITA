@@ -68,8 +68,8 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
         const auto name = quest->attributes.find("name");
         if (name != quest->attributes.end()) event.questId = name->second;
         else {
-            const id = quest->attributes.find("id");
-            if (id != quest->attributes.end()) event.questId = id->second;
+            const auto idIt = quest->attributes.find("id");
+            if (idIt != quest->attributes.end()) event.questId = idIt->second;
         }
     }
     event.store = hasChild(node, "store");
@@ -114,8 +114,8 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
                 const auto name = quest->attributes.find("name");
                 if (name != quest->attributes.end()) choice.questId = name->second;
                 else {
-                    const auto id = quest->attributes.find("id");
-                    if (id != quest->attributes.end()) choice.questId = id->second;
+                    const auto idIt = quest->attributes.find("id");
+                    if (idIt != quest->attributes.end()) choice.questId = idIt->second;
                 }
             }
             choice.store = hasChild(*e, "store");
