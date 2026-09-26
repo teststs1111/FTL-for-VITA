@@ -1089,18 +1089,49 @@ public:
         const auto& enemyRooms = combat_.enemy.content.layout.rooms;
         const int roomCount = static_cast<int>(enemyRooms.size());
 
-        // During combat the player can also manage crew and doors without
-        // leaving the battle view. selectedRoom_ points at a real player room,
-        // while selectedCrew_ identifies the crew member being commanded.
+        // During combat the player can also manage crew, doors and system power
+        // without leaving the battle view. selectedRoom_ points at a real player
+        // room, while selectedCrew_ identifies the crew member being commanded.
+        bool powerCommand = false;
+        if (!combat_.player.systems.empty()) {
+            selectedSystem_ = std::clamp(selectedSystem_, 0,
+                static_cast<int>(combat_.player.systems.size()) - 1);
+            if (input_.pressed(Button::Circle) && input_.down(Button::Left)) {
+                selectedSystem_ = (selectedSystem_ + static_cast<int>(combat_.player.systems.size()) - 1) %
+                    static_cast<int>(combat_.player.systems.size());
+                powerCommand = true;
+            } else if (input_.pressed(Button::Circle) && input_.down(Button::Right)) {
+                selectedSystem_ = (selectedSystem_ + 1) %
+                    static_cast<int>(combat_.player.systems.size());
+                powerCommand = true;
+            } else if (input_.pressed(Button::Circle) && input_.down(Button::Up)) {
+                powerCommand = true;
+                auto& system = combat_.player.systems[selectedSystem_];
+                if (!combat_.player.setSystemPower(selectedSystem_, system.power + 1))
+                    combatFeedback_ = "電力が足りない";
+                else
+                    combatFeedback_ = systemLabel(system) + "へ電力+1";
+                combatFeedbackTimer_ = 1.0f;
+            } else if (input_.pressed(Button::Circle) && input_.down(Button::Down)) {
+                powerCommand = true;
+                auto& system = combat_.player.systems[selectedSystem_];
+                if (!combat_.player.setSystemPower(selectedSystem_, system.power - 1))
+                    combatFeedback_ = system.power <= 0 ? "これ以上下げられない" : "電力を変更できない";
+                else
+                    combatFeedback_ = systemLabel(system) + "の電力-1";
+                combatFeedbackTimer_ = 1.0f;
+            }
+        }
+
         const auto& playerRooms = combat_.player.content.layout.rooms;
         if (!playerRooms.empty()) {
             const int playerRoomCount = static_cast<int>(playerRooms.size());
             selectedRoom_ = std::clamp(selectedRoom_, 0, playerRoomCount - 1);
             if (input_.pressed(Button::Triangle) && !combat_.player.crew.empty())
                 selectedCrew_ = (selectedCrew_ + 1) % static_cast<int>(combat_.player.crew.size());
-            if (input_.pressed(Button::Up)) {
+            if (!powerCommand && input_.pressed(Button::Up)) {
                 selectedRoom_ = (selectedRoom_ + playerRoomCount - 1) % playerRoomCount;
-            } else if (input_.pressed(Button::Down)) {
+            } else if (!powerCommand && input_.pressed(Button::Down)) {
                 selectedRoom_ = (selectedRoom_ + 1) % playerRoomCount;
             }
             const int selectedPlayerRoomId = playerRooms[selectedRoom_].id;
@@ -1152,9 +1183,9 @@ public:
                 break;
             }
         }
-        if (input_.pressed(Button::Left))
+        if (!powerCommand && input_.pressed(Button::Left))
             targetIndex = (targetIndex + roomCount - 1) % roomCount;
-        if (input_.pressed(Button::Right))
+        if (!powerCommand && input_.pressed(Button::Right))
             targetIndex = (targetIndex + 1) % roomCount;
         combatTargetRoom_ = enemyRooms[targetIndex].id;
 
@@ -1172,7 +1203,7 @@ public:
 
         // FTL retreat: the player must charge the FTL drive before leaving
         // combat. Fuel is consumed when the retreat jump is completed.
-        if (combat_.outcome == CombatOutcome::Ongoing && input_.pressed(Button::Circle)) {
+        if (combat_.outcome == CombatOutcome::Ongoing && !powerCommand && input_.pressed(Button::Circle)) {
             if (!jumpCharging_) {
                 if (fuel_ > 0) {
                     jumpCharging_ = true;
@@ -1549,8 +1580,17 @@ public:
                               : Color{0.3f, 0.65f, 0.9f, 1.f});
         }
 
-        text_.draw(graphics_, "←→: 敵ターゲット   ↑↓: クルー部屋   L/R: 武器   △: クルー   □: ドア   ○: FTL", 
+        text_.draw(graphics_, "←→: 敵ターゲット   ↑↓: クルー部屋   L/R: 武器   △: クルー   □: ドア   ○: FTL",
             leftX, 448.f, 11.f, {0.62f, 0.74f, 0.86f, 1.0f});
+        if (!combat_.player.systems.empty()) {
+            const int systemIndex = std::clamp(selectedSystem_, 0,
+                static_cast<int>(combat_.player.systems.size()) - 1);
+            const auto& system = combat_.player.systems[systemIndex];
+            text_.draw(graphics_, "電力対象: " + systemLabel(system) + " " +
+                std::to_string(system.power) + "/" + std::to_string(system.maxPower) +
+                "   ○+←→:対象   ○+↑↓:電力",
+                leftX, 464.f, 10.f, {0.68f, 0.80f, 0.90f, 1.0f});
+        }
 
         if (jumpCharging_) {
             constexpr float jumpChargeTime = 10.0f;
@@ -1771,6 +1811,7 @@ private:
     int combatTargetRoom_{0};
     int selectedRoom_{0};
     int selectedCrew_{0};
+    int selectedSystem_{0};
     TextureCache textures_;
     TextRenderer text_;
     std::unordered_map<int, std::string> roomTextureNames_;
