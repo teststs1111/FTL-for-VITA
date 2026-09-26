@@ -1588,13 +1588,18 @@ public:
         if (event->choices.empty()) {
             text_.draw(graphics_, "×: 続行", 105.f, 410.f, 16.f, {0.95f, 0.82f, 0.42f, 1.f});
         } else {
-            for (std::size_t i=0;i<event->choices.size() && i<6;++i) {
-                const bool selected = static_cast<int>(i) == activeEventChoice_;
-                const float y = 245.f + static_cast<float>(i) * 38.f;
-                if (selected)
-                    graphics_.fillRect(95.f, y - 20.f, 770.f, 30.f, {0.16f, 0.25f, 0.34f, 1.f});
+            std::size_t visible = 0;
+            for (std::size_t i=0; i<event->choices.size() && visible<6; ++i) {
                 const auto& choice = event->choices[i];
                 const bool available = eventChoiceAvailable(choice);
+                // Hidden choices are internal branches until their requirement
+                // is satisfied. Conditional hidden Blue Options become visible
+                // here once available.
+                if (choice.hidden && !available) continue;
+                const bool selected = static_cast<int>(i) == activeEventChoice_;
+                const float y = 245.f + static_cast<float>(visible++) * 38.f;
+                if (selected)
+                    graphics_.fillRect(95.f, y - 20.f, 770.f, 30.f, {0.16f, 0.25f, 0.34f, 1.f});
                 std::string label = choice.text;
                 if (!choice.textKey.empty()) {
                     const std::string translated(localization_.tr(choice.textKey));
