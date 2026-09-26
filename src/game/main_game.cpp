@@ -1127,7 +1127,7 @@ public:
         // Apply all resource modifications from the original event data, not
         // only scrap/fuel. Missiles and drone parts are carried by the combat
         // runtime, so event rewards immediately affect the actual inventory.
-        scrap_ = std::max(0, scrap_ + rollEventRange(choice.scrap, choice.scrapMax, 0x61u + static_cast<std::uint32_t>(activeEventChoice_)));
+        scrap_ = std::max(0, scrap_ + applyScrapAugments(rollEventRange(choice.scrap, choice.scrapMax, 0x61u + static_cast<std::uint32_t>(activeEventChoice_))));
         fuel_ = std::max(0, fuel_ + rollEventRange(choice.fuel, choice.fuelMax, 0x73u + static_cast<std::uint32_t>(activeEventChoice_)));
         // Resource rewards belong to the persistent ship state. Combat copies
         // this state when a fight starts, so updating runtime_ here prevents
