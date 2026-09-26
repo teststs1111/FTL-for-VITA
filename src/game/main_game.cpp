@@ -708,8 +708,9 @@ public:
                 member.weaponsSkill = weapons;
                 member.repairSkill = repair;
                 member.combatSkill = combat;
-                if (runtime_.addCrew(member) >= 0 && i < runtime_.crew.size())
-                    crew = &runtime_.crew[i];
+                const int addedIndex = runtime_.addCrew(member);
+                if (addedIndex >= 0 && addedIndex < static_cast<int>(runtime_.crew.size()))
+                    crew = &runtime_.crew[static_cast<std::size_t>(addedIndex)];
             }
             if (!crew) continue;
             crew->race = race;
