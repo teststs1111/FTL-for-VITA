@@ -559,3 +559,31 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 3. Convert `secretSector` into the real Crystal Home-sector transition.
 4. Add dedicated regression fixtures for special event effects.
 5. Continue deeper ship/system/weapon/crew fidelity and the real FTL HUD/input layer.
+
+
+## 2026-09-27 continuation — real sector selection / unique / secret-sector state
+- Fixed a stray closing brace in `src/game/main_game.cpp` that sat between `applyEventImmediateEffects` and `eventChoiceAvailable`.
+- `SectorDatabase` now supports:
+  - selecting candidates while excluding already-used `unique="true"` sector definitions;
+  - direct lookup by the actual sector definition name.
+- MainGame now selects and retains one concrete `sectorDescription` for the current sector instead of asking the database to choose a different sector definition for each beacon.
+- Beacon event pools now come from that retained real sector definition, so `min/max` usage tracking applies inside the selected sector type.
+- The existing compatibility beacon geometry remains in place; this change does **not** claim the 8x3 graph is already the original FTL topology.
+- `secretSector` now replaces the next normal sector selection with the real `CRYSTAL_HOME` definition from `sector_data.xml` when that definition is available. No synthetic Crystal event pool is created.
+- Save format advanced to `FTL_VITA_SAVE 5`; current sector type, used unique sector definitions, map-revealed state, and pending secret-sector state are persisted. Versions 2/3/4 remain readable.
+- `reveal_map` now affects the current map UI by allowing event classifications to be displayed without requiring Long-Ranged Scanners; the underlying compatibility graph is still visible as before.
+- Latest implementation commits:
+  - `2ae8099` — sector database API for unique-aware selection / lookup
+  - `277f013` — unique-aware sector selection implementation
+  - `f3ec4b3` — MainGame sector-state integration and syntax fix
+  - `e0d25ff` — save format v5 for sector-state persistence
+- GitHub combined status for `f3ec4b3` returned no statuses; no CI-green claim is made.
+- Local repository cloning/building is still unavailable in the current execution environment because DNS/network access to github.com is unavailable.
+- No proprietary `ftl.dat` or extracted FTL assets were committed.
+
+### Next implementation order
+1. Replace the compatibility 8x3 graph with a closer original FTL beacon-generation model while preserving the now-fixed concrete sector definition.
+2. Model sector-specific topology constraints and Rebel fleet pursuit independently from the generic graph.
+3. Verify the exact Crystal Home transition path against the real event data and ensure it occurs only in valid story conditions.
+4. Add dedicated sector/save regression coverage.
+5. Continue real FTL HUD/input fidelity, audio, and save/load completeness.
