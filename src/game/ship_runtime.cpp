@@ -1,5 +1,6 @@
 #include "game/ship_runtime.hpp"
 #include <algorithm>
+#include <cctype>
 #include <queue>
 #include <vector>
 
