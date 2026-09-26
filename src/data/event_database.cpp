@@ -284,8 +284,21 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
             event.choices.push_back(std::move(choice));
     }
 
+    const bool hasResourceEffect =
+        event.initialScrap != 0 || event.initialScrapMax != 0 ||
+        event.initialFuel != 0 || event.initialFuelMax != 0 ||
+        event.initialMissiles != 0 || event.initialMissilesMax != 0 ||
+        event.initialDrones != 0 || event.initialDronesMax != 0;
+    const bool hasGameplayEffect =
+        event.hasAutoReward || !event.weaponReward.empty() ||
+        event.hasEnvironment || event.distressBeacon ||
+        !event.crewMembers.empty() || !event.crewRemovals.empty() ||
+        !event.boarders.empty() || !event.questTargetId.empty() ||
+        event.special.modifyPursuit != 0 || event.special.revealMap ||
+        event.special.secretSector || !event.special.augmentReward.empty();
     event.valid = !event.text.empty() || !event.choices.empty() ||
-                  event.hostile || event.store || event.repair;
+                  event.hostile || event.store || event.repair ||
+                  hasResourceEffect || hasGameplayEffect;
     if (!event.valid) return;
     const auto it = events_.find(event.id);
     if (it == events_.end()) {
