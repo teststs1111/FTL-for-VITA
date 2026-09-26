@@ -208,6 +208,14 @@ static void testEventDatabase() {
     assert(localized && localized->textKey == "event_LOCALIZED_text");
     assert(localized && localized->choices.size() == 1);
     assert(localized && localized->choices[0].textKey == "event_LOCALIZED_choice");
+
+    const auto* inlinePool = database.resolve("INLINE_POOL", 2);
+    assert(inlinePool);
+    assert(inlinePool->initialDrones == -1 && inlinePool->initialDronesMax == -1);
+    const auto* choiceItem = database.find("CHOICE_ITEM");
+    assert(choiceItem && choiceItem->choices.size() == 1);
+    assert(choiceItem->choices[0].scrap == -25);
+    assert(choiceItem->choices[0].scrapMax == -10);
     std::remove(path.c_str());
 }
 
