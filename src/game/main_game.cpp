@@ -1728,6 +1728,7 @@ public:
             if (fuel_ <= 0) return;
             fuel_--;
             currentBeacon_ = selectedBeacon_;
+            advanceRebelFleetAfterJump();
             if (const auto* n = sectorGraph_.node(currentBeacon_)) {
                 if (n->row == sectorGraph_.exitRow()) {
                     if (sector_ >= 7) {
@@ -1769,6 +1770,14 @@ public:
             sceneMode_ = SceneMode::Ship;
             return;
         }
+    }
+
+    void advanceRebelFleetAfterJump() {
+        const int lastReachableRow = std::max(0, sectorGraph_.exitRow() - 1);
+        // The compatibility graph models the Rebel fleet as a row boundary.
+        // Vanilla FTL advances the fleet after each player jump; event
+        // modifyPursuit effects can then move that boundary backward/forward.
+        fleetRow_ = std::clamp(fleetRow_ + 1, -1, lastReachableRow);
     }
 
     void renderSectorMap() {
