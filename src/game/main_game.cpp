@@ -348,10 +348,32 @@ public:
         }
 
         // System-level requirements such as req="doors" lvl="3".
+        // FTL data uses a few historical aliases for the same system; map
+        // those aliases to the runtime's canonical type before comparing.
+        const auto canonicalSystem = [](const std::string& value) {
+            if (value == "piloting" || value == "pilot") return std::string("piloting");
+            if (value == "engines" || value == "engine") return std::string("engines");
+            if (value == "shields" || value == "shield") return std::string("shields");
+            if (value == "weapons" || value == "weapon") return std::string("weapons");
+            if (value == "doors" || value == "door") return std::string("doors");
+            if (value == "oxygen" || value == "o2") return std::string("oxygen");
+            if (value == "medbay" || value == "med") return std::string("medbay");
+            if (value == "clonebay" || value == "clone_bay") return std::string("clonebay");
+            if (value == "teleporter" || value == "teleport") return std::string("teleporter");
+            if (value == "cloaking" || value == "cloak") return std::string("cloaking");
+            if (value == "hacking" || value == "hack") return std::string("hacking");
+            if (value == "mind" || value == "mindcontrol" || value == "mind_control") return std::string("mind");
+            if (value == "artillery" || value == "artillerybeam") return std::string("artillery");
+            if (value == "battery" || value == "backupbattery") return std::string("battery");
+            if (value == "sensors" || value == "sensor") return std::string("sensors");
+            return value;
+        };
+        req = canonicalSystem(req);
         for (const auto& system : runtime_.systems) {
             std::string type = system.type;
             std::transform(type.begin(), type.end(), type.begin(),
                 [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            type = canonicalSystem(type);
             if (type == req && system.level >= choice.requirementLevel &&
                 system.damage < system.maxPower) return true;
         }
