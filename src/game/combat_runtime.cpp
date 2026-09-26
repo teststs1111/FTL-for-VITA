@@ -16,6 +16,9 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     lastImpactResult_ = {};
     hasImpactResult_ = false;
     enemyFireDelay_ = 0.0f;
+    boardingTimer_ = 8.0f;
+    boardingFightTimer_ = 0.0f;
+    boarders.clear();
 
     const LoadedShip* playerShip = contentSource.playerShip();
     if (!playerShip) return false;
@@ -86,6 +89,47 @@ void CombatRuntime::update(float dt) {
     enemy.updateShields(dt);
     player.updateEnvironment(dt);
     enemy.updateEnvironment(dt);
+
+    // Boarding-party prototype: after a short delay, an enemy crew member
+    // enters the player's weapons room. This uses the same RuntimeCrew model
+    // so health/death and room interactions remain deterministic.
+    boardingTimer_ -= dt;
+    if (boardingTimer_ <= 0.0f && boarders.empty() && !enemy.crew.empty() && !player.content.layout.rooms.empty()) {
+        for (const auto& enemyCrew : enemy.crew) {
+            if (!enemyCrew.alive) continue;
+            RuntimeCrew boarder = enemyCrew;
+            boarder.room = enemyTargetRoom;
+            if (boarder.room < 0 || boarder.room >= static_cast<int>(player.content.layout.rooms.size()))
+                boarder.room = player.content.layout.rooms.front().id;
+            boarder.health = boarder.maxHealth;
+            boarder.alive = true;
+            boarders.push_back(std::move(boarder));
+            break;
+        }
+        boardingTimer_ = 20.0f;
+    }
+
+    boardingFightTimer_ = std::max(0.0f, boardingFightTimer_ - dt);
+    if (!boarders.empty() && boardingFightTimer_ <= 0.0f) {
+        for (auto& boarder : boarders) {
+            if (!boarder.alive) continue;
+            int defenders = 0;
+            for (auto& crew : player.crew) {
+                if (crew.alive && crew.room == boarder.room) {
+                    crew.health = std::max(0, crew.health - 12);
+                    if (crew.health == 0) crew.alive = false;
+                    ++defenders;
+                }
+            }
+            if (defenders > 0) boarder.health = std::max(0, boarder.health - defenders * 18);
+            if (boarder.health == 0) boarder.alive = false;
+            if (defenders == 0)
+                player.damageSystemInRoom(boarder.room, 1);
+        }
+        boardingFightTimer_ = 1.0f;
+        boarders.erase(std::remove_if(boarders.begin(), boarders.end(),
+            [](const RuntimeCrew& crew) { return !crew.alive; }), boarders.end());
+    }
 
     // Enemy AI prototype: launch at the selected player room when a weapon is ready.
     if (enemy.valid && enemyTargetRoom >= 0 &&
