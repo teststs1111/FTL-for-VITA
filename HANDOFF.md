@@ -608,3 +608,22 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 - Fix commits: `3ad28bc`, `5d4544c`, `e8345f8`.
 - The failures were source/compile issues, not an inability of GitHub Actions to run. A new CI run is now expected from the latest fix commit.
 - Do not claim Host/Vita green until that new run completes successfully.
+
+
+## 2026-09-27 continuation — CI verified green after direct Actions inspection
+- Direct GitHub Actions inspection was performed instead of relying on the connector's commit-status summary.
+- The earlier `0545cba` Host/Vita runs were confirmed as actual failures. Their concrete compile failures were traced to the event parser's literal `\\n` source text, missing/incorrect special-effect declarations, and the stale engine-type comparison; those source issues were repaired in the intervening commits.
+- The subsequent `d03aa92` run exposed another literal newline escape and the malformed `hidden/req` declarations; these were corrected.
+- The `e6ecacf` run reached compilation but exposed a malformed localized-event test fixture. That fixture was corrected in `a57659b`.
+- The `a57659b` Host run passed compilation/tests, while its predecessor showed the data test failing because the inline event pool was not retained. Investigation found the DLC test XML itself was malformed: the `CHOICE_ITEM` fixture omitted the closing `</item_modify>` tag, causing the whole DLC XML parse to be discarded. The parser was also hardened to retain effect-only and synthetic inline events.
+- Final verification commit: `8e0a89fae0232ab80ee8822fd11a2e79d0ba6796`.
+- Host Actions run `36280349373`: **success**; build completed and all 4 CTest tests passed.
+- Vita Actions run `36280349426`: **success**; Vita VPK build and artifact upload completed successfully.
+- This is the first directly verified Host + Vita green result after the recent compile-repair sequence.
+- No proprietary `ftl.dat` or extracted FTL assets were committed.
+
+### Next implementation target
+1. Replace the compatibility 8x3 beacon graph with a closer original FTL sector/beacon generation model.
+2. Model Rebel Fleet advancement after jumps, rather than relying mainly on event `modifyPursuit` deltas.
+3. Preserve the now-working concrete sector selection, unique-sector tracking, event pools, and save-state behavior while introducing the more faithful topology.
+4. Add dedicated regression coverage for beacon reachability, fleet pressure, sector transition, and Crystal Home conditions.
