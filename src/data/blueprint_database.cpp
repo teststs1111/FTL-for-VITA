@@ -34,7 +34,18 @@ std::size_t BlueprintDatabase::loadShipBlueprints(const std::string& assetPath) 
 
     std::size_t loaded = 0;
     std::function<void(const bxml::Node&)> visit = [&](const bxml::Node& node) {
-        if (node.name == "droneBlueprint") {
+        if (node.name == "augBlueprint") {
+            AugmentBlueprint augment;
+            const auto attr = [&](const char* name) -> std::string { const auto it=node.attributes.find(name); return it==node.attributes.end()?std::string{}:it->second; };
+            const auto child = [&](const char* name) -> std::string { for (const auto& c:node.children) if(c.name==name) return c.text; return {}; };
+            const auto toInt = [&](const std::string& v,int fallback){ if(v.empty()) return fallback; try{return std::stoi(v);}catch(...){return fallback;} };
+            augment.id=attr("name");
+            augment.title=child("title");
+            augment.description=child("desc");
+            augment.cost=toInt(child("cost"),toInt(attr("cost"),0));
+            augment.rarity=toInt(child("rarity"),toInt(attr("rarity"),0));
+            if(!augment.id.empty()) augments_[augment.id]=std::move(augment);
+        } else if (node.name == "droneBlueprint") {
             DroneBlueprint drone;
             const auto getText = [&](const char* name) -> std::string {
                 for (const auto& child : node.children)
@@ -144,6 +155,11 @@ const WeaponBlueprint* BlueprintDatabase::findWeapon(const std::string& id) cons
     return it == weapons_.end() ? nullptr : &it->second;
 }
 
+const AugmentBlueprint* BlueprintDatabase::findAugment(const std::string& id) const {
+    const auto it = augments_.find(id);
+    return it == augments_.end() ? nullptr : &it->second;
+}
+
 const DroneBlueprint* BlueprintDatabase::findDrone(const std::string& id) const {
     const auto it = drones_.find(id);
     return it == drones_.end() ? nullptr : &it->second;
@@ -153,6 +169,7 @@ void BlueprintDatabase::clear() {
     ships_.clear();
     weapons_.clear();
     drones_.clear();
+    augments_.clear();
 }
 
 }
