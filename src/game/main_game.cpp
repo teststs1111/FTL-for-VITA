@@ -1211,8 +1211,13 @@ public:
         graphics_.fillRect(70.f, 55.f, 820.f, 430.f, {0.06f, 0.075f, 0.105f, 1.f});
         text_.draw(graphics_, "ビーコンイベント", 105.f, 95.f, 24.f, {0.88f, 0.93f, 1.f, 1.f});
         text_.draw(graphics_, "セクター " + std::to_string(sector_ + 1), 735.f, 95.f, 14.f, {0.65f, 0.75f, 0.88f, 1.f});
-        std::string message = event->text.empty() ? "このビーコンでは特に何も起きなかった。" : event->text;
-        if (message.size() > 110) message.resize(110);
+        std::string message = event->text;
+        if (!event->textKey.empty()) {
+            const std::string translated(localization_.tr(event->textKey));
+            if (!translated.empty() && translated != event->textKey) message = translated;
+        }
+        if (message.empty()) message = "このビーコンでは特に何も起きなかった。";
+        if (message.size() > 180) message.resize(180);
         text_.draw(graphics_, message, 105.f, 150.f, 16.f, {0.82f, 0.86f, 0.92f, 1.f});
         if (event->choices.empty()) {
             text_.draw(graphics_, "×: 続行", 105.f, 410.f, 16.f, {0.95f, 0.82f, 0.42f, 1.f});
@@ -1225,6 +1230,10 @@ public:
                 const auto& choice = event->choices[i];
                 const bool available = eventChoiceAvailable(choice);
                 std::string label = choice.text;
+                if (!choice.textKey.empty()) {
+                    const std::string translated(localization_.tr(choice.textKey));
+                    if (!translated.empty() && translated != choice.textKey) label = translated;
+                }
                 if (label.empty()) label = choice.load.empty() ? "続行" : "次へ";
                 if (choice.blue && !choice.requirement.empty()) label = "[青] " + label;
                 if (!available && !choice.requirement.empty()) label += "  (条件未達)";
