@@ -262,7 +262,7 @@ public:
     }
 
     struct StoreOffer {
-        enum class Kind { Fuel, Missiles, DroneParts, Repair, Weapon, Drone };
+        enum class Kind { Fuel, Missiles, DroneParts, Repair, Weapon, Drone, SellWeapon, SellDrone };
         Kind kind{Kind::Fuel};
         std::string id;
         int cost{0};
@@ -306,6 +306,32 @@ public:
                     if (current.name == drone->name) { owned = true; break; }
                 if (!owned) storeOffers_.push_back({StoreOffer::Kind::Drone, id, drone->cost});
             }
+        }
+
+        // FTL stores buy back equipment for roughly half its blueprint price.
+        // Keep these entries at the end so buying and selling are both available
+        // without introducing a separate shop scene.
+        for (const auto& weapon : runtime_.weapons) {
+            int sellValue = 0;
+            for (const auto& entry : content_.blueprints().weapons()) {
+                if (entry.second.name == weapon.name) {
+                    sellValue = std::max(1, entry.second.cost / 2);
+                    break;
+                }
+            }
+            if (sellValue > 0)
+                storeOffers_.push_back({StoreOffer::Kind::SellWeapon, weapon.name, sellValue});
+        }
+        for (const auto& drone : runtime_.drones) {
+            int sellValue = 0;
+            for (const auto& entry : content_.blueprints().drones()) {
+                if (entry.second.name == drone.name) {
+                    sellValue = std::max(1, entry.second.cost / 2);
+                    break;
+                }
+            }
+            if (sellValue > 0)
+                storeOffers_.push_back({StoreOffer::Kind::SellDrone, drone.name, sellValue});
         }
     }
 
@@ -392,6 +418,28 @@ public:
             storeSelection_ = std::min(storeSelection_, static_cast<int>(storeOffers_.size()) - 1);
             return true;
         }
+        case StoreOffer::Kind::SellWeapon: {
+            auto it = std::find_if(runtime_.weapons.begin(), runtime_.weapons.end(),
+                [&](const RuntimeWeapon& w) { return w.name == offer.id; });
+            if (it == runtime_.weapons.end()) { combatFeedback_ = "売却対象がありません"; break; }
+            scrap_ += offer.cost;
+            combatFeedback_ = "武器を売却: " + weaponLabel(*it);
+            runtime_.weapons.erase(it);
+            storeOffers_.erase(storeOffers_.begin() + storeSelection_);
+            storeSelection_ = std::min(storeSelection_, static_cast<int>(storeOffers_.size()) - 1);
+            return true;
+        }
+        case StoreOffer::Kind::SellDrone: {
+            auto it = std::find_if(runtime_.drones.begin(), runtime_.drones.end(),
+                [&](const RuntimeDrone& d) { return d.name == offer.id; });
+            if (it == runtime_.drones.end()) { combatFeedback_ = "売却対象がありません"; break; }
+            scrap_ += offer.cost;
+            combatFeedback_ = "ドローンを売却: " + droneLabel(*it);
+            runtime_.drones.erase(it);
+            storeOffers_.erase(storeOffers_.begin() + storeSelection_);
+            storeSelection_ = std::min(storeSelection_, static_cast<int>(storeOffers_.size()) - 1);
+            return true;
+        }
         }
         combatFeedbackTimer_ = 1.4f;
         return false;
@@ -420,7 +468,7 @@ public:
         for (std::size_t i = 0; i < storeOffers_.size(); ++i) {
             const auto& offer = storeOffers_[i];
             const bool selected = static_cast<int>(i) == storeSelection_;
-            const float y = 145.f + static_cast<float>(i) * 40.f;
+            const float y = 140.f + static_cast<float>(i) * 34.f;
             if (selected) graphics_.fillRect(65.f, y - 22.f, 820.f, 32.f, {0.15f, 0.25f, 0.34f, 1.f});
             std::string name;
             switch (offer.kind) {
@@ -434,11 +482,17 @@ public:
             case StoreOffer::Kind::Drone:
                 if (const auto* drone = content_.blueprints().findDrone(offer.id)) name = drone->name;
                 break;
+            case StoreOffer::Kind::SellWeapon:
+                name = "売却: " + offer.id;
+                break;
+            case StoreOffer::Kind::SellDrone:
+                name = "売却: " + offer.id;
+                break;
             }
             text_.draw(graphics_, name + "   " + std::to_string(offer.cost) + " scrap", 85.f, y, 16.f,
                 selected ? Color{0.98f, 0.84f, 0.48f, 1.f} : Color{0.82f, 0.87f, 0.94f, 1.f});
         }
-        text_.draw(graphics_, "↑↓: 選択   ×: 購入   ○: ショップ終了", 75.f, 475.f, 15.f, {0.68f, 0.76f, 0.86f, 1.f});
+        text_.draw(graphics_, "↑↓: 選択   ×: 購入/売却   ○: ショップ終了", 75.f, 475.f, 15.f, {0.68f, 0.76f, 0.86f, 1.f});
         if (combatFeedbackTimer_ > 0.0f && !combatFeedback_.empty())
             text_.draw(graphics_, combatFeedback_, 550.f, 475.f, 14.f, {0.95f, 0.76f, 0.40f, 1.f});
     }
