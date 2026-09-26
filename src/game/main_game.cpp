@@ -259,9 +259,19 @@ public:
 
     enum class SceneMode { SectorMap, Ship, Event, Combat, Pause, GameOver, Victory };
 
-    void enterCombatFromBeacon() {
+    void enterCombatFromBeacon(const std::string& enemyShipId = {}) {
         // Keep the persistent ship state in sync when entering combat. Combat
         // owns a working copy while the player is in the combat scene.
+        if (!enemyShipId.empty()) {
+            LoadedShip selectedEnemy;
+            if (content_.loadShip(enemyShipId, selectedEnemy) &&
+                !selectedEnemy.blueprint.id.empty()) {
+                combat_.enemy.load(selectedEnemy);
+                discoverRoomTextures();
+                discoverWeaponAndDroneTextures();
+                discoverCrewTextures();
+            }
+        }
         combat_.player = runtime_;
         combatMode_ = true;
         sceneMode_ = SceneMode::Combat;
@@ -382,7 +392,7 @@ public:
                 return;
             }
             if (event->hostile) {
-                enterCombatFromBeacon();
+                enterCombatFromBeacon(event->hostileShipId);
                 return;
             }
             if (event->repair) {
@@ -428,7 +438,7 @@ public:
         if (!choice.load.empty()) {
             const auto* next = eventDatabase_.resolve(choice.load, seed_ + static_cast<unsigned>(activeEventChoice_) * 71u + static_cast<unsigned>(visitedBeacons_));
             if (next && next->hostile) {
-                enterCombatFromBeacon();
+                enterCombatFromBeacon(next->hostileShipId);
                 return;
             }
             if (next) {
@@ -439,7 +449,7 @@ public:
             }
         }
         if (choice.hostile) {
-            enterCombatFromBeacon();
+            enterCombatFromBeacon(choice.hostileShipId);
             return;
         }
         ++visitedBeacons_;
