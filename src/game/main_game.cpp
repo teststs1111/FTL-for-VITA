@@ -290,9 +290,18 @@ public:
         // A sector event pool resolves to a concrete event; keep that concrete
         // id so update/render operate on the same definition.
         activeEventId_ = event->id;
+        applyEventImmediateEffects(*event);
         activeEventChoice_ = 0;
         sceneMode_ = SceneMode::Event;
         return true;
+    }
+
+    void applyEventImmediateEffects(const EventDefinition& event) {
+        scrap_ = std::max(0, scrap_ + event.initialScrap);
+        fuel_ = std::max(0, fuel_ + event.initialFuel);
+        runtime_.missiles = std::max(0, runtime_.missiles + event.initialMissiles);
+        combat_.player.missiles = runtime_.missiles;
+        droneParts_ = std::max(0, droneParts_ + event.initialDrones);
     }
 
     bool eventChoiceAvailable(const EventChoice& choice) const {
@@ -424,6 +433,7 @@ public:
             }
             if (next) {
                 activeEventId_ = next->id;
+                applyEventImmediateEffects(*next);
                 activeEventChoice_ = 0;
                 return;
             }
