@@ -25,6 +25,44 @@ const bxml::Node* findFirst(const bxml::Node& node, const std::string& name) {
 }
 }
 
+static void parseCrewEffects(const bxml::Node& node,
+                              std::vector<EventCrewMemberEffect>& members,
+                              std::vector<EventCrewRemovalEffect>& removals) {
+    for (const auto& c : node.children) {
+        if (c.name == "crewMember") {
+            EventCrewMemberEffect effect;
+            effect.amount = EventDatabase::attrInt(c, "amount", 0);
+            auto it = c.attributes.find("id");
+            if (it != c.attributes.end()) effect.id = it->second;
+            it = c.attributes.find("class");
+            if (it != c.attributes.end()) effect.race = it->second;
+            it = c.attributes.find("all_skills");
+            effect.allSkills = it != c.attributes.end() && it->second == "1";
+            effect.pilot = EventDatabase::attrInt(c, "pilot", 0);
+            effect.engines = EventDatabase::attrInt(c, "engines", 0);
+            effect.shields = EventDatabase::attrInt(c, "shields", 0);
+            effect.weapons = EventDatabase::attrInt(c, "weapons", 0);
+            effect.repair = EventDatabase::attrInt(c, "repair", 0);
+            effect.combat = EventDatabase::attrInt(c, "combat", 0);
+            if (effect.amount != 0) members.push_back(std::move(effect));
+        } else if (c.name == "removeCrew") {
+            EventCrewRemovalEffect effect;
+            auto it = c.attributes.find("class");
+            if (it != c.attributes.end()) effect.race = it->second;
+            if (const auto* clone = EventDatabase::child(c, "clone")) {
+                effect.clone = EventDatabase::nodeText(*clone) == "true";
+            }
+            if (const auto* text = EventDatabase::child(c, "text")) {
+                const auto idIt = text->attributes.find("id");
+                if (idIt != text->attributes.end()) effect.textKey = idIt->second;
+            }
+            removals.push_back(std::move(effect));
+        }
+    }
+}
+
+
+
 std::string EventDatabase::nodeText(const bxml::Node& node) {
     std::string out = node.text;
     for (const auto& child : node.children) {
@@ -80,6 +118,7 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
     }
     event.store = hasChild(node, "store");
     event.repair = hasChild(node, "repair");
+    parseCrewEffects(node, event.crewMembers, event.crewRemovals);
 
     // Preserve item_modify directly attached to an event. These effects are
     // applied when the event is entered, rather than only after a choice.
@@ -132,6 +171,7 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
             }
             choice.store = hasChild(*e, "store");
             choice.repair = hasChild(*e, "repair");
+            parseCrewEffects(*e, choice.crewMembers, choice.crewRemovals);
             if (const auto* items = child(*e, "item_modify")) {
                 for (const auto& item : items->children) {
                     if (item.name != "item") continue;
