@@ -1368,6 +1368,11 @@ public:
     }
 
     bool eventChoiceAvailable(const EventChoice& choice) const {
+        // Hidden choices are normally internal branches. In the original
+        // event data, hidden+req choices are the conditional Blue Options:
+        // they become selectable when their key is present. A hidden choice
+        // without a requirement remains internal and must never surface.
+        if (choice.hidden && choice.requirement.empty()) return false;
         if (choice.requirement.empty()) return true;
         std::string req = choice.requirement;
         std::transform(req.begin(), req.end(), req.begin(),
