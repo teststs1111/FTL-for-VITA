@@ -220,7 +220,7 @@ bool EventDatabase::load() {
         try { collectEvents(bxml::read(*bytes)); } catch (...) {}
     }
     if (advancedEdition_) {
-        const char* extra[] = {"data/dlcEvents.xml", "data/newEvents.xml"};
+        const char* extra[] = {"data/dlcEvents.xml"};
         for (const char* name : extra) {
             const auto* bytes = assets_.getBytes(name);
             if (!bytes || bytes->empty()) continue;
