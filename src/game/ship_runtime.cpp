@@ -43,7 +43,8 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         systems.push_back(std::move(system));
     }
 
-    doorOpen.assign(content.layout.doors.size(), false);
+    // Normal interior doors start open; closing them is an active player action.
+    doorOpen.assign(content.layout.doors.size(), true);
 
     missiles = std::max(0, content.blueprint.startingMissiles);
     shieldLayers = 0;
