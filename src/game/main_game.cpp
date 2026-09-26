@@ -1187,6 +1187,105 @@ public:
         combat_.player = runtime_;
     }
 
+    std::pair<int, int> eventScrapRange(const std::string& level) const {
+        static const int low[8][2] = {{7,10},{10,14},{13,18},{16,23},{19,27},{22,31},{25,35},{28,39}};
+        static const int med[8][2] = {{12,19},{16,27},{21,35},{26,42},{31,50},{36,58},{40,66},{45,74}};
+        static const int high[8][2] = {{19,23},{27,32},{35,41},{42,51},{50,60},{58,69},{66,79},{74,88}};
+        int tier = 1;
+        if (level == "LOW") tier = 0;
+        else if (level == "HIGH") tier = 2;
+        const int s = std::clamp(sector_, 0, 7);
+        const auto& table = tier == 0 ? low : (tier == 2 ? high : med);
+        return {table[s][0], table[s][1]};
+    }
+
+    void applyEventAutoReward(const EventAutoReward& reward) {
+        std::string level = reward.level;
+        std::transform(level.begin(), level.end(), level.begin(), [](unsigned char c) {
+            return static_cast<char>(std::toupper(c));
+        });
+        if (level == "RANDOM") {
+            const int roll = static_cast<int>((seed_ + static_cast<unsigned>(visitedBeacons_ * 17 + activeEventChoice_)) % 3u);
+            level = roll == 0 ? "LOW" : (roll == 1 ? "MED" : "HIGH");
+        }
+
+        std::string type = reward.type;
+        std::transform(type.begin(), type.end(), type.begin(), [](unsigned char c) {
+            return static_cast<char>(std::tolower(c));
+        });
+
+        const auto range = eventScrapRange(level);
+        const int scrap = rollEventRange(range.first, range.second, 0xA11u + static_cast<std::uint32_t>(visitedBeacons_));
+        const auto resource = [&](const std::string& name) {
+            if (name == "fuel") return rollEventRange(level == "LOW" ? 1 : (level == "MED" ? 2 : 3), level == "LOW" ? 3 : (level == "MED" ? 4 : 6), 0xA21u);
+            if (name == "missiles") return rollEventRange(level == "LOW" ? 1 : (level == "MED" ? 2 : 4), level == "LOW" ? 2 : (level == "MED" ? 4 : 8), 0xA31u);
+            return rollEventRange(1, level == "HIGH" ? 2 : 1, 0xA41u);
+        };
+        auto addFuel = [&](int amount) { fuel_ = std::max(0, fuel_ + amount); };
+        auto addMissiles = [&](int amount) { runtime_.missiles = std::max(0, runtime_.missiles + amount); combat_.player.missiles = runtime_.missiles; };
+        auto addDrones = [&](int amount) { droneParts_ = std::max(0, droneParts_ + amount); };
+
+        if (type == "scrap_only") {
+            scrap_ += scrap;
+        } else if (type == "fuel_only") {
+            addFuel(resource("fuel"));
+        } else if (type == "missiles_only") {
+            addMissiles(resource("missiles"));
+        } else if (type == "droneparts_only") {
+            addDrones(resource("droneparts"));
+        } else if (type == "fuel" || type == "missiles" || type == "droneparts") {
+            scrap_ += scrap;
+            if (type == "fuel") addFuel(resource("fuel"));
+            else if (type == "missiles") addMissiles(resource("missiles"));
+            else addDrones(resource("droneparts"));
+        } else if (type == "standard" || type == "stuff") {
+            if (type == "stuff") scrap_ += rollEventRange(7, 10, 0xA51u);
+            else scrap_ += scrap;
+            std::array<std::string, 3> names{{"fuel", "missiles", "droneparts"}};
+            const int first = static_cast<int>((seed_ + static_cast<unsigned>(visitedBeacons_)) % 3u);
+            const int second = (first + 1 + static_cast<int>((seed_ >> 3) % 2u)) % 3;
+            addFuel(names[first] == "fuel" ? resource("fuel") : 0);
+            addMissiles(names[first] == "missiles" ? resource("missiles") : 0);
+            addDrones(names[first] == "droneparts" ? resource("droneparts") : 0);
+            addFuel(names[second] == "fuel" ? resource("fuel") : 0);
+            addMissiles(names[second] == "missiles" ? resource("missiles") : 0);
+            addDrones(names[second] == "droneparts" ? resource("droneparts") : 0);
+        } else if (type == "weapon" || type == "augment" || type == "drone" || type == "item") {
+            scrap_ += scrap;
+            if (type == "weapon" || type == "item") {
+                std::vector<std::string> ids;
+                for (const auto& e : content_.blueprints().weapons()) ids.push_back(e.first);
+                if (!ids.empty() && static_cast<int>(runtime_.weapons.size()) < runtime_.content.blueprint.weaponSlots) {
+                    std::sort(ids.begin(), ids.end());
+                    const auto& id = ids[(seed_ + static_cast<unsigned>(visitedBeacons_)) % ids.size()];
+                    if (const auto* w = content_.blueprints().findWeapon(id)) runtime_.weapons.push_back(makeRuntimeWeapon(*w));
+                } else if (type == "item") {
+                    // Fall through to augment/drone for mixed item rewards when the weapon slot is full.
+                    type = "augment";
+                }
+            }
+            if (type == "augment" || type == "item") {
+                std::vector<std::string> ids;
+                for (const auto& e : content_.blueprints().augments()) ids.push_back(e.first);
+                if (!ids.empty() && augmentIds_.size() < 3) {
+                    std::sort(ids.begin(), ids.end());
+                    augmentIds_.push_back(ids[(seed_ + static_cast<unsigned>(visitedBeacons_)) % ids.size()]);
+                } else if (type == "item") {
+                    type = "drone";
+                }
+            }
+            if (type == "drone") {
+                std::vector<std::string> ids;
+                for (const auto& e : content_.blueprints().drones()) ids.push_back(e.first);
+                if (!ids.empty() && static_cast<int>(runtime_.drones.size()) < runtime_.content.blueprint.droneSlots) {
+                    std::sort(ids.begin(), ids.end());
+                    const auto& id = ids[(seed_ + static_cast<unsigned>(visitedBeacons_)) % ids.size()];
+                    if (const auto* d = content_.blueprints().findDrone(id)) runtime_.drones.push_back(makeRuntimeDrone(*d));
+                }
+            }
+        }
+    }
+
     void applyEventImmediateEffects(const EventDefinition& event) {
         scrap_ = std::max(0, scrap_ + applyScrapAugments(rollEventRange(event.initialScrap, event.initialScrapMax, 0x11u)));
         fuel_ = std::max(0, fuel_ + rollEventRange(event.initialFuel, event.initialFuelMax, 0x23u));
@@ -1196,6 +1295,7 @@ public:
         applyEventDamageEffects(event.effects);
         applyEventCrewEffects(event.crewMembers, event.crewRemovals);
         applyEventBoarders(event.boarders);
+        if (event.hasAutoReward) applyEventAutoReward(event.autoReward);
     }
     }
 
@@ -1337,6 +1437,7 @@ public:
         applyEventDamageEffects(choice.effects);
         applyEventCrewEffects(choice.crewMembers, choice.crewRemovals);
         applyEventBoarders(choice.boarders);
+        if (choice.hasAutoReward) applyEventAutoReward(choice.autoReward);
         if (choice.load.empty() && !choice.hostile && !choice.store && !choice.repair) {
             ++visitedBeacons_;
             sceneMode_ = SceneMode::SectorMap;
