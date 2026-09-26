@@ -301,6 +301,7 @@ public:
         // id so update/render operate on the same definition.
         activeEventId_ = event->id;
         applyEventImmediateEffects(*event);
+        registerQuest(*event);
         activeEventChoice_ = 0;
         sceneMode_ = SceneMode::Event;
         return true;
@@ -314,6 +315,12 @@ public:
         value ^= value << 5;
         const std::uint32_t span = static_cast<std::uint32_t>(maximum - minimum + 1);
         return minimum + static_cast<int>(value % span);
+    }
+
+    void registerQuest(const EventDefinition& event) {
+        if (event.questId.empty()) return;
+        if (std::find(activeQuestIds_.begin(), activeQuestIds_.end(), event.questId) == activeQuestIds_.end())
+            activeQuestIds_.push_back(event.questId);
     }
 
     void applyEventImmediateEffects(const EventDefinition& event) {
@@ -454,6 +461,7 @@ public:
             if (next) {
                 activeEventId_ = next->id;
                 applyEventImmediateEffects(*next);
+                registerQuest(*next);
                 activeEventChoice_ = 0;
                 return;
             }
@@ -461,6 +469,10 @@ public:
         if (choice.hostile) {
             enterCombatFromBeacon(choice.hostileShipId);
             return;
+        }
+        if (!choice.questId.empty()) {
+            if (std::find(activeQuestIds_.begin(), activeQuestIds_.end(), choice.questId) == activeQuestIds_.end())
+                activeQuestIds_.push_back(choice.questId);
         }
         ++visitedBeacons_;
         sceneMode_ = SceneMode::SectorMap;
@@ -541,6 +553,8 @@ public:
         graphics_.fillRect(0.f, 0.f, 960.f, 544.f, {0.035f, 0.045f, 0.065f, 1.f});
         text_.draw(graphics_, "FTL: Faster Than Light", 48.f, 42.f, 24.f, {0.88f,0.92f,1.f,1.f});
         text_.draw(graphics_, "セクター " + std::to_string(sector_ + 1) + " / 8", 48.f, 74.f, 15.f, {0.65f,0.75f,0.88f,1.f});
+        if (!activeQuestIds_.empty())
+            text_.draw(graphics_, "クエスト " + std::to_string(activeQuestIds_.size()), 360.f, 74.f, 14.f, {0.86f,0.78f,0.46f,1.f});
         text_.draw(graphics_, "燃料 " + std::to_string(fuel_) + "   ミサイル " + std::to_string(combat_.player.missiles),
             620.f,42.f,14.f,{0.78f,0.86f,0.94f,1.f});
         text_.draw(graphics_, "スクラップ " + std::to_string(scrap_) +
@@ -1272,6 +1286,7 @@ private:
     int fuel_{16};
     int scrap_{0};
     int droneParts_{0};
+    std::vector<std::string> activeQuestIds_;
 };
 
 MainGame::MainGame() = default;
