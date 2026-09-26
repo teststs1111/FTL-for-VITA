@@ -460,8 +460,12 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
         }
         if (weapon.systemDamage > 0)
             result.systemDamage += target.damageSystemInRoom(room, weapon.systemDamage);
-        if (weapon.ionDamage > 0)
-            result.ionDamage += target.ionizeSystemInRoom(room, weapon.ionDamage);
+        if (weapon.ionDamage > 0) {
+            const bool reverseIonNegated = (&target == &player &&
+                (nextRandom() % 100u) < 20u);
+            if (!reverseIonNegated)
+                result.ionDamage += target.ionizeSystemInRoom(room, weapon.ionDamage);
+        }
         if (weapon.personnelDamage > 0)
             result.personnelDamage += target.damageCrewInRoom(room, weapon.personnelDamage);
 
