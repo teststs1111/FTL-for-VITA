@@ -1,6 +1,7 @@
 #include "data/bxml.hpp"
 #include "data/ftl_dat.hpp"
 #include "data/asset_store.hpp"
+#include "data/event_database.hpp"
 #include "data/blueprint_database.hpp"
 #include "data/ship_blueprint.hpp"
 #include "data/ship_content.hpp"
@@ -171,6 +172,38 @@ static void testAssetStore() {
     const auto names = store.fileNames();
     assert(names.size() == 2);
     assert(names[0] == "hello.txt" && names[1] == "zeta.txt");
+    std::remove(path.c_str());
+}
+
+static void testEventDatabase() {
+    const std::string path = "test_event_database.dat";
+    const std::string events =
+        "<FTL><eventList name=\"NEUTRAL\"><event load=\"BASE\" weight=\"1\"/></eventList>"
+        "<event name=\"BASE\"><text>base event</text><choice><text>Fight</text>"
+        "<event><ship hostile=\"true\" name=\"ENGI_SCOUT\"/></event></choice></event></FTL>";
+    const std::string dlc =
+        "<FTL><eventList name=\"NEUTRAL\"><event load=\"DLC\" weight=\"1\"/></eventList>"
+        "<event name=\"DLC\"><text>advanced event</text><item_modify><item type=\"fuel\" min=\"1\" max=\"3\"/></item_modify></event></FTL>";
+    const std::string overwrite =
+        "<FTL><eventList name=\"OVERRIDE_NEUTRAL\"><event load=\"DLC\" weight=\"1\"/></eventList>"
+        "<event name=\"DLC\"><text>advanced replacement</text></event></FTL>";
+    writeFile(path, makeArchive({
+        {"data/events.xml", events},
+        {"data/dlcEvents.xml", dlc},
+        {"data/dlcEventsOverwrite.xml", overwrite}
+    }));
+    wormhole::AssetStore store;
+    assert(store.openArchive(path));
+    wormhole::EventDatabase database(store);
+    database.setAdvancedEdition(true);
+    assert(database.load());
+    const auto* resolved = database.resolve("NEUTRAL", 0);
+    assert(resolved && resolved->id == "DLC");
+    assert(resolved->text == "advanced replacement");
+    const auto* base = database.find("BASE");
+    assert(base && base->choices.size() == 1);
+    assert(base->choices[0].hostile);
+    assert(base->choices[0].hostileShipId == "ENGI_SCOUT");
     std::remove(path.c_str());
 }
 
@@ -777,6 +810,7 @@ int main() {
     testShipBlueprint();
     testShipContent();
     testBlueprintDatabase();
+    testEventDatabase();
     testPng();
     testShipRuntime();
     return 0;
