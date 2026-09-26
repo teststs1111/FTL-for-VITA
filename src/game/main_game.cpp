@@ -889,6 +889,7 @@ public:
         if (sector_ >= 7 && flagshipPhase_ > 0)
             combat_.configureFlagshipPhase(flagshipPhase_);
         combat_.setPlayerWeaponCooldownMultiplier(weaponCooldownMultiplier());
+        combat_.setPlayerShieldRechargeMultiplier(hasAugment("SHIELD_CHARGE_BOOSTER") ? 0.85f : 1.0f);
         if (hasAugment("WEAPON_PRE_IGNITER"))
             for (auto& weapon : combat_.player.weapons) weapon.ready = true;
         discoverRoomTextures();
