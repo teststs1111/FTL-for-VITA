@@ -915,7 +915,7 @@ public:
                 if(dst) graphics_.drawLine(x,y,x0+dst->column*dx,y0+dst->row*dy,{0.20f,0.34f,0.46f,1.f});
             }
         }
-        const auto choices=sectorGraph_.selectable(currentBeacon_);
+        const auto choices=sectorGraph_.selectable(currentBeacon_, fleetRow_);
         for (std::size_t index = 0; index < sectorGraph_.nodes().size(); ++index) {
             const auto& n = sectorGraph_.nodes()[index];
             const float x=x0+n.column*dx,y=y0+n.row*dy;
