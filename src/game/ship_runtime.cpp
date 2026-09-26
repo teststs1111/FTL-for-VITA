@@ -276,6 +276,22 @@ int ShipRuntime::damageSystemInRoom(int roomId, int amount) {
     return applied;
 }
 
+int ShipRuntime::repairSystemInRoom(int roomId, int amount) {
+    if (!valid || roomId < 0 || amount <= 0) return 0;
+    int repaired = 0;
+    for (auto& system : systems) {
+        if (system.room != roomId || system.damage <= 0) continue;
+        const int restored = std::min(amount - repaired, system.damage);
+        if (restored <= 0) continue;
+        system.damage -= restored;
+        const int effectiveMax = std::max(0, system.maxPower - system.damage - system.ionDamage);
+        system.power = std::min(effectiveMax, system.power + restored);
+        repaired += restored;
+        if (repaired >= amount) break;
+    }
+    return repaired;
+}
+
 int ShipRuntime::ionizeSystemInRoom(int roomId, int amount) {
     if (!valid || roomId < 0 || amount <= 0) return 0;
 
