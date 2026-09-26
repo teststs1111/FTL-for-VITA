@@ -1002,6 +1002,32 @@ public:
         combat_.setTargetRoom(combatTargetRoom_);
     }
 
+    void selectCurrentSectorDefinition() {
+        const SectorDefinition* selected = nullptr;
+        if (!currentSectorType_.empty())
+            selected = sectorDatabase_.find(currentSectorType_);
+        if (!selected) {
+            const std::size_t variant = static_cast<std::size_t>(
+                (seed_ + static_cast<unsigned>(sector_ * 97 + visitedBeacons_)) & 0x7fffffffu);
+            selected = sectorDatabase_.select(sector_, variant, usedUniqueSectorTypes_);
+        }
+        if (secretSectorPending_) {
+            if (const auto* crystal = sectorDatabase_.find("CRYSTAL_HOME")) {
+                selected = crystal;
+                secretSectorPending_ = false;
+            }
+        }
+        if (!selected) {
+            currentSectorType_.clear();
+            return;
+        }
+        currentSectorType_ = selected->name;
+        if (selected->unique &&
+            std::find(usedUniqueSectorTypes_.begin(), usedUniqueSectorTypes_.end(),
+                      selected->name) == usedUniqueSectorTypes_.end())
+            usedUniqueSectorTypes_.push_back(selected->name);
+    }
+
     std::string selectSectorEvent(const SectorDefinition& sector, int beacon) {
         if (sector.events.empty()) return sector.startEvent;
 
@@ -1042,7 +1068,7 @@ public:
         // loaded event table when a data file is unavailable.
         if (eventOrder_.empty()) return false;
         activeEventId_.clear();
-        if (const auto* sector = sectorDatabase_.select(sector_, static_cast<std::size_t>(beacon))) {
+        if (const auto* sector = sectorDatabase_.find(currentSectorType_)) {
             if (!sector->events.empty())
                 activeEventId_ = selectSectorEvent(*sector, beacon);
             if (activeEventId_.empty()) activeEventId_ = sector->startEvent;
@@ -1394,7 +1420,6 @@ public:
         if (event.hasEnvironment) pendingEnvironment_ = eventEnvironment(event.environment);
         applyEventSpecialEffects(event.special);
     }
-    }
 
     bool eventChoiceAvailable(const EventChoice& choice) const {
         // Hidden choices are normally internal branches. In the original
@@ -1690,9 +1715,12 @@ public:
                     }
                     ++sector_;
                     sectorEventUsage_.clear();
+                    currentSectorType_.clear();
+                    selectCurrentSectorDefinition();
                     sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
                     currentBeacon_ = -1;
                     selectedBeacon_ = sectorGraph_.startNode();
+                    mapRevealed_ = false;
                     return;
                 }
             }
@@ -1729,7 +1757,7 @@ public:
         const bool scanners = hasAugment("LONG_RANGED_SCANNERS");
         auto scannerLabel = [&](int nodeIndex) {
             if (!scanners) return std::string{};
-            const auto* sector = sectorDatabase_.select(sector_, static_cast<std::size_t>(std::max(0, nodeIndex)));
+            const auto* sector = sectorDatabase_.find(currentSectorType_);
             if (!sector || sector->events.empty()) return std::string("?");
             const auto& pool = sector->events[static_cast<std::size_t>(
                 (nodeIndex + static_cast<int>(seed_)) % static_cast<int>(sector->events.size()))];
@@ -1754,7 +1782,7 @@ public:
             const bool reachable = std::find(choices.begin(),choices.end(),static_cast<int>(index)) != choices.end();
             const float r=current?8.f:(selected?9.f:6.f);
             graphics_.fillRect(x-r,y-r,r*2.f,r*2.f,current?Color{0.40f,0.90f,0.55f,1.f}:(selected?Color{0.98f,0.75f,0.20f,1.f}:(reachable?Color{0.35f,0.65f,0.85f,1.f}:Color{0.20f,0.30f,0.38f,1.f})));
-            if (scanners && (reachable || current)) {
+            if ((scanners || mapRevealed_) && (mapRevealed_ || reachable || current)) {
                 const auto label = scannerLabel(static_cast<int>(index));
                 if (!label.empty())
                     text_.draw(graphics_, label, x - 18.f, y - 18.f, 9.f,
@@ -2782,6 +2810,8 @@ private:
     std::vector<std::string> augmentIds_;
     std::unordered_map<std::string, std::string> questTargets_;
     std::unordered_map<std::string, int> sectorEventUsage_;
+    std::string currentSectorType_;
+    std::vector<std::string> usedUniqueSectorTypes_;
     std::vector<StoreOffer> storeOffers_;
     int storeSelection_{0};
     bool storeOpen_{false};
