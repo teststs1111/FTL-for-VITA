@@ -43,6 +43,8 @@ public:
     std::vector<RuntimeCrew> boarders;
 
     bool load(ShipContent& content, const LoadedShip& enemyShip);
+    bool loadFlagshipPhase(ShipContent& content, const LoadedShip& enemyShip,
+                           const std::vector<RuntimeCrew>& previousCrew);
     void update(float dt);
     bool setTargetRoom(int roomId);
     CombatResult fireSelectedWeapon();
