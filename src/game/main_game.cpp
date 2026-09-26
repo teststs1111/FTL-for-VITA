@@ -993,7 +993,7 @@ public:
     }
 
     void applyEventImmediateEffects(const EventDefinition& event) {
-        scrap_ = std::max(0, scrap_ + rollEventRange(event.initialScrap, event.initialScrapMax, 0x11u));
+        scrap_ = std::max(0, scrap_ + applyScrapAugments(rollEventRange(event.initialScrap, event.initialScrapMax, 0x11u)));
         fuel_ = std::max(0, fuel_ + rollEventRange(event.initialFuel, event.initialFuelMax, 0x23u));
         runtime_.missiles = std::max(0, runtime_.missiles + rollEventRange(event.initialMissiles, event.initialMissilesMax, 0x37u));
         combat_.player.missiles = runtime_.missiles;
