@@ -23,23 +23,9 @@
 namespace {
 std::vector<std::string> loadArchiveSet(const char* basePath) {
     std::vector<std::string> paths;
-    if (!basePath || !*basePath) return paths;
-    paths.emplace_back(basePath);
-
-    // Optional sidecar manifest. The first archive is always the base game;
-    // following non-empty, non-comment lines are layered on top of it.
-    std::ifstream manifest(std::string(basePath) + ".dlc");
-    std::string line;
-    while (std::getline(manifest, line)) {
-        const auto first = line.find_first_not_of(" \t\r\n");
-        if (first == std::string::npos || line[first] == '#') continue;
-        const auto last = line.find_last_not_of(" \t\r\n");
-        paths.push_back(line.substr(first, last - first + 1));
-    }
+    if (basePath && *basePath) paths.emplace_back(basePath);
     return paths;
 }
-}
-
 namespace wormhole {
 
 class ShipScene final : public GameState {
@@ -60,7 +46,7 @@ public:
             return;
         }
         {
-            aeEnabled_ = archivePaths.size() > 1;
+            aeEnabled_ = true;
             if (const auto* bytes = content_.assets().getBytes("data/text-ja.xml"))
                 localization_.loadFtlTextXml(*bytes);
             eventDatabase_.load();
@@ -107,14 +93,10 @@ public:
     }
 
     bool reloadContentForAe(bool enabled) {
-        const auto paths = loadArchiveSet(archivePath_.c_str());
-        if (paths.empty()) return false;
-        std::vector<std::string> selected;
-        selected.push_back(paths.front());
-        if (enabled && paths.size() > 1)
-            selected.insert(selected.end(), paths.begin() + 1, paths.end());
+        if (archivePath_.empty()) return false;
+        std::vector<std::string> selected{archivePath_};
         if (!content_.openArchives(selected)) return false;
-        aeEnabled_ = enabled && paths.size() > 1;
+        aeEnabled_ = enabled;
         eventDatabase_.load();
         eventOrder_ = eventDatabase_.ids();
         sectorDatabase_.load();
@@ -126,18 +108,12 @@ public:
         LoadedShip enemy;
         const LoadedShip* player = content_.playerShip();
         std::string enemyId;
-        if (player) {
-            for (const auto& entry : content_.blueprints().ships()) {
-                if (entry.first != player->blueprint.id) { enemyId = entry.first; break; }
-            }
-        }
+        if (player) for (const auto& entry : content_.blueprints().ships())
+            if (entry.first != player->blueprint.id) { enemyId = entry.first; break; }
         if (enemyId.empty() || !content_.loadShip(enemyId, enemy)) return false;
         if (!combat_.load(content_, enemy)) return false;
         buildShipSelection();
-        discoverRoomTextures();
-        discoverWeaponAndDroneTextures();
-        discoverCrewTextures();
-        discoverShipTexture();
+        discoverRoomTextures(); discoverWeaponAndDroneTextures(); discoverCrewTextures(); discoverShipTexture();
         return true;
     }
 
