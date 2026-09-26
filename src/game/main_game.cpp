@@ -274,6 +274,8 @@ public:
         }
         combat_.player = runtime_;
         combatMode_ = true;
+        jumpCharging_ = false;
+        jumpCharge_ = 0.0f;
         sceneMode_ = SceneMode::Combat;
         combatTargetRoom_ = combat_.enemy.content.layout.rooms.empty()
             ? 0 : combat_.enemy.content.layout.rooms.front().id;
@@ -783,10 +785,43 @@ public:
         if (input_.pressed(Button::Cross))
             lastCombatResult_ = combat_.fireSelectedWeapon();
 
-        // FTL does not allow an arbitrary button press to abandon combat:
-        // retreat requires a charged jump drive and valid jump conditions.
-        // Keep combat state intact until the proper jump/retreat system is
-        // implemented instead of silently discarding the working ship copy.
+        // FTL retreat: the player must charge the FTL drive before leaving
+        // combat. Fuel is consumed when the retreat jump is completed.
+        if (combat_.outcome == CombatOutcome::Ongoing && input_.pressed(Button::Circle)) {
+            if (!jumpCharging_) {
+                if (fuel_ > 0) {
+                    jumpCharging_ = true;
+                    jumpCharge_ = 0.0f;
+                    combatFeedback_ = "FTLジャンプ充電開始";
+                    combatFeedbackTimer_ = 1.4f;
+                } else {
+                    combatFeedback_ = "燃料がない";
+                    combatFeedbackTimer_ = 1.4f;
+                }
+            } else {
+                jumpCharging_ = false;
+                jumpCharge_ = 0.0f;
+                combatFeedback_ = "FTLジャンプを中止";
+                combatFeedbackTimer_ = 1.4f;
+            }
+        }
+
+        if (jumpCharging_ && combat_.outcome == CombatOutcome::Ongoing) {
+            constexpr float jumpChargeTime = 10.0f;
+            jumpCharge_ = std::min(jumpChargeTime, jumpCharge_ + 1.0f / 60.0f);
+            if (jumpCharge_ >= jumpChargeTime) {
+                --fuel_;
+                runtime_ = combat_.player;
+                combatMode_ = false;
+                jumpCharging_ = false;
+                jumpCharge_ = 0.0f;
+                visitedBeacons_++;
+                combatFeedback_.clear();
+                combatFeedbackTimer_ = 0.0f;
+                sceneMode_ = SceneMode::SectorMap;
+                return;
+            }
+        }
     }
 
     void renderCombat() {
@@ -1088,6 +1123,21 @@ public:
                               : Color{0.3f, 0.65f, 0.9f, 1.f});
         }
 
+        if (jumpCharging_) {
+            constexpr float jumpChargeTime = 10.0f;
+            const float ratio = std::clamp(jumpCharge_ / jumpChargeTime, 0.0f, 1.0f);
+            text_.draw(graphics_, "○ FTLジャンプ充電中", leftX, 470.f, 13.f,
+                {0.55f, 0.82f, 1.0f, 1.0f});
+            graphics_.fillRect(leftX, 488.f, 280.f, 8.f, {0.12f, 0.14f, 0.18f, 1.f});
+            graphics_.fillRect(leftX, 488.f, 280.f * ratio, 8.f,
+                {0.35f, 0.78f, 1.0f, 1.0f});
+            text_.draw(graphics_, std::to_string(static_cast<int>(jumpCharge_)) + " / 10秒",
+                leftX + 290.f, 494.f, 11.f, {0.65f, 0.78f, 0.90f, 1.0f});
+        } else {
+            text_.draw(graphics_, "○ FTLジャンプ", leftX, 488.f, 13.f,
+                {0.55f, 0.68f, 0.80f, 1.0f});
+        }
+
         if (combatFeedbackTimer_ > 0.0f && !combatFeedback_.empty()) {
             text_.draw(graphics_, combatFeedback_, 360.f, 505.f, 14.f,
                 {1.f, 0.88f, 0.52f, 1.f});
@@ -1295,6 +1345,8 @@ private:
     std::string startupError_;
     std::string combatFeedback_;
     float combatFeedbackTimer_{0.0f};
+    float jumpCharge_{0.0f};
+    bool jumpCharging_{false};
     SceneMode sceneMode_{SceneMode::SectorMap};
     std::vector<std::string> eventOrder_;
     std::string activeEventId_;
