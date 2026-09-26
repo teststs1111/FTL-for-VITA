@@ -532,19 +532,37 @@ public:
     }
 
     void enterCombatFromBeacon(const std::string& enemyShipId = {}) {
-        // Keep the persistent ship state in sync when entering combat. Combat
-        // owns a working copy while the player is in the combat scene.
+        // Start every encounter from a clean CombatRuntime state. This resets
+        // the previous outcome, projectile queue, boarding timers and enemy
+        // fire timers while preserving the persistent player ship below.
+        LoadedShip enemyShip;
         if (!enemyShipId.empty()) {
-            LoadedShip selectedEnemy;
-            if (content_.loadShip(enemyShipId, selectedEnemy) &&
-                !selectedEnemy.blueprint.id.empty()) {
-                combat_.enemy.load(selectedEnemy);
-                discoverRoomTextures();
-                discoverWeaponAndDroneTextures();
-                discoverCrewTextures();
+            if (!content_.loadShip(enemyShipId, enemyShip) || enemyShip.blueprint.id.empty()) {
+                combatFeedback_ = "敵艦の読み込みに失敗";
+                combatFeedbackTimer_ = 2.0f;
+                return;
+            }
+        } else {
+            enemyShip = combat_.enemy.content;
+            if (enemyShip.blueprint.id.empty()) {
+                combatFeedback_ = "敵艦データがありません";
+                combatFeedbackTimer_ = 2.0f;
+                return;
             }
         }
+
+        if (!combat_.load(content_, enemyShip)) {
+            combatFeedback_ = "戦闘状態の初期化に失敗";
+            combatFeedbackTimer_ = 2.0f;
+            return;
+        }
+
+        // Combat owns a working copy while the player is in the combat scene.
+        // The persistent ship remains the source of truth between encounters.
         combat_.player = runtime_;
+        discoverRoomTextures();
+        discoverWeaponAndDroneTextures();
+        discoverCrewTextures();
         combatMode_ = true;
         jumpCharging_ = false;
         jumpCharge_ = 0.0f;
