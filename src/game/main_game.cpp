@@ -257,6 +257,188 @@ public:
         return byName.empty() ? drone.name : byName;
     }
 
+    struct StoreOffer {
+        enum class Kind { Fuel, Missiles, DroneParts, Repair, Weapon, Drone };
+        Kind kind{Kind::Fuel};
+        std::string id;
+        int cost{0};
+    };
+
+    void buildStoreOffers() {
+        storeOffers_.clear();
+        storeSelection_ = 0;
+        storeOffers_.push_back({StoreOffer::Kind::Fuel, {}, 3});
+        storeOffers_.push_back({StoreOffer::Kind::Missiles, {}, 6});
+        storeOffers_.push_back({StoreOffer::Kind::DroneParts, {}, 8});
+        storeOffers_.push_back({StoreOffer::Kind::Repair, {}, 2});
+
+        std::vector<std::string> weaponIds;
+        for (const auto& entry : content_.blueprints().weapons()) weaponIds.push_back(entry.first);
+        std::sort(weaponIds.begin(), weaponIds.end());
+        if (!weaponIds.empty()) {
+            const std::size_t start = static_cast<std::size_t>((seed_ + static_cast<unsigned>(sector_ * 31 + std::max(0, currentBeacon_))) % weaponIds.size());
+            for (std::size_t i = 0; i < weaponIds.size() && i < 3; ++i) {
+                const auto& id = weaponIds[(start + i) % weaponIds.size()];
+                const auto* weapon = content_.blueprints().findWeapon(id);
+                if (!weapon || weapon->cost <= 0) continue;
+                bool owned = false;
+                for (const auto& current : runtime_.weapons)
+                    if (current.name == weapon->name) { owned = true; break; }
+                if (!owned) storeOffers_.push_back({StoreOffer::Kind::Weapon, id, weapon->cost});
+            }
+        }
+
+        std::vector<std::string> droneIds;
+        for (const auto& entry : content_.blueprints().drones()) droneIds.push_back(entry.first);
+        std::sort(droneIds.begin(), droneIds.end());
+        if (!droneIds.empty()) {
+            const std::size_t start = static_cast<std::size_t>((seed_ + static_cast<unsigned>(sector_ * 17 + std::max(0, currentBeacon_))) % droneIds.size());
+            for (std::size_t i = 0; i < droneIds.size() && i < 2; ++i) {
+                const auto& id = droneIds[(start + i) % droneIds.size()];
+                const auto* drone = content_.blueprints().findDrone(id);
+                if (!drone || drone->cost <= 0) continue;
+                bool owned = false;
+                for (const auto& current : runtime_.drones)
+                    if (current.name == drone->name) { owned = true; break; }
+                if (!owned) storeOffers_.push_back({StoreOffer::Kind::Drone, id, drone->cost});
+            }
+        }
+    }
+
+    void openStore() {
+        buildStoreOffers();
+        storeOpen_ = true;
+        sceneMode_ = SceneMode::Ship;
+    }
+
+    RuntimeWeapon makeRuntimeWeapon(const WeaponBlueprint& blueprint) const {
+        RuntimeWeapon weapon;
+        weapon.name = blueprint.name; weapon.type = blueprint.type;
+        weapon.power = std::max(1, blueprint.power);
+        weapon.cooldown = std::max(0.1f, blueprint.cooldown);
+        weapon.speed = std::max(0, blueprint.speed);
+        weapon.shots = std::max(1, blueprint.shots);
+        weapon.damage = std::max(0, blueprint.damage);
+        weapon.systemDamage = std::max(0, blueprint.systemDamage);
+        weapon.ionDamage = std::max(0, blueprint.ionDamage);
+        weapon.shieldPiercing = std::max(0, blueprint.shieldPiercing);
+        weapon.missilesUsed = std::max(0, blueprint.missilesUsed);
+        weapon.personnelDamage = std::max(0, blueprint.personnelDamage);
+        weapon.hullBust = std::max(0, blueprint.hullBust);
+        weapon.fireChance = std::clamp(blueprint.fireChance, 0, 100);
+        weapon.breachChance = std::clamp(blueprint.breachChance, 0, 100);
+        weapon.stunChance = std::clamp(blueprint.stunChance, 0, 100);
+        weapon.stunDuration = std::max(0, blueprint.stunDuration);
+        return weapon;
+    }
+
+    RuntimeDrone makeRuntimeDrone(const DroneBlueprint& blueprint) const {
+        RuntimeDrone drone;
+        drone.type = blueprint.type; drone.name = blueprint.name;
+        drone.power = std::max(1, blueprint.power);
+        drone.speed = std::max(0, blueprint.speed);
+        drone.cooldown = std::max(0, blueprint.cooldown);
+        drone.dodge = std::clamp(blueprint.dodge, 0, 100);
+        drone.defenceTarget = blueprint.defenceTarget;
+        drone.weaponCooldown = std::max(0.1f, blueprint.weaponCooldown);
+        drone.weaponShots = std::max(1, blueprint.weaponShots);
+        drone.weaponDamage = std::max(0, blueprint.weaponDamage);
+        drone.weaponSystemDamage = std::max(0, blueprint.weaponSystemDamage);
+        drone.weaponIonDamage = std::max(0, blueprint.weaponIonDamage);
+        drone.weaponShieldPiercing = std::max(0, blueprint.weaponShieldPiercing);
+        drone.weaponPersonnelDamage = std::max(0, blueprint.weaponPersonnelDamage);
+        drone.weaponSpeed = std::max(0, blueprint.speed);
+        return drone;
+    }
+
+    bool purchaseStoreOffer() {
+        if (storeSelection_ < 0 || storeSelection_ >= static_cast<int>(storeOffers_.size())) return false;
+        const StoreOffer offer = storeOffers_[static_cast<std::size_t>(storeSelection_)];
+        if (scrap_ < offer.cost) {
+            combatFeedback_ = "スクラップが足りない"; combatFeedbackTimer_ = 1.4f; return false;
+        }
+        switch (offer.kind) {
+        case StoreOffer::Kind::Fuel:
+            if (fuel_ >= 30) { combatFeedback_ = "燃料は満タン"; break; }
+            scrap_ -= offer.cost; fuel_ = std::min(30, fuel_ + 1); combatFeedback_ = "燃料を購入"; return true;
+        case StoreOffer::Kind::Missiles:
+            if (runtime_.missiles >= 50) { combatFeedback_ = "ミサイルは満タン"; break; }
+            scrap_ -= offer.cost; runtime_.missiles = std::min(50, runtime_.missiles + 1); combatFeedback_ = "ミサイルを購入"; return true;
+        case StoreOffer::Kind::DroneParts:
+            if (droneParts_ >= 50) { combatFeedback_ = "ドローン部品は満タン"; break; }
+            scrap_ -= offer.cost; ++droneParts_; combatFeedback_ = "ドローン部品を購入"; return true;
+        case StoreOffer::Kind::Repair:
+            if (runtime_.hull >= runtime_.maxHull) { combatFeedback_ = "船体は無傷"; break; }
+            scrap_ -= offer.cost; runtime_.hull = std::min(runtime_.maxHull, runtime_.hull + 1); combatFeedback_ = "船体を1修理"; return true;
+        case StoreOffer::Kind::Weapon: {
+            const auto* weapon = content_.blueprints().findWeapon(offer.id);
+            if (!weapon || static_cast<int>(runtime_.weapons.size()) >= runtime_.content.blueprint.weaponSlots) { combatFeedback_ = "武器スロットがいっぱい"; break; }
+            scrap_ -= offer.cost; runtime_.weapons.push_back(makeRuntimeWeapon(*weapon));
+            combatFeedback_ = "武器を購入: " + weaponLabel(runtime_.weapons.back());
+            storeOffers_.erase(storeOffers_.begin() + storeSelection_);
+            storeSelection_ = std::min(storeSelection_, static_cast<int>(storeOffers_.size()) - 1);
+            return true;
+        }
+        case StoreOffer::Kind::Drone: {
+            const auto* drone = content_.blueprints().findDrone(offer.id);
+            if (!drone || static_cast<int>(runtime_.drones.size()) >= runtime_.content.blueprint.droneSlots) { combatFeedback_ = "ドローンスロットがいっぱい"; break; }
+            scrap_ -= offer.cost; runtime_.drones.push_back(makeRuntimeDrone(*drone));
+            combatFeedback_ = "ドローンを購入: " + droneLabel(runtime_.drones.back());
+            storeOffers_.erase(storeOffers_.begin() + storeSelection_);
+            storeSelection_ = std::min(storeSelection_, static_cast<int>(storeOffers_.size()) - 1);
+            return true;
+        }
+        }
+        combatFeedbackTimer_ = 1.4f;
+        return false;
+    }
+
+    void updateStore(float dt) {
+        if (input_.pressed(Button::Up) && !storeOffers_.empty())
+            storeSelection_ = (storeSelection_ + static_cast<int>(storeOffers_.size()) - 1) % static_cast<int>(storeOffers_.size());
+        if (input_.pressed(Button::Down) && !storeOffers_.empty())
+            storeSelection_ = (storeSelection_ + 1) % static_cast<int>(storeOffers_.size());
+        if (input_.pressed(Button::Cross)) purchaseStoreOffer();
+        if (input_.pressed(Button::Circle)) {
+            storeOpen_ = false;
+            ++visitedBeacons_;
+            sceneMode_ = SceneMode::SectorMap;
+        }
+        combatFeedbackTimer_ = std::max(0.0f, combatFeedbackTimer_ - dt);
+    }
+
+    void renderStore() {
+        graphics_.fillRect(45.f, 35.f, 870.f, 470.f, {0.055f, 0.07f, 0.10f, 1.f});
+        text_.draw(graphics_, "STORE / ショップ", 75.f, 75.f, 27.f, {0.90f, 0.94f, 1.f, 1.f});
+        text_.draw(graphics_, "スクラップ " + std::to_string(scrap_) + "   燃料 " + std::to_string(fuel_) +
+            "   ミサイル " + std::to_string(runtime_.missiles) + "   ドローン " + std::to_string(droneParts_),
+            75.f, 105.f, 15.f, {0.78f, 0.84f, 0.92f, 1.f});
+        for (std::size_t i = 0; i < storeOffers_.size(); ++i) {
+            const auto& offer = storeOffers_[i];
+            const bool selected = static_cast<int>(i) == storeSelection_;
+            const float y = 145.f + static_cast<float>(i) * 40.f;
+            if (selected) graphics_.fillRect(65.f, y - 22.f, 820.f, 32.f, {0.15f, 0.25f, 0.34f, 1.f});
+            std::string name;
+            switch (offer.kind) {
+            case StoreOffer::Kind::Fuel: name = "燃料 +1"; break;
+            case StoreOffer::Kind::Missiles: name = "ミサイル +1"; break;
+            case StoreOffer::Kind::DroneParts: name = "ドローン部品 +1"; break;
+            case StoreOffer::Kind::Repair: name = "船体修理 +1"; break;
+            case StoreOffer::Kind::Weapon:
+                if (const auto* weapon = content_.blueprints().findWeapon(offer.id)) name = weapon->name;
+                break;
+            case StoreOffer::Kind::Drone:
+                if (const auto* drone = content_.blueprints().findDrone(offer.id)) name = drone->name;
+                break;
+            }
+            text_.draw(graphics_, name + "   " + std::to_string(offer.cost) + " scrap", 85.f, y, 16.f,
+                selected ? Color{0.98f, 0.84f, 0.48f, 1.f} : Color{0.82f, 0.87f, 0.94f, 1.f});
+        }
+        text_.draw(graphics_, "↑↓: 選択   ×: 購入   ○: ショップ終了", 75.f, 475.f, 15.f, {0.68f, 0.76f, 0.86f, 1.f});
+        if (combatFeedbackTimer_ > 0.0f && !combatFeedback_.empty())
+            text_.draw(graphics_, combatFeedback_, 550.f, 475.f, 14.f, {0.95f, 0.76f, 0.40f, 1.f});
+    }
+
     enum class SceneMode { SectorMap, Ship, Event, Combat, Pause, GameOver, Victory };
 
     void enterCombatFromBeacon(const std::string& enemyShipId = {}) {
@@ -429,7 +611,7 @@ public:
         if (!input_.pressed(Button::Cross)) return;
         if (event->choices.empty()) {
             if (event->store) {
-                sceneMode_ = SceneMode::Ship;
+                openStore();
                 return;
             }
             if (event->hostile) {
@@ -470,7 +652,7 @@ public:
             return;
         }
         if (choice.store || event->store) {
-            sceneMode_ = SceneMode::Ship;
+            openStore();
             return;
         }
         if (choice.repair || event->repair) {
@@ -637,6 +819,10 @@ public:
         }
         if (sceneMode_ == SceneMode::Event) {
             updateEvent();
+            return;
+        }
+        if (storeOpen_) {
+            updateStore(dt);
             return;
         }
         if (sceneMode_ == SceneMode::GameOver || sceneMode_ == SceneMode::Victory) return;
@@ -1184,6 +1370,10 @@ public:
             renderEvent();
             return;
         }
+        if (storeOpen_) {
+            renderStore();
+            return;
+        }
         if (sceneMode_ == SceneMode::Pause) {
             if (combatMode_) renderCombat();
             else {
@@ -1361,6 +1551,9 @@ private:
     int scrap_{0};
     int droneParts_{0};
     std::vector<std::string> activeQuestIds_;
+    std::vector<StoreOffer> storeOffers_;
+    int storeSelection_{0};
+    bool storeOpen_{false};
 };
 
 MainGame::MainGame() = default;
