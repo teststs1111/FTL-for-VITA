@@ -66,6 +66,7 @@ public:
     bool cloaked() const { return cloakTimer_ > 0.0f; }
     float cloakRemaining() const { return std::max(0.0f, cloakTimer_); }
     int superShieldRemaining() const { return superShield_; }
+    bool playerDeployedCombatDrone() const { return playerDeployedCombatDrone_; }
 
 private:
     CombatResult resolveWeapon(ShipRuntime& attacker, ShipRuntime& target,
@@ -88,6 +89,7 @@ private:
     float playerShieldRechargeMultiplier_{1.0f};
     bool stealthWeapons_{false};
     float cloakTimer_{0.0f};
+    bool playerDeployedCombatDrone_{false};
     std::uint32_t nextRandom();
 };
 
