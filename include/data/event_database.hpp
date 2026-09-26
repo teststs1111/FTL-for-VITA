@@ -69,6 +69,7 @@ struct EventChoice {
     std::string requirement;
     int requirementLevel{0};
     bool blue{false};
+    bool hidden{false};
     bool hostile{false};
     std::string hostileShipId;
     std::string questId;
