@@ -385,6 +385,11 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
     result.fired = true;
     result.shotsFired = weapon.shots;
 
+    if (&target == &player && cloaked()) {
+        result.evaded = std::max(1, weapon.shots);
+        return result;
+    }
+
     const int shieldPiercing = std::max(0, weapon.shieldPiercing);
     for (int shot = 0; shot < weapon.shots; ++shot) {
         // Missile/bomb weapons bypass shields, and therefore do not use the
@@ -497,6 +502,8 @@ CombatResult CombatRuntime::fireWeapon(int weaponIndex) {
         return result;
 
     const RuntimeWeapon firedWeapon = weapon;
+    if (cloaked() && !stealthWeapons_)
+        cloakTimer_ = 0.0f;
     result.fired = true;
     result.shotsFired = std::max(1, firedWeapon.shots);
     enqueueWeapon(true, weaponIndex, firedWeapon, targetRoom);
