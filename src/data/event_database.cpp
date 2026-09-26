@@ -74,11 +74,12 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
             if (item.name != "item") continue;
             const auto type = item.attributes.find("type");
             if (type == item.attributes.end()) continue;
-            const int amount = attrInt(item, "min", 0);
-            if (type->second == "scrap") event.initialScrap += amount;
-            else if (type->second == "fuel") event.initialFuel += amount;
-            else if (type->second == "missiles") event.initialMissiles += amount;
-            else if (type->second == "drones") event.initialDrones += amount;
+            const int minAmount = attrInt(item, "min", attrInt(item, "amount", 0));
+            const int maxAmount = attrInt(item, "max", minAmount);
+            if (type->second == "scrap") { event.initialScrap += minAmount; event.initialScrapMax += std::max(minAmount, maxAmount); }
+            else if (type->second == "fuel") { event.initialFuel += minAmount; event.initialFuelMax += std::max(minAmount, maxAmount); }
+            else if (type->second == "missiles") { event.initialMissiles += minAmount; event.initialMissilesMax += std::max(minAmount, maxAmount); }
+            else if (type->second == "drones") { event.initialDrones += minAmount; event.initialDronesMax += std::max(minAmount, maxAmount); }
         }
     }
 
@@ -108,11 +109,12 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
                     if (item.name != "item") continue;
                     const auto type = item.attributes.find("type");
                     if (type == item.attributes.end()) continue;
-                    const int amount = attrInt(item, "min", 0);
-                    if (type->second == "scrap") choice.scrap += amount;
-                    else if (type->second == "fuel") choice.fuel += amount;
-                    else if (type->second == "missiles") choice.missiles += amount;
-                    else if (type->second == "drones") choice.drones += amount;
+                    const int minAmount = attrInt(item, "min", attrInt(item, "amount", 0));
+                    const int maxAmount = attrInt(item, "max", minAmount);
+                    if (type->second == "scrap") { choice.scrap += minAmount; choice.scrapMax += std::max(minAmount, maxAmount); }
+                    else if (type->second == "fuel") { choice.fuel += minAmount; choice.fuelMax += std::max(minAmount, maxAmount); }
+                    else if (type->second == "missiles") { choice.missiles += minAmount; choice.missilesMax += std::max(minAmount, maxAmount); }
+                    else if (type->second == "drones") { choice.drones += minAmount; choice.dronesMax += std::max(minAmount, maxAmount); }
                 }
             }
         }
