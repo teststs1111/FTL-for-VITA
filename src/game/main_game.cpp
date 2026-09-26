@@ -295,18 +295,73 @@ public:
         return true;
     }
 
+    bool eventChoiceAvailable(const EventChoice& choice) const {
+        if (choice.requirement.empty()) return true;
+        std::string req = choice.requirement;
+        std::transform(req.begin(), req.end(), req.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+        // Crew-race Blue Options: the original event data uses the race name
+        // as the requirement (engi, mantis, zoltan, rock, slug, crystal, etc.).
+        for (const auto& crew : runtime_.crew) {
+            if (!crew.alive) continue;
+            std::string race = crew.race;
+            std::transform(race.begin(), race.end(), race.begin(),
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            if (race == req) return true;
+        }
+
+        // System-level requirements such as req="doors" lvl="3".
+        for (const auto& system : runtime_.systems) {
+            std::string type = system.type;
+            std::transform(type.begin(), type.end(), type.begin(),
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            if (type == req && system.level >= choice.requirementLevel &&
+                system.damage < system.maxPower) return true;
+        }
+
+        // Weapon/drone/augmentation-style requirements. Blueprint identifiers
+        // are compared case-insensitively so the original XML can be reused.
+        for (const auto& weapon : runtime_.weapons) {
+            std::string name = weapon.name;
+            std::transform(name.begin(), name.end(), name.begin(),
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            if (name == req || name.find(req) != std::string::npos) return true;
+        }
+        for (const auto& drone : runtime_.drones) {
+            std::string name = drone.name;
+            std::transform(name.begin(), name.end(), name.begin(),
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            if (name == req || name.find(req) != std::string::npos) return true;
+        }
+        return false;
+    }
+
+    int nextAvailableEventChoice(const EventDefinition& event, int start, int direction) const {
+        if (event.choices.empty()) return 0;
+        int index = start;
+        for (std::size_t n = 0; n < event.choices.size(); ++n) {
+            if (index >= 0 && index < static_cast<int>(event.choices.size()) &&
+                eventChoiceAvailable(event.choices[static_cast<std::size_t>(index)]))
+                return index;
+            index += direction;
+            if (index < 0) index = static_cast<int>(event.choices.size()) - 1;
+            if (index >= static_cast<int>(event.choices.size())) index = 0;
+        }
+        return start;
+    }
+
     void updateEvent() {
         const auto* event = eventDatabase_.find(activeEventId_);
         if (!event) {
             sceneMode_ = SceneMode::SectorMap;
             return;
         }
+        activeEventChoice_ = nextAvailableEventChoice(*event, activeEventChoice_, 1);
         if (input_.pressed(Button::Up) || input_.pressed(Button::Left))
-            activeEventChoice_ = std::max(0, activeEventChoice_ - 1);
+            activeEventChoice_ = nextAvailableEventChoice(*event, activeEventChoice_ - 1, -1);
         if (input_.pressed(Button::Down) || input_.pressed(Button::Right))
-            activeEventChoice_ = std::min(
-                std::max(0, static_cast<int>(event->choices.size()) - 1),
-                activeEventChoice_ + 1);
+            activeEventChoice_ = nextAvailableEventChoice(*event, activeEventChoice_ + 1, 1);
         if (input_.pressed(Button::Circle)) {
             sceneMode_ = SceneMode::SectorMap;
             return;
@@ -329,7 +384,12 @@ public:
             return;
         }
 
-        const auto& choice = event->choices[activeEventChoice_];
+        if (activeEventChoice_ < 0 ||
+            activeEventChoice_ >= static_cast<int>(event->choices.size()) ||
+            !eventChoiceAvailable(event->choices[static_cast<std::size_t>(activeEventChoice_)]))
+            return;
+
+        const auto& choice = event->choices[static_cast<std::size_t>(activeEventChoice_)];
         // Apply all resource modifications from the original event data, not
         // only scrap/fuel. Missiles and drone parts are carried by the combat
         // runtime, so event rewards immediately affect the actual inventory.
@@ -393,11 +453,18 @@ public:
                 const float y = 245.f + static_cast<float>(i) * 38.f;
                 if (selected)
                     graphics_.fillRect(95.f, y - 20.f, 770.f, 30.f, {0.16f, 0.25f, 0.34f, 1.f});
-                std::string label = event->choices[i].text;
-                if (label.empty()) label = event->choices[i].load.empty() ? "続行" : "次へ";
+                const auto& choice = event->choices[i];
+                const bool available = eventChoiceAvailable(choice);
+                std::string label = choice.text;
+                if (label.empty()) label = choice.load.empty() ? "続行" : "次へ";
+                if (choice.blue && !choice.requirement.empty()) label = "[青] " + label;
+                if (!available && !choice.requirement.empty()) label += "  (条件未達)";
                 if (label.size() > 90) label.resize(90);
+                const Color normal = available
+                    ? Color{0.78f,0.83f,0.90f,1.f}
+                    : Color{0.42f,0.45f,0.50f,1.f};
                 text_.draw(graphics_, (selected ? "> " : "  ") + label, 110.f, y, 15.f,
-                    selected ? Color{0.98f,0.86f,0.45f,1.f} : Color{0.78f,0.83f,0.90f,1.f});
+                    selected ? (available ? Color{0.98f,0.86f,0.45f,1.f} : Color{0.52f,0.55f,0.60f,1.f}) : normal);
             }
             text_.draw(graphics_, "十字キー: 選択   ×: 決定   ○: 戻る", 105.f, 455.f, 14.f,
                 {0.64f,0.72f,0.82f,1.f});
