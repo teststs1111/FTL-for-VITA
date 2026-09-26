@@ -477,6 +477,7 @@ public:
         currentBeacon_ = -1;
         fleetRow_ = -1;
         sector_ = 0;
+        flagshipPhase_ = 0;
         selectedBeacon_ = sectorGraph_.startNode();
         activeQuestIds_.clear();
         questTargets_.clear();
@@ -877,7 +878,26 @@ public:
             currentBeacon_ = selectedBeacon_;
             if (const auto* n = sectorGraph_.node(currentBeacon_)) {
                 if (n->row == sectorGraph_.exitRow()) {
-                    if (sector_ >= 7) { sceneMode_ = SceneMode::Victory; return; }
+                    if (sector_ >= 7) {
+                        // The final sector leads into the Rebel Flagship battle.
+                        // The three combat phases are kept as separate encounters
+                        // so the player's surviving systems/crew carry forward.
+                        if (flagshipPhase_ == 0) {
+                            LoadedShip flagship;
+                            if (content_.loadShip("REBEL_FLAGSHIP", flagship) &&
+                                !flagship.blueprint.id.empty()) {
+                                flagshipPhase_ = 1;
+                                enterCombatFromBeacon("REBEL_FLAGSHIP");
+                                return;
+                            }
+                            // If the supplied archive does not contain the
+                            // flagship blueprint, retain the old safe fallback.
+                            sceneMode_ = SceneMode::Victory;
+                            return;
+                        }
+                        sceneMode_ = SceneMode::Victory;
+                        return;
+                    }
                     ++sector_;
                     sectorEventUsage_.clear();
                     sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
@@ -1009,10 +1029,23 @@ public:
                 // systems, crew, weapons, missiles, shields, fires and breaches
                 // must survive the return to the ship scene.
                 runtime_ = combat_.player;
-                combatMode_ = false;
                 scrap_ += 20 + sector_ * 5;
-                visitedBeacons_++;
-                sceneMode_ = SceneMode::SectorMap;
+
+                if (sector_ >= 7 && flagshipPhase_ > 0 && flagshipPhase_ < 3) {
+                    // Flagship phase transition: keep the damaged player ship,
+                    // but load a fresh flagship for the next phase.
+                    ++flagshipPhase_;
+                    combatFeedback_ = "反乱軍旗艦 Phase " + std::to_string(flagshipPhase_);
+                    combatFeedbackTimer_ = 2.0f;
+                    enterCombatFromBeacon("REBEL_FLAGSHIP");
+                } else if (sector_ >= 7 && flagshipPhase_ >= 3) {
+                    combatMode_ = false;
+                    sceneMode_ = SceneMode::Victory;
+                } else {
+                    combatMode_ = false;
+                    visitedBeacons_++;
+                    sceneMode_ = SceneMode::SectorMap;
+                }
             } else if (combat_.outcome == CombatOutcome::PlayerDestroyed) {
                 combatMode_ = false;
                 sceneMode_ = SceneMode::GameOver;
@@ -1559,6 +1592,9 @@ public:
         graphics_.fillRect(leftX, 100.f, 280.f * playerHull, 12.f, {0.2f, 0.8f, 0.35f, 1.f});
         graphics_.fillRect(rightX, 100.f, 280.f, 12.f, {0.15f, 0.15f, 0.15f, 1.f});
         graphics_.fillRect(rightX, 100.f, 280.f * enemyHull, 12.f, {0.85f, 0.25f, 0.25f, 1.f});
+        if (sector_ >= 7 && flagshipPhase_ > 0)
+            text_.draw(graphics_, "反乱軍旗艦 Phase " + std::to_string(flagshipPhase_) + " / 3",
+                390.f, 86.f, 12.f, {0.98f, 0.70f, 0.36f, 1.f});
         text_.draw(graphics_, "船体 " + std::to_string(std::max(0, combat_.player.hull)) +
             "/" + std::to_string(std::max(0, combat_.player.maxHull)),
             leftX, 86.f, 11.f, {0.72f, 0.92f, 0.78f, 1.f});
@@ -1830,6 +1866,7 @@ private:
     std::string activeEventId_;
     int activeEventChoice_{0};
     int sector_{0};
+    int flagshipPhase_{0};
     int selectedBeacon_{0};
     int currentBeacon_{-1};
     int fleetRow_{-1};
