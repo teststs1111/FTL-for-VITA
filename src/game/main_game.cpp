@@ -1334,6 +1334,24 @@ public:
         return CombatEnvironment::None;
     }
 
+    void applyShipOutcome(const EventShipOutcome& outcome) {
+        scrap_ = std::max(0, scrap_ + applyScrapAugments(
+            rollEventRange(outcome.scrap, outcome.scrapMax, 0xD11u)));
+        fuel_ = std::max(0, fuel_ + rollEventRange(outcome.fuel, outcome.fuelMax, 0xD23u));
+        runtime_.missiles = std::max(0, runtime_.missiles +
+            rollEventRange(outcome.missiles, outcome.missilesMax, 0xD37u));
+        combat_.player.missiles = runtime_.missiles;
+        droneParts_ = std::max(0, droneParts_ +
+            rollEventRange(outcome.drones, outcome.dronesMax, 0xD49u));
+        if (outcome.hasAutoReward) applyEventAutoReward(outcome.autoReward);
+        applyEventWeaponReward(outcome.weaponReward);
+        if (!outcome.textKey.empty()) {
+            combatFeedback_ = localization_.tr(outcome.textKey);
+            if (combatFeedback_ == outcome.textKey) combatFeedback_.clear();
+            else combatFeedbackTimer_ = 2.0f;
+        }
+    }
+
     void applyEventImmediateEffects(const EventDefinition& event) {
         scrap_ = std::max(0, scrap_ + applyScrapAugments(rollEventRange(event.initialScrap, event.initialScrapMax, 0x11u)));
         fuel_ = std::max(0, fuel_ + rollEventRange(event.initialFuel, event.initialFuelMax, 0x23u));
@@ -1802,7 +1820,14 @@ public:
                     combatFeedback_ = "Drone Recovery Arm: ドローンパーツ回収";
                     combatFeedbackTimer_ = 1.5f;
                 }
-                scrap_ += applyScrapAugments(20 + sector_ * 5);
+                if (const auto* outcome = eventDatabase_.findShipOutcome(
+                        combat_.enemy.content.blueprint.id, false)) {
+                    applyShipOutcome(*outcome);
+                } else {
+                    // Compatibility fallback for encounter ships without an
+                    // explicit destroyed block in the supplied event data.
+                    scrap_ += applyScrapAugments(20 + sector_ * 5);
+                }
 
                 if (sector_ >= 7 && flagshipPhase_ > 0 && flagshipPhase_ < 3) {
                     // Flagship phase transition: keep the damaged player ship,
