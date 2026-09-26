@@ -180,7 +180,7 @@ static void testEventDatabase() {
     const std::string events =
         "<FTL><eventList name=\"NEUTRAL\"><event load=\"BASE\" weight=\"1\"/></eventList>"
         "<event name=\"BASE\"><text>base event</text><choice><text>Fight</text>"
-        "<event><ship hostile=\"true\" name=\"ENGI_SCOUT\"/></event></choice></event><event name="LOCALIZED"><text id="event_LOCALIZED_text"/><choice><text id="event_LOCALIZED_choice"/><event load="BASE"/></choice></event></FTL>";
+        "<event><ship hostile=\"true\" name=\"ENGI_SCOUT\"/></event></choice></event><ship name=\"TEST_SHIP\"><destroyed><text id=\"destroyed_test\"/><item_modify><item type=\"scrap\" min=\"10\" max=\"20\"/><item type=\"fuel\" min=\"-2\" max=\"-1\"/></item_modify><weapon name=\"BEAM_2\"/></destroyed><deadCrew><autoReward level=\"LOW\">stuff</autoReward></deadCrew></ship><event name="LOCALIZED"><text id="event_LOCALIZED_text"/><choice><text id="event_LOCALIZED_choice"/><event load="BASE"/></choice></event></FTL>";
     const std::string dlc =
         "<FTL><eventList name=\"NEUTRAL\"><event load=\"DLC\" weight=\"1\"/></eventList>"
         "<eventList name=\"INLINE_POOL\"><event><text>inline</text><item_modify><item type=\"drones\" min=\"-1\" max=\"-1\"/></item_modify></event></eventList>"
@@ -206,6 +206,14 @@ static void testEventDatabase() {
     assert(base && base->choices.size() == 1);
     assert(base->choices[0].hostile);
     assert(base->choices[0].hostileShipId == "ENGI_SCOUT");
+
+    const auto* destroyed = database.findShipOutcome("TEST_SHIP", false);
+    assert(destroyed && destroyed->textKey == "destroyed_test");
+    assert(destroyed->scrap == 10 && destroyed->scrapMax == 20);
+    assert(destroyed->fuel == -2 && destroyed->fuelMax == -1);
+    assert(destroyed->weaponReward == "BEAM_2");
+    const auto* deadCrew = database.findShipOutcome("TEST_SHIP", true);
+    assert(deadCrew && deadCrew->hasAutoReward && deadCrew->autoReward.type == "stuff");
     const auto* localized = database.find("LOCALIZED");
     assert(localized && localized->textKey == "event_LOCALIZED_text");
     assert(localized && localized->choices.size() == 1);
