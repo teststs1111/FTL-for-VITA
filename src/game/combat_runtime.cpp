@@ -52,6 +52,42 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     return true;
 }
 
+
+bool CombatRuntime::loadFlagshipPhase(ShipContent& contentSource, const LoadedShip& enemyShip,
+                                      const std::vector<RuntimeCrew>& previousCrew) {
+    if (!load(contentSource, enemyShip)) return false;
+
+    // Flagship phases use separate blueprints, but crew casualties persist
+    // between phases. Match by name/race and carry health/alive state forward.
+    std::vector<bool> matched(previousCrew.size(), false);
+    for (auto& nextCrew : enemy.crew) {
+        std::size_t match = previousCrew.size();
+        for (std::size_t i = 0; i < previousCrew.size(); ++i) {
+            if (matched[i]) continue;
+            const auto& oldCrew = previousCrew[i];
+            if (oldCrew.name == nextCrew.name && oldCrew.race == nextCrew.race) {
+                match = i;
+                break;
+            }
+        }
+        if (match == previousCrew.size()) {
+            for (std::size_t i = 0; i < previousCrew.size(); ++i) {
+                if (matched[i]) continue;
+                if (previousCrew[i].race == nextCrew.race) {
+                    match = i;
+                    break;
+                }
+            }
+        }
+        if (match == previousCrew.size()) continue;
+        matched[match] = true;
+        const auto& oldCrew = previousCrew[match];
+        nextCrew.alive = oldCrew.alive;
+        nextCrew.health = oldCrew.alive ? std::clamp(oldCrew.health, 0, nextCrew.maxHealth) : 0;
+    }
+    return true;
+}
+
 void CombatRuntime::enqueueWeapon(bool fromPlayer, int weaponIndex,
                                   const RuntimeWeapon& weapon, int room) {
     const int projectileCount = std::max(1, weapon.shots);
