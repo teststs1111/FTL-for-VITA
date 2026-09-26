@@ -19,7 +19,13 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
     database_.clear();
     out = {};
 
-    if (database_.loadShipBlueprints(blueprintPath) == 0) return false;
+    std::vector<std::string> sources{blueprintPath};
+    if (advancedEdition_) {
+        sources.push_back("data/dlcBlueprints.xml");
+        sources.push_back("data/dlcBlueprintsOverwrite.xml");
+        sources.push_back("data/dlcPirateBlueprints.xml");
+    }
+    if (database_.loadShipBlueprints(sources) == 0) return false;
     const ShipBlueprint* blueprint = database_.findShip(shipId);
     if (!blueprint || blueprint->layout.empty()) return false;
 
