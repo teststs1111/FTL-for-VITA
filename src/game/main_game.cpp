@@ -1417,6 +1417,11 @@ public:
                 // systems, crew, weapons, missiles, shields, fires and breaches
                 // must survive the return to the ship scene.
                 runtime_ = combat_.player;
+                if (combat_.playerDeployedCombatDrone() && hasAugment("DRONE_RECOVERY_ARM")) {
+                    droneParts_ = std::min(99, droneParts_ + 1);
+                    combatFeedback_ = "Drone Recovery Arm: ドローンパーツ回収";
+                    combatFeedbackTimer_ = 1.5f;
+                }
                 scrap_ += applyScrapAugments(20 + sector_ * 5);
 
                 if (sector_ >= 7 && flagshipPhase_ > 0 && flagshipPhase_ < 3) {
