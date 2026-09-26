@@ -918,6 +918,25 @@ public:
         return reward;
     }
 
+    void applyEventBoarders(const std::vector<EventBoarderEffect>& effects) {
+        pendingBoarders_.clear();
+        for (const auto& effect : effects) {
+            const int minCount = std::max(1, effect.min);
+            const int maxCount = std::max(minCount, effect.max);
+            const int count = rollEventRange(minCount, maxCount, 0xB1u + static_cast<std::uint32_t>(visitedBeacons_));
+            const int capped = effect.maxGroup > 0 ? std::min(count, effect.maxGroup) : count;
+            for (int i = 0; i < capped; ++i) {
+                RuntimeCrew boarder;
+                boarder.race = effect.race.empty() ? "human" : effect.race;
+                boarder.name = "event_boarder_" + std::to_string(i);
+                boarder.health = 100;
+                boarder.maxHealth = 100;
+                boarder.alive = true;
+                pendingBoarders_.push_back(std::move(boarder));
+            }
+        }
+    }
+
     void enterCombatFromBeacon(const std::string& enemyShipId = {}) {
         // Start every encounter from a clean CombatRuntime state. This resets
         // the previous outcome, projectile queue, boarding timers and enemy
@@ -947,6 +966,8 @@ public:
         // Combat owns a working copy while the player is in the combat scene.
         // The persistent ship remains the source of truth between encounters.
         combat_.player = runtime_;
+        combat_.boarders = pendingBoarders_;
+        pendingBoarders_.clear();
         if (sector_ >= 7 && flagshipPhase_ > 0)
             combat_.configureFlagshipPhase(flagshipPhase_);
         combat_.setPlayerWeaponCooldownMultiplier(weaponCooldownMultiplier());
@@ -1161,6 +1182,7 @@ public:
         droneParts_ = std::max(0, droneParts_ + rollEventRange(event.initialDrones, event.initialDronesMax, 0x49u));
         applyEventDamageEffects(event.effects);
         applyEventCrewEffects(event.crewMembers, event.crewRemovals);
+        applyEventBoarders(event.boarders);
     }
     }
 
@@ -1301,6 +1323,7 @@ public:
         droneParts_ = std::max(0, droneParts_ + rollEventRange(choice.drones, choice.dronesMax, 0x97u + static_cast<std::uint32_t>(activeEventChoice_)));
         applyEventDamageEffects(choice.effects);
         applyEventCrewEffects(choice.crewMembers, choice.crewRemovals);
+        applyEventBoarders(choice.boarders);
         if (choice.load.empty() && !choice.hostile && !choice.store && !choice.repair) {
             ++visitedBeacons_;
             sceneMode_ = SceneMode::SectorMap;
@@ -2501,6 +2524,7 @@ private:
     std::vector<std::string> shipChoices_;
     int shipSelection_{0};
     std::vector<std::string> activeQuestIds_;
+    std::vector<RuntimeCrew> pendingBoarders_;
     std::vector<std::string> augmentIds_;
     std::unordered_map<std::string, std::string> questTargets_;
     std::unordered_map<std::string, int> sectorEventUsage_;
