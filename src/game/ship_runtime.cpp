@@ -334,6 +334,68 @@ bool ShipRuntime::setSystemPowered(int systemIndex, bool powered) {
     return true;
 }
 
+int ShipRuntime::addCrew(const RuntimeCrew& input) {
+    if (!valid) return -1;
+    int aliveCount = 0;
+    for (const auto& member : crew) if (member.alive) ++aliveCount;
+    if (aliveCount >= 8) return -1;
+
+    RuntimeCrew member = input;
+    member.alive = true;
+    member.maxHealth = std::max(1, member.maxHealth);
+    member.health = std::clamp(member.health, 1, member.maxHealth);
+    if (member.room < 0 && !content.layout.rooms.empty())
+        member.room = content.layout.rooms.front().id;
+
+    for (std::size_t i = 0; i < crew.size(); ++i) {
+        if (crew[i].alive) continue;
+        crew[i] = member;
+        return static_cast<int>(i);
+    }
+    crew.push_back(std::move(member));
+    return static_cast<int>(crew.size() - 1);
+}
+
+int ShipRuntime::removeCrewByRace(const std::string& race, bool cloneIfPossible) {
+    if (!valid) return 0;
+    std::string wanted = race;
+    std::transform(wanted.begin(), wanted.end(), wanted.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+    auto hasPoweredClonebay = [&]() {
+        for (const auto& system : systems) {
+            if (system.type == "clonebay" && system.powered && system.damage < system.maxPower)
+                return true;
+        }
+        return false;
+    };
+
+    for (auto& member : crew) {
+        if (!member.alive) continue;
+        std::string current = member.race;
+        std::transform(current.begin(), current.end(), current.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (!wanted.empty() && current != wanted) continue;
+
+        if (cloneIfPossible && hasPoweredClonebay()) {
+            member.health = member.maxHealth;
+            member.alive = true;
+            if (member.room < 0 && !content.layout.rooms.empty())
+                member.room = content.layout.rooms.front().id;
+        } else {
+            member.health = 0;
+            member.alive = false;
+            member.room = -1;
+        }
+        return 1;
+    }
+    return 0;
+}
+
+int ShipRuntime::removeCrew(bool cloneIfPossible) {
+    return removeCrewByRace({}, cloneIfPossible);
+}
+
 bool ShipRuntime::moveCrew(int crewIndex, int targetRoom) {
     if (!valid || crewIndex < 0 || crewIndex >= static_cast<int>(crew.size())) return false;
     if (targetRoom < 0 || targetRoom >= static_cast<int>(content.layout.rooms.size())) return false;
