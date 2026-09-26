@@ -75,9 +75,9 @@ const SectorDefinition* SectorDatabase::select(int sector,std::size_t variant,co
     if(candidates.empty()) return nullptr;
     return candidates[variant%candidates.size()];
 }
-}
-
 const SectorDefinition* SectorDatabase::find(const std::string& name) const {
     for (const auto& s : sectors_) if (s.name == name) return &s;
     return nullptr;
+}
+
 }
