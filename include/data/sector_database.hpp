@@ -24,6 +24,7 @@ class SectorDatabase {
 public:
     explicit SectorDatabase(AssetStore& assets) : assets_(assets) {}
     bool load();
+    void setAdvancedEdition(bool enabled) { advancedEdition_ = enabled; }
     const SectorDefinition* select(int sector, std::size_t variant) const;
     std::size_t size() const { return sectors_.size(); }
 
@@ -31,6 +32,7 @@ private:
     void collect(const bxml::Node& node);
     AssetStore& assets_;
     std::vector<SectorDefinition> sectors_;
+    bool advancedEdition_{true};
 };
 
 }
