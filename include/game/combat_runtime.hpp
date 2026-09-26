@@ -54,6 +54,8 @@ public:
     bool selectWeapon(int weaponIndex);
     bool setEnemyTargetRoom(int roomId);
     void setRandomSeed(std::uint32_t seed);
+    void configureFlagshipPhase(int phase);
+    int superShieldRemaining() const { return superShield_; }
 
 private:
     CombatResult resolveWeapon(ShipRuntime& attacker, ShipRuntime& target,
@@ -69,6 +71,9 @@ private:
     std::uint32_t randomState_{0x6D2B79F5u};
     float boardingTimer_{0.0f};
     float boardingFightTimer_{0.0f};
+    int flagshipPhase_{0};
+    float droneSurgeTimer_{0.0f};
+    int superShield_{0};
     std::uint32_t nextRandom();
 };
 
