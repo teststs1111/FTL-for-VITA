@@ -651,6 +651,10 @@ public:
         if (!choice.questId.empty() &&
             std::find(activeQuestIds_.begin(), activeQuestIds_.end(), choice.questId) == activeQuestIds_.end())
             activeQuestIds_.push_back(choice.questId);
+        if (!choice.questTargetId.empty()) {
+            const std::string questKey = choice.questId.empty() ? activeEventId_ : choice.questId;
+            questTargets_[questKey] = choice.questTargetId;
+        }
         // Apply all resource modifications from the original event data, not
         // only scrap/fuel. Missiles and drone parts are carried by the combat
         // runtime, so event rewards immediately affect the actual inventory.
