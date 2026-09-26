@@ -44,7 +44,8 @@ static std::string crewNodeText(const bxml::Node& node) {
 
 static void parseCrewEffects(const bxml::Node& node,
                               std::vector<EventCrewMemberEffect>& members,
-                              std::vector<EventCrewRemovalEffect>& removals) {
+                              std::vector<EventCrewRemovalEffect>& removals,
+                              std::vector<EventBoarderEffect>& boarders) {
     for (const auto& c : node.children) {
         if (c.name == "crewMember") {
             EventCrewMemberEffect effect;
@@ -74,6 +75,14 @@ static void parseCrewEffects(const bxml::Node& node,
                 if (idIt != text->attributes.end()) effect.textKey = idIt->second;
             }
             removals.push_back(std::move(effect));
+        } else if (c.name == "boarders") {
+            EventBoarderEffect effect;
+            effect.min = std::max(1, crewAttrInt(c, "min", 1));
+            effect.max = std::max(effect.min, crewAttrInt(c, "max", effect.min));
+            auto it = c.attributes.find("class");
+            if (it != c.attributes.end() && !it->second.empty()) effect.race = it->second;
+            effect.maxGroup = std::max(0, crewAttrInt(c, "max_group", 0));
+            boarders.push_back(std::move(effect));
         }
     }
 }
@@ -135,7 +144,7 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
     }
     event.store = hasChild(node, "store");
     event.repair = hasChild(node, "repair");
-    parseCrewEffects(node, event.crewMembers, event.crewRemovals);
+    parseCrewEffects(node, event.crewMembers, event.crewRemovals, event.boarders);
 
     // Preserve item_modify directly attached to an event. These effects are
     // applied when the event is entered, rather than only after a choice.
@@ -188,7 +197,7 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
             }
             choice.store = hasChild(*e, "store");
             choice.repair = hasChild(*e, "repair");
-            parseCrewEffects(*e, choice.crewMembers, choice.crewRemovals);
+            parseCrewEffects(*e, choice.crewMembers, choice.crewRemovals, choice.boarders);
             if (const auto* items = child(*e, "item_modify")) {
                 for (const auto& item : items->children) {
                     if (item.name != "item") continue;
