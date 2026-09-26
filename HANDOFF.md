@@ -596,3 +596,15 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 - Fix commit: `f63e02379730f7ea7c2d91347eb3d7b482ca596e`.
 - This is a source-level compile fix identified from the latest main branch; GitHub Actions has not yet surfaced a workflow result for this commit, so Host/Vita build success is still not claimed.
 - Next: wait for/inspect the Host and Vita workflow results, then continue with the remaining sector/beacon fidelity work.
+
+
+## 2026-09-27 continuation — CI build errors fixed
+- GitHub Actions was finally inspected directly; the latest `7addfb3` Host and Vita builds both failed during compilation.
+- Host failure showed two concrete issues: the event parser source contained literal `\\n` text between statements, and the event database header on `main` did not contain the `EventSpecialEffects` model used by `main_game.cpp`.
+- Vita failure independently exposed the same missing `EventSpecialEffects` type/member declarations, plus a stale `SystemType::Engines` comparison in `combat_runtime.cpp`; the runtime stores system types as strings.
+- Fixed the event special-effects declarations in `include/data/event_database.hpp` and restored the `special` members on event/choice definitions.
+- Fixed both malformed parser statement separators in `src/data/event_database.cpp`.
+- Fixed the PDS engine check to compare against the runtime string value `"engines"`.
+- Fix commits: `3ad28bc`, `5d4544c`, `e8345f8`.
+- The failures were source/compile issues, not an inability of GitHub Actions to run. A new CI run is now expected from the latest fix commit.
+- Do not claim Host/Vita green until that new run completes successfully.
