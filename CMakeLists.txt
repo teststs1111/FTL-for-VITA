@@ -66,9 +66,13 @@ if(VITA)
         SceTouch_stub
         ScePvf_stub
     )
-    # Keep adjacent loadable segments compatible with vita-elf-create when
-    # newer binutils enable separate-code layout by default.
-    target_link_options(vita_wormhole_prototype PRIVATE -Wl,-z,noseparate-code)
+    # Vita ELF conversion needs compact PT_LOAD spacing. Newer binutils
+    # use a larger maximum page size, leaving no room for injected metadata.
+    target_link_options(vita_wormhole_prototype PRIVATE
+        -Wl,-z,noseparate-code
+        -Wl,-z,max-page-size=0x1000
+        -Wl,-z,common-page-size=0x1000
+    )
     vita_create_self(eboot.bin vita_wormhole_prototype UNSAFE)
     vita_create_vpk(FTL-for-VITA.vpk ${VITA_TITLEID} eboot.bin
         VERSION ${VITA_VERSION}
@@ -82,11 +86,9 @@ if(BUILD_TESTS AND NOT VITA)
     add_executable(test_data tests/test_data.cpp)
     target_link_libraries(test_data PRIVATE wormhole_core)
     add_test(NAME data COMMAND test_data)
-
     add_executable(test_input tests/test_input.cpp)
     target_link_libraries(test_input PRIVATE wormhole_core)
     add_test(NAME input COMMAND test_input)
-
     add_executable(test_localization tests/test_localization.cpp)
     target_link_libraries(test_localization PRIVATE wormhole_core)
     add_test(NAME localization COMMAND test_localization)
