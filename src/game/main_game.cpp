@@ -890,6 +890,7 @@ public:
             combat_.configureFlagshipPhase(flagshipPhase_);
         combat_.setPlayerWeaponCooldownMultiplier(weaponCooldownMultiplier());
         combat_.setPlayerShieldRechargeMultiplier(hasAugment("SHIELD_CHARGE_BOOSTER") ? 0.85f : 1.0f);
+        combat_.setStealthWeapons(hasAugment("STEALTH_WEAPONS"));
         if (hasAugment("WEAPON_PRE_IGNITER"))
             for (auto& weapon : combat_.player.weapons) weapon.ready = true;
         discoverRoomTextures();
@@ -1404,6 +1405,7 @@ public:
                         combat_.loadFlagshipPhase(content_, nextFlagship, combat_.enemy.crew)) {
                         combat_.player = runtime_;
                         combat_.configureFlagshipPhase(flagshipPhase_);
+                        combat_.setStealthWeapons(hasAugment("STEALTH_WEAPONS"));
                         combatMode_ = true;
                         jumpCharging_ = false;
                         jumpCharge_ = 0.0f;
@@ -1538,6 +1540,19 @@ public:
             }
         }
 
+        bool cloakCommand = false;
+        if (input_.pressed(Button::Circle) && input_.down(Button::Square)) {
+            cloakCommand = true;
+            if (combat_.cloaked()) {
+                combatFeedback_ = "クローク解除";
+            } else if (combat_.activateCloaking()) {
+                combatFeedback_ = "クローク起動";
+            } else {
+                combatFeedback_ = "クロークを起動できない";
+            }
+            combatFeedbackTimer_ = 1.2f;
+        }
+
         const auto& playerRooms = combat_.player.content.layout.rooms;
         if (!playerRooms.empty()) {
             const int playerRoomCount = static_cast<int>(playerRooms.size());
@@ -1575,7 +1590,7 @@ public:
                     combatFeedbackTimer_ = 1.0f;
                 }
             }
-            if (input_.pressed(Button::Square)) {
+            if (input_.pressed(Button::Square) && !cloakCommand) {
                 for (int i = 0; i < static_cast<int>(combat_.player.content.layout.doors.size()); ++i) {
                     const auto& door = combat_.player.content.layout.doors[i];
                     if (door.leftRoom == selectedPlayerRoomId || door.rightRoom == selectedPlayerRoomId) {
@@ -1622,7 +1637,7 @@ public:
 
         // FTL retreat: the player must charge the FTL drive before leaving
         // combat. Fuel is consumed when the retreat jump is completed.
-        if (combat_.outcome == CombatOutcome::Ongoing && !powerCommand && input_.pressed(Button::Circle)) {
+        if (combat_.outcome == CombatOutcome::Ongoing && !powerCommand && !cloakCommand && input_.pressed(Button::Circle)) {
             if (!jumpCharging_) {
                 if (fuel_ > 0) {
                     jumpCharging_ = true;
@@ -1751,6 +1766,11 @@ public:
             graphics_.drawLine(x + w, y + h, x + w, y + h - std::min(h, corner),
                 {1.f, 0.82f, 0.25f, 1.f});
             break;
+        }
+
+        if (combat_.cloaked()) {
+            text_.draw(graphics_, "クローク " + std::to_string(static_cast<int>(std::ceil(combat_.cloakRemaining()))) + "秒",
+                leftX + 185.f, 86.f, 11.f, {0.55f, 0.88f, 1.f, 1.f});
         }
 
         if (combat_.selectedWeapon >= 0 &&
@@ -2013,7 +2033,7 @@ public:
                               : Color{0.3f, 0.65f, 0.9f, 1.f});
         }
 
-        text_.draw(graphics_, "←→: 敵ターゲット   ↑↓: クルー部屋   △: クルー   △+L/R: 武器   □: ドア   ○: FTL",
+        text_.draw(graphics_, "←→: 敵ターゲット   ↑↓: クルー部屋   △: クルー   △+L/R: 武器   □: ドア   ○: FTL   ○+□: クローク",
             leftX, 448.f, 11.f, {0.62f, 0.74f, 0.86f, 1.0f});
         if (!combat_.player.systems.empty()) {
             const int systemIndex = std::clamp(selectedSystem_, 0,
