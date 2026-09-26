@@ -11,6 +11,9 @@ namespace wormhole {
 struct EventChoice {
     std::string text;
     std::string load;
+    std::string requirement;
+    int requirementLevel{0};
+    bool blue{false};
     bool hostile{false};
     bool store{false};
     bool repair{false};
