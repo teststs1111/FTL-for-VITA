@@ -62,6 +62,7 @@ public:
     void setPlayerShieldRechargeMultiplier(float multiplier) { playerShieldRechargeMultiplier_ = multiplier; }
     void setStealthWeapons(bool enabled) { stealthWeapons_ = enabled; }
     bool activateCloaking();
+    void deactivateCloaking() { cloakTimer_ = 0.0f; }
     bool cloaked() const { return cloakTimer_ > 0.0f; }
     float cloakRemaining() const { return std::max(0.0f, cloakTimer_); }
     int superShieldRemaining() const { return superShield_; }
