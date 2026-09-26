@@ -17,6 +17,7 @@ struct EventChoice {
     bool hostile{false};
     std::string hostileShipId;
     std::string questId;
+    std::string questTargetId;
     bool store{false};
     bool repair{false};
     int scrap{0};
@@ -36,6 +37,7 @@ struct EventDefinition {
     bool hostile{false};
     std::string hostileShipId;
     std::string questId;
+    std::string questTargetId;
     bool store{false};
     bool repair{false};
     int initialScrap{0};
