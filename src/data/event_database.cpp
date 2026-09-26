@@ -203,7 +203,8 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
         if (it != reward->attributes.end()) event.autoReward.level = it->second;
         event.autoReward.type = nodeText(*reward);
     }
-    parseCrewEffects(node, event.crewMembers, event.crewRemovals, event.boarders);\n    parseSpecialEffects(node, event.special);
+    parseCrewEffects(node, event.crewMembers, event.crewRemovals, event.boarders);
+    parseSpecialEffects(node, event.special);
 
     // item_modify is the event's authoritative resource delta. Preserve
     // negative values (trades/costs) and ranges exactly; rollEventRange()
@@ -272,7 +273,8 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
                 if (it != reward->attributes.end()) choice.autoReward.level = it->second;
                 choice.autoReward.type = nodeText(*reward);
             }
-            parseCrewEffects(*e, choice.crewMembers, choice.crewRemovals, choice.boarders);\n            parseSpecialEffects(*e, choice.special);
+            parseCrewEffects(*e, choice.crewMembers, choice.crewRemovals, choice.boarders);
+            parseSpecialEffects(*e, choice.special);
             parseItemModify(*e, choice.scrap, choice.scrapMax,
                             choice.fuel, choice.fuelMax,
                             choice.missiles, choice.missilesMax,
