@@ -584,13 +584,18 @@ public:
         std::ofstream out(savePath(), std::ios::trunc);
         if (!out) return false;
 
-        out << "FTL_VITA_SAVE 4\n";
+        out << "FTL_VITA_SAVE 5\n";
         out << "ship " << std::quoted(runtime_.content.blueprint.id) << "\n";
         out << "seed " << seed_ << "\n";
         out << "sector " << sector_ << "\n";
         out << "flagship " << flagshipPhase_ << "\n";
         out << "beacon " << currentBeacon_ << ' ' << selectedBeacon_ << "\n";
         out << "fleet " << fleetRow_ << "\n";
+        out << "current_sector " << std::quoted(currentSectorType_) << "\n";
+        out << "unique_sectors " << usedUniqueSectorTypes_.size() << "\n";
+        for (const auto& name : usedUniqueSectorTypes_) out << std::quoted(name) << "\n";
+        out << "map_revealed " << (mapRevealed_ ? 1 : 0) << "\n";
+        out << "secret_pending " << (secretSectorPending_ ? 1 : 0) << "\n";
         out << "event_usage " << sectorEventUsage_.size() << "\n";
         for (const auto& entry : sectorEventUsage_)
             out << std::quoted(entry.first) << ' ' << entry.second << "\n";
@@ -640,7 +645,9 @@ public:
         std::getline(in, header);
         const bool legacySave = header == "FTL_VITA_SAVE 2";
         const bool saveV3 = header == "FTL_VITA_SAVE 3";
-        const bool currentSave = header == "FTL_VITA_SAVE 4";
+        const bool saveV4 = header == "FTL_VITA_SAVE 4";
+        const bool saveV5 = header == "FTL_VITA_SAVE 5";
+        const bool currentSave = saveV4 || saveV5;
         if (!legacySave && !saveV3 && !currentSave) return false;
 
         std::string key, shipId;
@@ -653,6 +660,28 @@ public:
         std::size_t count = 0;
         in >> key >> currentBeacon_ >> selectedBeacon_;
         in >> key >> fleetRow_;
+        currentSectorType_.clear();
+        usedUniqueSectorTypes_.clear();
+        mapRevealed_ = false;
+        secretSectorPending_ = false;
+        if (saveV5) {
+            in >> key >> std::quoted(currentSectorType_);
+            if (key != "current_sector") return false;
+            in >> key >> count;
+            if (key != "unique_sectors") return false;
+            for (std::size_t i = 0; i < count; ++i) {
+                std::string name;
+                in >> std::quoted(name);
+                if (!name.empty()) usedUniqueSectorTypes_.push_back(name);
+            }
+            int flag = 0;
+            in >> key >> flag;
+            if (key != "map_revealed") return false;
+            mapRevealed_ = flag != 0;
+            in >> key >> flag;
+            if (key != "secret_pending") return false;
+            secretSectorPending_ = flag != 0;
+        }
         sectorEventUsage_.clear();
         if (currentSave) {
             in >> key >> count;
@@ -768,6 +797,8 @@ public:
             if (!target.empty()) questTargets_[quest] = target;
         }
 
+        if (currentSectorType_.empty())
+            selectCurrentSectorDefinition();
         sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
         combat_.player = runtime_;
         currentBeacon_ = std::clamp(currentBeacon_, -1, static_cast<int>(sectorGraph_.nodes().size()) - 1);
@@ -818,6 +849,12 @@ public:
         fleetRow_ = -1;
         sector_ = 0;
         flagshipPhase_ = 0;
+        currentSectorType_.clear();
+        usedUniqueSectorTypes_.clear();
+        mapRevealed_ = false;
+        secretSectorPending_ = false;
+        selectCurrentSectorDefinition();
+        sectorGraph_.generate(sector_, seed_);
         selectedBeacon_ = sectorGraph_.startNode();
         activeQuestIds_.clear();
         questTargets_.clear();
