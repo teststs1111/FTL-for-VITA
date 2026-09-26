@@ -55,6 +55,10 @@ bool SectorDatabase::load() {
     return !sectors_.empty();
 }
 const SectorDefinition* SectorDatabase::select(int sector,std::size_t variant) const {
+    static const std::vector<std::string> none;
+    return select(sector, variant, none);
+}
+const SectorDefinition* SectorDatabase::select(int sector,std::size_t variant,const std::vector<std::string>& usedUnique) const {
     if(sectors_.empty()) return nullptr;
     const SectorDefinition* finalSector=nullptr;
     for(const auto& s:sectors_) {
@@ -65,9 +69,15 @@ const SectorDefinition* SectorDatabase::select(int sector,std::size_t variant) c
     std::vector<const SectorDefinition*> candidates;
     for(const auto& s:sectors_) {
         if(s.name=="FINAL" || s.events.empty() || s.minSector>sector) continue;
+        if(s.unique && std::find(usedUnique.begin(), usedUnique.end(), s.name) != usedUnique.end()) continue;
         candidates.push_back(&s);
     }
     if(candidates.empty()) return nullptr;
     return candidates[variant%candidates.size()];
 }
+}
+
+const SectorDefinition* SectorDatabase::find(const std::string& name) const {
+    for (const auto& s : sectors_) if (s.name == name) return &s;
+    return nullptr;
 }
