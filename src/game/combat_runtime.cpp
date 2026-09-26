@@ -23,6 +23,7 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     boarders.clear();
     flagshipPhase_ = 0;
     droneSurgeTimer_ = 0.0f;
+    playerWeaponCooldownMultiplier_ = 1.0f;
     superShield_ = 0;
 
     const LoadedShip* playerShip = contentSource.playerShip();
@@ -128,7 +129,7 @@ void CombatRuntime::update(float dt) {
     if (dt <= 0.0f || outcome != CombatOutcome::Ongoing) return;
 
     enemyFireDelay_ = std::max(0.0f, enemyFireDelay_ - dt);
-    player.updateWeapons(dt);
+    player.updateWeapons(dt, playerWeaponCooldownMultiplier_);
     enemy.updateWeapons(dt);
     player.updateDrones(dt);
     enemy.updateDrones(dt);
