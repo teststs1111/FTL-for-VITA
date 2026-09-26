@@ -121,7 +121,7 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
     return true;
 }
 
-void ShipRuntime::updateWeapons(float dt) {
+void ShipRuntime::updateWeapons(float dt, float cooldownMultiplier) {
     if (!valid || dt <= 0.f) return;
 
     int weaponSystemPower = 0;
