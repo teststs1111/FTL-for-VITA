@@ -352,6 +352,7 @@ EventDatabase::BeaconType EventDatabase::classify(const std::string& id) const {
     const auto* event = find(id);
     if (!event) return BeaconType::Empty;
     if (event->store) return BeaconType::Store;
+    if (event->distressBeacon) return BeaconType::Distress;
     std::string lower = id;
     std::transform(lower.begin(), lower.end(), lower.begin(),
                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
