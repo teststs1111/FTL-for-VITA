@@ -1025,12 +1025,66 @@ public:
         }
     }
 
+    void applyEventDamageEffects(const std::vector<EventDamageEffect>& effects) {
+        for (const auto& effect : effects) {
+            if (effect.amount == 0) continue;
+            std::string kind = effect.effect;
+            std::transform(kind.begin(), kind.end(), kind.begin(), [](unsigned char ch) {
+                return static_cast<char>(std::tolower(ch));
+            });
+
+            if (effect.system.empty()) {
+                if (effect.amount > 0)
+                    runtime_.hull = std::max(0, runtime_.hull - effect.amount);
+                else
+                    runtime_.hull = std::min(runtime_.maxHull, runtime_.hull - effect.amount);
+                continue;
+            }
+
+            auto canonical = [](std::string value) {
+                std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
+                    return static_cast<char>(std::tolower(ch));
+                });
+                if (value == "shield") return std::string("shields");
+                if (value == "engine") return std::string("engines");
+                if (value == "pilot") return std::string("piloting");
+                if (value == "door") return std::string("doors");
+                return value;
+            };
+            const std::string wanted = canonical(effect.system);
+            int room = -1;
+            for (const auto& system : runtime_.systems) {
+                if (canonical(system.type) == wanted) {
+                    room = system.room;
+                    break;
+                }
+            }
+            if (room < 0) continue;
+
+            if (kind == "fire") {
+                if (effect.amount > 0) runtime_.setRoomFire(room, true);
+            } else if (kind == "breach") {
+                if (effect.amount > 0) runtime_.setRoomBreach(room, true);
+            } else if (kind == "ion") {
+                if (effect.amount > 0) runtime_.ionizeSystemInRoom(room, effect.amount);
+            } else if (kind == "stun") {
+                runtime_.stunSystemsInRoom(room, static_cast<float>(std::max(1, effect.amount)));
+            } else if (effect.amount > 0) {
+                runtime_.damageSystemInRoom(room, effect.amount);
+            } else {
+                runtime_.repairSystemInRoom(room, -effect.amount);
+            }
+        }
+        combat_.player = runtime_;
+    }
+
     void applyEventImmediateEffects(const EventDefinition& event) {
         scrap_ = std::max(0, scrap_ + applyScrapAugments(rollEventRange(event.initialScrap, event.initialScrapMax, 0x11u)));
         fuel_ = std::max(0, fuel_ + rollEventRange(event.initialFuel, event.initialFuelMax, 0x23u));
         runtime_.missiles = std::max(0, runtime_.missiles + rollEventRange(event.initialMissiles, event.initialMissilesMax, 0x37u));
         combat_.player.missiles = runtime_.missiles;
         droneParts_ = std::max(0, droneParts_ + rollEventRange(event.initialDrones, event.initialDronesMax, 0x49u));
+    }
     }
 
     bool eventChoiceAvailable(const EventChoice& choice) const {
@@ -1168,6 +1222,7 @@ public:
         runtime_.missiles = std::max(0, runtime_.missiles + rollEventRange(choice.missiles, choice.missilesMax, 0x89u + static_cast<std::uint32_t>(activeEventChoice_)));
         combat_.player.missiles = runtime_.missiles;
         droneParts_ = std::max(0, droneParts_ + rollEventRange(choice.drones, choice.dronesMax, 0x97u + static_cast<std::uint32_t>(activeEventChoice_)));
+        applyEventDamageEffects(choice.effects);
         if (choice.load.empty() && !choice.hostile && !choice.store && !choice.repair) {
             ++visitedBeacons_;
             sceneMode_ = SceneMode::SectorMap;
