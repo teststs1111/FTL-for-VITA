@@ -454,3 +454,14 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 - Existing system-level and weapon/drone checks remain in place.
 - Latest Blue Option commit: `0ed1be757810b4bee729bba9d0e1f778fa5c85ce`.
 - No proprietary archive or extracted asset was committed.
+
+
+## 2026-09-26 continuation — environment, distressBeacon, weapon event effects
+- Inspected the real base `data/events.xml`: 7 `environment` nodes, 11 `distressBeacon` nodes, and 7 `weapon` nodes.
+- Observed real environment values are `PDS` targeting `player`, `asteroid`, and `sun`.
+- Event data now preserves environment type/target and explicit distress-beacon markers on both top-level events and nested choice events.
+- Beacon classification now honors the explicit `<distressBeacon/>` tag before relying on event-name heuristics.
+- Real event `weapon name="..."` effects are now applied as actual weapon rewards. Named weapons are loaded from the real Blueprint database; `RANDOM` selects a deterministic non-owned weapon when a weapon slot is available.
+- Environment data is currently modeled but not yet fully mapped to combat hazard mechanics (PDS/asteroid/sun damage/evasion/oxygen behavior remains a separate fidelity step).
+- Latest commits: `2d79d2fd92e03b78ab316faa5154ff10cf306c94`, `14242aa2d3251db508ba76f332780eacb5f208bb`, `1ff00bcfe40b54a2660d803e5243339fab020f2c`, `ba061afd675d77503c14c761af397f3200ae5bac`.
+- No proprietary archive or extracted asset was committed.
