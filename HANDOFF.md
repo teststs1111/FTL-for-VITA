@@ -262,6 +262,11 @@ This file is the durable project memory. Chat history is supplementary.
 
 ## 2026-09-26 continuation: build blocker after AE-layer pass
 
+- Namespace closure causing the large `main_game.cpp` compiler cascade was fixed in commit `3523041c3492f98c2edc1db36cdda9e810c91ea8`.
+- Real `eventList` `<event load="...">` references are now parsed in commit `23eaa057c4d06c598af5d6cf7a287d1888c6c93f`, while retaining support for named inline event entries.
+- Host #560 and Vita #252 are queued for the latest event-parser changes; these must be checked before declaring the parser fix green.
+
+
 - Host build #557: **failed during Build step**.
 - Vita build #249: **failed** after the same commit.
 - The failure has not been marked as solved. The next session must inspect/fix the compile error before adding more AE behavior.
