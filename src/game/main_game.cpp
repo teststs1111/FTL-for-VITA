@@ -1071,13 +1071,14 @@ public:
     }
 
     void registerQuest(const EventDefinition& event) {
-        if (!event.questId.empty()) {
-            if (std::find(activeQuestIds_.begin(), activeQuestIds_.end(), event.questId) == activeQuestIds_.end())
-                activeQuestIds_.push_back(event.questId);
-        }
-        if (!event.questTargetId.empty()) {
-            questTargets_[event.questId.empty() ? event.id : event.questId] = event.questTargetId;
-        }
+        if (event.questTargetId.empty()) return;
+        // In the supplied FTL data, quest nodes normally carry only
+        // event="TARGET_EVENT"; the quest's identity is therefore the
+        // originating event id unless an explicit name/id is present.
+        const std::string questKey = event.questId.empty() ? event.id : event.questId;
+        if (std::find(activeQuestIds_.begin(), activeQuestIds_.end(), questKey) == activeQuestIds_.end())
+            activeQuestIds_.push_back(questKey);
+        questTargets_[questKey] = event.questTargetId;
     }
 
     void completeQuestForEvent(const std::string& eventId) {
@@ -1416,11 +1417,12 @@ public:
             return;
 
         const auto& choice = event->choices[static_cast<std::size_t>(activeEventChoice_)];
-        if (!choice.questId.empty() &&
-            std::find(activeQuestIds_.begin(), activeQuestIds_.end(), choice.questId) == activeQuestIds_.end())
-            activeQuestIds_.push_back(choice.questId);
         if (!choice.questTargetId.empty()) {
+            // Choice-level quest nodes in the real data also usually omit a
+            // quest name. Keep the originating event as the stable quest key.
             const std::string questKey = choice.questId.empty() ? activeEventId_ : choice.questId;
+            if (std::find(activeQuestIds_.begin(), activeQuestIds_.end(), questKey) == activeQuestIds_.end())
+                activeQuestIds_.push_back(questKey);
             questTargets_[questKey] = choice.questTargetId;
         }
         // Apply all resource modifications from the original event data, not
