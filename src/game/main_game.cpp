@@ -584,7 +584,7 @@ public:
         std::ofstream out(savePath(), std::ios::trunc);
         if (!out) return false;
 
-        out << "FTL_VITA_SAVE 3\n";
+        out << "FTL_VITA_SAVE 4\n";
         out << "ship " << std::quoted(runtime_.content.blueprint.id) << "\n";
         out << "seed " << seed_ << "\n";
         out << "sector " << sector_ << "\n";
@@ -639,8 +639,9 @@ public:
         std::string header;
         std::getline(in, header);
         const bool legacySave = header == "FTL_VITA_SAVE 2";
-        const bool currentSave = header == "FTL_VITA_SAVE 3";
-        if (!legacySave && !currentSave) return false;
+        const bool saveV3 = header == "FTL_VITA_SAVE 3";
+        const bool currentSave = header == "FTL_VITA_SAVE 4";
+        if (!legacySave && !saveV3 && !currentSave) return false;
 
         std::string key, shipId;
         in >> key >> std::quoted(shipId);
@@ -683,16 +684,46 @@ public:
 
         in >> key >> count;
         for (std::size_t i = 0; i < count; ++i) {
-            std::string race, name; int room, health, maxHealth, alive;
+            std::string race, name;
+            int room, health, maxHealth, alive;
+            int pilot = 0, engines = 0, shields = 0, weapons = 0, repair = 0, combat = 0;
             in >> std::quoted(race) >> std::quoted(name) >> room >> health >> maxHealth >> alive;
-            for (auto& crew : runtime_.crew) {
-                if (crew.race != race || crew.name != name) continue;
-                crew.room = room;
-                crew.maxHealth = maxHealth;
-                crew.health = std::clamp(health, 0, maxHealth);
-                crew.alive = alive != 0 && crew.health > 0;
-                break;
+            if (currentSave)
+                in >> pilot >> engines >> shields >> weapons >> repair >> combat;
+
+            RuntimeCrew* crew = nullptr;
+            if (i < runtime_.crew.size()) {
+                crew = &runtime_.crew[i];
+            } else {
+                RuntimeCrew member;
+                member.race = race;
+                member.name = name;
+                member.room = room;
+                member.maxHealth = std::max(1, maxHealth);
+                member.health = std::clamp(health, 0, member.maxHealth);
+                member.alive = alive != 0 && member.health > 0;
+                member.pilotSkill = pilot;
+                member.enginesSkill = engines;
+                member.shieldsSkill = shields;
+                member.weaponsSkill = weapons;
+                member.repairSkill = repair;
+                member.combatSkill = combat;
+                if (runtime_.addCrew(member) >= 0 && i < runtime_.crew.size())
+                    crew = &runtime_.crew[i];
             }
+            if (!crew) continue;
+            crew->race = race;
+            crew->name = name;
+            crew->room = room;
+            crew->maxHealth = std::max(1, maxHealth);
+            crew->health = std::clamp(health, 0, crew->maxHealth);
+            crew->alive = alive != 0 && crew->health > 0;
+            crew->pilotSkill = pilot;
+            crew->enginesSkill = engines;
+            crew->shieldsSkill = shields;
+            crew->weaponsSkill = weapons;
+            crew->repairSkill = repair;
+            crew->combatSkill = combat;
         }
 
         in >> key >> count;
