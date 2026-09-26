@@ -465,3 +465,14 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 - Environment data is currently modeled but not yet fully mapped to combat hazard mechanics (PDS/asteroid/sun damage/evasion/oxygen behavior remains a separate fidelity step).
 - Latest commits: `2d79d2fd92e03b78ab316faa5154ff10cf306c94`, `14242aa2d3251db508ba76f332780eacb5f208bb`, `1ff00bcfe40b54a2660d803e5243339fab020f2c`, `ba061afd675d77503c14c761af397f3200ae5bac`.
 - No proprietary archive or extracted asset was committed.
+
+
+## 2026-09-26 continuation — environmental hazard runtime
+- Real event environment values confirmed from the supplied archive: `PDS target="player"` (3), `asteroid` (3), `sun` (1).
+- CombatRuntime now models environment state and applies deterministic periodic hazards:
+  - asteroid: removes one shield layer, otherwise deals 1 hull/system damage with small fire/breach chances to both ships;
+  - sun: periodic fires on both ships, reduced fire count while shields are present, with room damage chance;
+  - PDS: ASB-style periodic 3 damage + breach against the configured target, with player evasion derived from engines/piloting and cloaking.
+- EventDefinition/EventChoice environment metadata is now carried into pending combat state and applied when the hostile encounter starts.
+- This is a gameplay approximation of the documented vanilla hazard timings/behavior; visual warning/siren/projectile presentation and exact internal ASB/asteroid/sun formulas remain future fidelity work. Environmental hazard behavior references include the FTL Environmental Hazards documentation. 
+- Latest implementation commits: `731198e742ca9ceffbb78ef7d4f03965e1e85903`, `af2dec0046b724489f3fc06cff2d5f4cce3ec823`, `576928b91d659c6411a888589daaa2080c9dab67a6`.
