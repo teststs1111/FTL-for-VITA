@@ -30,6 +30,10 @@ struct EventDefinition {
     bool hostile{false};
     bool store{false};
     bool repair{false};
+    int initialScrap{0};
+    int initialFuel{0};
+    int initialMissiles{0};
+    int initialDrones{0};
     bool valid{false};
 };
 
