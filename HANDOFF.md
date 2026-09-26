@@ -538,3 +538,24 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 - Existing `req` handling continues to cover crew race, crew skill + `lvl`, systems + `lvl`, augment, weapon and drone requirements.
 - Numeric resource requirements and persistent story/flag requirements remain a later fidelity item; the current real-data inspection did not justify inventing unsupported semantics.
 - Reference inspection confirms the original event format uses hidden conditional choices such as `req="doors" lvl="3"` and `req="ADV_SCANNERS"`; see FTL Event Parser examples. citeturn0search0turn0search3
+
+
+## 2026-09-27 continuation — real event special effects
+- Re-inspected the Library copy of the legitimate user-supplied `ftl.dat`; it is still external and is not committed to the repository.
+- Confirmed real event data contains `modifyPursuit`, `reveal_map`, `secretSector`, and named `augment` effects. Observed `modifyPursuit` values include -2, -1, and +1; `secretSector` occurs in the base event data; named/random-style augment rewards are present.
+- Added `EventSpecialEffects` to the event data model and parser for both top-level events and nested choice events.
+- Runtime now applies:
+  - `modifyPursuit` to the existing Rebel-fleet boundary state, clamped to the current compatibility graph;
+  - `reveal_map` to persistent map-revealed state;
+  - `augment` rewards using the real loaded augment blueprint database and the existing three-slot inventory;
+  - `secretSector` to a persistent pending-secret-sector state marker.
+- The secret-sector marker is intentionally not yet converted into a full Crystal Home-sector topology switch; that requires replacing the generic sector graph with a real sector-transition model. No fake transition was added.
+- Latest implementation commits: `82093cc`, `1c5b9ac`, `95b45f3`.
+- CI has not surfaced a workflow run for the latest commit yet; **do not call this continuation CI-green**.
+
+### Next implementation order
+1. Replace the compatibility graph with real sector selection/topology and use the parsed `unique` sector definitions.
+2. Turn `reveal_map` into actual hidden-beacon visibility rather than only persistent state.
+3. Convert `secretSector` into the real Crystal Home-sector transition.
+4. Add dedicated regression fixtures for special event effects.
+5. Continue deeper ship/system/weapon/crew fidelity and the real FTL HUD/input layer.
