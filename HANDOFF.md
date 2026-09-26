@@ -516,3 +516,14 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 2. Implement remaining Blue Option numeric resource / quest-state conditions.
 3. Wire additional real event effects such as modifyPursuit, reveal_map, secretSector and augment rewards.
 4. Then replace the generic sector graph with original beacon generation constraints and Rebel fleet pursuit.
+
+
+## 2026-09-26 continuation — enemy crew wipe combat path
+- CombatRuntime now distinguishes an enemy defeat caused by complete crew elimination from ordinary hull destruction.
+- A manned enemy is marked EnemyDestroyed when every RuntimeCrew member is dead; automated ships with zero crew still require hull destruction.
+- MainGame now selects the real deadCrew outcome for crew-wipe victories, while destroyed outcomes remain the path for hull destruction.
+- deadCrew reward parsing was already present; this change connects it to the actual combat outcome.
+- No separate test executable exists yet for CombatRuntime; the repository currently has data/input/localization/real-data tests, so this path is covered structurally but still needs a dedicated combat regression.
+- Latest combat header commit: 9528b179fbfb1693416e81e6500ff6da680c6e22.
+- Latest combat implementation commit: 40758f1cefa50bb648c2132079697ada857f935f.
+- Latest MainGame reward integration commit: f7f9e9f3dc8bc8c3396a17d92ae6c283495ada03.
