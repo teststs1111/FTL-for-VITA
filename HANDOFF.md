@@ -527,3 +527,14 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 - Latest combat header commit: 9528b179fbfb1693416e81e6500ff6da680c6e22.
 - Latest combat implementation commit: 40758f1cefa50bb648c2132079697ada857f935f.
 - Latest MainGame reward integration commit: f7f9e9f3dc8bc8c3396a17d92ae6c283495ada03.
+
+
+## 2026-09-26 continuation — conditional hidden / Blue Options
+- Real FTL event data uses `hidden="true"` extensively for conditional Blue Options; dropping these nodes loses valid choices.
+- `EventChoice.hidden` was added and the parser now preserves the attribute instead of discarding the choice.
+- Hidden choices without a requirement remain internal and are not selectable/rendered.
+- Hidden choices with a satisfied `req` are now selectable and rendered, matching the conditional nature of Blue Options.
+- Event UI now compacts visible choices instead of leaving gaps caused by hidden branches.
+- Existing `req` handling continues to cover crew race, crew skill + `lvl`, systems + `lvl`, augment, weapon and drone requirements.
+- Numeric resource requirements and persistent story/flag requirements remain a later fidelity item; the current real-data inspection did not justify inventing unsupported semantics.
+- Reference inspection confirms the original event format uses hidden conditional choices such as `req="doors" lvl="3"` and `req="ADV_SCANNERS"`; see FTL Event Parser examples. citeturn0search0turn0search3
