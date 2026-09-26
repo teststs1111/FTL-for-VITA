@@ -180,7 +180,7 @@ static void testEventDatabase() {
     const std::string events =
         "<FTL><eventList name=\"NEUTRAL\"><event load=\"BASE\" weight=\"1\"/></eventList>"
         "<event name=\"BASE\"><text>base event</text><choice><text>Fight</text>"
-        "<event><ship hostile=\"true\" name=\"ENGI_SCOUT\"/></event></choice></event><ship name=\"TEST_SHIP\"><destroyed><text id=\"destroyed_test\"/><item_modify><item type=\"scrap\" min=\"10\" max=\"20\"/><item type=\"fuel\" min=\"-2\" max=\"-1\"/></item_modify><weapon name=\"BEAM_2\"/></destroyed><deadCrew><autoReward level=\"LOW\">stuff</autoReward></deadCrew></ship><event name="LOCALIZED"><text id="event_LOCALIZED_text"/><choice><text id="event_LOCALIZED_choice"/><event load="BASE"/></choice></event></FTL>";
+        "<event><ship hostile=\"true\" name=\"ENGI_SCOUT\"/></event></choice></event><ship name=\"TEST_SHIP\"><destroyed><text id=\"destroyed_test\"/><item_modify><item type=\"scrap\" min=\"10\" max=\"20\"/><item type=\"fuel\" min=\"-2\" max=\"-1\"/></item_modify><weapon name=\"BEAM_2\"/></destroyed><deadCrew><autoReward level=\"LOW\">stuff</autoReward></deadCrew></ship><event name=\"LOCALIZED\"><text id=\"event_LOCALIZED_text\"/><choice><text id=\"event_LOCALIZED_choice\"/><event load=\"BASE\"/></choice></event></FTL>";
     const std::string dlc =
         "<FTL><eventList name=\"NEUTRAL\"><event load=\"DLC\" weight=\"1\"/></eventList>"
         "<eventList name=\"INLINE_POOL\"><event><text>inline</text><item_modify><item type=\"drones\" min=\"-1\" max=\"-1\"/></item_modify></event></eventList>"
