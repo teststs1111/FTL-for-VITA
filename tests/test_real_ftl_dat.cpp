@@ -3,6 +3,7 @@
 #include "data/ftl_dat.hpp"
 #include "data/sector_database.hpp"
 #include "data/ship_content.hpp"
+#include "game/ship_runtime.hpp"
 #include <cassert>
 #include <cstdlib>
 #include <string>
@@ -37,6 +38,11 @@ int main() {
     assert(events.load());
     assert(events.resolve("STORE_REBELSIDE_SEARCH", 0) != nullptr);
 
+    const auto* crewRemoval = events.find("CREW_DEAD_TEST");
+    assert(crewRemoval != nullptr);
+    assert(crewRemoval->crewRemovals.size() == 1);
+    assert(!crewRemoval->crewRemovals.front().clone);
+
     wormhole::SectorDatabase sectors(assets);
     sectors.setAdvancedEdition(true);
     assert(sectors.load());
@@ -52,6 +58,18 @@ int main() {
     content.setAdvancedEdition(true);
     assert(content.loadPlayerShip("data/blueprints.xml", "PLAYER_SHIP_ANAEROBIC"));
     assert(content.playerShip()->blueprint.id == "PLAYER_SHIP_ANAEROBIC");
+
+    content.setAdvancedEdition(false);
+    assert(content.loadPlayerShip());
+    wormhole::ShipRuntime runtime;
+    assert(runtime.load(content));
+    const std::size_t beforeCrew = runtime.crew.size();
+    wormhole::RuntimeCrew extra;
+    extra.race = "human";
+    extra.name = "event_test";
+    assert(runtime.addCrew(extra) >= 0);
+    assert(runtime.crew.size() >= beforeCrew);
+    assert(runtime.removeCrewByRace("human", false) == 1);
 
     return 0;
 }
