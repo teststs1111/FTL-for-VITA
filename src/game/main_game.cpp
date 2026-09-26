@@ -968,6 +968,19 @@ public:
         combat_.player = runtime_;
         combat_.boarders = pendingBoarders_;
         pendingBoarders_.clear();
+        for (std::size_t i = 0; i < combat_.boarders.size(); ++i) {
+            auto& boarder = combat_.boarders[i];
+            if (boarder.room < 0 && !combat_.player.content.layout.rooms.empty()) {
+                const auto& rooms = combat_.player.content.layout.rooms;
+                boarder.room = rooms[i % rooms.size()].id;
+            }
+            if (boarder.race == "random" && !combat_.enemy.crew.empty()) {
+                const auto enemyIt = std::find_if(combat_.enemy.crew.begin(), combat_.enemy.crew.end(),
+                    [](const RuntimeCrew& crew) { return crew.alive && !crew.race.empty(); });
+                if (enemyIt != combat_.enemy.crew.end())
+                    boarder.race = enemyIt->race;
+            }
+        }
         if (sector_ >= 7 && flagshipPhase_ > 0)
             combat_.configureFlagshipPhase(flagshipPhase_);
         combat_.setPlayerWeaponCooldownMultiplier(weaponCooldownMultiplier());
