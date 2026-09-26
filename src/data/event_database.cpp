@@ -296,7 +296,8 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
         !event.boarders.empty() || !event.questTargetId.empty() ||
         event.special.modifyPursuit != 0 || event.special.revealMap ||
         event.special.secretSector || !event.special.augmentReward.empty();
-    event.valid = !event.text.empty() || !event.choices.empty() ||
+    const bool inlineEvent = event.id.rfind("__inline_", 0) == 0;
+    event.valid = inlineEvent || !event.text.empty() || !event.choices.empty() ||
                   event.hostile || event.store || event.repair ||
                   hasResourceEffect || hasGameplayEffect;
     if (!event.valid) return;
