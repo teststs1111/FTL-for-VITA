@@ -290,3 +290,5 @@ This file is the durable project memory. Chat history is supplementary.
 - Build log inspection found two concrete compile errors in main_game.cpp: missing auto on scanner label and missing closure of the anonymous namespace before MainGame definitions. Fixed in 4a8019658319fe126b1951dcc76fb148ec155dc3.
 
 - Host #569 reached successful compilation/linking of wormhole_core and tests; final link exposed one missing CombatRuntime::activateCloaking definition. Implemented in e13152613b79be869dccd1ed0acc06a0600443e3. This should be the next build verification point.
+
+- Host #571 exposed a second cloaking compile issue: ShipRuntime has no hasSystem/SystemType API. Replaced it with direct RuntimeSystem type lookup in 7d1647908ce232acc4acd2b2f7fca1dbad6e06ee.
