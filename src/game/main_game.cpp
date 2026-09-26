@@ -827,6 +827,15 @@ public:
             text_.draw(graphics_, "セーブデータあり", 700.f, 105.f, 14.f, {0.82f, 0.78f, 0.48f, 1.f});
     }
 
+    bool hasAugment(const char* id) const {
+        return std::find(augmentIds_.begin(), augmentIds_.end(), id) != augmentIds_.end();
+    }
+
+    float weaponCooldownMultiplier() const {
+        // Automated Reloader: 10% faster weapon charging.
+        return hasAugment("AUTO_RELOADER") ? 0.90f : 1.0f;
+    }
+
     void enterCombatFromBeacon(const std::string& enemyShipId = {}) {
         // Start every encounter from a clean CombatRuntime state. This resets
         // the previous outcome, projectile queue, boarding timers and enemy
@@ -858,6 +867,7 @@ public:
         combat_.player = runtime_;
         if (sector_ >= 7 && flagshipPhase_ > 0)
             combat_.configureFlagshipPhase(flagshipPhase_);
+        combat_.setPlayerWeaponCooldownMultiplier(weaponCooldownMultiplier());
         discoverRoomTextures();
         discoverWeaponAndDroneTextures();
         discoverCrewTextures();
