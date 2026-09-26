@@ -445,3 +445,12 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 - Existing `completeQuestForEvent()` now removes the matching active quest and target mapping when the target event is entered.
 - Latest quest fix commit: `8ee73f12a995756de70a56577f70e456514e9ed2`.
 - No proprietary data was committed.
+
+
+## 2026-09-26 continuation — Blue Option requirements
+- Inspected the real base event XML: hidden/blue-style choices use `req` + optional `lvl`, including crew/system requirements such as `pilot`, `engines`, `shields`, `weapons`, `doors`, `medbay`, `teleporter`, `cloaking`, `hacking`, `mind`, `sensors`, and equipment identifiers.
+- Runtime choice checks now evaluate crew skill levels for pilot/engines/shields/weapons/repair/combat when `lvl` is present.
+- Runtime choice checks also recognize owned augment identifiers through the existing augment inventory.
+- Existing system-level and weapon/drone checks remain in place.
+- Latest Blue Option commit: `0ed1be757810b4bee729bba9d0e1f778fa5c85ce`.
+- No proprietary archive or extracted asset was committed.
