@@ -50,6 +50,7 @@ public:
             aeEnabled_ = true;
             content_.setAdvancedEdition(aeEnabled_);
             eventDatabase_.setAdvancedEdition(aeEnabled_);
+            sectorDatabase_.setAdvancedEdition(aeEnabled_);
             if (const auto* bytes = content_.assets().getBytes("data/text-ja.xml"))
                 localization_.loadFtlTextXml(*bytes);
             eventDatabase_.load();
@@ -102,6 +103,7 @@ public:
         aeEnabled_ = enabled;
         content_.setAdvancedEdition(aeEnabled_);
         eventDatabase_.setAdvancedEdition(aeEnabled_);
+        sectorDatabase_.setAdvancedEdition(aeEnabled_);
         eventDatabase_.load();
         eventOrder_ = eventDatabase_.ids();
         sectorDatabase_.load();
