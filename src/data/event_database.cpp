@@ -165,8 +165,10 @@ void EventDatabase::collectEvents(const bxml::Node& node) {
                 pool.entries.push_back({nameIt->second, std::max(1, attrInt(c, "weight", 1))});
                 addEvent(c, nameIt->second);
             }
-            if (!pool.entries.empty() && eventPools_.find(idIt->second) == eventPools_.end())
-                eventPools_.emplace(idIt->second, std::move(pool));
+            if (!pool.entries.empty()) {
+                if (replacingPools_) eventPools_[idIt->second] = std::move(pool);
+                else if (eventPools_.find(idIt->second) == eventPools_.end()) eventPools_.emplace(idIt->second, std::move(pool));
+            }
         }
     }
     for (const auto& c : node.children) collectEvents(c);
@@ -194,15 +196,25 @@ bool EventDatabase::load() {
     order_.clear();
     eventPools_.clear();
 
+    replacingPools_ = false;
     for (const auto& name : assets_.fileNames()) {
         if (!startsWithEvents(name)) continue;
         const auto* bytes = assets_.getBytes(name);
         if (!bytes || bytes->empty()) continue;
-        try {
-            collectEvents(bxml::read(*bytes));
-        } catch (...) {
-            // One malformed/non-standard optional XML must not prevent the
-            // remaining FTL event files from loading.
+        try { collectEvents(bxml::read(*bytes)); } catch (...) {}
+    }
+    if (advancedEdition_) {
+        const char* extra[] = {"data/dlcEvents.xml", "data/newEvents.xml"};
+        for (const char* name : extra) {
+            const auto* bytes = assets_.getBytes(name);
+            if (!bytes || bytes->empty()) continue;
+            try { collectEvents(bxml::read(*bytes)); } catch (...) {}
+        }
+        const auto* overwrite = assets_.getBytes("data/dlcEventsOverwrite.xml");
+        if (overwrite && !overwrite->empty()) {
+            replacingPools_ = true;
+            try { collectEvents(bxml::read(*overwrite)); } catch (...) {}
+            replacingPools_ = false;
         }
     }
     return !events_.empty();
