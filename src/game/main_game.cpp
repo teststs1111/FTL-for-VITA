@@ -1078,12 +1078,57 @@ public:
         combat_.player = runtime_;
     }
 
+    void applyEventCrewEffects(const std::vector<EventCrewMemberEffect>& members,
+                                const std::vector<EventCrewRemovalEffect>& removals) {
+        for (const auto& effect : members) {
+            const int count = std::max(0, effect.amount);
+            for (int i = 0; i < count; ++i) {
+                RuntimeCrew member;
+                member.race = effect.race.empty() ? "human" : effect.race;
+                member.name = effect.id;
+                member.room = runtime_.content.layout.rooms.empty() ? -1 : runtime_.content.layout.rooms.front().id;
+                member.maxHealth = 100;
+                member.health = 100;
+                member.alive = true;
+                member.pilotSkill = effect.allSkills ? 2 : effect.pilot;
+                member.enginesSkill = effect.allSkills ? 2 : effect.engines;
+                member.shieldsSkill = effect.allSkills ? 2 : effect.shields;
+                member.weaponsSkill = effect.allSkills ? 2 : effect.weapons;
+                member.repairSkill = effect.allSkills ? 2 : effect.repair;
+                member.combatSkill = effect.allSkills ? 2 : effect.combat;
+                if (runtime_.addCrew(member) < 0) {
+                    combatFeedback_ = "クルー上限のため加入できません";
+                    combatFeedbackTimer_ = 1.5f;
+                    break;
+                }
+            }
+        }
+
+        for (const auto& effect : members) {
+            if (effect.amount >= 0) continue;
+            const int count = -effect.amount;
+            for (int i = 0; i < count; ++i) {
+                if (effect.race.empty())
+                    runtime_.removeCrew(effect.allSkills);
+                else
+                    runtime_.removeCrewByRace(effect.race, effect.allSkills);
+            }
+        }
+
+        for (const auto& effect : removals)
+            runtime_.removeCrewByRace(effect.race, effect.clone);
+
+        combat_.player = runtime_;
+    }
+
     void applyEventImmediateEffects(const EventDefinition& event) {
         scrap_ = std::max(0, scrap_ + applyScrapAugments(rollEventRange(event.initialScrap, event.initialScrapMax, 0x11u)));
         fuel_ = std::max(0, fuel_ + rollEventRange(event.initialFuel, event.initialFuelMax, 0x23u));
         runtime_.missiles = std::max(0, runtime_.missiles + rollEventRange(event.initialMissiles, event.initialMissilesMax, 0x37u));
         combat_.player.missiles = runtime_.missiles;
         droneParts_ = std::max(0, droneParts_ + rollEventRange(event.initialDrones, event.initialDronesMax, 0x49u));
+        applyEventDamageEffects(event.effects);
+        applyEventCrewEffects(event.crewMembers, event.crewRemovals);
     }
     }
 
@@ -1223,6 +1268,7 @@ public:
         combat_.player.missiles = runtime_.missiles;
         droneParts_ = std::max(0, droneParts_ + rollEventRange(choice.drones, choice.dronesMax, 0x97u + static_cast<std::uint32_t>(activeEventChoice_)));
         applyEventDamageEffects(choice.effects);
+        applyEventCrewEffects(choice.crewMembers, choice.crewRemovals);
         if (choice.load.empty() && !choice.hostile && !choice.store && !choice.repair) {
             ++visitedBeacons_;
             sceneMode_ = SceneMode::SectorMap;
