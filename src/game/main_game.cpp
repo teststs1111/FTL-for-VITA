@@ -1288,6 +1288,25 @@ public:
             }
         }
         const auto choices=sectorGraph_.selectable(currentBeacon_, fleetRow_);
+        const bool scanners = hasAugment("LONG_RANGED_SCANNERS");
+        auto scannerLabel = [&](int nodeIndex) {
+            if (!scanners) return std::string{};
+            const auto* sector = sectorDatabase_.select(sector_, static_cast<std::size_t>(std::max(0, nodeIndex)));
+            if (!sector || sector->events.empty()) return std::string("?");
+            const auto& pool = sector->events[static_cast<std::size_t>(
+                (nodeIndex + static_cast<int>(seed_)) % static_cast<int>(sector->events.size()))];
+            const auto* event = eventDatabase_.resolve(pool.name,
+                seed_ + static_cast<unsigned>(nodeIndex * 131 + sector_ * 17));
+            if (!event) return std::string("?");
+            switch (eventDatabase_.classify(event->id)) {
+                case EventDatabase::BeaconType::Hostile: return std::string("戦闘");
+                case EventDatabase::BeaconType::Store: return std::string("店");
+                case EventDatabase::BeaconType::Distress: return std::string("遭難");
+                case EventDatabase::BeaconType::Quest: return std::string("クエスト");
+                case EventDatabase::BeaconType::Exit: return std::string("出口");
+                default: return std::string("イベント");
+            }
+        };
         for (std::size_t index = 0; index < sectorGraph_.nodes().size(); ++index) {
             const auto& n = sectorGraph_.nodes()[index];
             const float x=x0+n.column*dx,y=y0+n.row*dy;
@@ -1297,6 +1316,12 @@ public:
             const bool reachable = std::find(choices.begin(),choices.end(),static_cast<int>(index)) != choices.end();
             const float r=current?8.f:(selected?9.f:6.f);
             graphics_.fillRect(x-r,y-r,r*2.f,r*2.f,current?Color{0.40f,0.90f,0.55f,1.f}:(selected?Color{0.98f,0.75f,0.20f,1.f}:(reachable?Color{0.35f,0.65f,0.85f,1.f}:Color{0.20f,0.30f,0.38f,1.f})));
+            if (scanners && (reachable || current)) {
+                const label = scannerLabel(static_cast<int>(index));
+                if (!label.empty())
+                    text_.draw(graphics_, label, x - 18.f, y - 18.f, 9.f,
+                        {0.65f, 0.88f, 0.98f, 1.f});
+            }
         }
         text_.draw(graphics_,"十字キー: 接続ビーコン選択   ×: ジャンプ   ○: 戻る",48.f,500.f,14.f,{0.68f,0.76f,0.86f,1.f});
     }
