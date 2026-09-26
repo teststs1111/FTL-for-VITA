@@ -1345,7 +1345,7 @@ public:
             const float r=current?8.f:(selected?9.f:6.f);
             graphics_.fillRect(x-r,y-r,r*2.f,r*2.f,current?Color{0.40f,0.90f,0.55f,1.f}:(selected?Color{0.98f,0.75f,0.20f,1.f}:(reachable?Color{0.35f,0.65f,0.85f,1.f}:Color{0.20f,0.30f,0.38f,1.f})));
             if (scanners && (reachable || current)) {
-                const label = scannerLabel(static_cast<int>(index));
+                const auto label = scannerLabel(static_cast<int>(index));
                 if (!label.empty())
                     text_.draw(graphics_, label, x - 18.f, y - 18.f, 9.f,
                         {0.65f, 0.88f, 0.98f, 1.f});
@@ -2366,6 +2366,8 @@ private:
     int storeSelection_{0};
     bool storeOpen_{false};
 };
+
+} // namespace
 
 MainGame::MainGame() = default;
 MainGame::~MainGame() { shutdown(); }
