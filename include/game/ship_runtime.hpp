@@ -115,7 +115,7 @@ struct ShipRuntime {
     void updateEnvironment(float dt);
     int usedReactorPower() const;
     int availableReactorPower() const;
-    void updateWeapons(float dt);
+    void updateWeapons(float dt, float cooldownMultiplier = 1.0f);
     void updateShields(float dt);
     bool damageShields(int amount);
     bool fireWeapon(int weaponIndex);
