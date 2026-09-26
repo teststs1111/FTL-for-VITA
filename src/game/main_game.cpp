@@ -1820,10 +1820,11 @@ public:
                     combatFeedback_ = "Drone Recovery Arm: ドローンパーツ回収";
                     combatFeedbackTimer_ = 1.5f;
                 }
+                const bool defeatedByCrew = combat_.enemyDefeatedByCrewDamage();
                 if (const auto* outcome = eventDatabase_.findShipOutcome(
-                        combat_.enemy.content.blueprint.id, false)) {
+                        combat_.enemy.content.blueprint.id, defeatedByCrew)) {
                     applyShipOutcome(*outcome);
-                } else {
+                } else if (!defeatedByCrew) {
                     // Compatibility fallback for encounter ships without an
                     // explicit destroyed block in the supplied event data.
                     scrap_ += applyScrapAugments(20 + sector_ * 5);
