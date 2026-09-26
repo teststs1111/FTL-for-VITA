@@ -71,6 +71,12 @@ struct RuntimeCrew {
     int health{100};
     int maxHealth{100};
     bool alive{true};
+    int pilotSkill{0};
+    int enginesSkill{0};
+    int shieldsSkill{0};
+    int weaponsSkill{0};
+    int repairSkill{0};
+    int combatSkill{0};
 };
 
 struct ShipRuntime {
@@ -105,6 +111,9 @@ struct ShipRuntime {
     bool setSystemPowered(int systemIndex, bool powered);
     bool setSystemPower(int systemIndex, int power);
     bool moveCrew(int crewIndex, int targetRoom);
+    int addCrew(const RuntimeCrew& member);
+    int removeCrewByRace(const std::string& race, bool cloneIfPossible);
+    int removeCrew(bool cloneIfPossible);
     int damageCrewInRoom(int roomId, int amount);
     int stunSystemsInRoom(int roomId, float seconds);
     int healCrew(int crewIndex, int amount);
