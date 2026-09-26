@@ -15,6 +15,7 @@ struct EventChoice {
     int requirementLevel{0};
     bool blue{false};
     bool hostile{false};
+    std::string hostileShipId;
     bool store{false};
     bool repair{false};
     int scrap{0};
@@ -28,6 +29,7 @@ struct EventDefinition {
     std::string text;
     std::vector<EventChoice> choices;
     bool hostile{false};
+    std::string hostileShipId;
     bool store{false};
     bool repair{false};
     int initialScrap{0};
