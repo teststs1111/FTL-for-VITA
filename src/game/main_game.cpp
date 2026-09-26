@@ -1239,7 +1239,7 @@ public:
             else if (type == "missiles") addMissiles(resource("missiles"));
             else addDrones(resource("droneparts"));
         } else if (type == "standard" || type == "stuff") {
-            if (type == "stuff") scrap_ += rollEventRange(7, 10, 0xA51u);
+            if (type == "stuff") { const auto low = eventScrapRange("LOW"); scrap_ += rollEventRange(low.first, low.second, 0xA51u); }
             else scrap_ += scrap;
             std::array<std::string, 3> names{{"fuel", "missiles", "droneparts"}};
             const int first = static_cast<int>((seed_ + static_cast<unsigned>(visitedBeacons_)) % 3u);
