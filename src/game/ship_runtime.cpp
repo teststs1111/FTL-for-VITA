@@ -138,7 +138,7 @@ void ShipRuntime::updateWeapons(float dt, float cooldownMultiplier) {
     }
 }
 
-void ShipRuntime::updateShields(float dt) {
+void ShipRuntime::updateShields(float dt, float rechargeMultiplier) {
     if (!valid || dt <= 0.0f) return;
 
     int targetLayers = 0;
