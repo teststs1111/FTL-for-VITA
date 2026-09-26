@@ -98,6 +98,8 @@ public:
             discoverWeaponAndDroneTextures();
             discoverCrewTextures();
             discoverShipTexture();
+            buildShipSelection();
+            sceneMode_ = shipChoices_.empty() ? SceneMode::SectorMap : SceneMode::ShipSelect;
         }
     }
 
@@ -440,7 +442,93 @@ public:
             text_.draw(graphics_, combatFeedback_, 550.f, 475.f, 14.f, {0.95f, 0.76f, 0.40f, 1.f});
     }
 
-    enum class SceneMode { SectorMap, Ship, Event, Combat, Pause, GameOver, Victory };
+    enum class SceneMode { ShipSelect, SectorMap, Ship, Event, Combat, Pause, GameOver, Victory };
+
+    void buildShipSelection() {
+        shipChoices_.clear();
+        for (const auto& entry : content_.blueprints().ships()) {
+            if (entry.first.rfind("PLAYER_SHIP_", 0) != 0) continue;
+            if (entry.second.maxHealth <= 0 || entry.second.layout.empty()) continue;
+            shipChoices_.push_back(entry.first);
+        }
+        std::sort(shipChoices_.begin(), shipChoices_.end());
+        shipSelection_ = 0;
+        for (std::size_t i = 0; i < shipChoices_.size(); ++i)
+            if (shipChoices_[i] == "PLAYER_SHIP_HARD") { shipSelection_ = static_cast<int>(i); break; }
+    }
+
+    std::string shipChoiceLabel(const std::string& id) const {
+        const auto* ship = content_.blueprints().findShip(id);
+        if (!ship) return id;
+        if (!ship->name.empty()) return ship->name;
+        return id;
+    }
+
+    bool applySelectedShip() {
+        if (shipSelection_ < 0 || shipSelection_ >= static_cast<int>(shipChoices_.size())) return false;
+        const std::string id = shipChoices_[static_cast<std::size_t>(shipSelection_)];
+        if (!content_.loadPlayerShip("data/blueprints.xml", id)) return false;
+        if (!runtime_.load(content_)) return false;
+        combat_.player = runtime_;
+        fuel_ = 16;
+        scrap_ = 0;
+        droneParts_ = 0;
+        visitedBeacons_ = 0;
+        currentBeacon_ = -1;
+        fleetRow_ = -1;
+        sector_ = 0;
+        selectedBeacon_ = sectorGraph_.startNode();
+        activeQuestIds_.clear();
+        questTargets_.clear();
+        storeOffers_.clear();
+        storeOpen_ = false;
+        discoverRoomTextures();
+        discoverWeaponAndDroneTextures();
+        discoverCrewTextures();
+        discoverShipTexture();
+        sceneMode_ = SceneMode::SectorMap;
+        return true;
+    }
+
+    void updateShipSelect() {
+        if (shipChoices_.empty()) {
+            sceneMode_ = SceneMode::SectorMap;
+            return;
+        }
+        if (input_.pressed(Button::Up))
+            shipSelection_ = (shipSelection_ + static_cast<int>(shipChoices_.size()) - 1) % static_cast<int>(shipChoices_.size());
+        if (input_.pressed(Button::Down))
+            shipSelection_ = (shipSelection_ + 1) % static_cast<int>(shipChoices_.size());
+        if (input_.pressed(Button::Cross)) {
+            if (!applySelectedShip()) {
+                combatFeedback_ = "艦の読み込みに失敗";
+                combatFeedbackTimer_ = 2.0f;
+            }
+        }
+    }
+
+    void renderShipSelect() {
+        graphics_.fillRect(35.f, 30.f, 890.f, 485.f, {0.045f, 0.06f, 0.09f, 1.f});
+        text_.draw(graphics_, "FTL: Faster Than Light", 70.f, 70.f, 28.f, {0.90f, 0.94f, 1.f, 1.f});
+        text_.draw(graphics_, "艦を選択", 70.f, 105.f, 22.f, {0.72f, 0.84f, 1.f, 1.f});
+        const int first = std::max(0, std::min(shipSelection_ - 4, static_cast<int>(shipChoices_.size()) - 8));
+        const int last = std::min(static_cast<int>(shipChoices_.size()), first + 8);
+        for (int i = first; i < last; ++i) {
+            const bool selected = i == shipSelection_;
+            const float y = 145.f + static_cast<float>(i - first) * 38.f;
+            text_.draw(graphics_, (selected ? "> " : "  ") + shipChoiceLabel(shipChoices_[static_cast<std::size_t>(i)]),
+                90.f, y, 18.f, selected ? Color{0.98f, 0.84f, 0.48f, 1.f} : Color{0.78f, 0.84f, 0.92f, 1.f});
+            const auto* ship = content_.blueprints().findShip(shipChoices_[static_cast<std::size_t>(i)]);
+            if (selected && ship) {
+                text_.draw(graphics_, "HP " + std::to_string(ship->maxHealth) +
+                    "  武器 " + std::to_string(ship->weaponSlots) +
+                    "  ドローン " + std::to_string(ship->droneSlots) +
+                    "  クルー " + std::to_string(ship->crew.size()),
+                    530.f, y, 14.f, {0.65f, 0.76f, 0.88f, 1.f});
+            }
+        }
+        text_.draw(graphics_, "↑↓: 選択   ×: この艦で開始", 75.f, 475.f, 15.f, {0.68f, 0.76f, 0.86f, 1.f});
+    }
 
     void enterCombatFromBeacon(const std::string& enemyShipId = {}) {
         // Keep the persistent ship state in sync when entering combat. Combat
@@ -865,6 +953,10 @@ public:
         }
         if (sceneMode_ == SceneMode::Pause) {
             updatePause();
+            return;
+        }
+        if (sceneMode_ == SceneMode::ShipSelect) {
+            updateShipSelect();
             return;
         }
         if (sceneMode_ == SceneMode::SectorMap) {
@@ -1416,6 +1508,10 @@ public:
                 {0.70f, 0.78f, 0.88f, 1.f});
             return;
         }
+        if (sceneMode_ == SceneMode::ShipSelect) {
+            renderShipSelect();
+            return;
+        }
         if (sceneMode_ == SceneMode::SectorMap) {
             renderSectorMap();
             return;
@@ -1604,6 +1700,8 @@ private:
     int fuel_{16};
     int scrap_{0};
     int droneParts_{0};
+    std::vector<std::string> shipChoices_;
+    int shipSelection_{0};
     std::vector<std::string> activeQuestIds_;
     std::unordered_map<std::string, std::string> questTargets_;
     std::unordered_map<std::string, int> sectorEventUsage_;
