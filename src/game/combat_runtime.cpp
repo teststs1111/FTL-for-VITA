@@ -1,6 +1,8 @@
 #include "game/combat_runtime.hpp"
 #include <algorithm>
 #include <cstdint>
+#include <unordered_map>
+#include <vector>
 
 namespace wormhole {
 
@@ -111,8 +113,56 @@ void CombatRuntime::update(float dt) {
 
     boardingFightTimer_ = std::max(0.0f, boardingFightTimer_ - dt);
     if (!boarders.empty() && boardingFightTimer_ <= 0.0f) {
+        // Boarding crews now move through open doors toward the nearest living
+        // defender instead of remaining permanently in their insertion room.
+        // This keeps boarding tied to the same ship layout/door state used by
+        // player crew movement.
         for (auto& boarder : boarders) {
             if (!boarder.alive) continue;
+
+            int targetRoom = boarder.room;
+            int bestDistance = 1000000;
+            for (const auto& defender : player.crew) {
+                if (!defender.alive || defender.room < 0) continue;
+                const int distance = std::abs(defender.room - boarder.room);
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    targetRoom = defender.room;
+                }
+            }
+
+            if (targetRoom != boarder.room) {
+                std::unordered_map<int, int> parent;
+                std::vector<int> queue;
+                queue.push_back(boarder.room);
+                parent[boarder.room] = -1;
+                for (std::size_t head = 0; head < queue.size(); ++head) {
+                    const int current = queue[head];
+                    if (current == targetRoom) break;
+                    for (int doorIndex = 0;
+                         doorIndex < static_cast<int>(player.content.layout.doors.size());
+                         ++doorIndex) {
+                        if (doorIndex >= static_cast<int>(player.doorOpen.size()) ||
+                            !player.doorOpen[doorIndex])
+                            continue;
+                        const auto& door = player.content.layout.doors[doorIndex];
+                        int next = -1;
+                        if (door.leftRoom == current) next = door.rightRoom;
+                        else if (door.rightRoom == current) next = door.leftRoom;
+                        if (next < 0 || parent.find(next) != parent.end()) continue;
+                        parent[next] = current;
+                        queue.push_back(next);
+                    }
+                }
+                if (parent.find(targetRoom) != parent.end()) {
+                    int step = targetRoom;
+                    while (parent[step] != -1 && parent[step] != boarder.room)
+                        step = parent[step];
+                    if (parent[step] == boarder.room)
+                        boarder.room = step;
+                }
+            }
+
             int defenders = 0;
             for (auto& crew : player.crew) {
                 if (crew.alive && crew.room == boarder.room) {
