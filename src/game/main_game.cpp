@@ -716,7 +716,9 @@ public:
                 }
             }
         }
-        if (input_.pressed(Button::Start) && !runtime_.systems.empty()) {
+        // Start is reserved for the global pause handled at the top of
+        // update(). Use Circle for deterministic system power-down instead.
+        if (input_.pressed(Button::Circle) && !runtime_.systems.empty()) {
             for (int i = 0; i < static_cast<int>(runtime_.systems.size()); ++i) {
                 if (runtime_.systems[i].room == selectedRoomId) {
                     runtime_.setSystemPower(i, runtime_.systems[i].power - 1);
@@ -781,11 +783,10 @@ public:
         if (input_.pressed(Button::Cross))
             lastCombatResult_ = combat_.fireSelectedWeapon();
 
-        if (input_.pressed(Button::Circle)) {
-            combatMode_ = false;
-            combatFeedback_.clear();
-            combatFeedbackTimer_ = 0.0f;
-        }
+        // FTL does not allow an arbitrary button press to abandon combat:
+        // retreat requires a charged jump drive and valid jump conditions.
+        // Keep combat state intact until the proper jump/retreat system is
+        // implemented instead of silently discarding the working ship copy.
     }
 
     void renderCombat() {
