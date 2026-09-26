@@ -1263,11 +1263,15 @@ public:
             targetIndex = (targetIndex + 1) % roomCount;
         combatTargetRoom_ = enemyRooms[targetIndex].id;
 
-        if (input_.pressed(Button::L) && !combat_.player.weapons.empty())
+        // L is reserved for the selected crew action; weapon cycling uses
+        // Triangle+L/R so crew commands cannot silently change the weapon.
+        if (input_.pressed(Button::Triangle) && input_.down(Button::L) &&
+            !combat_.player.weapons.empty())
             combat_.selectedWeapon = (combat_.selectedWeapon +
                 static_cast<int>(combat_.player.weapons.size()) - 1) %
                 static_cast<int>(combat_.player.weapons.size());
-        if (input_.pressed(Button::R) && !combat_.player.weapons.empty())
+        if (input_.pressed(Button::Triangle) && input_.down(Button::R) &&
+            !combat_.player.weapons.empty())
             combat_.selectedWeapon = (combat_.selectedWeapon + 1) %
                 static_cast<int>(combat_.player.weapons.size());
 
@@ -1668,7 +1672,7 @@ public:
                               : Color{0.3f, 0.65f, 0.9f, 1.f});
         }
 
-        text_.draw(graphics_, "←→: 敵ターゲット   ↑↓: クルー部屋   L/R: 武器   △: クルー   □: ドア   ○: FTL",
+        text_.draw(graphics_, "←→: 敵ターゲット   ↑↓: クルー部屋   △: クルー   △+L/R: 武器   □: ドア   ○: FTL",
             leftX, 448.f, 11.f, {0.62f, 0.74f, 0.86f, 1.0f});
         if (!combat_.player.systems.empty()) {
             const int systemIndex = std::clamp(selectedSystem_, 0,
