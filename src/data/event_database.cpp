@@ -42,6 +42,36 @@ static std::string crewNodeText(const bxml::Node& node) {
     return {};
 }
 
+static int itemAttrInt(const bxml::Node& node, const char* name, int fallback = 0) {
+    const auto it = node.attributes.find(name);
+    if (it == node.attributes.end()) return fallback;
+    try { return std::stoi(it->second); } catch (...) { return fallback; }
+}
+
+static const bxml::Node* itemChild(const bxml::Node& node, const std::string& name) {
+    for (const auto& child : node.children)
+        if (child.name == name) return &child;
+    return nullptr;
+}
+
+static void parseItemModify(const bxml::Node& node, int& scrap, int& scrapMax,
+                            int& fuel, int& fuelMax, int& missiles, int& missilesMax,
+                            int& drones, int& dronesMax) {
+    const auto* items = node.name == "item_modify" ? &node : itemChild(node, "item_modify");
+    if (!items) return;
+    for (const auto& item : items->children) {
+        if (item.name != "item") continue;
+        const auto type = item.attributes.find("type");
+        if (type == item.attributes.end()) continue;
+        const int minimum = itemAttrInt(item, "min", itemAttrInt(item, "amount", 0));
+        const int maximum = itemAttrInt(item, "max", minimum);
+        if (type->second == "scrap") { scrap += minimum; scrapMax += maximum; }
+        else if (type->second == "fuel") { fuel += minimum; fuelMax += maximum; }
+        else if (type->second == "missiles") { missiles += minimum; missilesMax += maximum; }
+        else if (type->second == "drones") { drones += minimum; dronesMax += maximum; }
+    }
+}
+
 static void parseCrewEffects(const bxml::Node& node,
                               std::vector<EventCrewMemberEffect>& members,
                               std::vector<EventCrewRemovalEffect>& removals,
@@ -164,21 +194,13 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
     }
     parseCrewEffects(node, event.crewMembers, event.crewRemovals, event.boarders);
 
-    // Preserve item_modify directly attached to an event. These effects are
-    // applied when the event is entered, rather than only after a choice.
-    if (const auto* items = child(node, "item_modify")) {
-        for (const auto& item : items->children) {
-            if (item.name != "item") continue;
-            const auto type = item.attributes.find("type");
-            if (type == item.attributes.end()) continue;
-            const int minAmount = attrInt(item, "min", attrInt(item, "amount", 0));
-            const int maxAmount = attrInt(item, "max", minAmount);
-            if (type->second == "scrap") { event.initialScrap += minAmount; event.initialScrapMax += std::max(minAmount, maxAmount); }
-            else if (type->second == "fuel") { event.initialFuel += minAmount; event.initialFuelMax += std::max(minAmount, maxAmount); }
-            else if (type->second == "missiles") { event.initialMissiles += minAmount; event.initialMissilesMax += std::max(minAmount, maxAmount); }
-            else if (type->second == "drones") { event.initialDrones += minAmount; event.initialDronesMax += std::max(minAmount, maxAmount); }
-        }
-    }
+    // item_modify is the event's authoritative resource delta. Preserve
+    // negative values (trades/costs) and ranges exactly; rollEventRange()
+    // later handles the combined range deterministically.
+    parseItemModify(node, event.initialScrap, event.initialScrapMax,
+                    event.initialFuel, event.initialFuelMax,
+                    event.initialMissiles, event.initialMissilesMax,
+                    event.initialDrones, event.initialDronesMax);
 
     for (const auto& c : node.children) {
         if (c.name != "choice") continue;
@@ -194,6 +216,11 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
             const auto idIt = t->attributes.find("id");
             if (idIt != t->attributes.end()) choice.textKey = idIt->second;
         }
+        // Some original choices carry item_modify directly on <choice>.
+        parseItemModify(c, choice.scrap, choice.scrapMax,
+                        choice.fuel, choice.fuelMax,
+                        choice.missiles, choice.missilesMax,
+                        choice.drones, choice.dronesMax);
         if (const auto* e = child(c, "event")) {
             const auto it = e->attributes.find("load");
             if (it != e->attributes.end()) choice.load = it->second;
@@ -234,19 +261,10 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
                 choice.autoReward.type = nodeText(*reward);
             }
             parseCrewEffects(*e, choice.crewMembers, choice.crewRemovals, choice.boarders);
-            if (const auto* items = child(*e, "item_modify")) {
-                for (const auto& item : items->children) {
-                    if (item.name != "item") continue;
-                    const auto type = item.attributes.find("type");
-                    if (type == item.attributes.end()) continue;
-                    const int minAmount = attrInt(item, "min", attrInt(item, "amount", 0));
-                    const int maxAmount = attrInt(item, "max", minAmount);
-                    if (type->second == "scrap") { choice.scrap += minAmount; choice.scrapMax += std::max(minAmount, maxAmount); }
-                    else if (type->second == "fuel") { choice.fuel += minAmount; choice.fuelMax += std::max(minAmount, maxAmount); }
-                    else if (type->second == "missiles") { choice.missiles += minAmount; choice.missilesMax += std::max(minAmount, maxAmount); }
-                    else if (type->second == "drones") { choice.drones += minAmount; choice.dronesMax += std::max(minAmount, maxAmount); }
-                }
-            }
+            parseItemModify(*e, choice.scrap, choice.scrapMax,
+                            choice.fuel, choice.fuelMax,
+                            choice.missiles, choice.missilesMax,
+                            choice.drones, choice.dronesMax);
         }
         if (!choice.text.empty() || !choice.load.empty() || choice.store || choice.hostile)
             event.choices.push_back(std::move(choice));
@@ -279,10 +297,12 @@ void EventDatabase::collectEvents(const bxml::Node& node) {
                 if (loadIt != c.attributes.end()) eventId = loadIt->second;
                 const auto nameIt = c.attributes.find("name");
                 if (eventId.empty() && nameIt != c.attributes.end()) eventId = nameIt->second;
-                if (eventId.empty()) continue;
+                if (eventId.empty()) {
+                    eventId = "__inline_" + idIt->second + "_" +
+                              std::to_string(pool.entries.size());
+                }
                 pool.entries.push_back({eventId, std::max(1, attrInt(c, "weight", 1))});
-                if (nameIt != c.attributes.end() && !nameIt->second.empty())
-                    addEvent(c, nameIt->second);
+                addEvent(c, eventId);
             }
             if (!pool.entries.empty()) {
                 std::string poolId = idIt->second;
