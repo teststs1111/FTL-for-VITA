@@ -627,3 +627,18 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 2. Model Rebel Fleet advancement after jumps, rather than relying mainly on event `modifyPursuit` deltas.
 3. Preserve the now-working concrete sector selection, unique-sector tracking, event pools, and save-state behavior while introducing the more faithful topology.
 4. Add dedicated regression coverage for beacon reachability, fleet pressure, sector transition, and Crystal Home conditions.
+
+
+## 2026-09-27 continuation — automatic Rebel fleet advancement
+- Added automatic Rebel fleet movement to the normal beacon-jump path.
+- The compatibility graph still represents fleet pressure as a row boundary, but the boundary now advances by one row after each successful player jump instead of moving only when an event contains `modifyPursuit`.
+- Existing event `modifyPursuit` effects continue to apply afterward, allowing pursuit-related events to move the boundary backward/forward relative to normal progression.
+- The change is intentionally isolated from fuel/combat reward handling: fuel is consumed once per jump, then the fleet advances, then the beacon event/combat flow continues.
+- Implementation commit: `8e72b5b0bd7e474501ca8c56514d7f4ae064dac1`.
+- Direct CI verification for this commit: Host run `36280519300` **success**; Vita run `36280519307` **success**, including VPK build and artifact upload.
+
+### Next target
+1. Replace the fixed 8x3 compatibility topology with a more faithful FTL-style variable beacon graph while preserving reachability.
+2. Add explicit fleet-covered beacon state instead of only a row cutoff.
+3. Verify sector-specific generation constraints and exit/starting-beacon behavior against the supplied sector data.
+4. Add regression coverage for automatic fleet advancement and pursuit modifiers.
