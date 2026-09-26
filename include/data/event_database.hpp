@@ -33,6 +33,13 @@ struct EventCrewRemovalEffect {
     std::string textKey;
 };
 
+struct EventBoarderEffect {
+    int min{1};
+    int max{1};
+    std::string race{"human"};
+    int maxGroup{0};
+};
+
 struct EventChoice {
     std::string text;
     std::string textKey;
@@ -57,6 +64,7 @@ struct EventChoice {
     std::vector<EventDamageEffect> effects;
     std::vector<EventCrewMemberEffect> crewMembers;
     std::vector<EventCrewRemovalEffect> crewRemovals;
+    std::vector<EventBoarderEffect> boarders;
 };
 
 struct EventDefinition {
@@ -81,6 +89,7 @@ struct EventDefinition {
     std::vector<EventDamageEffect> effects;
     std::vector<EventCrewMemberEffect> crewMembers;
     std::vector<EventCrewRemovalEffect> crewRemovals;
+    std::vector<EventBoarderEffect> boarders;
     bool valid{false};
 };
 
