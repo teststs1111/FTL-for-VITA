@@ -66,7 +66,10 @@ if(VITA)
         SceTouch_stub
         ScePvf_stub
     )
-    # Keep adjacent loadable segments compatible with vita-elf-create when\n    # newer binutils enable separate-code layout by default.\n    target_link_options(vita_wormhole_prototype PRIVATE -Wl,-z,noseparate-code)\n    vita_create_self(eboot.bin vita_wormhole_prototype UNSAFE)
+    # Keep adjacent loadable segments compatible with vita-elf-create when
+    # newer binutils enable separate-code layout by default.
+    target_link_options(vita_wormhole_prototype PRIVATE -Wl,-z,noseparate-code)
+    vita_create_self(eboot.bin vita_wormhole_prototype UNSAFE)
     vita_create_vpk(FTL-for-VITA.vpk ${VITA_TITLEID} eboot.bin
         VERSION ${VITA_VERSION}
         NAME ${VITA_APP_NAME}
