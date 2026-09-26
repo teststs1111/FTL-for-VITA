@@ -522,6 +522,7 @@ public:
             return false;
 
         in >> key >> seed_; in >> key >> sector_; in >> key >> flagshipPhase_;
+        std::size_t count = 0;
         in >> key >> currentBeacon_ >> selectedBeacon_;
         in >> key >> fleetRow_;
         sectorEventUsage_.clear();
@@ -539,7 +540,6 @@ public:
         in >> key >> fuel_ >> scrap_ >> droneParts_ >> runtime_.missiles;
         in >> key >> runtime_.hull;
 
-        std::size_t count = 0;
         in >> key >> count;
         for (std::size_t i = 0; i < count; ++i) {
             std::string type; int room, power, damage, ionDamage, powered;
