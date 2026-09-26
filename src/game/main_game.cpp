@@ -560,6 +560,8 @@ public:
         // Combat owns a working copy while the player is in the combat scene.
         // The persistent ship remains the source of truth between encounters.
         combat_.player = runtime_;
+        if (sector_ >= 7 && flagshipPhase_ > 0)
+            combat_.configureFlagshipPhase(flagshipPhase_);
         discoverRoomTextures();
         discoverWeaponAndDroneTextures();
         discoverCrewTextures();
@@ -1613,6 +1615,9 @@ public:
         if (sector_ >= 7 && flagshipPhase_ > 0)
             text_.draw(graphics_, "反乱軍旗艦 Phase " + std::to_string(flagshipPhase_) + " / 3",
                 390.f, 86.f, 12.f, {0.98f, 0.70f, 0.36f, 1.f});
+        if (combat_.superShieldRemaining() > 0)
+            text_.draw(graphics_, "Phase 3: Zoltan超シールド",
+                390.f, 102.f, 11.f, {0.55f, 0.88f, 1.f, 1.f});
         text_.draw(graphics_, "船体 " + std::to_string(std::max(0, combat_.player.hull)) +
             "/" + std::to_string(std::max(0, combat_.player.maxHull)),
             leftX, 86.f, 11.f, {0.72f, 0.92f, 0.78f, 1.f});
@@ -1622,6 +1627,14 @@ public:
 
         for (int i = 0; i < combat_.enemy.shieldLayers; ++i)
             graphics_.fillRect(rightX + i * 14.f, 125.f, 10.f, 6.f, {0.25f, 0.65f, 0.95f, 1.f});
+        if (combat_.superShieldRemaining() > 0) {
+            const int superShield = combat_.superShieldRemaining();
+            text_.draw(graphics_, "超シールド " + std::to_string(superShield) + " / 10",
+                rightX, 116.f, 10.f, {0.62f, 0.90f, 1.f, 1.f});
+            for (int i = 0; i < superShield; ++i)
+                graphics_.fillRect(rightX + i * 13.f, 132.f, 10.f, 5.f,
+                    {0.55f, 0.90f, 1.f, 1.f});
+        }
 
         if (combat_.selectedWeapon >= 0 &&
             combat_.selectedWeapon < static_cast<int>(combat_.player.weapons.size())) {
