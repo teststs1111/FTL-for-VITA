@@ -44,7 +44,7 @@ namespace wormhole {
 
 class ShipScene final : public GameState {
 public:
-    ShipScene(Graphics& graphics, Input& input, Localization& localization, const char* archivePath) : graphics_(graphics), input_(input), localization_(localization) {
+    ShipScene(Graphics& graphics, Input& input, Localization& localization, const char* archivePath) : graphics_(graphics), input_(input), localization_(localization), archivePath_(archivePath ? archivePath : "") {
         // Initialize text first so archive failures can be diagnosed on-device.
         if (!text_.init()) {
             startupError_ = "Text renderer initialization failed";
@@ -103,6 +103,41 @@ public:
             buildShipSelection();
             sceneMode_ = shipChoices_.empty() ? SceneMode::SectorMap : SceneMode::ShipSelect;
         }
+    }
+
+    bool reloadContentForAe(bool enabled) {
+        const auto paths = loadArchiveSet(archivePath_.c_str());
+        if (paths.empty()) return false;
+        std::vector<std::string> selected;
+        selected.push_back(paths.front());
+        if (enabled && paths.size() > 1)
+            selected.insert(selected.end(), paths.begin() + 1, paths.end());
+        if (!content_.openArchives(selected)) return false;
+        aeEnabled_ = enabled && paths.size() > 1;
+        eventDatabase_.load();
+        eventOrder_ = eventDatabase_.ids();
+        sectorDatabase_.load();
+        sectorGraph_.generate(sector_, seed_);
+        selectedBeacon_ = sectorGraph_.startNode();
+        if (!content_.loadPlayerShip()) return false;
+        if (!runtime_.load(content_)) return false;
+        combat_.player = runtime_;
+        LoadedShip enemy;
+        const LoadedShip* player = content_.playerShip();
+        std::string enemyId;
+        if (player) {
+            for (const auto& entry : content_.blueprints().ships()) {
+                if (entry.first != player->blueprint.id) { enemyId = entry.first; break; }
+            }
+        }
+        if (enemyId.empty() || !content_.loadShip(enemyId, enemy)) return false;
+        if (!combat_.load(content_, enemy)) return false;
+        buildShipSelection();
+        discoverRoomTextures();
+        discoverWeaponAndDroneTextures();
+        discoverCrewTextures();
+        discoverShipTexture();
+        return true;
     }
 
     ~ShipScene() override {
@@ -781,6 +816,14 @@ public:
     }
 
     void updateShipSelect() {
+        if (input_.pressed(Button::Triangle)) {
+            const bool next = !aeEnabled_;
+            if (reloadContentForAe(next))
+                combatFeedback_ = next ? "Advanced Edition: ON" : "Advanced Edition: OFF";
+            else
+                combatFeedback_ = "AE設定を変更できません";
+            combatFeedbackTimer_ = 1.5f;
+        }
         if (shipChoices_.empty()) {
             sceneMode_ = SceneMode::SectorMap;
             return;
@@ -823,7 +866,7 @@ public:
                     530.f, y, 14.f, {0.65f, 0.76f, 0.88f, 1.f});
             }
         }
-        text_.draw(graphics_, "↑↓: 選択   ×: この艦で開始   □: セーブから再開", 75.f, 475.f, 15.f, {0.68f, 0.76f, 0.86f, 1.f});
+        text_.draw(graphics_, "↑↓: 選択   ×: この艦で開始   △: AE ON/OFF   □: セーブから再開", 75.f, 475.f, 15.f, {0.68f, 0.76f, 0.86f, 1.f});
         if (hasSaveGame())
             text_.draw(graphics_, "セーブデータあり", 700.f, 105.f, 14.f, {0.82f, 0.78f, 0.48f, 1.f});
     }
@@ -2282,6 +2325,9 @@ public:
     }
 
 private:
+    std::string archivePath_;
+    bool aeEnabled_{true};
+
     Graphics& graphics_;
     Input& input_;
     Localization& localization_;
