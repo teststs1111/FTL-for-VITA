@@ -65,6 +65,21 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
     event.store = hasChild(node, "store");
     event.repair = hasChild(node, "repair");
 
+    // Preserve item_modify directly attached to an event. These effects are
+    // applied when the event is entered, rather than only after a choice.
+    if (const auto* items = child(node, "item_modify")) {
+        for (const auto& item : items->children) {
+            if (item.name != "item") continue;
+            const auto type = item.attributes.find("type");
+            if (type == item.attributes.end()) continue;
+            const int amount = attrInt(item, "min", 0);
+            if (type->second == "scrap") event.initialScrap += amount;
+            else if (type->second == "fuel") event.initialFuel += amount;
+            else if (type->second == "missiles") event.initialMissiles += amount;
+            else if (type->second == "drones") event.initialDrones += amount;
+        }
+    }
+
     for (const auto& c : node.children) {
         if (c.name != "choice") continue;
         if (c.attributes.count("hidden") && c.attributes.at("hidden") == "true") continue;
