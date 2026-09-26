@@ -484,6 +484,7 @@ public:
         // A sector event pool resolves to a concrete event; keep that concrete
         // id so update/render operate on the same definition.
         activeEventId_ = event->id;
+        completeQuestForEvent(activeEventId_);
         applyEventImmediateEffects(*event);
         registerQuest(*event);
         activeEventChoice_ = 0;
@@ -502,9 +503,24 @@ public:
     }
 
     void registerQuest(const EventDefinition& event) {
-        if (event.questId.empty()) return;
-        if (std::find(activeQuestIds_.begin(), activeQuestIds_.end(), event.questId) == activeQuestIds_.end())
-            activeQuestIds_.push_back(event.questId);
+        if (!event.questId.empty()) {
+            if (std::find(activeQuestIds_.begin(), activeQuestIds_.end(), event.questId) == activeQuestIds_.end())
+                activeQuestIds_.push_back(event.questId);
+        }
+        if (!event.questTargetId.empty()) {
+            questTargets_[event.questId.empty() ? event.id : event.questId] = event.questTargetId;
+        }
+    }
+
+    void completeQuestForEvent(const std::string& eventId) {
+        for (auto it = questTargets_.begin(); it != questTargets_.end();) {
+            if (it->second == eventId) {
+                activeQuestIds_.erase(std::remove(activeQuestIds_.begin(), activeQuestIds_.end(), it->first), activeQuestIds_.end());
+                it = questTargets_.erase(it);
+            } else {
+                ++it;
+            }
+        }
     }
 
     void applyEventImmediateEffects(const EventDefinition& event) {
@@ -1551,6 +1567,7 @@ private:
     int scrap_{0};
     int droneParts_{0};
     std::vector<std::string> activeQuestIds_;
+    std::unordered_map<std::string, std::string> questTargets_;
     std::vector<StoreOffer> storeOffers_;
     int storeSelection_{0};
     bool storeOpen_{false};
