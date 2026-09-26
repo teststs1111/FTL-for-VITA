@@ -8,6 +8,7 @@
 namespace wormhole {
 
 enum class CombatOutcome { Ongoing, PlayerDestroyed, EnemyDestroyed };
+enum class CombatEnvironment { None, Asteroid, Sun, PDSPlayer, PDSEnemy };
 
 struct CombatResult {
     bool fired{false};
@@ -61,6 +62,11 @@ public:
     void setPlayerWeaponCooldownMultiplier(float multiplier) { playerWeaponCooldownMultiplier_ = multiplier; }
     void setPlayerShieldRechargeMultiplier(float multiplier) { playerShieldRechargeMultiplier_ = multiplier; }
     void setStealthWeapons(bool enabled) { stealthWeapons_ = enabled; }
+    void setEnvironment(CombatEnvironment environment) {
+        environment_ = environment;
+        environmentTimer_ = 0.0f;
+    }
+    CombatEnvironment environment() const { return environment_; }
     bool activateCloaking();
     void deactivateCloaking() { cloakTimer_ = 0.0f; }
     bool cloaked() const { return cloakTimer_ > 0.0f; }
@@ -90,7 +96,10 @@ private:
     bool stealthWeapons_{false};
     float cloakTimer_{0.0f};
     bool playerDeployedCombatDrone_{false};
+    CombatEnvironment environment_{CombatEnvironment::None};
+    float environmentTimer_{0.0f};
     std::uint32_t nextRandom();
+    void updateEnvironmentHazard(float dt);
 };
 
 } 
