@@ -16,6 +16,7 @@
 #include <utility>
 #include <vector>
 #include <array>
+#include <unordered_map>
 
 namespace {
 std::vector<std::string> loadArchiveSet(const char* basePath) {
@@ -464,6 +465,40 @@ public:
         combat_.setTargetRoom(combatTargetRoom_);
     }
 
+    std::string selectSectorEvent(const SectorDefinition& sector, int beacon) {
+        if (sector.events.empty()) return sector.startEvent;
+
+        // In the original data, min/max describe how often an event may appear
+        // within the sector. Track selections during the current sector so we
+        // do not repeatedly pick an event that has already reached its maximum.
+        std::vector<std::size_t> candidates;
+        std::vector<std::size_t> minimums;
+        for (std::size_t i = 0; i < sector.events.size(); ++i) {
+            const auto& entry = sector.events[i];
+            const int used = sectorEventUsage_[entry.name];
+            const bool unlimited = entry.max <= 0;
+            if (unlimited || used < entry.max) {
+                candidates.push_back(i);
+                if (used < entry.min) minimums.push_back(i);
+            }
+        }
+        if (!minimums.empty()) candidates = minimums;
+        if (candidates.empty()) {
+            for (std::size_t i = 0; i < sector.events.size(); ++i)
+                candidates.push_back(i);
+        }
+
+        std::uint32_t hash = seed_ ^ (static_cast<std::uint32_t>(sector_) * 0x9e3779b9u)
+            ^ (static_cast<std::uint32_t>(visitedBeacons_ + 1) * 0x85ebca6bu)
+            ^ static_cast<std::uint32_t>(beacon * 0xc2b2ae35u);
+        hash ^= hash >> 16;
+        hash *= 0x7feb352du;
+        hash ^= hash >> 15;
+        const auto index = candidates[static_cast<std::size_t>(hash % candidates.size())];
+        ++sectorEventUsage_[sector.events[index].name];
+        return sector.events[index].name;
+    }
+
     bool beginBeaconEvent(int beacon) {
         if (eventDatabase_.size() == 0) return false;
         // Prefer the original sectorDescription event pools; fall back to the
@@ -471,10 +506,8 @@ public:
         if (eventOrder_.empty()) return false;
         activeEventId_.clear();
         if (const auto* sector = sectorDatabase_.select(sector_, static_cast<std::size_t>(beacon))) {
-            if (!sector->events.empty()) {
-                const auto& pool = sector->events[static_cast<std::size_t>(beacon) % sector->events.size()];
-                activeEventId_ = pool.name;
-            }
+            if (!sector->events.empty())
+                activeEventId_ = selectSectorEvent(*sector, beacon);
             if (activeEventId_.empty()) activeEventId_ = sector->startEvent;
         }
         if (activeEventId_.empty())
@@ -758,6 +791,7 @@ public:
                 if (n->row == sectorGraph_.exitRow()) {
                     if (sector_ >= 7) { sceneMode_ = SceneMode::Victory; return; }
                     ++sector_;
+                    sectorEventUsage_.clear();
                     sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
                     currentBeacon_ = -1;
                     selectedBeacon_ = sectorGraph_.startNode();
@@ -1572,6 +1606,7 @@ private:
     int droneParts_{0};
     std::vector<std::string> activeQuestIds_;
     std::unordered_map<std::string, std::string> questTargets_;
+    std::unordered_map<std::string, int> sectorEventUsage_;
     std::vector<StoreOffer> storeOffers_;
     int storeSelection_{0};
     bool storeOpen_{false};
