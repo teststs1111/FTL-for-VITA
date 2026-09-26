@@ -125,6 +125,78 @@ void CombatRuntime::configureFlagshipPhase(int phase) {
     superShield_ = flagshipPhase_ == 3 ? 10 : 0;
 }
 
+void CombatRuntime::updateEnvironmentHazard(float dt) {
+    if (environment_ == CombatEnvironment::None || outcome != CombatOutcome::Ongoing) return;
+    environmentTimer_ -= dt;
+    if (environmentTimer_ > 0.0f) return;
+
+    auto randomRoom = [](ShipRuntime& ship, std::uint32_t roll) {
+        if (ship.content.layout.rooms.empty()) return -1;
+        return ship.content.layout.rooms[roll % ship.content.layout.rooms.size()].id;
+    };
+
+    auto schedule = [&](float minimum, float maximum) {
+        const std::uint32_t span = static_cast<std::uint32_t>((maximum - minimum) * 1000.0f);
+        const float offset = span == 0 ? 0.0f : static_cast<float>(nextRandom() % (span + 1)) / 1000.0f;
+        environmentTimer_ = minimum + offset;
+    };
+
+    if (environment_ == CombatEnvironment::Asteroid) {
+        ShipRuntime* ships[2] = {&player, &enemy};
+        for (ShipRuntime* ship : ships) {
+            if (ship->shieldLayers > 0) {
+                ship->damageShields(1);
+            } else {
+                const int room = randomRoom(*ship, nextRandom());
+                if (room >= 0) {
+                    ship->damageRoom(room, 1);
+                    if ((nextRandom() % 100u) < 10u) ship->setRoomFire(room, true);
+                    if ((nextRandom() % 100u) < 10u) ship->setRoomBreach(room, true);
+                }
+            }
+        }
+        schedule(4.0f, 8.0f);
+        return;
+    }
+
+    if (environment_ == CombatEnvironment::Sun) {
+        ShipRuntime* ships[2] = {&player, &enemy};
+        for (ShipRuntime* ship : ships) {
+            const int fires = ship->shieldLayers > 0
+                ? 1 + static_cast<int>(nextRandom() % 2u)
+                : 3 + static_cast<int>(nextRandom() % 4u);
+            for (int i = 0; i < fires; ++i) {
+                const int room = randomRoom(*ship, nextRandom());
+                if (room < 0) continue;
+                if (ship->setRoomFire(room, true) &&
+                    (nextRandom() % 100u) < (fires > 2 ? 66u : 33u))
+                    ship->damageRoom(room, 1);
+            }
+        }
+        schedule(28.0f, 34.0f);
+        return;
+    }
+
+    ShipRuntime* target = environment_ == CombatEnvironment::PDSEnemy ? &enemy : &player;
+    const int room = randomRoom(*target, nextRandom());
+    if (room >= 0) {
+        int evade = 0;
+        if (target == &player && !cloaked()) {
+            for (const auto& system : player.systems)
+                if (system.type == SystemType::Engines) evade += system.power * 5;
+            for (const auto& crew : player.crew)
+                if (crew.alive && crew.room == player.content.layout.rooms.front().id)
+                    evade += std::min(5, crew.pilotSkill);
+            evade = std::min(40, evade);
+        }
+        if ((nextRandom() % 100u) >= static_cast<std::uint32_t>(evade)) {
+            target->damageRoom(room, 3);
+            target->setRoomBreach(room, true);
+        }
+    }
+    schedule(20.0f, 30.0f);
+}
+
 void CombatRuntime::update(float dt) {
     if (dt <= 0.0f || outcome != CombatOutcome::Ongoing) return;
 
