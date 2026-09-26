@@ -426,6 +426,9 @@ public:
             return;
 
         const auto& choice = event->choices[static_cast<std::size_t>(activeEventChoice_)];
+        if (!choice.questId.empty() &&
+            std::find(activeQuestIds_.begin(), activeQuestIds_.end(), choice.questId) == activeQuestIds_.end())
+            activeQuestIds_.push_back(choice.questId);
         // Apply all resource modifications from the original event data, not
         // only scrap/fuel. Missiles and drone parts are carried by the combat
         // runtime, so event rewards immediately affect the actual inventory.
@@ -469,10 +472,6 @@ public:
         if (choice.hostile) {
             enterCombatFromBeacon(choice.hostileShipId);
             return;
-        }
-        if (!choice.questId.empty()) {
-            if (std::find(activeQuestIds_.begin(), activeQuestIds_.end(), choice.questId) == activeQuestIds_.end())
-                activeQuestIds_.push_back(choice.questId);
         }
         ++visitedBeacons_;
         sceneMode_ = SceneMode::SectorMap;
