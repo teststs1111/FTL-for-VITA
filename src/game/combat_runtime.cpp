@@ -183,7 +183,7 @@ void CombatRuntime::updateEnvironmentHazard(float dt) {
         int evade = 0;
         if (target == &player && !cloaked()) {
             for (const auto& system : player.systems)
-                if (system.type == SystemType::Engines) evade += system.power * 5;
+                if (system.type == "engines") evade += system.power * 5;
             for (const auto& crew : player.crew)
                 if (crew.alive && crew.room == player.content.layout.rooms.front().id)
                     evade += std::min(5, crew.pilotSkill);
