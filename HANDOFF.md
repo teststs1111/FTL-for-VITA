@@ -391,3 +391,24 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 4. Expand blue-option requirements to actual crew skills and equipment/augment requirements.
 5. Continue with `weapon`, `item_modify`, `environment`, `distressBeacon`, and nested combat outcomes.
 6. Then replace the generic beacon graph with original FTL beacon generation constraints and Rebel Fleet pursuit.
+
+
+## 2026-09-26 continuation — real `boarders` event integration
+- The Library-supplied real `data/events.xml` was inspected directly. Confirmed `boarders` nodes use `min`, `max`, and `class`; some also use `max_group`.
+- Observed real examples include human, ghost, slug, mantis, and random boarder classes.
+- Added `EventBoarderEffect` to the event data model and parse it from both direct event nodes and nested choice event outcomes.
+- Boarder counts are rolled from the real XML min/max range and capped by `max_group` when present.
+- Event boarders are held until the associated combat starts, then injected into the existing `CombatRuntime::boarders` system.
+- Existing CombatRuntime already handles boarding movement, open-door pathing, boarding combat, death/removal, and boarder rendering, so this work reuses that runtime instead of creating a second boarding implementation.
+- Event boarders are assigned valid player rooms before combat. `class="random"` is resolved to an available enemy crew race for the runtime/texture path.
+- This means real event outcomes such as `<boarders min="3" max="5" class="human"/>` now have a path from original XML -> EventDatabase -> MainGame -> CombatRuntime.
+- Latest boarder integration commit: `2484415ba271060a07ca8d1daf04d15b3689d93c`.
+- No proprietary archive/assets were committed.
+- CI has not yet surfaced a new workflow result for this continuation; do not claim green until Host/Vita results appear.
+
+### Next target
+1. Parse and apply `autoReward` using the original reward semantics.
+2. Improve `quest` chain/state handling.
+3. Expand Blue Option requirements to crew skills, augment/equipment and resource conditions.
+4. Continue `weapon`, `item_modify`, `environment`, and `distressBeacon` semantics.
+5. Replace the compatibility beacon graph with original FTL generation constraints and Rebel Fleet pursuit.
