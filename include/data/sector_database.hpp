@@ -26,6 +26,8 @@ public:
     bool load();
     void setAdvancedEdition(bool enabled) { advancedEdition_ = enabled; }
     const SectorDefinition* select(int sector, std::size_t variant) const;
+    const SectorDefinition* select(int sector, std::size_t variant, const std::vector<std::string>& usedUnique) const;
+    const SectorDefinition* find(const std::string& name) const;
     std::size_t size() const { return sectors_.size(); }
 
 private:
