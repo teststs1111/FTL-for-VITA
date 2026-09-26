@@ -496,3 +496,23 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 2. Complete Blue Option numeric resource conditions and quest/flag conditions.
 3. Then improve event effect edge cases (augment, secretSector, modifyPursuit, reveal_map, etc.) that are still outside the current runtime model.
 4. After event fidelity, replace the generic sector graph with original FTL beacon generation constraints and Rebel fleet pursuit.
+
+
+## 2026-09-26 continuation — ship destroyed/deadCrew outcome data
+- Inspected all 7 real <destroyed> and 7 real <deadCrew> blocks in data/events.xml.
+- Outcome blocks can contain fixed/ranged item_modify rewards, autoReward, weapon rewards, and localized text keys.
+- Added EventShipOutcome plus EventDatabase lookup keyed by the event ship name.
+- EventDatabase now parses destroyed/deadCrew outcome definitions from real event <ship> nodes.
+- EnemyDestroyed now uses an explicit destroyed outcome when one exists, applying its signed resource ranges, autoReward and weapon reward. The previous generic sector-based scrap reward remains only as a compatibility fallback for ships without an explicit destroyed block.
+- deadCrew outcome definitions are now parsed and test-covered, but the combat runtime does not yet terminate an encounter when all enemy crew die; that application path remains the next subtask.
+- Added regression coverage for fixed/ranged destroyed rewards and deadCrew autoReward parsing.
+- No proprietary FTL data or extracted assets were committed.
+- Latest implementation commit: 7e6c4728135ce066f043e1f33e1584cde8367dcc.
+- Latest outcome parser/test commits: 3a6914d07a71bb77d0e3006dcb18670aaffbc45c and 1e2330f0812da270a4f577c468f437015bb1dda1.
+- GitHub Actions still has not surfaced a workflow result for 1e2330f (workflow_runs=[], statuses=[]). A local clone/build was also unavailable because the execution environment could not resolve github.com. Do not claim CI or local build success.
+
+### Next implementation order
+1. Add an explicit enemy-crew-dead combat outcome and apply deadCrew rewards without requiring hull destruction.
+2. Implement remaining Blue Option numeric resource / quest-state conditions.
+3. Wire additional real event effects such as modifyPursuit, reveal_map, secretSector and augment rewards.
+4. Then replace the generic sector graph with original beacon generation constraints and Rebel fleet pursuit.
