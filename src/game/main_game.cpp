@@ -902,10 +902,10 @@ public:
                         // so the player's surviving systems/crew carry forward.
                         if (flagshipPhase_ == 0) {
                             LoadedShip flagship;
-                            if (content_.loadShip("REBEL_FLAGSHIP", flagship) &&
+                            if (content_.loadShip("BOSS_1", flagship) &&
                                 !flagship.blueprint.id.empty()) {
                                 flagshipPhase_ = 1;
-                                enterCombatFromBeacon("REBEL_FLAGSHIP");
+                                enterCombatFromBeacon("BOSS_1");
                                 return;
                             }
                             // If the supplied archive does not contain the
@@ -1055,7 +1055,7 @@ public:
                     ++flagshipPhase_;
                     combatFeedback_ = "反乱軍旗艦 Phase " + std::to_string(flagshipPhase_);
                     combatFeedbackTimer_ = 2.0f;
-                    enterCombatFromBeacon("REBEL_FLAGSHIP");
+                    enterCombatFromBeacon(flagshipPhase_ == 2 ? "BOSS_2" : "BOSS_3");
                 } else if (sector_ >= 7 && flagshipPhase_ >= 3) {
                     combatMode_ = false;
                     sceneMode_ = SceneMode::Victory;
