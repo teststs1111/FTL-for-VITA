@@ -1109,9 +1109,9 @@ public:
             const int count = -effect.amount;
             for (int i = 0; i < count; ++i) {
                 if (effect.race.empty())
-                    runtime_.removeCrew(effect.allSkills);
+                    runtime_.removeCrew(false);
                 else
-                    runtime_.removeCrewByRace(effect.race, effect.allSkills);
+                    runtime_.removeCrewByRace(effect.race, false);
             }
         }
 
