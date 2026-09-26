@@ -889,6 +889,8 @@ public:
         if (sector_ >= 7 && flagshipPhase_ > 0)
             combat_.configureFlagshipPhase(flagshipPhase_);
         combat_.setPlayerWeaponCooldownMultiplier(weaponCooldownMultiplier());
+        if (hasAugment("WEAPON_PRE_IGNITER"))
+            for (auto& weapon : combat_.player.weapons) weapon.ready = true;
         discoverRoomTextures();
         discoverWeaponAndDroneTextures();
         discoverCrewTextures();
