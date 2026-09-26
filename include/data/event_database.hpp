@@ -47,6 +47,13 @@ struct EventEnvironment {
     std::string target;
 };
 
+struct EventSpecialEffects {
+    int modifyPursuit{0};
+    bool revealMap{false};
+    bool secretSector{false};
+    std::string augmentReward;
+};
+
 struct EventShipOutcome {
     std::string textKey;
     int scrap{0};
@@ -94,6 +101,7 @@ struct EventChoice {
     EventEnvironment environment;
     bool distressBeacon{false};
     std::string weaponReward;
+    EventSpecialEffects special;
 };
 
 struct EventDefinition {
@@ -125,6 +133,7 @@ struct EventDefinition {
     EventEnvironment environment;
     bool distressBeacon{false};
     std::string weaponReward;
+    EventSpecialEffects special;
     bool valid{false};
 };
 
