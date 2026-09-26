@@ -247,8 +247,7 @@ This file is the durable project memory. Chat history is supplementary.
   - `data/dlcPirateBlueprints.xml`
   - `data/dlcEvents.xml`
   - `data/dlcEventsOverwrite.xml`
-  - `data/newEvents.xml`
-- Therefore the target behavior is: open one `ftl.dat`, then enable/disable the AE dataset/layers inside that archive. Do **not** revert to the previous external `.dlc` approach.
+  - Therefore the target behavior is: open one `ftl.dat`, then enable/disable the AE dataset/layers inside that archive. Do **not** revert to the previous external `.dlc` approach.
 - A first implementation pass was made to let blueprint/event loading include those internal AE resources when AE is enabled, including overwrite event-list handling. This pass currently fails Host build #557 and Vita build #249 and is **not validated** yet. Fix the build before treating the AE integration as complete.
 - A further data-fidelity issue was identified: real event data uses forms such as `<event load="...">` extensively, while the current parser primarily assumes `<event name="...">`. This must be corrected so event resolution matches the real FTL data model.
 - Next priorities:
@@ -343,3 +342,15 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 - The latest commit's GitHub Actions status has not surfaced yet; do not treat this as a new green CI result. The last confirmed green baseline remains Host #578 / Vita #270 at `e04d0231`.
 - The next fidelity target remains the event effect model: nested rewards/crew/damage/boarder outcomes and complete choice requirements, followed by more faithful sector beacon generation and Rebel Fleet pressure.
 - Estimated overall progress remains about 40% toward the real-FTL gameplay target; this is an engineering estimate, not a completion guarantee.
+
+
+## 2026-09-26 continuation — Library ftl.dat handoff source
+- A legitimate user-supplied **ftl.dat is already stored in the ChatGPT Library** and is available as the project's real-data validation source across continuation sessions.
+- When real FTL data needs to be inspected, parsed, counted, or validated, **retrieve/use the Library copy of ftl.dat first** rather than asking the user to upload it again.
+- The Library copy is for local technical inspection only. **Never commit, embed, extract-and-commit, or redistribute the proprietary archive or its extracted proprietary assets to GitHub.**
+- Known inspected Library archive: header is reconstructed PKG\\n; 3,219 entries; 280,573,482 bytes; 2,837 PNG resources; Japanese resource data/text-ja.xml.
+- AE resources are inside the same archive: data/dlcBlueprints.xml, data/dlcBlueprintsOverwrite.xml, data/dlcPirateBlueprints.xml, data/dlcEvents.xml, data/dlcEventsOverwrite.xml.
+- data/newEvents.xml does not exist in the inspected archive.
+- The desired game behavior is a single-archive model matching the real game: base data and AE data are selected/layered internally from the same ftl.dat, not packaged as a separate external DLC archive.
+- If a future continuation needs the archive and it is not already mounted in the current runtime, use the Files/Library retrieval path to materialize the existing Library file. Do not ask the user to provide it again unless the Library copy is genuinely unavailable.
+- This Library source is especially important for validating event effects, choice requirements, ship/weapon/crew data, sector data, Japanese localization, and asset paths against the real game data.
