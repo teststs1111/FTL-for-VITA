@@ -925,7 +925,7 @@ public:
             text_.draw(graphics_, "セーブデータあり", 700.f, 105.f, 14.f, {0.82f, 0.78f, 0.48f, 1.f});
     }
 
-    bool hasAugment(const char* id) const {
+    bool hasAugment(const std::string& id) const {
         if (std::find(augmentIds_.begin(), augmentIds_.end(), id) != augmentIds_.end()) return true;
         const std::string wanted = id;
         for (const auto& owned : augmentIds_) {
