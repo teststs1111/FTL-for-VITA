@@ -1570,6 +1570,7 @@ public:
         if (input_.pressed(Button::Circle) && input_.down(Button::Square)) {
             cloakCommand = true;
             if (combat_.cloaked()) {
+                combat_.deactivateCloaking();
                 combatFeedback_ = "クローク解除";
             } else if (combat_.activateCloaking()) {
                 combatFeedback_ = "クローク起動";
