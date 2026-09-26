@@ -14,6 +14,25 @@ struct EventDamageEffect {
     std::string effect;
 };
 
+struct EventCrewMemberEffect {
+    int amount{0};
+    std::string id;
+    std::string race;
+    bool allSkills{false};
+    int pilot{0};
+    int engines{0};
+    int shields{0};
+    int weapons{0};
+    int repair{0};
+    int combat{0};
+};
+
+struct EventCrewRemovalEffect {
+    bool clone{false};
+    std::string race;
+    std::string textKey;
+};
+
 struct EventChoice {
     std::string text;
     std::string textKey;
@@ -36,6 +55,8 @@ struct EventChoice {
     int drones{0};
     int dronesMax{0};
     std::vector<EventDamageEffect> effects;
+    std::vector<EventCrewMemberEffect> crewMembers;
+    std::vector<EventCrewRemovalEffect> crewRemovals;
 };
 
 struct EventDefinition {
@@ -58,6 +79,8 @@ struct EventDefinition {
     int initialDrones{0};
     int initialDronesMax{0};
     std::vector<EventDamageEffect> effects;
+    std::vector<EventCrewMemberEffect> crewMembers;
+    std::vector<EventCrewRemovalEffect> crewRemovals;
     bool valid{false};
 };
 
