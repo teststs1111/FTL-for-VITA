@@ -434,3 +434,14 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 3. Upgrade Blue Options from race/system presence to actual crew skills and equipment/augment requirements.
 4. Parse/apply `environment`, `distressBeacon`, `weapon`, and `item_modify` semantics more completely.
 5. Replace the compatibility sector graph with original FTL beacon generation and Rebel fleet pressure.
+
+
+## 2026-09-26 continuation — real quest target handling
+- Inspected all 21 `<quest>` nodes in the supplied base `data/events.xml`.
+- The real archive overwhelmingly uses the form `<quest event="TARGET_EVENT" />` without a separate quest name/id.
+- Fixed runtime quest registration so the originating concrete event ID becomes the stable quest key when no explicit quest name/id exists.
+- Choice-level quest creation now uses the originating event ID for the same reason.
+- This makes the existing save/load quest state meaningful for the actual FTL data: active quest -> target event ID -> completion when that target event is reached.
+- Existing `completeQuestForEvent()` now removes the matching active quest and target mapping when the target event is entered.
+- Latest quest fix commit: `8ee73f12a995756de70a56577f70e456514e9ed2`.
+- No proprietary data was committed.
