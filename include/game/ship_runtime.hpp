@@ -99,6 +99,7 @@ struct ShipRuntime {
     void reset();
     bool damageRoom(int roomId, int amount);
     int damageSystemInRoom(int roomId, int amount);
+    int repairSystemInRoom(int roomId, int amount);
     int ionizeSystemInRoom(int roomId, int amount);
     bool repairRoom(int roomId, int amount);
     bool setSystemPowered(int systemIndex, bool powered);
