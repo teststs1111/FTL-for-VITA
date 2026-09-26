@@ -8,6 +8,12 @@
 
 namespace wormhole {
 
+struct EventDamageEffect {
+    int amount{0};
+    std::string system;
+    std::string effect;
+};
+
 struct EventChoice {
     std::string text;
     std::string textKey;
@@ -29,6 +35,7 @@ struct EventChoice {
     int missilesMax{0};
     int drones{0};
     int dronesMax{0};
+    std::vector<EventDamageEffect> effects;
 };
 
 struct EventDefinition {
@@ -50,6 +57,7 @@ struct EventDefinition {
     int initialMissilesMax{0};
     int initialDrones{0};
     int initialDronesMax{0};
+    std::vector<EventDamageEffect> effects;
     bool valid{false};
 };
 
