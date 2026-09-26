@@ -1316,6 +1316,25 @@ public:
             if (race == req) return true;
         }
 
+        if (choice.requirementLevel > 0) {
+            for (const auto& crew : runtime_.crew) {
+                if (!crew.alive) continue;
+                int skill = -1;
+                if (req == "pilot" || req == "piloting") skill = crew.pilotSkill;
+                else if (req == "engines" || req == "engine") skill = crew.enginesSkill;
+                else if (req == "shields" || req == "shield") skill = crew.shieldsSkill;
+                else if (req == "weapons" || req == "weapon") skill = crew.weaponsSkill;
+                else if (req == "repair" || req == "repairs") skill = crew.repairSkill;
+                else if (req == "combat" || req == "fighting") skill = crew.combatSkill;
+                if (skill >= choice.requirementLevel) return true;
+            }
+        }
+
+        std::string augmentReq = choice.requirement;
+        std::transform(augmentReq.begin(), augmentReq.end(), augmentReq.begin(),
+            [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+        if (hasAugment(augmentReq.c_str())) return true;
+
         // System-level requirements such as req="doors" lvl="3".
         // FTL data uses a few historical aliases for the same system; map
         // those aliases to the runtime's canonical type before comparing.
