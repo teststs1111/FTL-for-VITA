@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cctype>
 #include <fstream>
+#include <iomanip>
 #include <utility>
 #include <vector>
 #include <array>
@@ -444,6 +445,170 @@ public:
 
     enum class SceneMode { ShipSelect, SectorMap, Ship, Event, Combat, Pause, GameOver, Victory };
 
+
+    static constexpr const char* savePath() { return "ux0:data/wormhole/save.dat"; }
+
+    bool hasSaveGame() const {
+        std::ifstream in(savePath());
+        return in.good();
+    }
+
+    bool saveGame() {
+        if (combatMode_ || sceneMode_ == SceneMode::GameOver || sceneMode_ == SceneMode::Victory)
+            return false;
+        std::ofstream out(savePath(), std::ios::trunc);
+        if (!out) return false;
+
+        out << "FTL_VITA_SAVE 2\n";
+        out << "ship " << std::quoted(runtime_.content.blueprint.id) << "\n";
+        out << "seed " << seed_ << "\n";
+        out << "sector " << sector_ << "\n";
+        out << "flagship " << flagshipPhase_ << "\n";
+        out << "beacon " << currentBeacon_ << ' ' << selectedBeacon_ << "\n";
+        out << "fleet " << fleetRow_ << "\n";
+        out << "visited " << visitedBeacons_ << "\n";
+        out << "resources " << fuel_ << ' ' << scrap_ << ' ' << droneParts_ << ' ' << runtime_.missiles << "\n";
+        out << "hull " << runtime_.hull << "\n";
+
+        out << "systems " << runtime_.systems.size() << "\n";
+        for (const auto& s : runtime_.systems)
+            out << std::quoted(s.type) << ' ' << s.room << ' ' << s.power << ' ' << s.damage << ' '
+                << s.ionDamage << ' ' << (s.powered ? 1 : 0) << "\n";
+
+        out << "crew " << runtime_.crew.size() << "\n";
+        for (const auto& crew : runtime_.crew)
+            out << std::quoted(crew.race) << ' ' << std::quoted(crew.name) << ' '
+                << crew.room << ' ' << crew.health << ' ' << crew.maxHealth << ' ' << (crew.alive ? 1 : 0) << "\n";
+
+        out << "weapons " << runtime_.weapons.size() << "\n";
+        for (const auto& w : runtime_.weapons)
+            out << std::quoted(w.name) << ' ' << std::quoted(w.type) << ' '
+                << w.charge << ' ' << (w.ready ? 1 : 0) << "\n";
+
+        out << "drones " << runtime_.drones.size() << "\n";
+        for (const auto& d : runtime_.drones)
+            out << std::quoted(d.name) << ' ' << static_cast<int>(d.type) << ' '
+                << (d.powered ? 1 : 0) << ' ' << (d.active ? 1 : 0) << "\n";
+
+        out << "doors " << runtime_.doorOpen.size();
+        for (bool open : runtime_.doorOpen) out << ' ' << (open ? 1 : 0);
+        out << "\n";
+        out << "quests " << activeQuestIds_.size() << "\n";
+        for (const auto& quest : activeQuestIds_) {
+            const auto it = questTargets_.find(quest);
+            out << std::quoted(quest) << ' '
+                << std::quoted(it == questTargets_.end() ? std::string{} : it->second) << "\n";
+        }
+        return static_cast<bool>(out);
+    }
+
+    bool loadGame() {
+        std::ifstream in(savePath());
+        if (!in) return false;
+
+        std::string header;
+        std::getline(in, header);
+        if (header != "FTL_VITA_SAVE 2") return false;
+
+        std::string key, shipId;
+        in >> key >> std::quoted(shipId);
+        if (key != "ship" || shipId.empty()) return false;
+        if (!content_.loadPlayerShip("data/blueprints.xml", shipId) || !runtime_.load(content_))
+            return false;
+
+        in >> key >> seed_; in >> key >> sector_; in >> key >> flagshipPhase_;
+        in >> key >> currentBeacon_ >> selectedBeacon_;
+        in >> key >> fleetRow_;
+        in >> key >> visitedBeacons_;
+        in >> key >> fuel_ >> scrap_ >> droneParts_ >> runtime_.missiles;
+        in >> key >> runtime_.hull;
+
+        std::size_t count = 0;
+        in >> key >> count;
+        for (std::size_t i = 0; i < count; ++i) {
+            std::string type; int room, power, damage, ionDamage, powered;
+            in >> std::quoted(type) >> room >> power >> damage >> ionDamage >> powered;
+            for (auto& s : runtime_.systems) {
+                if (s.type != type || s.room != room) continue;
+                s.power = std::clamp(power, 0, s.maxPower);
+                s.damage = std::clamp(damage, 0, s.maxPower);
+                s.ionDamage = std::clamp(ionDamage, 0, s.maxPower - s.damage);
+                s.powered = powered != 0 && s.power > 0;
+                break;
+            }
+        }
+
+        in >> key >> count;
+        for (std::size_t i = 0; i < count; ++i) {
+            std::string race, name; int room, health, maxHealth, alive;
+            in >> std::quoted(race) >> std::quoted(name) >> room >> health >> maxHealth >> alive;
+            for (auto& crew : runtime_.crew) {
+                if (crew.race != race || crew.name != name) continue;
+                crew.room = room;
+                crew.maxHealth = maxHealth;
+                crew.health = std::clamp(health, 0, maxHealth);
+                crew.alive = alive != 0 && crew.health > 0;
+                break;
+            }
+        }
+
+        in >> key >> count;
+        for (std::size_t i = 0; i < count; ++i) {
+            std::string name, type; float charge; int ready;
+            in >> std::quoted(name) >> std::quoted(type) >> charge >> ready;
+            for (auto& w : runtime_.weapons) {
+                if (w.name != name) continue;
+                w.charge = std::max(0.0f, charge);
+                w.ready = ready != 0;
+                break;
+            }
+        }
+
+        in >> key >> count;
+        for (std::size_t i = 0; i < count; ++i) {
+            std::string name; int type, powered, active;
+            in >> std::quoted(name) >> type >> powered >> active;
+            for (auto& d : runtime_.drones) {
+                if (d.name != name) continue;
+                d.powered = powered != 0;
+                d.active = active != 0;
+                break;
+            }
+        }
+
+        in >> key >> count;
+        runtime_.doorOpen.assign(runtime_.content.layout.doors.size(), false);
+        for (std::size_t i = 0; i < count; ++i) {
+            int open = 0; in >> open;
+            if (i < runtime_.doorOpen.size()) runtime_.doorOpen[i] = open != 0;
+        }
+
+        activeQuestIds_.clear();
+        questTargets_.clear();
+        in >> key >> count;
+        for (std::size_t i = 0; i < count; ++i) {
+            std::string quest, target;
+            in >> std::quoted(quest) >> std::quoted(target);
+            activeQuestIds_.push_back(quest);
+            if (!target.empty()) questTargets_[quest] = target;
+        }
+
+        sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
+        combat_.player = runtime_;
+        currentBeacon_ = std::clamp(currentBeacon_, -1, static_cast<int>(sectorGraph_.nodes().size()) - 1);
+        selectedBeacon_ = std::clamp(selectedBeacon_, 0, static_cast<int>(sectorGraph_.nodes().size()) - 1);
+        combatMode_ = false;
+        storeOpen_ = false;
+        jumpCharging_ = false;
+        jumpCharge_ = 0.0f;
+        sceneMode_ = SceneMode::SectorMap;
+        discoverRoomTextures();
+        discoverWeaponAndDroneTextures();
+        discoverCrewTextures();
+        discoverShipTexture();
+        return true;
+    }
+
     void buildShipSelection() {
         shipChoices_.clear();
         for (const auto& entry : content_.blueprints().ships()) {
@@ -506,6 +671,12 @@ public:
                 combatFeedbackTimer_ = 2.0f;
             }
         }
+        if (input_.pressed(Button::Square) && hasSaveGame()) {
+            if (!loadGame()) {
+                combatFeedback_ = "セーブデータを読み込めません";
+                combatFeedbackTimer_ = 2.0f;
+            }
+        }
     }
 
     void renderShipSelect() {
@@ -528,7 +699,9 @@ public:
                     530.f, y, 14.f, {0.65f, 0.76f, 0.88f, 1.f});
             }
         }
-        text_.draw(graphics_, "↑↓: 選択   ×: この艦で開始", 75.f, 475.f, 15.f, {0.68f, 0.76f, 0.86f, 1.f});
+        text_.draw(graphics_, "↑↓: 選択   ×: この艦で開始   □: セーブから再開", 75.f, 475.f, 15.f, {0.68f, 0.76f, 0.86f, 1.f});
+        if (hasSaveGame())
+            text_.draw(graphics_, "セーブデータあり", 700.f, 105.f, 14.f, {0.82f, 0.78f, 0.48f, 1.f});
     }
 
     void enterCombatFromBeacon(const std::string& enemyShipId = {}) {
