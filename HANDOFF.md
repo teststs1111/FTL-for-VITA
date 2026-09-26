@@ -424,7 +424,7 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 - `weapon`, `augment`, `drone`, and mixed `item` rewards now select actual loaded blueprint entries and add them to the runtime when the corresponding slot is available.
 - `RANDOM` tier is resolved deterministically from the existing run seed/state so host tests remain reproducible.
 - This is intentionally implemented against the real archive's data model rather than inventing a separate DLC reward system.
-- Latest auto-reward implementation commit: `577d6e333f81e0b7d1d35e96a14561c16596eea5`.
+- Latest auto-reward implementation commit: `3f026ae50904e4d816747cbcf3ec606d8bd5379c` (follow-up corrected `stuff` to use sector-scaled LOW scrap).
 - Web cross-check: FTL reward documentation confirms the tier/resource ranges and autoReward categories used here. citeturn0search0turn0search6
 - CI status has not produced a new workflow result for this continuation; do not claim green yet.
 
