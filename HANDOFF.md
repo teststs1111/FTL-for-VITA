@@ -292,3 +292,5 @@ This file is the durable project memory. Chat history is supplementary.
 - Host #569 reached successful compilation/linking of wormhole_core and tests; final link exposed one missing CombatRuntime::activateCloaking definition. Implemented in e13152613b79be869dccd1ed0acc06a0600443e3. This should be the next build verification point.
 
 - Host #571 exposed a second cloaking compile issue: ShipRuntime has no hasSystem/SystemType API. Replaced it with direct RuntimeSystem type lookup in 7d1647908ce232acc4acd2b2f7fca1dbad6e06ee.
+
+- Host/Vita builds #573/#265 are green on 163bf2c0. AE event overwrite handling was advanced in 618411db: overwrite event definitions can replace existing IDs, and OVERRIDE_ event-list names map back to the base pool ID.
