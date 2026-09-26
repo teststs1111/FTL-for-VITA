@@ -65,6 +65,8 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
         if (name != ship->attributes.end()) event.hostileShipId = name->second;
     }
     if (const auto* quest = child(node, "quest")) {
+        const auto target = quest->attributes.find("event");
+        if (target != quest->attributes.end()) event.questTargetId = target->second;
         const auto name = quest->attributes.find("name");
         if (name != quest->attributes.end()) event.questId = name->second;
         else {
@@ -111,6 +113,8 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
                 if (name != ship->attributes.end()) choice.hostileShipId = name->second;
             }
             if (const auto* quest = child(*e, "quest")) {
+                const auto target = quest->attributes.find("event");
+                if (target != quest->attributes.end()) choice.questTargetId = target->second;
                 const auto name = quest->attributes.find("name");
                 if (name != quest->attributes.end()) choice.questId = name->second;
                 else {
