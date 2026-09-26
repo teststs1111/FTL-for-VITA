@@ -204,6 +204,7 @@ bool EventDatabase::load() {
     replacingPools_ = false;
     for (const auto& name : assets_.fileNames()) {
         if (!startsWithEvents(name)) continue;
+        if (!advancedEdition_ && (name == "data/events_ae.xml" || name == "data/events_ae_overwrite.xml")) continue;
         const auto* bytes = assets_.getBytes(name);
         if (!bytes || bytes->empty()) continue;
         try { collectEvents(bxml::read(*bytes)); } catch (...) {}
