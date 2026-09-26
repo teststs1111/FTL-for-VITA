@@ -47,6 +47,21 @@ struct EventEnvironment {
     std::string target;
 };
 
+struct EventShipOutcome {
+    std::string textKey;
+    int scrap{0};
+    int scrapMax{0};
+    int fuel{0};
+    int fuelMax{0};
+    int missiles{0};
+    int missilesMax{0};
+    int drones{0};
+    int dronesMax{0};
+    bool hasAutoReward{false};
+    EventAutoReward autoReward;
+    std::string weaponReward;
+};
+
 struct EventChoice {
     std::string text;
     std::string textKey;
@@ -119,6 +134,7 @@ public:
     void setAdvancedEdition(bool enabled) { advancedEdition_ = enabled; }
     const EventDefinition* find(const std::string& id) const;
     const EventDefinition* resolve(const std::string& id, std::uint32_t seed) const;
+    const EventShipOutcome* findShipOutcome(const std::string& shipId, bool deadCrew) const;
     enum class BeaconType { Empty, Hostile, Store, Distress, Quest, Exit };
     BeaconType classify(const std::string& id) const;
     const EventDefinition* firstUsable() const;
@@ -139,6 +155,8 @@ private:
     AssetStore& assets_;
     std::unordered_map<std::string, EventDefinition> events_;
     std::unordered_map<std::string, EventPool> eventPools_;
+    std::unordered_map<std::string, EventShipOutcome> destroyedOutcomes_;
+    std::unordered_map<std::string, EventShipOutcome> deadCrewOutcomes_;
     std::vector<std::string> order_;
     bool advancedEdition_{true};
     bool replacingPools_{false};
