@@ -828,7 +828,15 @@ public:
     }
 
     bool hasAugment(const char* id) const {
-        return std::find(augmentIds_.begin(), augmentIds_.end(), id) != augmentIds_.end();
+        if (std::find(augmentIds_.begin(), augmentIds_.end(), id) != augmentIds_.end()) return true;
+        const std::string wanted = id;
+        for (const auto& owned : augmentIds_) {
+            if ((wanted == "AUTO_RELOADER" && (owned == "RELOADER" || owned == "AUTO_RELOADER")) ||
+                (wanted == "FTL_RECHARGE" && (owned == "FTL_RECHARGE_BOOSTER" || owned == "FTL_RECHARGE")) ||
+                (wanted == "SCRAP_ARM" && (owned == "SCRAP_RECOVERY_ARM" || owned == "SCRAP_ARM")))
+                return true;
+        }
+        return false;
     }
 
     float weaponCooldownMultiplier() const {
