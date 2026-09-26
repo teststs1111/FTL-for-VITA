@@ -11,6 +11,7 @@
 #include "render/text_renderer.hpp"
 #include "platform/input.hpp"
 #include <algorithm>
+#include <cmath>
 #include <cctype>
 #include <fstream>
 #include <iomanip>
