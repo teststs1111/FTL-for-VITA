@@ -19,9 +19,13 @@ struct EventChoice {
     bool store{false};
     bool repair{false};
     int scrap{0};
+    int scrapMax{0};
     int fuel{0};
+    int fuelMax{0};
     int missiles{0};
+    int missilesMax{0};
     int drones{0};
+    int dronesMax{0};
 };
 
 struct EventDefinition {
@@ -33,9 +37,13 @@ struct EventDefinition {
     bool store{false};
     bool repair{false};
     int initialScrap{0};
+    int initialScrapMax{0};
     int initialFuel{0};
+    int initialFuelMax{0};
     int initialMissiles{0};
+    int initialMissilesMax{0};
     int initialDrones{0};
+    int initialDronesMax{0};
     bool valid{false};
 };
 
