@@ -47,6 +47,7 @@ bool SectorDatabase::load() {
     sectors_.clear();
     for(const auto& n:assets_.fileNames()) {
         if(!sectorFile(n)) continue;
+        if(!advancedEdition_ && n == "data/sector_data_ae.xml") continue;
         const auto* bytes=assets_.getBytes(n);
         if(!bytes || bytes->empty()) continue;
         try { collect(bxml::read(*bytes)); } catch(...) {}
