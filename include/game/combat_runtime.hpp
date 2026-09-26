@@ -3,6 +3,7 @@
 #include <deque>
 #include <vector>
 #include <cstdint>
+#include <algorithm>
 
 namespace wormhole {
 
@@ -59,6 +60,10 @@ public:
     void configureFlagshipPhase(int phase);
     void setPlayerWeaponCooldownMultiplier(float multiplier) { playerWeaponCooldownMultiplier_ = multiplier; }
     void setPlayerShieldRechargeMultiplier(float multiplier) { playerShieldRechargeMultiplier_ = multiplier; }
+    void setStealthWeapons(bool enabled) { stealthWeapons_ = enabled; }
+    bool activateCloaking();
+    bool cloaked() const { return cloakTimer_ > 0.0f; }
+    float cloakRemaining() const { return std::max(0.0f, cloakTimer_); }
     int superShieldRemaining() const { return superShield_; }
 
 private:
@@ -80,6 +85,8 @@ private:
     int superShield_{0};
     float playerWeaponCooldownMultiplier_{1.0f};
     float playerShieldRechargeMultiplier_{1.0f};
+    bool stealthWeapons_{false};
+    float cloakTimer_{0.0f};
     std::uint32_t nextRandom();
 };
 
