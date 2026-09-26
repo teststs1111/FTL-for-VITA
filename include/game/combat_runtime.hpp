@@ -58,6 +58,7 @@ public:
     void setRandomSeed(std::uint32_t seed);
     void configureFlagshipPhase(int phase);
     void setPlayerWeaponCooldownMultiplier(float multiplier) { playerWeaponCooldownMultiplier_ = multiplier; }
+    void setPlayerShieldRechargeMultiplier(float multiplier) { playerShieldRechargeMultiplier_ = multiplier; }
     int superShieldRemaining() const { return superShield_; }
 
 private:
@@ -78,6 +79,7 @@ private:
     float droneSurgeTimer_{0.0f};
     int superShield_{0};
     float playerWeaponCooldownMultiplier_{1.0f};
+    float playerShieldRechargeMultiplier_{1.0f};
     std::uint32_t nextRandom();
 };
 
