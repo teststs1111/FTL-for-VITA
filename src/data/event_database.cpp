@@ -72,6 +72,17 @@ static void parseItemModify(const bxml::Node& node, int& scrap, int& scrapMax,
     }
 }
 
+static void parseSpecialEffects(const bxml::Node& node, EventSpecialEffects& out) {
+    if (const auto* pursuit = itemChild(node, "modifyPursuit"))
+        out.modifyPursuit += itemAttrInt(*pursuit, "amount", 0);
+    out.revealMap = out.revealMap || itemChild(node, "reveal_map") != nullptr;
+    out.secretSector = out.secretSector || itemChild(node, "secretSector") != nullptr;
+    if (const auto* augment = itemChild(node, "augment")) {
+        const auto it = augment->attributes.find("name");
+        if (it != augment->attributes.end()) out.augmentReward = it->second;
+    }
+}
+
 static void parseCrewEffects(const bxml::Node& node,
                               std::vector<EventCrewMemberEffect>& members,
                               std::vector<EventCrewRemovalEffect>& removals,
@@ -192,7 +203,7 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
         if (it != reward->attributes.end()) event.autoReward.level = it->second;
         event.autoReward.type = nodeText(*reward);
     }
-    parseCrewEffects(node, event.crewMembers, event.crewRemovals, event.boarders);
+    parseCrewEffects(node, event.crewMembers, event.crewRemovals, event.boarders);\n    parseSpecialEffects(node, event.special);
 
     // item_modify is the event's authoritative resource delta. Preserve
     // negative values (trades/costs) and ranges exactly; rollEventRange()
@@ -261,7 +272,7 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
                 if (it != reward->attributes.end()) choice.autoReward.level = it->second;
                 choice.autoReward.type = nodeText(*reward);
             }
-            parseCrewEffects(*e, choice.crewMembers, choice.crewRemovals, choice.boarders);
+            parseCrewEffects(*e, choice.crewMembers, choice.crewRemovals, choice.boarders);\n            parseSpecialEffects(*e, choice.special);
             parseItemModify(*e, choice.scrap, choice.scrapMax,
                             choice.fuel, choice.fuelMax,
                             choice.missiles, choice.missilesMax,
