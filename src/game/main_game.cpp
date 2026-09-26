@@ -968,6 +968,8 @@ public:
         combat_.player = runtime_;
         combat_.boarders = pendingBoarders_;
         pendingBoarders_.clear();
+        combat_.setEnvironment(pendingEnvironment_);
+        pendingEnvironment_ = CombatEnvironment::None;
         for (std::size_t i = 0; i < combat_.boarders.size(); ++i) {
             auto& boarder = combat_.boarders[i];
             if (boarder.room < 0 && !combat_.player.content.layout.rooms.empty()) {
@@ -1324,6 +1326,14 @@ public:
         }
     }
 
+    CombatEnvironment eventEnvironment(const EventEnvironment& environment) const {
+        if (environment.type == "asteroid") return CombatEnvironment::Asteroid;
+        if (environment.type == "sun") return CombatEnvironment::Sun;
+        if (environment.type == "PDS")
+            return environment.target == "enemy" ? CombatEnvironment::PDSEnemy : CombatEnvironment::PDSPlayer;
+        return CombatEnvironment::None;
+    }
+
     void applyEventImmediateEffects(const EventDefinition& event) {
         scrap_ = std::max(0, scrap_ + applyScrapAugments(rollEventRange(event.initialScrap, event.initialScrapMax, 0x11u)));
         fuel_ = std::max(0, fuel_ + rollEventRange(event.initialFuel, event.initialFuelMax, 0x23u));
@@ -1335,6 +1345,7 @@ public:
         applyEventBoarders(event.boarders);
         if (event.hasAutoReward) applyEventAutoReward(event.autoReward);
         applyEventWeaponReward(event.weaponReward);
+        if (event.hasEnvironment) pendingEnvironment_ = eventEnvironment(event.environment);
     }
     }
 
@@ -1498,6 +1509,8 @@ public:
         applyEventBoarders(choice.boarders);
         if (choice.hasAutoReward) applyEventAutoReward(choice.autoReward);
         applyEventWeaponReward(choice.weaponReward);
+        if (choice.hasEnvironment) pendingEnvironment_ = eventEnvironment(choice.environment);
+        if (choice.distressBeacon) { /* classification is retained by EventDatabase */ }
         if (choice.load.empty() && !choice.hostile && !choice.store && !choice.repair) {
             ++visitedBeacons_;
             sceneMode_ = SceneMode::SectorMap;
@@ -2699,6 +2712,7 @@ private:
     int shipSelection_{0};
     std::vector<std::string> activeQuestIds_;
     std::vector<RuntimeCrew> pendingBoarders_;
+    CombatEnvironment pendingEnvironment_{CombatEnvironment::None};
     std::vector<std::string> augmentIds_;
     std::unordered_map<std::string, std::string> questTargets_;
     std::unordered_map<std::string, int> sectorEventUsage_;
