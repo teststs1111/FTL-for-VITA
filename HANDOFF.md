@@ -381,7 +381,7 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 - Dynamic crew is now included in save files. Save format advanced to `FTL_VITA_SAVE 4`; versions 2/3 remain readable.
 - Added real-data smoke coverage for `CREW_DEAD_TEST` removal parsing and ShipRuntime add/remove operations.
 - No proprietary FTL data was committed.
-- Latest implementation commit: `89e15bb57cc706e7c7798fadcfbdcb47f42c8038`.
+- Latest implementation commit: `ef312a9ea171b3475543fd167fa371c6d69ac49e` (includes a follow-up fix for dynamic crew save-slot restoration).
 - GitHub Actions status for that commit has not surfaced yet (`workflow_runs=[]`, `statuses=[]`); **do not call this change CI-green until a new Host/Vita result is available**.
 
 ### Next event-fidelity targets
