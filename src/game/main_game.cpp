@@ -306,12 +306,22 @@ public:
         return true;
     }
 
+    int rollEventRange(int minimum, int maximum, std::uint32_t salt) const {
+        if (maximum <= minimum) return minimum;
+        std::uint32_t value = seed_ ^ (static_cast<std::uint32_t>(visitedBeacons_) * 0x9e3779b9u) ^ salt;
+        value ^= value << 13;
+        value ^= value >> 17;
+        value ^= value << 5;
+        const std::uint32_t span = static_cast<std::uint32_t>(maximum - minimum + 1);
+        return minimum + static_cast<int>(value % span);
+    }
+
     void applyEventImmediateEffects(const EventDefinition& event) {
-        scrap_ = std::max(0, scrap_ + event.initialScrap);
-        fuel_ = std::max(0, fuel_ + event.initialFuel);
-        runtime_.missiles = std::max(0, runtime_.missiles + event.initialMissiles);
+        scrap_ = std::max(0, scrap_ + rollEventRange(event.initialScrap, event.initialScrapMax, 0x11u));
+        fuel_ = std::max(0, fuel_ + rollEventRange(event.initialFuel, event.initialFuelMax, 0x23u));
+        runtime_.missiles = std::max(0, runtime_.missiles + rollEventRange(event.initialMissiles, event.initialMissilesMax, 0x37u));
         combat_.player.missiles = runtime_.missiles;
-        droneParts_ = std::max(0, droneParts_ + event.initialDrones);
+        droneParts_ = std::max(0, droneParts_ + rollEventRange(event.initialDrones, event.initialDronesMax, 0x49u));
     }
 
     bool eventChoiceAvailable(const EventChoice& choice) const {
@@ -412,14 +422,14 @@ public:
         // Apply all resource modifications from the original event data, not
         // only scrap/fuel. Missiles and drone parts are carried by the combat
         // runtime, so event rewards immediately affect the actual inventory.
-        scrap_ = std::max(0, scrap_ + choice.scrap);
-        fuel_ = std::max(0, fuel_ + choice.fuel);
+        scrap_ = std::max(0, scrap_ + rollEventRange(choice.scrap, choice.scrapMax, 0x61u + static_cast<std::uint32_t>(activeEventChoice_)));
+        fuel_ = std::max(0, fuel_ + rollEventRange(choice.fuel, choice.fuelMax, 0x73u + static_cast<std::uint32_t>(activeEventChoice_)));
         // Resource rewards belong to the persistent ship state. Combat copies
         // this state when a fight starts, so updating runtime_ here prevents
         // event rewards from disappearing on the next combat.
-        runtime_.missiles = std::max(0, runtime_.missiles + choice.missiles);
+        runtime_.missiles = std::max(0, runtime_.missiles + rollEventRange(choice.missiles, choice.missilesMax, 0x89u + static_cast<std::uint32_t>(activeEventChoice_)));
         combat_.player.missiles = runtime_.missiles;
-        droneParts_ = std::max(0, droneParts_ + choice.drones);
+        droneParts_ = std::max(0, droneParts_ + rollEventRange(choice.drones, choice.dronesMax, 0x97u + static_cast<std::uint32_t>(activeEventChoice_)));
         if (choice.load.empty() && !choice.hostile && !choice.store && !choice.repair) {
             ++visitedBeacons_;
             sceneMode_ = SceneMode::SectorMap;
