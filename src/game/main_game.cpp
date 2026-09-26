@@ -60,6 +60,7 @@ public:
             return;
         }
         {
+            aeEnabled_ = archivePaths.size() > 1;
             if (const auto* bytes = content_.assets().getBytes("data/text-ja.xml"))
                 localization_.loadFtlTextXml(*bytes);
             eventDatabase_.load();
@@ -866,6 +867,7 @@ public:
                     530.f, y, 14.f, {0.65f, 0.76f, 0.88f, 1.f});
             }
         }
+        text_.draw(graphics_, "Advanced Edition: " + std::string(aeEnabled_ ? "ON" : "OFF"), 75.f, 448.f, 13.f, {0.55f, 0.85f, 1.f, 1.f});
         text_.draw(graphics_, "↑↓: 選択   ×: この艦で開始   △: AE ON/OFF   □: セーブから再開", 75.f, 475.f, 15.f, {0.68f, 0.76f, 0.86f, 1.f});
         if (hasSaveGame())
             text_.draw(graphics_, "セーブデータあり", 700.f, 105.f, 14.f, {0.82f, 0.78f, 0.48f, 1.f});
