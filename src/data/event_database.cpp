@@ -25,34 +25,51 @@ const bxml::Node* findFirst(const bxml::Node& node, const std::string& name) {
 }
 }
 
+static int crewAttrInt(const bxml::Node& node, const char* name, int fallback = 0) {
+    const auto it = node.attributes.find(name);
+    if (it == node.attributes.end()) return fallback;
+    try { return std::stoi(it->second); } catch (...) { return fallback; }
+}
+
+static const bxml::Node* crewChild(const bxml::Node& node, const std::string& name) {
+    for (const auto& c : node.children) if (c.name == name) return &c;
+    return nullptr;
+}
+
+static std::string crewNodeText(const bxml::Node& node) {
+    if (!node.text.empty()) return node.text;
+    for (const auto& c : node.children) if (c.name == "text" && !c.text.empty()) return c.text;
+    return {};
+}
+
 static void parseCrewEffects(const bxml::Node& node,
                               std::vector<EventCrewMemberEffect>& members,
                               std::vector<EventCrewRemovalEffect>& removals) {
     for (const auto& c : node.children) {
         if (c.name == "crewMember") {
             EventCrewMemberEffect effect;
-            effect.amount = EventDatabase::attrInt(c, "amount", 0);
+            effect.amount = crewAttrInt(c, "amount", 0);
             auto it = c.attributes.find("id");
             if (it != c.attributes.end()) effect.id = it->second;
             it = c.attributes.find("class");
             if (it != c.attributes.end()) effect.race = it->second;
             it = c.attributes.find("all_skills");
             effect.allSkills = it != c.attributes.end() && it->second == "1";
-            effect.pilot = EventDatabase::attrInt(c, "pilot", 0);
-            effect.engines = EventDatabase::attrInt(c, "engines", 0);
-            effect.shields = EventDatabase::attrInt(c, "shields", 0);
-            effect.weapons = EventDatabase::attrInt(c, "weapons", 0);
-            effect.repair = EventDatabase::attrInt(c, "repair", 0);
-            effect.combat = EventDatabase::attrInt(c, "combat", 0);
+            effect.pilot = crewAttrInt(c, "pilot", 0);
+            effect.engines = crewAttrInt(c, "engines", 0);
+            effect.shields = crewAttrInt(c, "shields", 0);
+            effect.weapons = crewAttrInt(c, "weapons", 0);
+            effect.repair = crewAttrInt(c, "repair", 0);
+            effect.combat = crewAttrInt(c, "combat", 0);
             if (effect.amount != 0) members.push_back(std::move(effect));
         } else if (c.name == "removeCrew") {
             EventCrewRemovalEffect effect;
             auto it = c.attributes.find("class");
             if (it != c.attributes.end()) effect.race = it->second;
-            if (const auto* clone = EventDatabase::child(c, "clone")) {
-                effect.clone = EventDatabase::nodeText(*clone) == "true";
+            if (const auto* clone = crewChild(c, "clone")) {
+                effect.clone = crewNodeText(*clone) == "true";
             }
-            if (const auto* text = EventDatabase::child(c, "text")) {
+            if (const auto* text = crewChild(c, "text")) {
                 const auto idIt = text->attributes.find("id");
                 if (idIt != text->attributes.end()) effect.textKey = idIt->second;
             }
