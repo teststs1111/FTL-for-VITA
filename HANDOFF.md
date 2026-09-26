@@ -333,3 +333,13 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 3. Wire real ship room/system/weapon/crew data deeper into the playable loop.
 4. Complete original Japanese text lookup and Vita Japanese glyph rendering.
 5. Continue FTL HUD/touch, audio, save/load, and flagship sequence.
+
+
+## 2026-09-26 continuation — real FTL event localization
+- Latest implementation commits: `23d6560`, `f92da8b`, `1fefbbf`, `67c281e`.
+- Event definitions and choices now retain the original FTL `text id=` keys in addition to inline text.
+- Vita event rendering resolves those keys through the user-supplied `data/text-ja.xml` localization table, so events using the real FTL text database can display Japanese text instead of exposing raw localization IDs.
+- Added regression coverage for event and choice localization keys.
+- The latest commit's GitHub Actions status has not surfaced yet; do not treat this as a new green CI result. The last confirmed green baseline remains Host #578 / Vita #270 at `e04d0231`.
+- The next fidelity target remains the event effect model: nested rewards/crew/damage/boarder outcomes and complete choice requirements, followed by more faithful sector beacon generation and Rebel Fleet pressure.
+- Estimated overall progress remains about 40% toward the real-FTL gameplay target; this is an engineering estimate, not a completion guarantee.
