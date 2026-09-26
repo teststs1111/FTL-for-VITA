@@ -81,6 +81,7 @@ private:
     std::vector<std::string> order_;
     bool advancedEdition_{true};
     bool replacingPools_{false};
+    bool replacingEvents_{false};
 };
 
 }
