@@ -476,3 +476,23 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 - EventDefinition/EventChoice environment metadata is now carried into pending combat state and applied when the hostile encounter starts.
 - This is a gameplay approximation of the documented vanilla hazard timings/behavior; visual warning/siren/projectile presentation and exact internal ASB/asteroid/sun formulas remain future fidelity work. Environmental hazard behavior references include the FTL Environmental Hazards documentation. 
 - Latest implementation commits: `731198e742ca9ceffbb78ef7d4f03965e1e85903`, `af2dec0046b724489f3fc06cff2d5f4cce3ec823`, `576928b91d659c6411a888589daaa2080c9dab67a6`.
+
+
+## 2026-09-26 continuation — item_modify and inline eventList fidelity
+- Re-inspected all 41 real item_modify nodes in the supplied base data/events.xml.
+- Confirmed item_modify is not limited to top-level events: the archive also uses it inside nested choice events, directly on choices, and inside inline eventList entries.
+- Resource modifiers include both positive rewards and negative costs/trades, with ranged values such as scrap -25..-10, fuel -4..-2, and mixed multi-resource transactions.
+- Added a shared parser for scrap/fuel/missiles/drones that preserves signed min/max ranges instead of normalizing negative maxima upward.
+- Added support for item_modify directly on <choice> as well as the nested <choice><event>...</event></choice> form.
+- Fixed eventList parsing so unnamed inline <event> entries receive stable synthetic IDs and are retained in weighted pools. Previously these entries were silently discarded, which could prevent real event outcomes from ever being selected.
+- Added regression coverage for an inline eventList item modifier and a negative choice-level scrap modifier.
+- No proprietary FTL data or extracted assets were committed.
+- Latest implementation commit: 3fef8f02340bb42fba0de76abe6b69c0555f6ef1.
+- Latest regression-fixture commit: 973506103903974803b97f7002d22d1b55fd6fbe.
+- GitHub Actions has not surfaced a workflow result for 9735061 yet (workflow_runs=[], statuses=[]); do not call this CI-green until Host/Vita results appear.
+
+### Next event-fidelity target
+1. Inspect and model deadCrew / destroyed encounter reward blocks, including their item_modify and weapon rewards.
+2. Complete Blue Option numeric resource conditions and quest/flag conditions.
+3. Then improve event effect edge cases (augment, secretSector, modifyPursuit, reveal_map, etc.) that are still outside the current runtime model.
+4. After event fidelity, replace the generic sector graph with original FTL beacon generation constraints and Rebel fleet pursuit.
