@@ -180,7 +180,7 @@ static void testEventDatabase() {
     const std::string events =
         "<FTL><eventList name=\"NEUTRAL\"><event load=\"BASE\" weight=\"1\"/></eventList>"
         "<event name=\"BASE\"><text>base event</text><choice><text>Fight</text>"
-        "<event><ship hostile=\"true\" name=\"ENGI_SCOUT\"/></event></choice></event></FTL>";
+        "<event><ship hostile=\"true\" name=\"ENGI_SCOUT\"/></event></choice></event><event name="LOCALIZED"><text id="event_LOCALIZED_text"/><choice><text id="event_LOCALIZED_choice"/><event load="BASE"/></choice></event></FTL>";
     const std::string dlc =
         "<FTL><eventList name=\"NEUTRAL\"><event load=\"DLC\" weight=\"1\"/></eventList>"
         "<event name=\"DLC\"><text>advanced event</text><item_modify><item type=\"fuel\" min=\"1\" max=\"3\"/></item_modify></event></FTL>";
@@ -204,6 +204,10 @@ static void testEventDatabase() {
     assert(base && base->choices.size() == 1);
     assert(base->choices[0].hostile);
     assert(base->choices[0].hostileShipId == "ENGI_SCOUT");
+    const auto* localized = database.find("LOCALIZED");
+    assert(localized && localized->textKey == "event_LOCALIZED_text");
+    assert(localized && localized->choices.size() == 1);
+    assert(localized && localized->choices[0].textKey == "event_LOCALIZED_choice");
     std::remove(path.c_str());
 }
 
