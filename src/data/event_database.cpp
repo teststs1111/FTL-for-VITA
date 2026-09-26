@@ -61,6 +61,8 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
     if (const auto* ship = child(node, "ship")) {
         const auto it = ship->attributes.find("hostile");
         event.hostile = it != ship->attributes.end() && it->second == "true";
+        const auto name = ship->attributes.find("name");
+        if (name != ship->attributes.end()) event.hostileShipId = name->second;
     }
     event.store = hasChild(node, "store");
     event.repair = hasChild(node, "repair");
@@ -96,6 +98,8 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
             if (const auto* ship = child(*e, "ship")) {
                 const auto hit = ship->attributes.find("hostile");
                 choice.hostile = hit != ship->attributes.end() && hit->second == "true";
+                const auto name = ship->attributes.find("name");
+                if (name != ship->attributes.end()) choice.hostileShipId = name->second;
             }
             choice.store = hasChild(*e, "store");
             choice.repair = hasChild(*e, "repair");
