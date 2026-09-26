@@ -160,10 +160,15 @@ void EventDatabase::collectEvents(const bxml::Node& node) {
             EventPool pool;
             for (const auto& c : node.children) {
                 if (c.name != "event") continue;
+                std::string eventId;
+                const auto loadIt = c.attributes.find("load");
+                if (loadIt != c.attributes.end()) eventId = loadIt->second;
                 const auto nameIt = c.attributes.find("name");
-                if (nameIt == c.attributes.end() || nameIt->second.empty()) continue;
-                pool.entries.push_back({nameIt->second, std::max(1, attrInt(c, "weight", 1))});
-                addEvent(c, nameIt->second);
+                if (eventId.empty() && nameIt != c.attributes.end()) eventId = nameIt->second;
+                if (eventId.empty()) continue;
+                pool.entries.push_back({eventId, std::max(1, attrInt(c, "weight", 1))});
+                if (nameIt != c.attributes.end() && !nameIt->second.empty())
+                    addEvent(c, nameIt->second);
             }
             if (!pool.entries.empty()) {
                 if (replacingPools_) eventPools_[idIt->second] = std::move(pool);
