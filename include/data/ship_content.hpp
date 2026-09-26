@@ -22,6 +22,7 @@ public:
                   const std::string& blueprintPath = "data/blueprints.xml");
     bool loadPlayerShip(const std::string& blueprintPath = "data/blueprints.xml",
                         const std::string& shipId = "PLAYER_SHIP_HARD");
+    void setAdvancedEdition(bool enabled) { advancedEdition_ = enabled; }
 
     const LoadedShip* playerShip() const { return loaded_ ? &ship_ : nullptr; }
     AssetStore& assets() { return assets_; }
@@ -34,6 +35,7 @@ private:
     BlueprintDatabase database_{assets_};
     LoadedShip ship_;
     bool loaded_{false};
+    bool advancedEdition_{true};
 };
 
 }
