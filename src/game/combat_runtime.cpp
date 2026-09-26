@@ -532,4 +532,12 @@ bool CombatRuntime::consumeImpactResult(CombatResult& result) {
     return true;
 }
 
+
+bool CombatRuntime::activateCloaking() {
+    if (!player.valid || !player.hasSystem(SystemType::Cloaking)) return false;
+    if (cloakTimer_ > 0.0f) return false;
+    cloakTimer_ = 5.0f;
+    return true;
+}
+
 }
