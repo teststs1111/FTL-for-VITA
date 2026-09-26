@@ -262,7 +262,7 @@ public:
     }
 
     struct StoreOffer {
-        enum class Kind { Fuel, Missiles, DroneParts, Repair, Weapon, Drone, SellWeapon, SellDrone };
+        enum class Kind { Fuel, Missiles, DroneParts, Repair, Weapon, Drone, Augment, SellWeapon, SellDrone, SellAugment };
         Kind kind{Kind::Fuel};
         std::string id;
         int cost{0};
@@ -308,6 +308,20 @@ public:
             }
         }
 
+        std::vector<std::string> augmentIds;
+        for (const auto& entry : content_.blueprints().augments()) augmentIds.push_back(entry.first);
+        std::sort(augmentIds.begin(), augmentIds.end());
+        if (!augmentIds.empty()) {
+            const std::size_t start = static_cast<std::size_t>((seed_ + static_cast<unsigned>(sector_ * 43 + std::max(0, currentBeacon_))) % augmentIds.size());
+            for (std::size_t i = 0; i < augmentIds.size() && i < 3; ++i) {
+                const auto& id = augmentIds[(start + i) % augmentIds.size()];
+                const auto* augment = content_.blueprints().findAugment(id);
+                if (!augment || augment->cost <= 0) continue;
+                if (std::find(augmentIds_.begin(), augmentIds_.end(), id) == augmentIds_.end())
+                    storeOffers_.push_back({StoreOffer::Kind::Augment, id, augment->cost});
+            }
+        }
+
         // FTL stores buy back equipment for roughly half its blueprint price.
         // Keep these entries at the end so buying and selling are both available
         // without introducing a separate shop scene.
@@ -321,6 +335,11 @@ public:
             }
             if (sellValue > 0)
                 storeOffers_.push_back({StoreOffer::Kind::SellWeapon, weapon.name, sellValue});
+        }
+        for (const auto& augmentId : augmentIds_) {
+            const auto* augment = content_.blueprints().findAugment(augmentId);
+            if (augment && augment->cost > 0)
+                storeOffers_.push_back({StoreOffer::Kind::SellAugment, augmentId, std::max(1, augment->cost / 2)});
         }
         for (const auto& drone : runtime_.drones) {
             int sellValue = 0;
@@ -418,6 +437,30 @@ public:
             storeSelection_ = std::min(storeSelection_, static_cast<int>(storeOffers_.size()) - 1);
             return true;
         }
+        case StoreOffer::Kind::Augment: {
+            const auto* augment = content_.blueprints().findAugment(offer.id);
+            if (!augment) { combatFeedback_ = "オーグメントが見つかりません"; break; }
+            if (augmentIds_.size() >= 3) { combatFeedback_ = "オーグメント枠がいっぱい"; break; }
+            if (std::find(augmentIds_.begin(), augmentIds_.end(), augment->id) != augmentIds_.end()) { combatFeedback_ = "すでに装備中"; break; }
+            if (scrap_ < offer.cost) { combatFeedback_ = "スクラップ不足"; break; }
+            scrap_ -= offer.cost;
+            augmentIds_.push_back(augment->id);
+            combatFeedback_ = "オーグメント装備: " + (augment->title.empty() ? augment->id : augment->title);
+            storeOffers_.erase(storeOffers_.begin() + storeSelection_);
+            storeSelection_ = std::min(storeSelection_, static_cast<int>(storeOffers_.size()) - 1);
+            return true;
+        }
+        case StoreOffer::Kind::SellAugment: {
+            auto it = std::find(augmentIds_.begin(), augmentIds_.end(), offer.id);
+            if (it == augmentIds_.end()) { combatFeedback_ = "売却対象がありません"; break; }
+            scrap_ += offer.cost;
+            const auto* augment = content_.blueprints().findAugment(offer.id);
+            combatFeedback_ = "オーグメントを売却: " + (augment && !augment->title.empty() ? augment->title : offer.id);
+            augmentIds_.erase(it);
+            storeOffers_.erase(storeOffers_.begin() + storeSelection_);
+            storeSelection_ = std::min(storeSelection_, static_cast<int>(storeOffers_.size()) - 1);
+            return true;
+        }
         case StoreOffer::Kind::SellWeapon: {
             auto it = std::find_if(runtime_.weapons.begin(), runtime_.weapons.end(),
                 [&](const RuntimeWeapon& w) { return w.name == offer.id; });
@@ -481,6 +524,14 @@ public:
                 break;
             case StoreOffer::Kind::Drone:
                 if (const auto* drone = content_.blueprints().findDrone(offer.id)) name = drone->name;
+                break;
+            case StoreOffer::Kind::Augment:
+                if (const auto* augment = content_.blueprints().findAugment(offer.id))
+                    name = "AUG: " + (augment->title.empty() ? offer.id : augment->title);
+                break;
+            case StoreOffer::Kind::SellAugment:
+                if (const auto* augment = content_.blueprints().findAugment(offer.id))
+                    name = "売却: " + (augment->title.empty() ? offer.id : augment->title);
                 break;
             case StoreOffer::Kind::SellWeapon:
                 name = "売却: " + offer.id;
@@ -2189,6 +2240,7 @@ private:
     std::vector<std::string> shipChoices_;
     int shipSelection_{0};
     std::vector<std::string> activeQuestIds_;
+    std::vector<std::string> augmentIds_;
     std::unordered_map<std::string, std::string> questTargets_;
     std::unordered_map<std::string, int> sectorEventUsage_;
     std::vector<StoreOffer> storeOffers_;
