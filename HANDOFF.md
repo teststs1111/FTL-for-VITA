@@ -286,3 +286,5 @@ This file is the durable project memory. Chat history is supplementary.
 - Normal navigation now consumes fuel when jumping to a connected beacon; combat no longer consumes a second fuel unit on victory.
 - Reaching the final row advances to the next sector; sector 8 final-row completion enters the victory state.
 - The graph is still a compatibility/prototype layer; the next fidelity step is to apply original FTL beacon type weighting, Rebel fleet pursuit, and sector-specific graph constraints rather than using the generic 8×3 generator.
+
+- Build log inspection found two concrete compile errors in main_game.cpp: missing auto on scanner label and missing closure of the anonymous namespace before MainGame definitions. Fixed in 4a8019658319fe126b1951dcc76fb148ec155dc3.
