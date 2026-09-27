@@ -95,8 +95,8 @@ static void testFleetCoverage() {
     assert(std::find(coveredSelectable.begin(), coveredSelectable.end(), links.front()) != coveredSelectable.end());
 }
 
-void testNebulaSector() {
-    SectorGraph graph;
+static void testNebulaSector() {
+    wormhole::SectorGraph graph;
     graph.generate(4, 0x1234u);
     graph.setNebulaSector(true);
     for (const auto& beacon : graph.nodes()) assert(beacon.nebula);
