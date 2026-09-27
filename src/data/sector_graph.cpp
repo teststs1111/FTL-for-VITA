@@ -122,6 +122,50 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
                 links.push_back(rowNode(row + 1, candidates.front()));
         }
     }
+
+    // Repair the generated graph from the selected starting beacon outward.
+    // The per-node incoming/outgoing guarantees above do not by themselves
+    // guarantee that every beacon belongs to the playable component.
+    std::vector<bool> reachable(nodes_.size(), false);
+    std::vector<int> frontier{startNode_};
+    reachable[static_cast<std::size_t>(startNode_)] = true;
+    for (std::size_t cursor = 0; cursor < frontier.size(); ++cursor) {
+        const int current = frontier[cursor];
+        for (const int next : nodes_[static_cast<std::size_t>(current)].links) {
+            if (!reachable[static_cast<std::size_t>(next)]) {
+                reachable[static_cast<std::size_t>(next)] = true;
+                frontier.push_back(next);
+            }
+        }
+    }
+
+    for (int row = 1; row < rows_; ++row) {
+        const int count = rowCounts_[static_cast<std::size_t>(row)];
+        for (int targetIndex = 0; targetIndex < count; ++targetIndex) {
+            const int target = rowNode(row, targetIndex);
+            if (reachable[static_cast<std::size_t>(target)]) continue;
+
+            int bestSource = -1;
+            int bestDistance = 1000000;
+            const int targetColumn = nodes_[static_cast<std::size_t>(target)].column;
+            const int sourceCount = rowCounts_[static_cast<std::size_t>(row - 1)];
+            for (int sourceIndex = 0; sourceIndex < sourceCount; ++sourceIndex) {
+                const int source = rowNode(row - 1, sourceIndex);
+                if (!reachable[static_cast<std::size_t>(source)]) continue;
+                const int distance = std::abs(
+                    nodes_[static_cast<std::size_t>(source)].column - targetColumn);
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    bestSource = source;
+                }
+            }
+            if (bestSource < 0) continue;
+            auto& links = nodes_[static_cast<std::size_t>(bestSource)].links;
+            if (std::find(links.begin(), links.end(), target) == links.end())
+                links.push_back(target);
+            reachable[static_cast<std::size_t>(target)] = true;
+        }
+    }
 }
 
 const BeaconNode* SectorGraph::node(int index) const {
