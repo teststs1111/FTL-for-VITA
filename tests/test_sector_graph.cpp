@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cmath>
+#include <functional>
 #include <queue>
 #include <vector>
 
@@ -162,6 +163,43 @@ static void testLastStandNavigation() {
     assert(hasReverseOrSameRowLink);
 }
 
+
+static void testLastStandRouteShapes() {
+    wormhole::SectorGraph graph;
+    graph.generate(8, 0x2468ACE0u);
+
+    bool foundThreeToFive = false;
+    for (std::size_t start = 0; start < graph.nodes().size(); ++start) {
+        const auto& s = graph.nodes()[start];
+        if (s.row != 4 && s.row != 5) continue;
+        for (std::size_t goal = 0; goal < graph.nodes().size(); ++goal) {
+            const auto& g = graph.nodes()[goal];
+            if (g.row != 2 && g.row != 3) continue;
+            for (int length = 3; length <= 5; ++length) {
+                std::vector<int> seen(graph.nodes().size(), 0);
+                std::function<bool(int,int)> dfs = [&](int current, int depth) {
+                    if (depth == length) return current == static_cast<int>(goal);
+                    seen[static_cast<std::size_t>(current)] = 1;
+                    for (const int next : graph.node(current)->links) {
+                        if (next < 0 || next >= static_cast<int>(seen.size())) continue;
+                        if (seen[static_cast<std::size_t>(next)]) continue;
+                        if (dfs(next, depth + 1)) return true;
+                    }
+                    seen[static_cast<std::size_t>(current)] = 0;
+                    return false;
+                };
+                if (dfs(static_cast<int>(start), 0)) {
+                    foundThreeToFive = true;
+                    break;
+                }
+            }
+            if (foundThreeToFive) break;
+        }
+        if (foundThreeToFive) break;
+    }
+    assert(foundThreeToFive);
+}
+
 static void testNebulaSector() {
     wormhole::SectorGraph graph;
     graph.generate(4, 0x1234u);
@@ -177,5 +215,6 @@ int main() {
     testFleetCoverage();
     testNebulaSector();
     testLastStandNavigation();
+    testLastStandRouteShapes();
     return 0;
 }
