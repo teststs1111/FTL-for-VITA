@@ -809,8 +809,17 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 - CI verified directly for `e39933a3d061d30722969178b3e173c452d12ee4`: Host build #769 and Vita build #461 both **success**.
 - No proprietary FTL assets were committed.
 
+### 2026-09-27 continuation — v10 validation and vanilla placement review
+
+- Verified Host #771 and Vita #463 for commit `6eb76d3`: both **success**.
+- Added a visible Sector 8 Flagship next-destination route cue in `renderSectorMap()`, matching vanilla behavior where the next Flagship beacon is shown on the map.
+- Added v10 Last Stand state validation in commit `8f58ef7`: after deterministic map regeneration, saved Flagship route/node indices are checked before being trusted; malformed or stale v10 Flagship state falls back to fresh Last Stand initialization instead of leaving invalid beacon references.
+- Vanilla placement review found that the Flagship is documented as starting on column 4 or 5 and the Federation Base around column 2/3 on Normal/Easy (3/4 on Hard), while the Flagship still requires 3–5 Flagship jumps to reach the Base. The current normal-sector graph is not sufficient to reproduce all of those constraints by simply using row-distance, so the existing route scaffold is intentionally **not** changed blindly.
+- Vanilla sources also confirm the next-destination line, two-player-jump cadence, random beacon takeover, wait behavior, and three consecutive Base turns. cite references were used in the development log, not embedded in repo docs.
+- CI for `8f58ef7` is currently queued: Host #772 / Vita #464.
+
 ### Next target
-1. Verify the Flagship route survives v10 save/load exactly.
-2. Add/strengthen Last Stand regression coverage for 2-player-jump movement, post-phase wait, and 3-turn Base countdown.
-3. Verify random beacon takeover timing and interaction with Flagship movement.
-4. Continue comparing Sector 8 map placement/behavior against vanilla mechanics.
+1. Verify Host/Vita CI for `8f58ef7`.
+2. Design a dedicated Last Stand route generator instead of forcing vanilla Flagship/Base placement through the normal sector graph.
+3. Add/strengthen Host regression coverage for v10 Flagship persistence, 2-player-jump movement, post-phase wait, and 3-turn Base countdown.
+4. Verify random beacon takeover timing and interaction with Flagship movement.
