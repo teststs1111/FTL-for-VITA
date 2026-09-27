@@ -4,6 +4,7 @@
 #include "data/event_database.hpp"
 #include "data/sector_database.hpp"
 #include "data/sector_graph.hpp"
+#include "data/last_stand_state.hpp"
 #include "game/ship_runtime.hpp"
 #include "game/combat_runtime.hpp"
 #include "render/graphics.hpp"
@@ -1968,39 +1969,24 @@ public:
     void advanceLastStandFlagshipAfterJump() {
         if (sector_ < 7 || flagshipNode_ < 0) return;
 
-        if (flagshipWaitTurns_ > 0) {
-            --flagshipWaitTurns_;
+        const auto result = advanceLastStandState(
+            static_cast<int>(flagshipRoute_.size()),
+            flagshipRouteIndex_,
+            flagshipJumpCounter_,
+            flagshipBaseTurns_,
+            flagshipWaitTurns_,
+            flagshipNode_ == flagshipBaseNode_);
+        if (result.gameOver) {
+            sceneMode_ = SceneMode::GameOver;
             return;
         }
-
-        // Once the Flagship reaches the Federation Base, its three-turn
-        // destruction countdown advances on every player jump, not every
-        // Flagship jump.
-        if (flagshipNode_ == flagshipBaseNode_) {
-            ++flagshipBaseTurns_;
-            if (flagshipBaseTurns_ >= 3)
-                sceneMode_ = SceneMode::GameOver;
-            return;
-        }
-
-        ++flagshipJumpCounter_;
-        if (flagshipJumpCounter_ < 2) return;
-        flagshipJumpCounter_ = 0;
-
-        if (flagshipRouteIndex_ + 1 < static_cast<int>(flagshipRoute_.size())) {
-            ++flagshipRouteIndex_;
+        if (result.moved) {
             flagshipNode_ = flagshipRoute_[static_cast<std::size_t>(flagshipRouteIndex_)];
-            flagshipBaseTurns_ = 0;
             // A beacon left by the Flagship becomes Rebel-controlled.
             auto covered = sectorGraph_.fleetCoveredIndices();
             if (std::find(covered.begin(), covered.end(), flagshipNode_) == covered.end())
                 covered.push_back(flagshipNode_);
             sectorGraph_.setFleetCoveredIndices(covered);
-        } else {
-            ++flagshipBaseTurns_;
-            if (flagshipBaseTurns_ >= 3) {
-                sceneMode_ = SceneMode::GameOver;
-            }
         }
     }
 
@@ -2477,13 +2463,8 @@ public:
                     ++flagshipPhase_;
                     combatFeedback_ = "反乱軍旗艦が離脱：次は Phase " + std::to_string(flagshipPhase_);
                     combatFeedbackTimer_ = 2.0f;
-                    if (flagshipRouteIndex_ > 0) {
-                        --flagshipRouteIndex_;
-                        flagshipNode_ = flagshipRoute_[static_cast<std::size_t>(flagshipRouteIndex_)];
-                    }
-                    flagshipJumpCounter_ = 0;
-                    flagshipWaitTurns_ = 1;
-                    flagshipBaseTurns_ = 0;
+                    retreatLastStandAfterPhase(flagshipRouteIndex_, flagshipJumpCounter_, flagshipBaseTurns_, flagshipWaitTurns_);
+                    flagshipNode_ = flagshipRoute_[static_cast<std::size_t>(flagshipRouteIndex_)];
                     combatMode_ = false;
                     sceneMode_ = SceneMode::SectorMap;
                     visitedBeacons_++;
