@@ -5,13 +5,13 @@
 #include <queue>
 #include <vector>
 
-static void testVariableReachableGraph() {
+static void testVanillaGridBounds() {
     wormhole::SectorGraph graph;
     graph.generate(1, 0x12345678u);
 
-    assert(graph.rows() == 8);
-    assert(graph.nodes().size() >= 24);
-    assert(graph.nodes().size() <= 40);
+    assert(graph.rows() == 6);
+    assert(graph.nodes().size() >= 19);
+    assert(graph.nodes().size() <= 24);
     assert(graph.startNode() >= 0);
     assert(graph.node(graph.startNode()));
     assert(graph.node(graph.startNode())->row == 0);
@@ -105,7 +105,7 @@ static void testNebulaSector() {
 }
 
 int main() {
-    testVariableReachableGraph();
+    testVanillaGridBounds();
     testDeterminism();
     testFleetCoverage();
     testNebulaSector();
