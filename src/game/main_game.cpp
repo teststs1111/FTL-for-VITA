@@ -2001,8 +2001,7 @@ public:
         text_.draw(graphics_, "スクラップ " + std::to_string(scrap_) +
             "   ドローン " + std::to_string(droneParts_),620.f,66.f,14.f,{0.82f,0.76f,0.58f,1.f});
 
-        const float x0=150.f, dx=105.f, y0=145.f, dy=43.f;
-        for (const auto& n : sectorGraph_.nodes()) {
+                for (const auto& n : sectorGraph_.nodes()) {
             const float x=n.x, y=n.y;
             for (const int to:n.links) {
                 const auto* dst=sectorGraph_.node(to);
@@ -2031,9 +2030,9 @@ public:
         };
         for (std::size_t index = 0; index < sectorGraph_.nodes().size(); ++index) {
             const auto& n = sectorGraph_.nodes()[index];
-            const float x=x0+n.column*dx,y=y0+n.row*dy;
-            const auto* selectedNode = sectorGraph_.node(selectedBeacon_);
-            const bool selected = selectedNode && static_cast<int>(index) != sectorGraph_.exitNode() && static_cast<int>(index) == selectedBeacon_;
+            const float x=n.x,y=n.y;
+            const bool selected = static_cast<int>(index) == selectedBeacon_ &&
+                static_cast<int>(index) != sectorGraph_.exitNode();
             const bool current = static_cast<int>(index) == currentBeacon_;
             const bool reachable = std::find(choices.begin(),choices.end(),static_cast<int>(index)) != choices.end();
             const bool fleetCovered = n.fleetCovered;
