@@ -2333,7 +2333,7 @@ public:
         // Stand uses a separate takeover model, so the augment has no effect
         // there.
         if (sector_ >= 7 || !hasAugment("DISTRACTION_BUOYS")) return;
-        fleetPursuitDelay_ = std::min(32, fleetPursuitDelay_ + 1);
+        fleetPursuitDelay_ = std::max(-32, fleetPursuitDelay_ - 1);
     }
 
     void advanceRebelFleetAfterJump() {
