@@ -82,20 +82,11 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
     startNode_ = rowNode(0, static_cast<int>(
         rng() % static_cast<std::uint32_t>(rowCounts_[0])));
 
-    if (sector >= 7) {
-        // The Last Stand has its own runtime state machine, but its beacon
-        // graph still uses the same generated grid.
-        exitNode_ = rowNode(rows_ - 1, static_cast<int>(
-            rng() % static_cast<std::uint32_t>(rowCounts_[rows_ - 1])));
-    } else {
-        std::vector<int> exitCandidates;
-        for (int row = rows_ - 2; row < rows_; ++row) {
-            for (int i = 0; i < rowCounts_[static_cast<std::size_t>(row)]; ++i)
-                exitCandidates.push_back(rowNode(row, i));
-        }
-        exitNode_ = exitCandidates[static_cast<std::size_t>(
-            rng() % static_cast<std::uint32_t>(exitCandidates.size()))];
-    }
+    // Exit selection is finalized after the graph is built so a random
+    // disconnected component can never become the required sector exit.
+    // The vanilla exit is chosen from the far side of the map; for normal
+    // sectors the final two grid columns are the candidate area.
+    exitNode_ = -1;
     nodes_[static_cast<std::size_t>(startNode_)].visited = true;
 
     // Beacons connect to every beacon in an adjacent grid cell when the
@@ -135,33 +126,33 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
             if (!reachable[static_cast<std::size_t>(next)]) stack.push_back(next);
     }
 
-    if (!reachable[static_cast<std::size_t>(exitNode_)]) {
-        int bestA = -1;
-        int bestB = -1;
-        float bestDistance = 1000000.0f;
+    std::vector<int> exitCandidates;
+    for (std::size_t i = 0; i < nodes_.size(); ++i) {
+        const auto& beacon = nodes_[i];
+        const bool inExitArea = sector >= 7
+            ? beacon.row == rows_ - 1
+            : beacon.row >= rows_ - 2;
+        if (inExitArea && reachable[i])
+            exitCandidates.push_back(static_cast<int>(i));
+    }
+
+    // Extremely sparse/random layouts can leave the far-side cells
+    // disconnected. In that case keep the generated graph intact and choose
+    // the furthest reachable beacon as the exit rather than introducing a
+    // non-vanilla link across empty cells.
+    if (exitCandidates.empty()) {
+        int furthestRow = -1;
         for (std::size_t i = 0; i < nodes_.size(); ++i) {
             if (!reachable[i]) continue;
-            for (std::size_t j = 0; j < nodes_.size(); ++j) {
-                if (reachable[j]) continue;
-                if (std::abs(nodes_[i].row - nodes_[j].row) > 1 ||
-                    std::abs(nodes_[i].column - nodes_[j].column) > 1)
-                    continue;
-                const float dx = nodes_[i].x - nodes_[j].x;
-                const float dy = nodes_[i].y - nodes_[j].y;
-                const float distance = dx * dx + dy * dy;
-                if (distance <= kLinkDistance * kLinkDistance &&
-                    distance < bestDistance) {
-                    bestDistance = distance;
-                    bestA = static_cast<int>(i);
-                    bestB = static_cast<int>(j);
-                }
-            }
+            furthestRow = std::max(furthestRow, nodes_[i].row);
         }
-        if (bestA >= 0) {
-            nodes_[static_cast<std::size_t>(bestA)].links.push_back(bestB);
-            nodes_[static_cast<std::size_t>(bestB)].links.push_back(bestA);
-        }
+        for (std::size_t i = 0; i < nodes_.size(); ++i)
+            if (reachable[i] && nodes_[i].row == furthestRow)
+                exitCandidates.push_back(static_cast<int>(i));
     }
+
+    exitNode_ = exitCandidates[static_cast<std::size_t>(
+        rng() % static_cast<std::uint32_t>(exitCandidates.size()))];
 }
 
 
