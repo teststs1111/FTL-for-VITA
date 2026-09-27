@@ -155,4 +155,59 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Directly inspect GitHub Actions and failing job logs.
 - Distinguish compile failures from test/verification failures.
 - Keep changes small and testable.
+- Update HANDOFF.md after meaningful changes so a future '続き' can resume without asking the user to repeat context.## Research checkpoint 2026-09-28:
+- Rebel Fleet pursuit advances by exactly 64 pixels per regular jump according to a long-standing pixel-accuracy pursuit-indicator mod; the datamined counter is also documented as +0x40 per jump. However, the raw pursuit/offset value is not established as a direct comparison against this implementation's generated beacon x-coordinate. 
+- Additional historical FTL save-editor research describes the fleet offset as a large negative pixel value (roughly -900 to -500 depending on sector) approaching zero during travel, with a separate per-sector random "fudge" affecting the offset. This strongly suggests that a direct raw-counter -> generated-beacon-x comparison is an oversimplification.
+- Therefore keep setFleetCoverageFromPosition() explicitly provisional. Next fidelity step is to reconstruct the sector-specific visual/map offset and its random component before changing the coverage transform; do not invent a linear transform from -959 to the current beacon coordinates.
+
+## Event fidelity
+Implemented: real XML ingestion, event load references, weighted eventLists, AE resources/overwrites, common choices/requirements, stores, distress, hostile, repair, resource/crew effects, and original text IDs through data/text-ja.xml.
+
+Still incomplete: complex nested requirements, full blue options, complete quest chains, complete reward semantics, exact unique-event limits, full environmental/ASB behavior, and enemy escape/fleet-pursuit effects.
+
+## Rebel Fleet
+Implemented: per-beacon fleetCovered, navigable fleet beacons with Rebel encounters, save/load persistence, normal pursuit position, nebula pursuit modifiers, Distraction Buoys delay, and Rebel Controlled Sector entry advance.
+Approximation remains in exact fleet frontier/rate timing, raw pursuit-to-map mapping, fleet-controlled beacon environment/ASB replacement, nebula takeover exceptions, and exact Rebel Elite selection.
+
+## Last Stand
+Implemented: Sector 8 entry resources, Flagship/Base state and save/load, 3–5 jump route scaffold, two-player-jump cadence, wait/post-phase behavior, Base countdown, individual takeover, and FINAL event-pool checks.
+Approximation remains in exact Flagship/Base placement, takeover timing/selection, and complete Flagship behavior.
+
+## Build/platform
+- Host C++17/CMake build and regression tests
+- VitaSDK workflow and VPK packaging
+- vitaGL 960×544 bring-up
+- Vita controller input
+- Real Vita hardware gameplay verification is still outstanding
+
+## Progress
+- Archive/BXML: ~90%
+- Real-data ingestion: ~70%
+- Blueprint/ship data: ~60%
+- Event system: ~50%
+- Sector/beacon/event flow: ~45%
+- Rebel Fleet: ~40%
+- Combat/runtime: ~45%
+- Vita renderer/input: ~35%
+- Japanese text/font/UI: ~25%
+- Audio: pending
+- Save/load: partial
+- Mod support: pending
+- Overall project progress: ~50% toward the stated actual-game-faithful playable target.
+
+## Immediate next work
+1. Tighten Rebel Fleet raw pursuit-to-map mapping without inventing an unsupported transform.
+2. Tighten fleet-controlled beacon environment/ASB exceptions using real event data and documented vanilla rules.
+3. Add regression coverage for nebula pursuit rate modifiers and fleet takeover edge cases.
+4. Continue Sector 8 takeover/Flagship fidelity.
+5. Continue deeper event-choice/effect fidelity.
+
+## Non-negotiable rules
+- Aim for actual FTL behavior, not a generic FTL-like approximation.
+- Use Library ftl.dat as the real-data basis whenever applicable.
+- Never commit or redistribute proprietary FTL assets/data.
+- AE is contained in the single ftl.dat; do not introduce an external DLC archive model.
+- Directly inspect GitHub Actions and failing job logs.
+- Distinguish compile failures from test/verification failures.
+- Keep changes small and testable.
 - Update HANDOFF.md after meaningful changes so a future '続き' can resume without asking the user to repeat context.
