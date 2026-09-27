@@ -23,7 +23,7 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
     int remaining = targetTotal - rows_ * 3;
     while (remaining > 0) {
         const int row = static_cast<int>(rng() % static_cast<std::uint32_t>(rows_));
-        if (counts[static_cast<std::size_t>(row)] < columns) {
+        if (counts[static_cast<std::size_t>(row)] < kColumns) {
             ++counts[static_cast<std::size_t>(row)];
             --remaining;
         }
