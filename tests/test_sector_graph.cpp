@@ -67,8 +67,12 @@ static void testVanillaGridBounds() {
     assert(graph.node(first.front())->row == 0);
 
     const auto blocked = graph.selectable(graph.startNode(), 0);
-    for (const int index : blocked)
-        assert(graph.node(index)->row > 0);
+    for (const int index : blocked) {
+        const auto* node = graph.node(index);
+        assert(node);
+        assert(std::abs(node->row - graph.node(graph.startNode())->row) <= 1);
+        assert(std::abs(node->column - graph.node(graph.startNode())->column) <= 1);
+    }
 }
 
 static void testDeterminism() {
