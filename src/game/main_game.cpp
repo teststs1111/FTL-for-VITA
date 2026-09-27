@@ -1866,42 +1866,102 @@ public:
 
         if (sector_ < 7 || sectorGraph_.nodes().empty()) return;
 
-        // The Flagship starts on the right side. Build a concrete route through
-        // the generated beacon graph so it can reach a base in the middle of
-        // the map in 3-5 Flagship jumps, matching vanilla Last Stand timing.
-        int current = sectorGraph_.exitNode();
+        // Last Stand is not a normal sector: there is no story-gate exit.
+        // Vanilla places the player at the far left, the Flagship on the
+        // right side, and the Federation Base around the middle/right.
+        // Keep those roles independent from SectorGraph::exitNode().
+        const int rightRow = sectorGraph_.rows() - 1;
+        const int flagshipRow = rightRow - static_cast<int>((seed_ ^ visitedBeacons_) & 1u);
+        const int baseRow = std::max(0, flagshipRow - 3);
+
+        std::vector<int> flagshipCandidates;
+        std::vector<int> baseCandidates;
+        for (std::size_t i = 0; i < sectorGraph_.nodes().size(); ++i) {
+            const auto& beacon = sectorGraph_.nodes()[i];
+            if (beacon.row == flagshipRow) flagshipCandidates.push_back(static_cast<int>(i));
+            if (beacon.row == baseRow) baseCandidates.push_back(static_cast<int>(i));
+        }
+        if (flagshipCandidates.empty() || baseCandidates.empty()) return;
+
+        auto chooseByX = [&](const std::vector<int>& candidates, bool rightSide) {
+            int chosen = candidates.front();
+            for (const int index : candidates) {
+                const auto* a = sectorGraph_.node(index);
+                const auto* b = sectorGraph_.node(chosen);
+                if (!a || !b) continue;
+                if ((rightSide && a->x > b->x) || (!rightSide && a->x < b->x))
+                    chosen = index;
+            }
+            return chosen;
+        };
+
+        const int start = chooseByX(flagshipCandidates, true);
+        const int base = chooseByX(baseCandidates, false);
+
+        // Follow actual generated links toward the base. For the normal
+        // 6-column map this produces the canonical 3-jump Last Stand layout;
+        // the remaining 4/5-jump vanilla variants are a follow-up fidelity
+        // target because their Flagship route is not the same as the normal
+        // sector exit graph.
+        int current = start;
         flagshipRoute_.push_back(current);
-        const int desiredJumps = 3 + static_cast<int>((seed_ ^ visitedBeacons_) % 3u);
-        for (int step = 0; step < desiredJumps; ++step) {
-            std::vector<int> incoming;
-            const auto* currentNode = sectorGraph_.node(current);
-            if (!currentNode) break;
+        while (current != base) {
+            const auto* node = sectorGraph_.node(current);
+            if (!node) break;
+            int next = -1;
+            float bestDistance = 1.0e9f;
+            for (const int link : node->links) {
+                const auto* candidate = sectorGraph_.node(link);
+                if (!candidate || candidate->row <= node->row) continue;
+                const float distance = std::fabs(candidate->x - sectorGraph_.node(base)->x);
+                if (candidate->row <= baseRow && distance < bestDistance) {
+                    bestDistance = distance;
+                    next = link;
+                }
+            }
+            // The graph points rightward, so route backwards from the base
+            // when constructing the Flagship's approach path.
+            if (next >= 0) {
+                current = next;
+                flagshipRoute_.push_back(current);
+                continue;
+            }
+            break;
+        }
+
+        // Build a reliable route by walking incoming links from the base to
+        // the chosen right-side start, then reverse it for forward movement.
+        std::vector<int> reverseRoute{base};
+        current = base;
+        while (current != start) {
+            const auto* target = sectorGraph_.node(current);
+            if (!target) break;
+            int previous = -1;
+            float bestX = -1.0e9f;
             for (std::size_t i = 0; i < sectorGraph_.nodes().size(); ++i) {
                 const auto& candidate = sectorGraph_.nodes()[i];
-                if (candidate.row + 1 != currentNode->row) continue;
-                if (std::find(candidate.links.begin(), candidate.links.end(), current) != candidate.links.end())
-                    incoming.push_back(static_cast<int>(i));
+                if (candidate.row + 1 != target->row) continue;
+                if (std::find(candidate.links.begin(), candidate.links.end(), current) == candidate.links.end()) continue;
+                if (candidate.x > bestX) {
+                    bestX = candidate.x;
+                    previous = static_cast<int>(i);
+                }
             }
-            if (incoming.empty()) break;
-
-            std::sort(incoming.begin(), incoming.end(), [&](int a, int b) {
-                const auto* na = sectorGraph_.node(a);
-                const auto* nb = sectorGraph_.node(b);
-                return na && nb && na->x > nb->x;
-            });
-            current = incoming.front();
-            flagshipRoute_.push_back(current);
+            if (previous < 0) break;
+            reverseRoute.push_back(previous);
+            current = previous;
+        }
+        if (current == start) {
+            flagshipRoute_.assign(reverseRoute.rbegin(), reverseRoute.rend());
+        } else {
+            flagshipRoute_.clear();
+            flagshipRoute_.push_back(start);
+            flagshipRoute_.push_back(base);
         }
 
-        // If the generated route is shorter than the requested timing window,
-        // use the farthest reachable predecessor as the base rather than
-        // inventing a disconnected beacon.
         flagshipRouteIndex_ = 0;
         flagshipNode_ = flagshipRoute_.front();
-        flagshipBaseNode_ = flagshipRoute_.back();
-        if (flagshipRoute_.size() < 3) {
-            flagshipBaseNode_ = flagshipRoute_.back();
-        }
+        flagshipBaseNode_ = base;
     }
 
     void advanceLastStandFlagshipAfterJump() {
@@ -2148,7 +2208,6 @@ public:
             for (std::size_t i = 0; i < sectorGraph_.nodes().size(); ++i) {
                 const auto& beacon = sectorGraph_.nodes()[i];
                 if (static_cast<int>(i) == currentBeacon_ ||
-                    static_cast<int>(i) == sectorGraph_.exitNode() ||
                     static_cast<int>(i) == flagshipBaseNode_ ||
                     beacon.fleetCovered)
                     continue;
