@@ -108,6 +108,7 @@ public:
         eventOrder_ = eventDatabase_.ids();
         sectorDatabase_.load();
         sectorGraph_.generate(sector_, seed_);
+        sectorGraph_.setFleetCoverageFromRow(-1);
         selectedBeacon_ = sectorGraph_.startNode();
         if (!content_.loadPlayerShip()) return false;
         if (!runtime_.load(content_)) return false;
@@ -584,13 +585,16 @@ public:
         std::ofstream out(savePath(), std::ios::trunc);
         if (!out) return false;
 
-        out << "FTL_VITA_SAVE 5\n";
+        out << "FTL_VITA_SAVE 6\n";
         out << "ship " << std::quoted(runtime_.content.blueprint.id) << "\n";
         out << "seed " << seed_ << "\n";
         out << "sector " << sector_ << "\n";
         out << "flagship " << flagshipPhase_ << "\n";
         out << "beacon " << currentBeacon_ << ' ' << selectedBeacon_ << "\n";
         out << "fleet " << fleetRow_ << "\n";
+        const auto covered = sectorGraph_.fleetCoveredIndices();
+        out << "fleet_covered " << covered.size() << "\n";
+        for (const int index : covered) out << index << "\n";
         out << "current_sector " << std::quoted(currentSectorType_) << "\n";
         out << "unique_sectors " << usedUniqueSectorTypes_.size() << "\n";
         for (const auto& name : usedUniqueSectorTypes_) out << std::quoted(name) << "\n";
@@ -647,7 +651,8 @@ public:
         const bool saveV3 = header == "FTL_VITA_SAVE 3";
         const bool saveV4 = header == "FTL_VITA_SAVE 4";
         const bool saveV5 = header == "FTL_VITA_SAVE 5";
-        const bool currentSave = saveV4 || saveV5;
+        const bool saveV6 = header == "FTL_VITA_SAVE 6";
+        const bool currentSave = saveV4 || saveV5 || saveV6;
         if (!legacySave && !saveV3 && !currentSave) return false;
 
         std::string key, shipId;
@@ -664,7 +669,7 @@ public:
         usedUniqueSectorTypes_.clear();
         mapRevealed_ = false;
         secretSectorPending_ = false;
-        if (saveV5) {
+        if (saveV5 || saveV6) {
             in >> key >> std::quoted(currentSectorType_);
             if (key != "current_sector") return false;
             in >> key >> count;
@@ -681,6 +686,18 @@ public:
             in >> key >> flag;
             if (key != "secret_pending") return false;
             secretSectorPending_ = flag != 0;
+            if (saveV6) {
+                in >> key >> count;
+                if (key != "fleet_covered") return false;
+                std::vector<int> covered;
+                covered.reserve(count);
+                for (std::size_t i = 0; i < count; ++i) {
+                    int index = -1;
+                    in >> index;
+                    covered.push_back(index);
+                }
+                sectorGraph_.setFleetCoveredIndices(covered);
+            }
         }
         sectorEventUsage_.clear();
         if (currentSave) {
@@ -800,6 +817,8 @@ public:
         if (currentSectorType_.empty())
             selectCurrentSectorDefinition();
         sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
+        if (!saveV6)
+            sectorGraph_.setFleetCoverageFromRow(fleetRow_);
         combat_.player = runtime_;
         currentBeacon_ = std::clamp(currentBeacon_, -1, static_cast<int>(sectorGraph_.nodes().size()) - 1);
         selectedBeacon_ = std::clamp(selectedBeacon_, 0, static_cast<int>(sectorGraph_.nodes().size()) - 1);
@@ -1419,6 +1438,7 @@ public:
         if (special.modifyPursuit != 0) {
             const int maxRow = std::max(0, sectorGraph_.exitRow() - 1);
             fleetRow_ = std::clamp(fleetRow_ + special.modifyPursuit, -1, maxRow);
+            sectorGraph_.setFleetCoverageFromRow(fleetRow_);
         }
         if (special.revealMap) mapRevealed_ = true;
         if (special.secretSector) secretSectorPending_ = true;
@@ -1778,6 +1798,7 @@ public:
         // Vanilla FTL advances the fleet after each player jump; event
         // modifyPursuit effects can then move that boundary backward/forward.
         fleetRow_ = std::clamp(fleetRow_ + 1, -1, lastReachableRow);
+        sectorGraph_.setFleetCoverageFromRow(fleetRow_);
     }
 
     void renderSectorMap() {
