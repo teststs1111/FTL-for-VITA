@@ -870,3 +870,16 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 1. Verify Host/Vita CI for `590010b`.
 2. Strengthen Last Stand event-pool assignment so the generated beacon distribution follows the vanilla FINAL min/max pool more faithfully instead of relying only on visit order.
 3. Continue Last Stand save/load regression and exact vanilla placement/wait behavior.
+
+
+## 2026-09-27 continuation — Vanilla beacon-count correction
+
+- Rechecked the vanilla map specification: sector maps use **19-24 beacons**, not 16-24. This is independently documented in the current FTL research corpus. citeturn0search0turn0search1
+- Corrected `SectorGraph::generate()` from 16-24 to 19-24 beacons and updated the regression assertion.
+- Commits: `5de01cc` (generator), `08dbb43` (test).
+- The change is intentionally limited to the beacon-count invariant; no proprietary FTL assets were committed.
+
+### Next target
+1. Verify Host/Vita CI for the beacon-count correction.
+2. Continue replacing approximation in map placement/links with the documented vanilla generation rules.
+3. Continue Last Stand event/save fidelity work.
