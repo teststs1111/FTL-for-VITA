@@ -43,9 +43,10 @@ CI means GitHub Actions Continuous Integration. Do not substitute 'CI未取得' 
 - AE is inside the same ftl.dat. Do not revert to an external DLC-file model.
 
 ## Current verified main state — 2026-09-28
-- Latest baseline main commit: b5cd88afddab3300aeba564f536d78cc6b54775e
-- Host build #815: success
-- Vita build #507: success
+- Latest main commit: 34aa64a3ed54c0a2d677545ac0be71ac31f2d518
+- Host #819 for code commit 9fc176d9859cc41bd2c38660dd82ac1a3940ab5d: success
+- Vita #511 for code commit 9fc176d9859cc41bd2c38660dd82ac1a3940ab5d: success
+- Main currently includes the handoff-only commit 34aa64a3ed54c0a2d677545ac0be71ac31f2d518 on top of that verified code commit.
 - Sector graph, real archive/BXML, blueprint/event/sector databases, Japanese text loading, PNG pipeline, beacon event assignment, Rebel Fleet state, and Last Stand state are implemented to varying prototype/intermediate fidelity.
 
 ## Current change — vanilla default NEBULA resolution
@@ -80,7 +81,7 @@ After the two commits above, check GitHub Actions directly for the newest main c
 Latest real-data regression extension:
 - 9fc176d9859cc41bd2c38660dd82ac1a3940ab5d — Verify real sector nebula pool definitions
 - Adds assertions for STANDARD_SPACE/CIVILIAN_SECTOR/NEBULA_SECTOR/SLUG_SECTOR pool ranges from the supplied archive.
-- Host #819 and Vita #511 were observed running for this exact code commit; final status must be checked before declaring it green.
+- Host #819 and Vita #511 have now completed successfully for this exact code commit. The regression is green.
 
 ## Sector / nebula fidelity
 - 6 logical columns × 4 logical rows
@@ -93,7 +94,9 @@ Latest real-data regression extension:
 - per-beacon nebula state
 - NEBULA_* pools processed before ordinary sector pools
 
-Known approximation: exact vanilla beacon coordinate/occupancy sequence and exact cloud-overlap geometry are not yet reproduced. Do not claim current nebula placement is exact.
+Known approximation: exact vanilla beacon coordinate/occupancy sequence and exact cloud-overlap geometry are not yet reproduced. Current implementation selects explicit NEBULA_* beacon counts and grows connected groups, but it does not yet model the actual cloud graphics' overlap test. Do not claim current nebula placement is exact.
+
+Research checkpoint 2026-09-28: external technical references confirm that FTL first places the 6×4 beacon map, processes all NEBULA_* lists before ordinary pools, draws nebula clouds, and converts ordinary beacons overlapped by those clouds into additional nebula beacons assigned from the default NEBULA pool. The exact cloud placement/overlap geometry remains undocumented in the accessible sources, so implementation should not invent a false exact formula.
 
 ## Event fidelity
 Implemented: real XML ingestion, event load references, weighted eventLists, AE resources/overwrites, common choices/requirements, stores, distress, hostile, repair, resource/crew effects, and original text IDs through data/text-ja.xml.
