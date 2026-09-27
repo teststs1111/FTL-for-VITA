@@ -11,6 +11,7 @@
 #include "render/text_renderer.hpp"
 #include "platform/input.hpp"
 #include <algorithm>
+#include <functional>
 #include <cmath>
 #include <cctype>
 #include <fstream>
@@ -1891,77 +1892,77 @@ public:
 
         if (sector_ < 7 || sectorGraph_.nodes().empty()) return;
 
-        // Last Stand has no normal story-gate exit. Vanilla places the
-        // Flagship on the right side and the Federation Base around the
-        // middle/right, so select those roles independently of exitNode().
-        const int rightRow = sectorGraph_.rows() - 1;
-        const int flagshipRow = rightRow;
-        // Vanilla Last Stand reaches the base after 3, 4, or 5
-        // Flagship jumps (6, 8, or 10 player map ticks). Choose that
-        // distance deterministically while keeping the Flagship on the
-        // rightmost side of the generated map.
+        // Vanilla Last Stand keeps the same 6x4 map, but places the
+        // Flagship on column 4/5 and the Federation Base around column 2/3.
+        // Our graph stores the horizontal map column as row, so search those
+        // ranges directly rather than deriving the base from route length.
         const int routeMoves =
             3 + static_cast<int>((seed_ ^ visitedBeacons_) % 3u);
-        const int baseRow = std::max(0, flagshipRow - routeMoves);
 
         std::vector<int> starts;
+        std::vector<int> bases;
         for (std::size_t i = 0; i < sectorGraph_.nodes().size(); ++i) {
-            if (sectorGraph_.nodes()[i].row == flagshipRow)
+            const auto& beacon = sectorGraph_.nodes()[i];
+            if (beacon.row == 4 || beacon.row == 5)
                 starts.push_back(static_cast<int>(i));
+            if (beacon.row == 2 || beacon.row == 3)
+                bases.push_back(static_cast<int>(i));
         }
-        if (starts.empty()) return;
+        if (starts.empty() || bases.empty()) return;
 
-        int start = starts.front();
-        for (const int index : starts) {
-            const auto* aNode = sectorGraph_.node(index);
-            const auto* bNode = sectorGraph_.node(start);
-            if (aNode && bNode && aNode->x > bNode->x) start = index;
-        }
+        // Find an exact-length connected route. Last Stand pathing is allowed
+        // to use adjacent-grid links in either direction; normal sector links
+        // remain forward-only.
+        auto findRoute = [&](int start, int goal, int length) {
+            std::vector<int> path{start};
+            std::vector<int> result;
+            std::vector<int> seen(sectorGraph_.nodes().size(), 0);
 
-        // Build a connected Flagship -> Base path through the actual map links.
-        // Use a breadth-first search over incoming links rather than greedily
-        // picking a predecessor, because a locally far-right predecessor can
-        // lead to a dead end even when another connected path exists.
-        std::vector<int> queue{start};
-        std::vector<int> parent(sectorGraph_.nodes().size(), -1);
-        parent[static_cast<std::size_t>(start)] = start;
-        int base = -1;
-        for (std::size_t head = 0; head < queue.size() && base < 0; ++head) {
-            const int current = queue[head];
-            const auto* target = sectorGraph_.node(current);
-            if (!target) continue;
-            if (target->row == baseRow) {
-                base = current;
-                break;
+            std::function<bool(int, int)> dfs = [&](int current, int depth) {
+                if (depth == length)
+                    return current == goal;
+
+                seen[static_cast<std::size_t>(current)] = 1;
+                const auto* node = sectorGraph_.node(current);
+                if (!node) return false;
+
+                for (const int next : node->links) {
+                    if (next < 0 || next >= static_cast<int>(seen.size())) continue;
+                    if (seen[static_cast<std::size_t>(next)]) continue;
+                    const auto* target = sectorGraph_.node(next);
+                    if (!target) continue;
+
+                    path.push_back(next);
+                    if (dfs(next, depth + 1)) {
+                        result = path;
+                        return true;
+                    }
+                    path.pop_back();
+                }
+
+                seen[static_cast<std::size_t>(current)] = 0;
+                return false;
+            };
+
+            if (dfs(start, 0)) return result;
+            return std::vector<int>{};
+        };
+
+        // Deterministically try all valid placement pairs until the required
+        // 3/4/5-jump Flagship route exists. This preserves the vanilla
+        // placement ranges without forcing the Base to be a fixed row.
+        for (const int start : starts) {
+            for (const int base : bases) {
+                const auto route = findRoute(start, base, routeMoves);
+                if (route.empty()) continue;
+
+                flagshipRoute_ = route;
+                flagshipRouteIndex_ = 0;
+                flagshipNode_ = flagshipRoute_.front();
+                flagshipBaseNode_ = flagshipRoute_.back();
+                return;
             }
-
-            for (std::size_t i = 0; i < sectorGraph_.nodes().size(); ++i) {
-                if (parent[i] != -1) continue;
-                const auto& candidate = sectorGraph_.nodes()[i];
-                if (candidate.row + 1 != target->row) continue;
-                if (std::find(candidate.links.begin(), candidate.links.end(), current) ==
-                    candidate.links.end()) continue;
-                parent[i] = current;
-                queue.push_back(static_cast<int>(i));
-            }
         }
-
-        if (base < 0) return;
-
-        std::vector<int> reverseRoute;
-        for (int current = base; ; current = parent[static_cast<std::size_t>(current)]) {
-            reverseRoute.push_back(current);
-            if (current == start) break;
-        }
-        std::reverse(reverseRoute.begin(), reverseRoute.end());
-
-        // reverseRoute is ordered Flagship -> Base and therefore has exactly
-        // routeMoves edges because every map link advances one row.
-        if (static_cast<int>(reverseRoute.size()) != routeMoves + 1) return;
-        flagshipRoute_ = std::move(reverseRoute);
-        flagshipRouteIndex_ = 0;
-        flagshipNode_ = flagshipRoute_.front();
-        flagshipBaseNode_ = flagshipRoute_.back();
     }
 
     void advanceLastStandFlagshipAfterJump() {
