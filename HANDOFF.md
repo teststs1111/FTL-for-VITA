@@ -823,3 +823,9 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 2. Design a dedicated Last Stand route generator instead of forcing vanilla Flagship/Base placement through the normal sector graph.
 3. Add/strengthen Host regression coverage for v10 Flagship persistence, 2-player-jump movement, post-phase wait, and 3-turn Base countdown.
 4. Verify random beacon takeover timing and interaction with Flagship movement.
+
+## 2026-09-27 continuation — Last Stand route regression verified
+- Commit `314e65e8357d3201c0ea3bee7b336dca71979d48` added regression coverage that searches the generated Sector 8 graph for a connected Flagship-to-Base route of 3–5 edges using the actual Last Stand links.
+- Host #784 and Vita #476 both **success**.
+- Code review confirms the current runtime behavior: Flagship advances every 2 player jumps, waiting consumes a map tick without fuel, post-phase retreat sets a one-turn wait, and Base occupation increments the three-turn countdown on player jumps.
+- The next testing target is to exercise these runtime state transitions rather than only validating graph shape.
