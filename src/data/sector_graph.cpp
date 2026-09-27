@@ -45,9 +45,11 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
             BeaconNode beacon;
             beacon.row = row;
             beacon.column = available[static_cast<std::size_t>(i)];
-            beacon.x = 150.0f + beacon.column * 150.0f + 8.0f +
+            // The 6 grid columns are the horizontal progression of the
+            // vanilla sector map; the 4 rows are the vertical lanes.
+            beacon.x = 150.0f + row * 150.0f + 8.0f +
                 static_cast<float>(rng() % 134u);
-            beacon.y = 80.0f + row * 100.0f + 8.0f +
+            beacon.y = 80.0f + beacon.column * 100.0f + 8.0f +
                 static_cast<float>(rng() % 84u);
             nodes_.push_back(beacon);
         }
