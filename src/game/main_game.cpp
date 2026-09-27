@@ -64,6 +64,8 @@ public:
             sectorGraph_.generate(sector_, seed_);
             configureBeaconNebulaState();
             sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
+            if (sector_ >= 7)
+                initializeLastStandState();
             selectedBeacon_ = sectorGraph_.startNode();
             if (!content_.loadPlayerShip()) {
                 startupError_ = "Player ship blueprint could not be loaded";
@@ -1913,32 +1915,29 @@ public:
             fuel_--;
             currentBeacon_ = selectedBeacon_;
             advanceRebelFleetAfterJump();
+            if (sceneMode_ == SceneMode::GameOver) return;
             if (const auto* n = sectorGraph_.node(currentBeacon_)) {
+                // In The Last Stand there is no normal exit beacon. The player
+                // wins by intercepting the moving Flagship; the Federation Base
+                // is an ordinary safe beacon for navigation purposes.
+                if (sector_ >= 7 && currentBeacon_ == flagshipNode_) {
+                    const int nextPhase = flagshipPhase_ + 1;
+                    const std::string flagshipId = "BOSS_" + std::to_string(nextPhase);
+                    LoadedShip flagship;
+                    if (nextPhase <= 3 && content_.loadShip(flagshipId, flagship) &&
+                        !flagship.blueprint.id.empty()) {
+                        flagshipPhase_ = nextPhase;
+                        enterCombatFromBeacon(flagshipId);
+                        return;
+                    }
+                    sceneMode_ = SceneMode::GameOver;
+                    return;
+                }
                 if (n->fleetCovered) {
                     enterRebelFleetEncounter();
                     return;
                 }
-                if (currentBeacon_ == sectorGraph_.exitNode()) {
-                    if (sector_ >= 7) {
-                        // The final sector leads into the Rebel Flagship battle.
-                        // The three combat phases are kept as separate encounters
-                        // so the player's surviving systems/crew carry forward.
-                        if (flagshipPhase_ == 0) {
-                            LoadedShip flagship;
-                            if (content_.loadShip("BOSS_1", flagship) &&
-                                !flagship.blueprint.id.empty()) {
-                                flagshipPhase_ = 1;
-                                enterCombatFromBeacon("BOSS_1");
-                                return;
-                            }
-                            // If the supplied archive does not contain the
-                            // flagship blueprint, retain the old safe fallback.
-                            sceneMode_ = SceneMode::Victory;
-                            return;
-                        }
-                        sceneMode_ = SceneMode::Victory;
-                        return;
-                    }
+                if (sector_ < 7 && currentBeacon_ == sectorGraph_.exitNode()) {
                     ++sector_;
                     sectorEventUsage_.clear();
                     fleetRow_ = -1;
@@ -1952,7 +1951,9 @@ public:
                     applySectorStartFleetModifiers();
                     sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
                     configureBeaconNebulaState();
-                    sectorGraph_.setFleetCoverageFromRow(-1);
+                    sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
+                    if (sector_ >= 7)
+                        initializeLastStandState();
                     currentBeacon_ = -1;
                     selectedBeacon_ = sectorGraph_.startNode();
                     mapRevealed_ = false;
@@ -2301,34 +2302,22 @@ public:
                 }
 
                 if (sector_ >= 7 && flagshipPhase_ > 0 && flagshipPhase_ < 3) {
-                    // Flagship phase transition: keep the damaged player ship,
-                    // but load a fresh flagship for the next phase.
+                    // Vanilla Last Stand does not chain the next phase directly.
+                    // The Flagship retreats to a nearby beacon; the next phase
+                    // begins only when the player catches it again.
                     ++flagshipPhase_;
-                    combatFeedback_ = "反乱軍旗艦 Phase " + std::to_string(flagshipPhase_);
+                    combatFeedback_ = "反乱軍旗艦が離脱：次は Phase " + std::to_string(flagshipPhase_);
                     combatFeedbackTimer_ = 2.0f;
-                    LoadedShip nextFlagship;
-                    const std::string nextId = flagshipPhase_ == 2 ? "BOSS_2" : "BOSS_3";
-                    if (content_.loadShip(nextId, nextFlagship) &&
-                        combat_.loadFlagshipPhase(content_, nextFlagship, combat_.enemy.crew)) {
-                        combat_.player = runtime_;
-                        combat_.configureFlagshipPhase(flagshipPhase_);
-                        combat_.setStealthWeapons(hasAugment("STEALTH_WEAPONS"));
-                        combatMode_ = true;
-                        jumpCharging_ = false;
-                        jumpCharge_ = 0.0f;
-                        sceneMode_ = SceneMode::Combat;
-                        combatTargetRoom_ = combat_.enemy.content.layout.rooms.empty()
-                            ? 0 : combat_.enemy.content.layout.rooms.front().id;
-                        combat_.setTargetRoom(combatTargetRoom_);
-                        discoverRoomTextures();
-                        discoverWeaponAndDroneTextures();
-                        discoverCrewTextures();
-                    } else {
-                        combatFeedback_ = "旗艦次フェーズの読み込みに失敗";
-                        combatFeedbackTimer_ = 2.0f;
-                        combatMode_ = false;
-                        sceneMode_ = SceneMode::GameOver;
+                    if (flagshipRouteIndex_ > 0) {
+                        --flagshipRouteIndex_;
+                        flagshipNode_ = flagshipRoute_[static_cast<std::size_t>(flagshipRouteIndex_)];
                     }
+                    flagshipJumpCounter_ = 0;
+                    flagshipWaitTurns_ = 1;
+                    flagshipBaseTurns_ = 0;
+                    combatMode_ = false;
+                    sceneMode_ = SceneMode::SectorMap;
+                    visitedBeacons_++;
                 } else if (sector_ >= 7 && flagshipPhase_ >= 3) {
                     combatMode_ = false;
                     sceneMode_ = SceneMode::Victory;
