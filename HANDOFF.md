@@ -672,3 +672,10 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 - Updated the sector-graph regression to require that a deliberately covered reachable beacon remains selectable.
 - Fix commits: `0726b23` and `695cbbd`.
 - CI verification is pending for these latest source changes.
+
+## 2026-09-27 continuation — combat retreat advances Rebel fleet
+- Direct source inspection found that normal beacon jumps called `advanceRebelFleetAfterJump()`, while a successful FTL retreat from combat consumed fuel and returned to the sector map without advancing the Rebel fleet.
+- Fixed the combat-retreat completion path to call `advanceRebelFleetAfterJump()` immediately after successful fuel consumption.
+- This keeps fleet movement consistent across normal navigation, post-combat navigation, and combat escape; aborted FTL charging still does not move the fleet.
+- Source commit: `4eeebc75` (behavior change), followed by `d040a421` to restore the file's original formatting/newline state.
+- Host CI run: `36283829547`; Vita CI run: `36283829552`. Both were running when this handoff entry was written.
