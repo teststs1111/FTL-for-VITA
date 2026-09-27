@@ -883,3 +883,22 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 1. Verify Host/Vita CI for the beacon-count correction.
 2. Continue replacing approximation in map placement/links with the documented vanilla generation rules.
 3. Continue Last Stand event/save fidelity work.
+
+
+## 2026-09-28 continuation — Vanilla sector map links
+
+- Replaced the previous forward-only row graph with the documented vanilla map rule: a 6x4 grid, 80% beacon placement with a 19-beacon minimum, and links between beacons in adjacent grid cells when their map-space distance is at most 165 pixels.
+- Normal-sector exit selection now stays in the far two grid columns and is restricted to a beacon reachable from the start; disconnected random layouts are regenerated instead of creating synthetic long-distance links.
+- Normal and Last Stand graphs now share the same underlying adjacent-grid/bidirectional link model; Last Stand keeps its separate runtime Flagship state machine.
+- Updated sector-graph regression tests for 19-24 beacons, bidirectional adjacency, and reachable far-side exits.
+- Direct CI verification for commit `73ab14f`: Host #807 **success**, Vita #499 **success**.
+- The intermediate CI failures were test expectation mismatches caused by the old forward-only assumptions; no compile failure occurred.
+- External map-generation references confirm the 6x4 / 80% / <=165px rules and that the generated map guarantees a route to the exit. citeturn2search0turn4search5
+- No proprietary `ftl.dat` or extracted FTL assets were committed.
+
+### Next target
+
+1. Make normal-sector beacon event assignment follow the actual sector-definition order and min/max pool consumption more closely.
+2. Replace the current whole-nebula-sector flag with actual per-beacon `NEBULA_*` assignment from the supplied `ftl.dat`.
+3. Continue exact Rebel Fleet frontier behavior and Sector 8 individual-beacon takeover.
+4. Continue save/load and real-data regression coverage.
