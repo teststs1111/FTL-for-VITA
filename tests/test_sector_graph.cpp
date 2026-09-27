@@ -95,9 +95,19 @@ static void testFleetCoverage() {
     assert(std::find(coveredSelectable.begin(), coveredSelectable.end(), links.front()) != coveredSelectable.end());
 }
 
+void testNebulaSector() {
+    SectorGraph graph;
+    graph.generate(4, 0x1234u);
+    graph.setNebulaSector(true);
+    for (const auto& beacon : graph.nodes()) assert(beacon.nebula);
+    graph.setNebulaSector(false);
+    for (const auto& beacon : graph.nodes()) assert(!beacon.nebula);
+}
+
 int main() {
     testVariableReachableGraph();
     testDeterminism();
     testFleetCoverage();
+    testNebulaSector();
     return 0;
 }
