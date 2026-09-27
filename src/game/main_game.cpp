@@ -689,12 +689,12 @@ public:
         in >> key >> currentBeacon_ >> selectedBeacon_;
         in >> key >> fleetRow_;
         fleetPursuitDelay_ = 0;
-        if (saveV7 || saveV8 || saveV9) {
+        if (saveV7 || saveV8 || saveV9 || saveV10) {
             in >> key >> fleetPursuitDelay_;
             if (key != "fleet_pursuit_delay") return false;
             fleetPursuitDelay_ = std::clamp(fleetPursuitDelay_, -32, 32);
             fleetPursuitProgress_ = 0.0f;
-            if (saveV8 || saveV9) {
+            if (saveV8 || saveV9 || saveV10) {
                 in >> key >> fleetPursuitProgress_;
                 if (key != "fleet_pursuit_progress") return false;
                 fleetPursuitProgress_ = std::clamp(fleetPursuitProgress_, 0.0f, 0.9999f);
@@ -731,7 +731,7 @@ public:
         usedUniqueSectorTypes_.clear();
         mapRevealed_ = false;
         secretSectorPending_ = false;
-        if (saveV5 || saveV6 || saveV7 || saveV8 || saveV9) {
+        if (saveV5 || saveV6 || saveV7 || saveV8 || saveV9 || saveV10) {
             in >> key >> std::quoted(currentSectorType_);
             if (key != "current_sector") return false;
             in >> key >> count;
@@ -748,7 +748,7 @@ public:
             in >> key >> flag;
             if (key != "secret_pending") return false;
             secretSectorPending_ = flag != 0;
-            if (saveV6 || saveV7 || saveV8 || saveV9) {
+            if (saveV6 || saveV7 || saveV8 || saveV9 || saveV10) {
                 in >> key >> count;
                 if (key != "fleet_covered") return false;
                 std::vector<int> covered;
