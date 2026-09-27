@@ -893,6 +893,10 @@ public:
         secretSectorPending_ = false;
         selectCurrentSectorDefinition();
         sectorGraph_.generate(sector_, seed_);
+        sectorGraph_.setNebulaSector(currentSectorType_ == "NEBULA_SECTOR" || currentSectorType_ == "SLUG_SECTOR" || currentSectorType_ == "SLUG_HOME");
+        fleetPursuitDelay_ = 0;
+        fleetPursuitProgress_ = 0.0f;
+        sectorGraph_.setFleetCoverageFromRow(-1);
         selectedBeacon_ = sectorGraph_.startNode();
         activeQuestIds_.clear();
         questTargets_.clear();
@@ -1833,10 +1837,14 @@ public:
                     }
                     ++sector_;
                     sectorEventUsage_.clear();
+                    fleetRow_ = -1;
+                    fleetPursuitDelay_ = 0;
+                    fleetPursuitProgress_ = 0.0f;
                     currentSectorType_.clear();
                     selectCurrentSectorDefinition();
                     sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
                     sectorGraph_.setNebulaSector(currentSectorType_ == "NEBULA_SECTOR" || currentSectorType_ == "SLUG_SECTOR" || currentSectorType_ == "SLUG_HOME");
+                    sectorGraph_.setFleetCoverageFromRow(-1);
                     currentBeacon_ = -1;
                     selectedBeacon_ = sectorGraph_.startNode();
                     mapRevealed_ = false;
