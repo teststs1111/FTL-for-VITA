@@ -829,3 +829,16 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 - Host #784 and Vita #476 both **success**.
 - Code review confirms the current runtime behavior: Flagship advances every 2 player jumps, waiting consumes a map tick without fuel, post-phase retreat sets a one-turn wait, and Base occupation increments the three-turn countdown on player jumps.
 - The next testing target is to exercise these runtime state transitions rather than only validating graph shape.
+
+
+## 2026-09-27 continuation — Last Stand runtime state transitions verified
+- Added `src/data/last_stand_state.hpp/.cpp` so the Flagship map-tick state machine is shared by runtime code and regression tests.
+- Added regression coverage for: first/second player jump cadence, one-turn post-phase wait, Flagship retreat, Federation Base three-turn countdown, and route-end countdown behavior.
+- Host #791 and Vita #483 for commit `ff79190c3144ed7b93517c5d3b215c0a520c0bdb` both **success**.
+- The initial Host failure (#790) was a test-source formatting error (`\\n` literal); fixed in the next commit and reverified successfully.
+- No proprietary FTL assets were committed.
+
+### Next target
+1. Verify the Sector 8 wait/idle path against the shared state machine and ensure it advances the same map tick as a jump without consuming fuel.
+2. Strengthen Last Stand save/load regression coverage for the new state fields.
+3. Revisit exact vanilla Flagship/Base placement and route generation after runtime persistence is covered.
