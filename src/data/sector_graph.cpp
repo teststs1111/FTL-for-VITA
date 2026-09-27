@@ -184,40 +184,40 @@ void SectorGraph::setFleetCoverageFromRow(int fleetRow) {
 void SectorGraph::advanceFleetCoverage(int steps) {
     if (steps <= 0 || nodes_.empty()) return;
 
-    // The Rebel Fleet approaches from the exit side of the sector.  Coverage
-    // therefore grows backwards through the graph, rather than from row 0.
-    // The exit beacon itself is never marked as fleet-controlled.
+    // In normal FTL sectors the Rebel Fleet advances from the sector entrance
+    // toward the exit, following the same left-to-right progression as the
+    // sector map. The final sector has separate flagship behavior handled by
+    // MainGame; this graph-level frontier is for the normal pursuit model.
     for (int step = 0; step < steps; ++step) {
-        int frontierRow = exitRow();
+        int frontierRow = -1;
         for (const auto& beacon : nodes_) {
-            if (beacon.fleetCovered) frontierRow = std::min(frontierRow, beacon.row);
+            if (beacon.fleetCovered)
+                frontierRow = std::max(frontierRow, beacon.row);
         }
 
-        const int nextRow = frontierRow - 1;
-        if (nextRow < 0) break;
+        const int nextRow = frontierRow + 1;
+        if (nextRow >= exitRow()) break;
 
         std::vector<int> candidates;
         for (std::size_t i = 0; i < nodes_.size(); ++i) {
             const auto& beacon = nodes_[i];
             if (beacon.row != nextRow || beacon.fleetCovered) continue;
 
-            bool adjacent = false;
-            for (std::size_t sourceIndex = 0; sourceIndex < nodes_.size(); ++sourceIndex) {
-                const auto& source = nodes_[sourceIndex];
-                if (!source.fleetCovered || source.row != nextRow + 1) continue;
-                if (std::find(source.links.begin(), source.links.end(),
-                              static_cast<int>(i)) != source.links.end()) {
-                    adjacent = true;
-                    break;
+            bool adjacent = frontierRow < 0;
+            if (!adjacent) {
+                for (std::size_t sourceIndex = 0; sourceIndex < nodes_.size(); ++sourceIndex) {
+                    const auto& source = nodes_[sourceIndex];
+                    if (!source.fleetCovered || source.row != frontierRow) continue;
+                    if (std::find(source.links.begin(), source.links.end(),
+                                  static_cast<int>(i)) != source.links.end()) {
+                        adjacent = true;
+                        break;
+                    }
                 }
             }
             if (adjacent) candidates.push_back(static_cast<int>(i));
         }
 
-        // If this is the first Fleet advance, the frontier is the row directly
-        // before the exit. Multiple beacons may form the real visual frontier;
-        // keep one deterministic beacon for now so save/replay behavior stays
-        // stable until the full fleet-spread model is implemented.
         if (candidates.empty()) break;
 
         nodes_[static_cast<std::size_t>(candidates.front())].fleetCovered = true;
