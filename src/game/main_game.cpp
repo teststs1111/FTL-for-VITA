@@ -678,7 +678,7 @@ public:
         in >> key >> currentBeacon_ >> selectedBeacon_;
         in >> key >> fleetRow_;
         fleetPursuitDelay_ = 0;
-        if (saveV7 || saveV8) {
+        if (saveV7 || saveV8 || saveV9) {
             in >> key >> fleetPursuitDelay_;
             if (key != "fleet_pursuit_delay") return false;
             fleetPursuitDelay_ = std::clamp(fleetPursuitDelay_, -32, 32);
