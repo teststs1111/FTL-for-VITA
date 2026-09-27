@@ -497,8 +497,7 @@ public:
             auto it = std::find_if(runtime_.drones.begin(), runtime_.drones.end(),
                 [&](const RuntimeDrone& d) { return d.name == offer.id; });
             if (it == runtime_.drones.end()) { combatFeedback_ = "売却対象がありません"; break; }
-            scrap_ += offer.cost;
-            combatFeedback_ = "ドローンを売却: " + droneLabel(*it);
+            scrap_ += offer.cost;            combatFeedback_ = "ドローンを売却: " + droneLabel(*it);
             runtime_.drones.erase(it);
             storeOffers_.erase(storeOffers_.begin() + storeSelection_);
             storeSelection_ = std::min(storeSelection_, static_cast<int>(storeOffers_.size()) - 1);
@@ -997,8 +996,7 @@ public:
         // Start every encounter from a clean CombatRuntime state. This resets
         // the previous outcome, projectile queue, boarding timers and enemy
         // fire timers while preserving the persistent player ship below.
-        LoadedShip enemyShip;
-        if (!enemyShipId.empty()) {
+        LoadedShip enemyShip;        if (!enemyShipId.empty()) {
             if (!content_.loadShip(enemyShipId, enemyShip) || enemyShip.blueprint.id.empty()) {
                 combatFeedback_ = "敵艦の読み込みに失敗";
                 combatFeedbackTimer_ = 2.0f;
@@ -1497,8 +1495,7 @@ public:
                 if (!hasAugment(augment->id)) augmentIds_.push_back(augment->id);
             }
         }
-    }
-    void applyEventImmediateEffects(const EventDefinition& event) {
+    }    void applyEventImmediateEffects(const EventDefinition& event) {
         scrap_ = std::max(0, scrap_ + applyScrapAugments(rollEventRange(event.initialScrap, event.initialScrapMax, 0x11u)));
         fuel_ = std::max(0, fuel_ + rollEventRange(event.initialFuel, event.initialFuelMax, 0x23u));
         runtime_.missiles = std::max(0, runtime_.missiles + rollEventRange(event.initialMissiles, event.initialMissilesMax, 0x37u));
@@ -1997,8 +1994,7 @@ public:
                 // Persist all combat-side changes, not just hull damage:
                 // systems, crew, weapons, missiles, shields, fires and breaches
                 // must survive the return to the ship scene.
-                runtime_ = combat_.player;
-                if (combat_.playerDeployedCombatDrone() && hasAugment("DRONE_RECOVERY_ARM")) {
+                runtime_ = combat_.player;                if (combat_.playerDeployedCombatDrone() && hasAugment("DRONE_RECOVERY_ARM")) {
                     droneParts_ = std::min(99, droneParts_ + 1);
                     combatFeedback_ = "Drone Recovery Arm: ドローンパーツ回収";
                     combatFeedbackTimer_ = 1.5f;
@@ -2282,6 +2278,7 @@ public:
             jumpCharge_ = std::min(jumpChargeTime, jumpCharge_ + 1.0f / 60.0f);
             if (jumpCharge_ >= jumpChargeTime) {
                 --fuel_;
+                advanceRebelFleetAfterJump();
                 runtime_ = combat_.player;
                 combatMode_ = false;
                 jumpCharging_ = false;
@@ -2497,8 +2494,7 @@ public:
                     const float x = center.first - 32.f + (weaponSlot % 3) * 32.f;
                     const float y = center.second - 18.f + (weaponSlot / 3) * 32.f;
                     graphics_.drawTexture(*texture, x - w * 0.5f, y - h * 0.5f, w, h);
-                    text_.draw(graphics_, weaponLabel(weapon), x - 20.f, y + 12.f, 9.f,
-                        {0.92f, 0.86f, 0.62f, 1.f});
+                    text_.draw(graphics_, weaponLabel(weapon), x - 20.f, y + 12.f, 9.f,                        {0.92f, 0.86f, 0.62f, 1.f});
                     ++weaponSlot;
                 }
             }
