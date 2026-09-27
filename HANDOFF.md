@@ -763,3 +763,27 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 - Commit c70e372 fixed new-game initialization so initial Fleet position is applied after map generation and the Distraction Buoys one-jump delay is not accidentally cleared.
 - CI for c70e372 was still queued/running when this entry was prepared; verify Host and Vita directly before marking it green.
 - Remaining Last Stand fidelity work: model the Flagship movement cadence/location more faithfully while preserving the three-phase flagship combat sequence and individual beacon takeover behavior.
+
+
+## 2026-09-27 continuation — Last Stand Flagship persistence and map presentation
+- Verified the previous Last Stand movement implementation at commit `53e97de`: Host build #756 **success** and Vita build #448 **success**.
+- Added save-format v10 in `src/game/main_game.cpp` so Sector 8 Flagship state survives save/load:
+  - current Flagship beacon;
+  - Federation Base beacon;
+  - route index and generated route;
+  - two-player-jump movement counter;
+  - Base three-turn countdown;
+  - one-turn post-phase wait.
+- Fixed v10 loading so saved fleet-covered beacon indices are restored **after** regenerating the deterministic sector graph. This avoids losing explicit Fleet state during load.
+- Added Sector 8 map markers for the Flagship and Federation Base, plus a visible Base countdown and Flagship movement cadence hint.
+- Random Last Stand beacon takeover now excludes the Federation Base so the Base remains the dedicated Flagship destination/countdown location.
+- CI verification for the new commits:
+  - Host build #759 (`c5e8571`) **success**
+  - Vita build #451 (`c5e8571`) **success**
+- No proprietary `ftl.dat` or extracted FTL assets were committed.
+
+### Next implementation order
+1. Add a proper Sector 8 wait/idle action that advances the Flagship/random beacon takeover exactly when the player waits, matching the vanilla Last Stand map tick.
+2. Add the vanilla Sector 8 entry resource behavior (fuel/hull repair) after confirming the existing initialization path does not already provide it.
+3. Replace the current Flagship route scaffold with explicit Last Stand start/base node selection and more faithful 3–5 Flagship-jump routing.
+4. Continue save/load regression coverage for Last Stand state and per-beacon Fleet/nebula state.
