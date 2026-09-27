@@ -105,7 +105,9 @@ std::vector<int> SectorGraph::selectable(int current, int fleetRow) const {
     for (const int link : n->links) {
         const auto* target = node(link);
         if (!target) continue;
-        if (target->fleetCovered) continue;
+        // Fleet-controlled beacons remain navigable; arrival triggers the
+        // Rebel fleet encounter in MainGame. Removing them here would make
+        // the fleet state unreachable from the player map.
         out.push_back(link);
     }
 
