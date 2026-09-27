@@ -842,3 +842,16 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 1. Verify the Sector 8 wait/idle path against the shared state machine and ensure it advances the same map tick as a jump without consuming fuel.
 2. Strengthen Last Stand save/load regression coverage for the new state fields.
 3. Revisit exact vanilla Flagship/Base placement and route generation after runtime persistence is covered.
+
+
+## 2026-09-27 continuation: Last Stand event-pool verification
+
+- Vita build #485 for `2377e3dc61808afadee7e047a5d8b149b1ffcdec` is verified **success**; Host #793 is also **success**.
+- The Last Stand repair beacon now uses the documented `BOSS_REPAIR_STATION` rewards: +15 hull, +22-44 scrap, +5 fuel, +4 missiles, +5 drone parts.
+- Added real-data regression checks in `tests/test_real_ftl_dat.cpp` for the vanilla `FINAL` sector event pools:
+  - `STORE`: 1-1
+  - `BOSS_REPAIR_STATION`: 3-3
+  - `BOSS_HOSTILE`: 6-6
+  - `BOSS_NEUTRAL`: 7-10
+- These checks run only when `FTL_DAT_PATH` points at the user-supplied archive, so proprietary data remains outside CI/repository history.
+- Next target: make Last Stand beacon event assignment persist per beacon and verify the event pool min/max behavior against the actual map flow, then continue save/load and exact vanilla placement fidelity.
