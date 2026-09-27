@@ -140,6 +140,9 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
     // forward-only sector links. This allows the Flagship to route through
     // vertical as well as diagonal/forward neighboring beacons.
     if (sector >= 7) {
+        // Replace the normal forward-only links entirely. Last Stand uses
+        // the vanilla adjacent-grid navigation rule for all beacon movement.
+        for (auto& beacon : nodes_) beacon.links.clear();
         for (std::size_t i = 0; i < nodes_.size(); ++i) {
             for (std::size_t j = 0; j < nodes_.size(); ++j) {
                 if (i == j) continue;
