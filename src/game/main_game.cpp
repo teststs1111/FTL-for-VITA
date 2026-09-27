@@ -2003,6 +2003,7 @@ public:
                     return;
                 }
                 if (sector_ < 7 && currentBeacon_ == sectorGraph_.exitNode()) {
+                    const bool enteringLastStand = (sector_ == 6);
                     ++sector_;
                     sectorEventUsage_.clear();
                     fleetRow_ = -1;
@@ -2017,6 +2018,14 @@ public:
                     sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
                     configureBeaconNebulaState();
                     sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
+                    if (enteringLastStand) {
+                        // Vanilla FTL grants a small resource/hull buffer on entry
+                        // to The Last Stand: +10 fuel and +10 hull, capped at max.
+                        fuel_ += 10;
+                        combat_.player.hull = std::min(
+                            combat_.player.maxHull, combat_.player.hull + 10);
+                        runtime_.hull = combat_.player.hull;
+                    }
                     if (sector_ >= 7)
                         initializeLastStandState();
                     currentBeacon_ = -1;
