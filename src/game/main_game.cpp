@@ -1321,6 +1321,27 @@ public:
             if (pool.name.rfind("NEBULA_", 0) == 0)
                 assignPool(pool, true);
 
+        // Any nebula beacon left after the explicit NEBULA_* pools must
+        // use the default NEBULA event list. In vanilla, cloud overlap can
+        // convert an originally non-nebula beacon into a nebula beacon, and
+        // those converted beacons are filled from NEBULA rather than from the
+        // ordinary sector event lines. This also covers nebula-sector filler
+        // beacons after the specialized NEBULA_* pools have been exhausted.
+        std::vector<int> nebulaRemainder;
+        for (const int index : available) {
+            const auto* node = sectorGraph_.node(index);
+            if (node && node->nebula) nebulaRemainder.push_back(index);
+        }
+        if (!nebulaRemainder.empty()) {
+            for (const int beacon : nebulaRemainder) {
+                beaconEventAssignments_[beacon] = "NEBULA";
+                ++sectorEventUsage_["NEBULA"];
+                available.erase(
+                    std::remove(available.begin(), available.end(), beacon),
+                    available.end());
+            }
+        }
+
         // Ordinary pools are then consumed strictly in sector-definition order.
         for (const auto& pool : sector->events) {
             if (pool.name.rfind("NEBULA_", 0) == 0) continue;
