@@ -23,9 +23,9 @@
 
 ### CI state
 
-- The latest sector-graph change has just been pushed; GitHub Actions validation is pending.
-- The last directly verified green Host/Vita pair remains commit `8e72b5b0bd7e474501ca8c56514d7f4ae064dac1`.
-- Do not mark the new sector-graph change green until both Host and Vita Actions complete successfully.
+- The latest Rebel Fleet per-beacon changes have been pushed; GitHub Actions validation is pending.
+- The last directly verified green Host/Vita pair before this change was commit `dbc0c4cbb6c59e3201090ab7210f17fecf1d6b2b`.
+- Do not mark the new Fleet changes green until both Host and Vita Actions complete successfully.
 
 ### Startup/crash milestone
 
@@ -41,6 +41,7 @@ The VPK application name is now:
 `FTL: Faster Than Light`
 
 ## What is already implemented
+- Rebel Fleet per-beacon coverage state: `BeaconNode::fleetCovered`, v6 save/load of covered beacon indices, v5-and-earlier row-based compatibility restore, and red/!! map rendering.
 
 ### Build / platform
 - C++17 project migration prototype
