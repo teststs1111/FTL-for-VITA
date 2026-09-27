@@ -710,3 +710,18 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 - Source commits: `0d292d9`, `eb84d20`, `5bd27f7`, `0e277c7`, `afaaa92`, `1231008`.
 - Current Host/Vita Actions for `1231008` are still in progress at the time of this update; do not mark this change green until both complete successfully.
 - External FTL mechanics references confirm that normal-sector nebula jumps reduce Rebel pursuit to about 50%, nebula-sector jumps to about 80%, and Distraction Buoys delay the fleet by one jump at sector start. citeturn0search0turn1search5
+
+
+## 2026-09-27 continuation — Distraction Buoys sector-start fleet delay
+- Implemented the Advanced Edition Distraction Buoys behavior in commit `df27982ccfe1e049f180d4d6b6cf6e62c3a57a7c`.
+- When the player owns `DISTRACTION_BUOYS`, entering a new sector now adds one pending Rebel Fleet delay before the first jump of that sector.
+- The delay is applied after selecting the new sector definition, including the initial sector and normal sector transitions, and is not applied in The Last Stand (sector 8), matching the documented final-sector behavior.
+- The existing pursuit-delay pipeline then consumes that pending delay on the first jump, so this uses the same state path as event-based `modifyPursuit` effects instead of introducing a separate fleet counter.
+- The delay is reset/re-applied on each actual sector transition and is not re-applied when loading a save or merely toggling the AE dataset.
+- External mechanics references confirm Distraction Buoys postpone Rebel Fleet advancement by one jump at sector start and have no practical effect on The Last Stand's separate fleet model. citeturn0search0turn1search0
+- CI for `df27982` must still be checked directly before calling this change green.
+
+### Next target
+1. Implement scout/auto-ship escape pursuit doubling for the next jump.
+2. Replace generic sector-wide nebula flags with per-beacon NEBULA_* event assignment in normal sectors.
+3. Continue toward the original 6×4 / 19–24 beacon sector-generation constraints and sector-specific event weighting.
