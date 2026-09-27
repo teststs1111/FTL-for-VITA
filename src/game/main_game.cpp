@@ -57,6 +57,9 @@ public:
             eventOrder_ = eventDatabase_.ids();
             sectorDatabase_.load();
             selectCurrentSectorDefinition();
+            fleetPursuitDelay_ = 0;
+            fleetPursuitProgress_ = 0.0f;
+            applySectorStartFleetModifiers();
             sectorGraph_.generate(sector_, seed_);
             sectorGraph_.setNebulaSector(currentSectorType_ == "NEBULA_SECTOR" || currentSectorType_ == "SLUG_SECTOR" || currentSectorType_ == "SLUG_HOME");
             selectedBeacon_ = sectorGraph_.startNode();
@@ -901,6 +904,9 @@ public:
         mapRevealed_ = false;
         secretSectorPending_ = false;
         selectCurrentSectorDefinition();
+        fleetPursuitDelay_ = 0;
+        fleetPursuitProgress_ = 0.0f;
+        applySectorStartFleetModifiers();
         sectorGraph_.generate(sector_, seed_);
         sectorGraph_.setNebulaSector(currentSectorType_ == "NEBULA_SECTOR" || currentSectorType_ == "SLUG_SECTOR" || currentSectorType_ == "SLUG_HOME");
         fleetPursuitDelay_ = 0;
@@ -1851,6 +1857,9 @@ public:
                     fleetPursuitProgress_ = 0.0f;
                     currentSectorType_.clear();
                     selectCurrentSectorDefinition();
+                    fleetPursuitDelay_ = 0;
+                    fleetPursuitProgress_ = 0.0f;
+                    applySectorStartFleetModifiers();
                     sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
                     sectorGraph_.setNebulaSector(currentSectorType_ == "NEBULA_SECTOR" || currentSectorType_ == "SLUG_SECTOR" || currentSectorType_ == "SLUG_HOME");
                     sectorGraph_.setFleetCoverageFromRow(-1);
@@ -1868,6 +1877,15 @@ public:
             sceneMode_ = SceneMode::Ship;
             return;
         }
+    }
+
+    void applySectorStartFleetModifiers() {
+        // Distraction Buoys leave a false signal when entering a new sector,
+        // delaying the first Rebel Fleet advancement by one jump. The Last
+        // Stand uses a separate takeover model, so the augment has no effect
+        // there.
+        if (sector_ >= 7 || !hasAugment("DISTRACTION_BUOYS")) return;
+        fleetPursuitDelay_ = std::min(32, fleetPursuitDelay_ + 1);
     }
 
     void advanceRebelFleetAfterJump() {
