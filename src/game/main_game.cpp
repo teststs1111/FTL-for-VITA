@@ -1870,9 +1870,14 @@ public:
         // Flagship on the right side and the Federation Base around the
         // middle/right, so select those roles independently of exitNode().
         const int rightRow = sectorGraph_.rows() - 1;
-        const int flagshipRow = rightRow -
-            static_cast<int>((seed_ ^ visitedBeacons_) & 1u);
-        const int baseRow = std::max(0, flagshipRow - 3);
+        const int flagshipRow = rightRow;
+        // Vanilla Last Stand reaches the base after 3, 4, or 5
+        // Flagship jumps (6, 8, or 10 player map ticks). Choose that
+        // distance deterministically while keeping the Flagship on the
+        // rightmost side of the generated map.
+        const int routeMoves =
+            3 + static_cast<int>((seed_ ^ visitedBeacons_) % 3u);
+        const int baseRow = std::max(0, flagshipRow - routeMoves);
 
         std::vector<int> starts;
         for (std::size_t i = 0; i < sectorGraph_.nodes().size(); ++i) {
@@ -1917,10 +1922,12 @@ public:
             sectorGraph_.node(reverseRoute.back())->row != baseRow)
             return;
 
-        flagshipRoute_.assign(reverseRoute.rbegin(), reverseRoute.rend());
-        flagshipRouteIndex_ = static_cast<int>(flagshipRoute_.size()) - 1;
-        flagshipNode_ = flagshipRoute_[static_cast<std::size_t>(flagshipRouteIndex_)];
-        flagshipBaseNode_ = flagshipRoute_.front();
+        // reverseRoute is already ordered Flagship -> Base because each
+        // predecessor is appended while walking left through the map.
+        flagshipRoute_ = reverseRoute;
+        flagshipRouteIndex_ = 0;
+        flagshipNode_ = flagshipRoute_.front();
+        flagshipBaseNode_ = flagshipRoute_.back();
     }
 
     void advanceLastStandFlagshipAfterJump() {
