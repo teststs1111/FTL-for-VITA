@@ -68,9 +68,10 @@ static void testDeterminism() {
     }
 }
 
-int main() {
-    testVariableReachableGraph();
-    testDeterminism();
+static void testFleetCoverage() {
+    wormhole::SectorGraph graph;
+    graph.generate(2, 0xABCDEF01u);
+
     graph.setFleetCoverageFromRow(0);
     const auto covered = graph.fleetCoveredIndices();
     assert(!covered.empty());
@@ -88,6 +89,11 @@ int main() {
     const auto filtered = graph.selectable(graph.startNode(), 0);
     for (const int index : filtered)
         assert(!graph.isFleetCovered(index));
+}
 
+int main() {
+    testVariableReachableGraph();
+    testDeterminism();
+    testFleetCoverage();
     return 0;
 }
