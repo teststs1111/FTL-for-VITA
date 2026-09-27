@@ -1874,42 +1874,28 @@ public:
             static_cast<int>((seed_ ^ visitedBeacons_) & 1u);
         const int baseRow = std::max(0, flagshipRow - 3);
 
-        std::vector<int> flagshipCandidates;
-        std::vector<int> baseCandidates;
+        std::vector<int> starts;
         for (std::size_t i = 0; i < sectorGraph_.nodes().size(); ++i) {
-            const auto& beacon = sectorGraph_.nodes()[i];
-            if (beacon.row == flagshipRow)
-                flagshipCandidates.push_back(static_cast<int>(i));
-            if (beacon.row == baseRow)
-                baseCandidates.push_back(static_cast<int>(i));
+            if (sectorGraph_.nodes()[i].row == flagshipRow)
+                starts.push_back(static_cast<int>(i));
         }
-        if (flagshipCandidates.empty() || baseCandidates.empty()) return;
+        if (starts.empty()) return;
 
-        auto chooseByX = [&](const std::vector<int>& candidates, bool rightSide) {
-            int chosen = candidates.front();
-            for (const int index : candidates) {
-                const auto* aNode = sectorGraph_.node(index);
-                const auto* bNode = sectorGraph_.node(chosen);
-                if (!aNode || !bNode) continue;
-                if ((rightSide && aNode->x > bNode->x) ||
-                    (!rightSide && aNode->x < bNode->x))
-                    chosen = index;
-            }
-            return chosen;
-        };
+        int start = starts.front();
+        for (const int index : starts) {
+            const auto* aNode = sectorGraph_.node(index);
+            const auto* bNode = sectorGraph_.node(start);
+            if (aNode && bNode && aNode->x > bNode->x) start = index;
+        }
 
-        const int start = chooseByX(flagshipCandidates, true);
-        const int base = chooseByX(baseCandidates, false);
-
-        // Flagship movement runs against the normal map direction. Walk
-        // incoming generated links from the right-side start until the
-        // selected base row, then reverse the path for forward movement.
+        // Build the Flagship path backwards through the actual map links.
+        // This keeps the route connected instead of reusing the normal-sector
+        // exit beacon or inventing a disconnected boss path.
         std::vector<int> reverseRoute{start};
         int current = start;
-        while (current != base) {
+        while (sectorGraph_.node(current) &&
+               sectorGraph_.node(current)->row > baseRow) {
             const auto* target = sectorGraph_.node(current);
-            if (!target) break;
-
             int previous = -1;
             float bestX = -1.0e9f;
             for (std::size_t i = 0; i < sectorGraph_.nodes().size(); ++i) {
@@ -1925,23 +1911,16 @@ public:
             if (previous < 0) break;
             reverseRoute.push_back(previous);
             current = previous;
-            if (static_cast<int>(reverseRoute.size()) > sectorGraph_.rows()) break;
         }
 
-        if (current == base) {
-            flagshipRoute_.assign(reverseRoute.rbegin(), reverseRoute.rend());
-        } else {
-            // The selected pair should normally be connected by the generated
-            // graph. Keep a deterministic fallback rather than creating an
-            // invalid empty Flagship state if a rare graph layout breaks it.
-            flagshipRoute_.clear();
-            flagshipRoute_.push_back(start);
-            flagshipRoute_.push_back(base);
-        }
+        if (reverseRoute.empty() ||
+            sectorGraph_.node(reverseRoute.back())->row != baseRow)
+            return;
 
-        flagshipRouteIndex_ = 0;
-        flagshipNode_ = flagshipRoute_.front();
-        flagshipBaseNode_ = base;
+        flagshipRoute_.assign(reverseRoute.rbegin(), reverseRoute.rend());
+        flagshipRouteIndex_ = static_cast<int>(flagshipRoute_.size()) - 1;
+        flagshipNode_ = flagshipRoute_[static_cast<std::size_t>(flagshipRouteIndex_)];
+        flagshipBaseNode_ = flagshipRoute_.front();
     }
 
     void advanceLastStandFlagshipAfterJump() {
