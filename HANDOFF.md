@@ -15,6 +15,9 @@
 
 ### Latest commits
 
+- `8dbd67e266fe15b5255651ecdd108ec73ecc9634` — `Enter Rebel encounter on fleet-controlled beacon`
+- `881cff0b1e5b73c48fde65e693a60163feacf39f` — `Allow navigation to Rebel-controlled beacons`
+- `a37d3eb2aa95d4003833470a08fa662d5fe9b75b` — `Fix sector graph coverage test scope`
 - `8391a2467c110abd4279c8cb0f389fafa35624a3` — `Test variable sector graph generation`
 - `660fee07e65d87f22f2e8730a2f81ad8cdce9f7f` — `Add sector graph reachability regression tests`
 - `3e41699b19c51936d35e577c99dacde124100ee1` — `Track variable sector graph row layout`
@@ -23,9 +26,8 @@
 
 ### CI state
 
-- The latest Rebel Fleet per-beacon changes have been pushed; GitHub Actions validation is pending.
-- The last directly verified green Host/Vita pair before this change was commit `dbc0c4cbb6c59e3201090ab7210f17fecf1d6b2b`.
-- Do not mark the new Fleet changes green until both Host and Vita Actions complete successfully.
+- Commit `a37d3eb2aa95d4003833470a08fa662d5fe9b75b` Host and Vita Actions are both green.
+- The subsequent commits `881cff0b1e5b73c48fde65e693a60163feacf39f` and `8dbd67e266fe15b5255651ecdd108ec73ecc9634` implement the next Fleet encounter step; their new Actions must be verified before marking them green.
 
 ### Startup/crash milestone
 
@@ -656,3 +658,8 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
   - fleet-row filtering.
 - This is intentionally an incremental compatibility step. The next map-fidelity step is to replace the remaining row-only Rebel fleet approximation with explicit covered-beacon state / movement while preserving deterministic tests and save compatibility.
 - CI for this change is pending; the previously verified green baseline is `8e72b5b0bd7e474501ca8c56514d7f4ae064dac1`.
+
+
+### Latest Fleet encounter fidelity
+
+Fleet-controlled beacons are now navigable instead of being removed from the route. On arrival, if the beacon is covered after the normal Fleet advance, MainGame enters a Rebel ship encounter before normal event selection. The current implementation dynamically chooses the first non-player/non-boss ship blueprint whose ID contains `REBEL`; this is a compatibility step toward exact Rebel Fleet/ASB encounter rules. The row-boundary model remains underneath the explicit per-beacon flags.
