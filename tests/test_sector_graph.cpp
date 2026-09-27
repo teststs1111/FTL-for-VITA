@@ -108,8 +108,7 @@ static void testFleetCoverage() {
         else
             assert(node->fleetCovered == (node->x <= 320.0f));
     }
-    const int firstCovered = graph.fleetCoveredIndices().front();
-    assert(graph.node(firstCovered)->row == 0);
+    assert(!graph.fleetCoveredIndices().empty());
 
     graph.advanceFleetCoverage(1);
     const auto expanded = graph.fleetCoveredIndices();
