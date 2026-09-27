@@ -689,3 +689,12 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 - The existing player-target PDS/ASB environment remains enabled for the fleet encounter.
 - Source commit: `7b0b50c8`.
 - The archive was inspected locally from the user's Library copy; no proprietary data was added to the repository.
+
+
+## 2026-09-27 continuation — queue pursuit modifiers until the next jump
+- Rechecked current Host/Vita CI for `1edcfbf`: both are green.
+- Revisited the real FTL pursuit behavior. `modifyPursuit` is a modifier to the fleet's next advancement, not an immediate teleport of the fleet boundary. The current implementation was applying it immediately, which could make a beacon become captured before the next jump.
+- Changed `MainGame` to accumulate `fleetPursuitDelay_` and consume it on the next successful jump: `-1` cancels that jump's normal fleet advance, `+1` makes that jump advance two steps, and multiple chained modifiers accumulate.
+- Save format is now v7 and persists the pending pursuit modifier. v2-v6 loading remains supported.
+- Source commit: `1845d088`.
+- External mechanics references support the next-jump interpretation and also identify additional fidelity work: nebula destinations reduce that jump's advance, Rebel-controlled sector entry adds an advance, and Distraction Buoys/out-of-fuel/other events can defer pursuit. citeturn0search0turn0search6
