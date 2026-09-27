@@ -739,3 +739,17 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 2. Move the sector graph toward the documented 6×4 / ~19–24 beacon generation and adjacency rules.
 3. Preserve per-beacon nebula state through save/load and fleet takeover transitions.
 4. Implement Rebel scout/auto-ship escape pursuit acceleration once the combat runtime has an explicit enemy-escape outcome.
+
+
+## 2026-09-27 continuation — beacon-level Rebel Fleet frontier
+- Latest verified commit: `efbfa4f2e9895c35a288f68cd78691b2ca5201d5` (`Fix fleet frontier regression expectation`).
+- Rebel Fleet coverage is now tracked at individual beacon level via `BeaconNode::fleetCovered`, with `SectorGraph::advanceFleetCoverage(steps)` extending a connected frontier through links instead of marking an entire row covered at once.
+- Fleet-controlled beacons remain navigable; arrival can trigger the Rebel fleet encounter rather than making the route disappear.
+- Save/load continues to persist covered beacon indices, while the older row-based coverage method remains available for compatibility/legacy restore.
+- Verification: Host build #726 **success** and Vita build #418 **success** on the same commit. The Host suite completed all 5 tests successfully.
+- This is still an approximation of vanilla FTL fleet positioning: the next frontier beacon is currently selected deterministically by lowest node index. The next fidelity step is to model more faithful fleet route/frontier selection and sector-specific pursuit behavior.
+
+### Next target
+1. Replace lowest-index fleet frontier selection with a map-aware deterministic rule closer to FTL's actual pursuit behavior.
+2. Continue tightening the 6×4 / 19–24 beacon generation and adjacency constraints against the real FTL map model.
+3. Keep per-beacon nebula and fleet state consistent through navigation, sector transitions, and save/load.
