@@ -1,4 +1,5 @@
 #include "data/sector_graph.hpp"
+#include "data/last_stand_state.hpp"
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
@@ -200,7 +201,53 @@ static void testLastStandRouteShapes() {
     assert(foundThreeToFive);
 }
 
-static void testNebulaSector() {
+
+static void testLastStandStateTransitions() {
+    int routeIndex = 0;
+    int jumpCounter = 0;
+    int baseTurns = 0;
+    int waitTurns = 0;
+
+    auto r = wormhole::advanceLastStandState(4, routeIndex, jumpCounter, baseTurns, waitTurns, false);
+    assert(!r.moved && !r.gameOver);
+    assert(routeIndex == 0 && jumpCounter == 1);
+
+    r = wormhole::advanceLastStandState(4, routeIndex, jumpCounter, baseTurns, waitTurns, false);
+    assert(r.moved && !r.gameOver);
+    assert(routeIndex == 1 && jumpCounter == 0);
+
+    wormhole::retreatLastStandAfterPhase(routeIndex, jumpCounter, baseTurns, waitTurns);
+    assert(routeIndex == 0);
+    assert(jumpCounter == 0 && baseTurns == 0 && waitTurns == 1);
+
+    r = wormhole::advanceLastStandState(4, routeIndex, jumpCounter, baseTurns, waitTurns, false);
+    assert(!r.moved && !r.gameOver && waitTurns == 0 && jumpCounter == 0);
+
+    r = wormhole::advanceLastStandState(4, routeIndex, jumpCounter, baseTurns, waitTurns, false);
+    assert(!r.moved && jumpCounter == 1);
+    r = wormhole::advanceLastStandState(4, routeIndex, jumpCounter, baseTurns, waitTurns, false);
+    assert(r.moved && routeIndex == 1);
+
+    routeIndex = 3;
+    jumpCounter = 0;
+    baseTurns = 0;
+    waitTurns = 0;
+    r = wormhole::advanceLastStandState(4, routeIndex, jumpCounter, baseTurns, waitTurns, true);
+    assert(!r.gameOver && baseTurns == 1);
+    r = wormhole::advanceLastStandState(4, routeIndex, jumpCounter, baseTurns, waitTurns, true);
+    assert(!r.gameOver && baseTurns == 2);
+    r = wormhole::advanceLastStandState(4, routeIndex, jumpCounter, baseTurns, waitTurns, true);
+    assert(r.gameOver && baseTurns == 3);
+
+    routeIndex = 2;
+    jumpCounter = 0;
+    baseTurns = 0;
+    waitTurns = 0;
+    r = wormhole::advanceLastStandState(3, routeIndex, jumpCounter, baseTurns, waitTurns, false);
+    r = wormhole::advanceLastStandState(3, routeIndex, jumpCounter, baseTurns, waitTurns, false);
+    assert(!r.moved && !r.gameOver && baseTurns == 1);
+}
+\nstatic void testNebulaSector() {
     wormhole::SectorGraph graph;
     graph.generate(4, 0x1234u);
     graph.setNebulaSector(true);
@@ -216,5 +263,6 @@ int main() {
     testNebulaSector();
     testLastStandNavigation();
     testLastStandRouteShapes();
+    testLastStandStateTransitions();
     return 0;
 }
