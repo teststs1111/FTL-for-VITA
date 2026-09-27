@@ -115,7 +115,10 @@ public:
         sectorDatabase_.load();
         sectorGraph_.generate(sector_, seed_);
         configureBeaconNebulaState();
-        sectorGraph_.setFleetCoverageFromRow(-1);
+        fleetPursuitDelay_ = 0;
+        fleetPursuitProgress_ = 0.0f;
+        fleetPursuitPosition_ = -959.0f;
+        sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
         selectedBeacon_ = sectorGraph_.startNode();
         if (!content_.loadPlayerShip()) return false;
         if (!runtime_.load(content_)) return false;
