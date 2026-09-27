@@ -20,6 +20,7 @@ public:
     const BeaconNode* node(int index) const;
     std::vector<int> selectable(int current, int fleetRow = -1) const;
     void setFleetCoverageFromRow(int fleetRow);
+    void advanceFleetCoverage(int steps);
     void setNebulaSector(bool enabled);
     void setNebulaIndices(const std::vector<int>& indices);
     void setFleetCoveredIndices(const std::vector<int>& indices);
