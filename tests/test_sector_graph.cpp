@@ -13,7 +13,7 @@ static void testVanillaGridBounds() {
     graph.generate(1, 0x12345678u);
 
     assert(graph.rows() == 6);
-    assert(graph.nodes().size() >= 16);
+    assert(graph.nodes().size() >= 19);
     assert(graph.nodes().size() <= 24);
     assert(graph.startNode() >= 0);
     assert(graph.node(graph.startNode()));
