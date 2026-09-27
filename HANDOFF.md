@@ -663,3 +663,4 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 ### Latest Fleet encounter fidelity
 
 Fleet-controlled beacons are now navigable instead of being removed from the route. On arrival, if the beacon is covered after the normal Fleet advance, MainGame enters a Rebel ship encounter before normal event selection. The current implementation dynamically chooses the first non-player/non-boss ship blueprint whose ID contains `REBEL`; this is a compatibility step toward exact Rebel Fleet/ASB encounter rules. The row-boundary model remains underneath the explicit per-beacon flags.
+ The encounter now prefers conventional `REBEL_FIGHTER` / `REBEL_SCOUT` / `REBEL_ELITE` blueprint IDs when available and enables the existing player-target PDS/ASB combat hazard; alternate datasets still use a deterministic Rebel-ship fallback.
