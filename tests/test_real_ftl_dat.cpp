@@ -47,7 +47,21 @@ int main() {
     sectors.setAdvancedEdition(true);
     assert(sectors.load());
     assert(sectors.select(0, 0) != nullptr);
-    assert(sectors.select(7, 0) != nullptr);
+    const auto* final = sectors.select(7, 0);
+    assert(final != nullptr && final->name == "FINAL");
+    auto finalPool = [&](const char* name, int min, int max) {
+        for (const auto& pool : final->events) {
+            if (pool.name == name) {
+                assert(pool.min == min && pool.max == max);
+                return true;
+            }
+        }
+        return false;
+    };
+    assert(finalPool("STORE", 1, 1));
+    assert(finalPool("BOSS_REPAIR_STATION", 3, 3));
+    assert(finalPool("BOSS_HOSTILE", 6, 6));
+    assert(finalPool("BOSS_NEUTRAL", 7, 10));
 
     wormhole::ShipContent content;
     assert(content.open(env));
