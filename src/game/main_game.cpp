@@ -591,7 +591,7 @@ public:
         std::ofstream out(savePath(), std::ios::trunc);
         if (!out) return false;
 
-        out << "FTL_VITA_SAVE 8\n";
+        out << "FTL_VITA_SAVE 9\n";
         out << "ship " << std::quoted(runtime_.content.blueprint.id) << "\n";
         out << "seed " << seed_ << "\n";
         out << "sector " << sector_ << "\n";
@@ -600,6 +600,7 @@ public:
         out << "fleet " << fleetRow_ << "\n";
         out << "fleet_pursuit_delay " << fleetPursuitDelay_ << "\n";
         out << "fleet_pursuit_progress " << fleetPursuitProgress_ << "\n";
+        out << "fleet_pursuit_position " << fleetPursuitPosition_ << "\n";
         const auto covered = sectorGraph_.fleetCoveredIndices();
         out << "fleet_covered " << covered.size() << "\n";
         for (const int index : covered) out << index << "\n";
@@ -662,7 +663,8 @@ public:
         const bool saveV6 = header == "FTL_VITA_SAVE 6";
         const bool saveV7 = header == "FTL_VITA_SAVE 7";
         const bool saveV8 = header == "FTL_VITA_SAVE 8";
-        const bool currentSave = saveV4 || saveV5 || saveV6 || saveV7 || saveV8;
+        const bool saveV9 = header == "FTL_VITA_SAVE 9";
+        const bool currentSave = saveV4 || saveV5 || saveV6 || saveV7 || saveV8 || saveV9;
         if (!legacySave && !saveV3 && !currentSave) return false;
 
         std::string key, shipId;
@@ -681,10 +683,16 @@ public:
             if (key != "fleet_pursuit_delay") return false;
             fleetPursuitDelay_ = std::clamp(fleetPursuitDelay_, -32, 32);
             fleetPursuitProgress_ = 0.0f;
-            if (saveV8) {
+            if (saveV8 || saveV9) {
                 in >> key >> fleetPursuitProgress_;
                 if (key != "fleet_pursuit_progress") return false;
                 fleetPursuitProgress_ = std::clamp(fleetPursuitProgress_, 0.0f, 0.9999f);
+            }
+            fleetPursuitPosition_ = -959.0f;
+            if (saveV9) {
+                in >> key >> fleetPursuitPosition_;
+                if (key != "fleet_pursuit_position") return false;
+                fleetPursuitPosition_ = std::clamp(fleetPursuitPosition_, -959.0f, 4096.0f);
             }
         }
         currentSectorType_.clear();
@@ -907,6 +915,7 @@ public:
         selectCurrentSectorDefinition();
         fleetPursuitDelay_ = 0;
         fleetPursuitProgress_ = 0.0f;
+        fleetPursuitPosition_ = -959.0f;
         applySectorStartFleetModifiers();
         sectorGraph_.generate(sector_, seed_);
         configureBeaconNebulaState();
@@ -1860,6 +1869,7 @@ public:
                     selectCurrentSectorDefinition();
                     fleetPursuitDelay_ = 0;
                     fleetPursuitProgress_ = 0.0f;
+                    fleetPursuitPosition_ = -959.0f;
                     applySectorStartFleetModifiers();
                     sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
                     configureBeaconNebulaState();
@@ -1976,18 +1986,30 @@ public:
     }
 
     void advanceRebelFleetAfterJump() {
-        const int lastReachableRow = std::max(0, sectorGraph_.exitRow() - 1);
-        const int baseSteps = std::max(0, 1 + fleetPursuitDelay_);
+        // The original game advances a pursuit counter by 0x40 per jump.
+        // Keep the counter in map-space rather than converting it into
+        // discrete beacon rows; this allows the fleet to overtake arbitrary
+        // beacons according to their actual generated positions.
+        if (sector_ >= 7) return;
+
         const auto* destination = sectorGraph_.node(currentBeacon_);
         float multiplier = 1.0f;
         if (destination && destination->nebula)
-            multiplier = (currentSectorType_ == "NEBULA_SECTOR" || currentSectorType_ == "SLUG_SECTOR" || currentSectorType_ == "SLUG_HOME") ? 0.8f : 0.5f;
+            multiplier = (currentSectorType_ == "NEBULA_SECTOR" ||
+                          currentSectorType_ == "SLUG_SECTOR" ||
+                          currentSectorType_ == "SLUG_HOME") ? 0.8f : 0.5f;
+
+        const float jumpAdvance = static_cast<float>(std::max(0, 1 + fleetPursuitDelay_)) * 64.0f * multiplier;
         fleetPursuitDelay_ = 0;
-        fleetPursuitProgress_ += static_cast<float>(baseSteps) * multiplier;
-        const int steps = std::max(0, static_cast<int>(std::floor(fleetPursuitProgress_)));
-        fleetPursuitProgress_ -= static_cast<float>(steps);
-        fleetRow_ = std::clamp(fleetRow_ + steps, -1, lastReachableRow);
-        sectorGraph_.advanceFleetCoverage(steps);
+        fleetPursuitPosition_ += jumpAdvance;
+        sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
+
+        // Keep the legacy row value only for save/UI compatibility.
+        fleetRow_ = -1;
+        for (const auto& beacon : sectorGraph_.nodes()) {
+            if (beacon.fleetCovered)
+                fleetRow_ = std::max(fleetRow_, beacon.row);
+        }
     }
 
     void renderSectorMap() {
@@ -3071,6 +3093,7 @@ private:
     int fleetRow_{-1};
     int fleetPursuitDelay_{0};
     float fleetPursuitProgress_{0.0f};
+    float fleetPursuitPosition_{-959.0f};
     unsigned seed_{0x51f7a21u};
     int visitedBeacons_{0};
     int fuel_{16};
