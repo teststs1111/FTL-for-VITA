@@ -419,6 +419,34 @@ bool EventDatabase::load() {
         if (!bytes || bytes->empty()) continue;
         try { collectEvents(bxml::read(*bytes)); } catch (...) {}
     }
+    // The vanilla sector_data.xml refers to the special NEBULA pool, but
+    // the pool itself is not serialized as an <eventList name="NEBULA"> in
+    // the supplied archive. It is an engine-level 15-entry pool in vanilla.
+    // Keep that behavior data-driven at the resolver boundary rather than
+    // letting a generated nebula beacon fail to resolve at visit time.
+    const char* vanillaNebula[] = {
+        "NEBULA_EMPTY",
+        "NEBULA_REBEL",
+        "NEBULA_AUTO",
+        "NEBULA_AUTO_WARNING",
+        "NEBULA_PIRATE_SMUGGLE",
+        "NEBULA_AUTO_DEFENSE_ITEM",
+        "NEBULA_TRADER",
+        "STORM_REBEL",
+        "STORM_AUTO",
+        "STORM_ITEMS",
+        "NEBULA_LOST_SHIP",
+        "NEBULA_BOARDING",
+        "STORM_BOARDING",
+        "NEBULA_MANTIS_FIGHT",
+        "NEBULA_WEAPONS_TRADER"
+    };
+    EventPool nebulaPool;
+    for (const char* id : vanillaNebula) {
+        if (find(id)) nebulaPool.entries.push_back({id, 1});
+    }
+    if (!nebulaPool.entries.empty()) eventPools_["NEBULA"] = std::move(nebulaPool);
+
     if (advancedEdition_) {
         const char* extra[] = {"data/dlcEvents.xml"};
         for (const char* name : extra) {
