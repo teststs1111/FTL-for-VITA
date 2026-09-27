@@ -698,3 +698,15 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 - Save format is now v7 and persists the pending pursuit modifier. v2-v6 loading remains supported.
 - Source commit: `1845d088`.
 - External mechanics references support the next-jump interpretation and also identify additional fidelity work: nebula destinations reduce that jump's advance, Rebel-controlled sector entry adds an advance, and Distraction Buoys/out-of-fuel/other events can defer pursuit. citeturn0search0turn0search6
+
+
+## 2026-09-27 continuation — nebula pursuit and save-state fidelity
+- Added explicit `BeaconNode::nebula` state and a sector-level nebula marker in the compatibility graph.
+- Nebula sectors (`NEBULA_SECTOR`, `SLUG_SECTOR`, `SLUG_HOME`) now mark their generated beacons as nebula destinations. This is an incremental fidelity layer; non-nebula sectors still need the original per-beacon NEBULA_* event assignment instead of the current generic graph flag.
+- Rebel Fleet pursuit now accumulates fractional progress. A normal jump advances by 1.0, a nebula destination in a normal sector uses 0.5, and a nebula destination in a nebula/Slug sector uses 0.8. Pending `modifyPursuit` modifiers are applied before that multiplier and the fractional remainder carries into later jumps.
+- Fleet pursuit state is reset at sector boundaries, matching the fact that each new sector starts with its own fleet position rather than carrying the previous sector's row boundary.
+- Save format is now v8 and persists the fractional pursuit remainder. v2-v7 compatibility remains supported.
+- Also fixed an existing save/load mismatch: saved augments are now restored before system state parsing, and v7/v8 saves correctly read current-sector, unique-sector, map, and fleet-covered state blocks.
+- Source commits: `0d292d9`, `eb84d20`, `5bd27f7`, `0e277c7`, `afaaa92`, `1231008`.
+- Current Host/Vita Actions for `1231008` are still in progress at the time of this update; do not mark this change green until both complete successfully.
+- External FTL mechanics references confirm that normal-sector nebula jumps reduce Rebel pursuit to about 50%, nebula-sector jumps to about 80%, and Distraction Buoys delay the fleet by one jump at sector start. citeturn0search0turn1search5
