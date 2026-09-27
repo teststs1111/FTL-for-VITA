@@ -850,7 +850,7 @@ public:
         sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
         configureBeaconNebulaState();
         if (!saveV6)
-            sectorGraph_.setFleetCoverageFromRow(fleetRow_);
+            sectorGraph_.advanceFleetCoverage(steps);
         combat_.player = runtime_;
         currentBeacon_ = std::clamp(currentBeacon_, -1, static_cast<int>(sectorGraph_.nodes().size()) - 1);
         selectedBeacon_ = std::clamp(selectedBeacon_, 0, static_cast<int>(sectorGraph_.nodes().size()) - 1);
