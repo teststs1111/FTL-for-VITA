@@ -1,7 +1,8 @@
 #include "data/sector_graph.hpp"
 #include <algorithm>
 #include <cassert>
-#include <cstdint>\n#include <cmath>
+#include <cstdint>
+#include <cmath>
 #include <queue>
 #include <vector>
 
@@ -170,6 +171,7 @@ int main() {
     testVanillaGridBounds();
     testDeterminism();
     testFleetCoverage();
-    testNebulaSector();\n    testLastStandNavigation();
+    testNebulaSector();
+    testLastStandNavigation();
     return 0;
 }
