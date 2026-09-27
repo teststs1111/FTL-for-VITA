@@ -2120,6 +2120,7 @@ public:
                 const auto& beacon = sectorGraph_.nodes()[i];
                 if (static_cast<int>(i) == currentBeacon_ ||
                     static_cast<int>(i) == sectorGraph_.exitNode() ||
+                    static_cast<int>(i) == flagshipBaseNode_ ||
                     beacon.fleetCovered)
                     continue;
                 candidates.push_back(static_cast<int>(i));
@@ -2224,12 +2225,30 @@ public:
                 text_.draw(graphics_, "!!", x - 10.f, y + 10.f, 11.f,
                     {1.f, 0.72f, 0.72f, 1.f});
             }
+            if (sector_ >= 7 && static_cast<int>(index) == flagshipBaseNode_) {
+                graphics_.fillRect(x - 10.f, y - 10.f, 20.f, 20.f,
+                    {0.20f, 0.72f, 0.92f, 1.f});
+                text_.draw(graphics_, "基地", x - 16.f, y - 22.f, 10.f,
+                    {0.55f, 0.88f, 1.f, 1.f});
+            }
+            if (sector_ >= 7 && static_cast<int>(index) == flagshipNode_) {
+                graphics_.fillRect(x - 8.f, y - 8.f, 16.f, 16.f,
+                    {0.92f, 0.20f, 0.20f, 1.f});
+                text_.draw(graphics_, "旗艦", x - 16.f, y + 12.f, 10.f,
+                    {1.f, 0.72f, 0.72f, 1.f});
+            }
             if ((scanners || mapRevealed_) && (mapRevealed_ || reachable || current)) {
                 const auto label = scannerLabel(static_cast<int>(index));
                 if (!label.empty())
                     text_.draw(graphics_, label, x - 18.f, y - 18.f, 9.f,
                         {0.65f, 0.88f, 0.98f, 1.f});
             }
+        }
+        if (sector_ >= 7 && flagshipBaseNode_ >= 0) {
+            const int remaining = std::max(0, 3 - flagshipBaseTurns_);
+            text_.draw(graphics_,
+                "旗艦: 2ジャンプごとに移動   連邦基地: " + std::to_string(remaining) + "ターン",
+                48.f, 478.f, 12.f, {0.92f, 0.72f, 0.72f, 1.f});
         }
         text_.draw(graphics_,"十字キー: 接続ビーコン選択   ×: ジャンプ   ○: 戻る",48.f,500.f,14.f,{0.68f,0.76f,0.86f,1.f});
     }
