@@ -65,7 +65,9 @@ public:
             applySectorStartFleetModifiers();
             sectorGraph_.generate(sector_, seed_);
             configureBeaconNebulaState();
-            sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
+            assignSectorBeaconEvents();
+            assignSectorBeaconEvents();
+        sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
             if (sector_ >= 7)
                 initializeLastStandState();
             selectedBeacon_ = sectorGraph_.startNode();
@@ -120,6 +122,7 @@ public:
         sectorDatabase_.load();
         sectorGraph_.generate(sector_, seed_);
         configureBeaconNebulaState();
+        assignSectorBeaconEvents();
         sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
         selectedBeacon_ = sectorGraph_.startNode();
         if (!content_.loadPlayerShip()) return false;
@@ -1252,6 +1255,98 @@ public:
             usedUniqueSectorTypes_.push_back(selected->name);
     }
 
+    void assignSectorBeaconEvents() {
+        beaconEventAssignments_.clear();
+        sectorEventUsage_.clear();
+
+        const auto* sector = sectorDatabase_.find(currentSectorType_);
+        if (!sector) return;
+
+        const auto& nodes = sectorGraph_.nodes();
+        if (nodes.empty()) return;
+
+        // The start and exit beacons are map-level gates, not entries consumed
+        // from the sector's normal event pools.
+        if (sectorGraph_.startNode() >= 0 && !sector->startEvent.empty())
+            beaconEventAssignments_[sectorGraph_.startNode()] = sector->startEvent;
+
+        std::vector<int> available;
+        available.reserve(nodes.size());
+        for (std::size_t i = 0; i < nodes.size(); ++i) {
+            const int index = static_cast<int>(i);
+            if (index == sectorGraph_.startNode() || index == sectorGraph_.exitNode())
+                continue;
+            available.push_back(index);
+        }
+
+        std::uint32_t baseSeed = seed_ ^
+            (static_cast<std::uint32_t>(sector_) * 0x9e3779b9u) ^
+            (static_cast<std::uint32_t>(nodes.size()) * 0x85ebca6bu);
+        std::mt19937 rng(baseSeed);
+
+        auto assignPool = [&](const SectorEventPool& pool, bool nebulaOnly) {
+            if (available.empty()) return;
+            int minimum = std::max(0, pool.min);
+            int maximum = std::max(minimum, pool.max);
+            if (maximum == 0) return;
+
+            int count = minimum;
+            if (maximum > minimum)
+                count += static_cast<int>(rng() % static_cast<std::uint32_t>(maximum - minimum + 1));
+
+            std::vector<int> candidates;
+            candidates.reserve(available.size());
+            for (const int index : available) {
+                const auto* node = sectorGraph_.node(index);
+                if (!node) continue;
+                if (nebulaOnly && !node->nebula) continue;
+                candidates.push_back(index);
+            }
+            if (candidates.empty()) return;
+
+            std::shuffle(candidates.begin(), candidates.end(), rng);
+            const int take = std::min(count, static_cast<int>(candidates.size()));
+            for (int i = 0; i < take; ++i) {
+                const int beacon = candidates[static_cast<std::size_t>(i)];
+                beaconEventAssignments_[beacon] = pool.name;
+                ++sectorEventUsage_[pool.name];
+                available.erase(std::remove(available.begin(), available.end(), beacon), available.end());
+            }
+        };
+
+        // Vanilla processes all NEBULA_* pools first so the cloud layout is
+        // established before ordinary event lines consume the remaining
+        // beacons. This is separate from the textual order in sector_data.xml.
+        for (const auto& pool : sector->events)
+            if (pool.name.rfind("NEBULA_", 0) == 0)
+                assignPool(pool, true);
+
+        // Ordinary pools are then consumed strictly in sector-definition order.
+        for (const auto& pool : sector->events) {
+            if (pool.name.rfind("NEBULA_", 0) == 0) continue;
+            if (available.empty()) break;
+            assignPool(pool, false);
+        }
+
+        // A sparse/approximate compatibility map can leave a beacon without a
+        // pool when the source min/max ranges do not cover the generated map.
+        // Use the game's ordinary empty-beacon pool as a deterministic fallback
+        // rather than reverting to visit-time random event selection.
+        if (!available.empty()) {
+            const auto empty = std::find_if(
+                sector->events.begin(), sector->events.end(),
+                [](const SectorEventPool& pool) {
+                    return pool.name == "NOTHING" || pool.name.rfind("NOTHING_", 0) == 0;
+                });
+            if (empty != sector->events.end()) {
+                for (const int beacon : available) {
+                    beaconEventAssignments_[beacon] = empty->name;
+                    ++sectorEventUsage_[empty->name];
+                }
+            }
+        }
+    }
+
     std::string selectSectorEvent(const SectorDefinition& sector, int beacon) {
         if (sector.events.empty()) return sector.startEvent;
 
@@ -2097,7 +2192,9 @@ public:
                     applySectorStartFleetModifiers();
                     sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
                     configureBeaconNebulaState();
-                    sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
+                    assignSectorBeaconEvents();
+            assignSectorBeaconEvents();
+        sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
                     if (enteringLastStand) {
                         // Vanilla FTL grants a small resource/hull buffer on entry
                         // to The Last Stand: +10 fuel and +10 hull, capped at max.
