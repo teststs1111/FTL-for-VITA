@@ -7,6 +7,8 @@ namespace wormhole {
 struct BeaconNode {
     int row{0};
     int column{0};
+    float x{0.0f};
+    float y{0.0f};
     std::vector<int> links;
     bool visited{false};
     bool fleetCovered{false};
