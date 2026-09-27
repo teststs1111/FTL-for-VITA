@@ -231,6 +231,19 @@ void SectorGraph::advanceFleetCoverage(int steps) {
     }
 }
 
+void SectorGraph::setFleetCoverageFromPosition(float x) {
+    // Vanilla FTL advances the Rebel pursuit counter continuously from the
+    // left edge. A beacon is under fleet control once its map position lies
+    // behind the current frontier. Keep the exit beacon outside this normal
+    // frontier so the player can still transition through it.
+    for (std::size_t i = 0; i < nodes_.size(); ++i) {
+        auto& beacon = nodes_[i];
+        beacon.fleetCovered =
+            static_cast<int>(i) != exitNode_ &&
+            beacon.x <= x;
+    }
+}
+
 void SectorGraph::setFleetCoveredIndices(const std::vector<int>& indices) {
     for (auto& beacon : nodes_) beacon.fleetCovered = false;
     for (const int index : indices) {
