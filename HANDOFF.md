@@ -753,3 +753,13 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 1. Replace lowest-index fleet frontier selection with a map-aware deterministic rule closer to FTL's actual pursuit behavior.
 2. Continue tightening the 6×4 / 19–24 beacon generation and adjacency constraints against the real FTL map model.
 3. Keep per-beacon nebula and fleet state consistent through navigation, sector transitions, and save/load.
+
+
+## 2026-09-27 continuation — vanilla 6x4 sector graph and Fleet state cleanup
+- SectorGraph now uses 6 logical rows x 4 logical columns, about 80% beacon occupancy, 19-24 beacons, randomized beacon coordinates, adjacent-row links with a distance limit, and retry-based start-to-exit reachability.
+- The exit is one explicit beacon in the final row rather than an entire final-column exit zone.
+- Normal Rebel Fleet coverage uses continuous x-position pursuit; Sector 8 uses individual beacon takeover instead of the normal frontier model.
+- Commit 84382a2 fixed a regression-test assumption that positional coverage would always expand to exactly two nodes.
+- Commit c70e372 fixed new-game initialization so initial Fleet position is applied after map generation and the Distraction Buoys one-jump delay is not accidentally cleared.
+- CI for c70e372 was still queued/running when this entry was prepared; verify Host and Vita directly before marking it green.
+- Remaining Last Stand fidelity work: model the Flagship movement cadence/location more faithfully while preserving the three-phase flagship combat sequence and individual beacon takeover behavior.
