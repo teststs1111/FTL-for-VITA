@@ -37,6 +37,7 @@ add_library(wormhole_core
     src/data/event_database.cpp
     src/data/sector_database.cpp
     src/data/sector_graph.cpp
+    src/data/last_stand_state.cpp
     src/render/png_loader.cpp
     src/render/texture_cache.cpp
     src/render/text_renderer.cpp
