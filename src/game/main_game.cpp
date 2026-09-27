@@ -1890,11 +1890,6 @@ public:
         const auto* sector = sectorDatabase_.find(currentSectorType_);
         if (!sector) return;
 
-        // Normal sectors create nebula graphics from every event list whose
-        // name begins with NEBULA_. The real generator may expand this set
-        // when nebula graphics overlap neighboring beacons; this pass keeps
-        // the data-driven minimum/maximum counts while retaining deterministic
-        // host/Vita behavior.
         int minNebula = 0;
         int maxNebula = 0;
         for (const auto& pool : sector->events) {
@@ -1917,26 +1912,57 @@ public:
         hash ^= hash >> 15;
         const int targetCount = minNebula >= maxNebula
             ? minNebula
-            : minNebula + static_cast<int>(hash % static_cast<std::uint32_t>(maxNebula - minNebula + 1));
+            : minNebula + static_cast<int>(
+                hash % static_cast<std::uint32_t>(maxNebula - minNebula + 1));
 
+        // Prefer connected nebula groups, matching the way FTL's map can
+        // visually form nebula chains instead of scattering isolated nodes.
         std::vector<int> candidates;
-        candidates.reserve(static_cast<std::size_t>(nodeCount - 1));
-        const int start = sectorGraph_.startNode();
-        for (int i = 0; i < nodeCount; ++i)
-            if (i != start) candidates.push_back(i);
-
-        // Fisher-Yates with a deterministic local state. Keep the starting
-        // beacon clear, matching the normal sector's initial beacon behavior.
-        std::uint32_t state = hash ^ 0xA5A5A5A5u;
-        for (int i = static_cast<int>(candidates.size()) - 1; i > 0; --i) {
-            state ^= state << 13;
-            state ^= state >> 17;
-            state ^= state << 5;
-            const int j = static_cast<int>(state % static_cast<std::uint32_t>(i + 1));
-            std::swap(candidates[static_cast<std::size_t>(i)], candidates[static_cast<std::size_t>(j)]);
+        candidates.reserve(static_cast<std::size_t>(nodeCount));
+        for (int i = 0; i < nodeCount; ++i) {
+            const auto* node = sectorGraph_.node(i);
+            if (!node || node->row == sectorGraph_.exitRow()) continue;
+            candidates.push_back(i);
         }
-        candidates.resize(static_cast<std::size_t>(targetCount));
-        sectorGraph_.setNebulaIndices(candidates);
+        if (candidates.empty()) return;
+
+        std::mt19937 rng(hash ^ 0xa511e9b3u);
+        std::shuffle(candidates.begin(), candidates.end(), rng);
+
+        std::vector<int> selected;
+        selected.reserve(static_cast<std::size_t>(targetCount));
+        selected.push_back(candidates.front());
+
+        while (static_cast<int>(selected.size()) < targetCount) {
+            std::vector<int> frontier;
+            for (const int selectedIndex : selected) {
+                const auto* source = sectorGraph_.node(selectedIndex);
+                if (!source) continue;
+                for (const int linked : source->links) {
+                    const auto* target = sectorGraph_.node(linked);
+                    if (!target || target->row == sectorGraph_.exitRow()) continue;
+                    if (std::find(selected.begin(), selected.end(), linked) != selected.end()) continue;
+                    if (std::find(frontier.begin(), frontier.end(), linked) == frontier.end())
+                        frontier.push_back(linked);
+                }
+            }
+
+            if (frontier.empty()) break;
+            std::shuffle(frontier.begin(), frontier.end(), rng);
+            selected.push_back(frontier.front());
+        }
+
+        // If the map topology cannot supply enough connected candidates,
+        // fill the remainder deterministically from the unused pool.
+        if (static_cast<int>(selected.size()) < targetCount) {
+            for (const int index : candidates) {
+                if (static_cast<int>(selected.size()) >= targetCount) break;
+                if (std::find(selected.begin(), selected.end(), index) == selected.end())
+                    selected.push_back(index);
+            }
+        }
+
+        sectorGraph_.setNebulaIndices(selected);
     }
 
     void applySectorStartFleetModifiers() {
