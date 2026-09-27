@@ -44,7 +44,7 @@ static void testVanillaGridBounds() {
 
     bool exitReachable = false;
     for (std::size_t i = 0; i < graph.nodes().size(); ++i) {
-        if (graph.nodes()[i].row == graph.exitRow() && reachable[i]) {
+        if (static_cast<int>(i) == graph.exitNode() && reachable[i]) {
             exitReachable = true;
             break;
         }
@@ -52,8 +52,9 @@ static void testVanillaGridBounds() {
     assert(exitReachable);
 
     const auto first = graph.selectable(-1, -1);
-    assert(!first.empty());
-    for (const int index : first) assert(graph.node(index)->row == 0);
+    assert(first.size() == 1);
+    assert(first.front() == graph.startNode());
+    assert(graph.node(first.front())->row == 0);
 
     const auto blocked = graph.selectable(graph.startNode(), 0);
     for (const int index : blocked)
@@ -70,6 +71,8 @@ static void testDeterminism() {
     for (std::size_t i = 0; i < a.nodes().size(); ++i) {
         assert(a.nodes()[i].row == b.nodes()[i].row);
         assert(a.nodes()[i].column == b.nodes()[i].column);
+        assert(a.nodes()[i].x == b.nodes()[i].x);
+        assert(a.nodes()[i].y == b.nodes()[i].y);
         assert(a.nodes()[i].links == b.nodes()[i].links);
     }
 }
