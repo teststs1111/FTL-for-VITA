@@ -909,11 +909,11 @@ public:
         sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
         configureBeaconNebulaState();
 
-        // v10 stores the Last Stand route because it is generated once per
+        // v10/v11 stores the Last Stand route because it is generated once per
         // sector. Validate it against the regenerated deterministic graph
         // before trusting the saved indices. A malformed/obsolete route must
         // never leave the Flagship pointing at an invalid beacon.
-        bool validSavedFlagshipState = saveV10 && sector_ >= 7 &&
+        bool validSavedFlagshipState = (saveV10 || saveV11) && sector_ >= 7 &&
             !flagshipRoute_.empty() &&
             flagshipRouteIndex_ >= 0 &&
             flagshipRouteIndex_ < static_cast<int>(flagshipRoute_.size());
@@ -938,7 +938,7 @@ public:
         } else if (!saveV6) {
             sectorGraph_.setFleetCoverageFromRow(fleetRow_);
         }
-        if (sector_ >= 7 && !saveV10)
+        if (sector_ >= 7 && !saveV10 && !saveV11)
             initializeLastStandState();
         combat_.player = runtime_;
         currentBeacon_ = std::clamp(currentBeacon_, -1, static_cast<int>(sectorGraph_.nodes().size()) - 1);
