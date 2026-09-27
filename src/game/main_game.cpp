@@ -1877,6 +1877,16 @@ public:
             return;
         }
 
+        // Once the Flagship reaches the Federation Base, its three-turn
+        // destruction countdown advances on every player jump, not every
+        // Flagship jump.
+        if (flagshipNode_ == flagshipBaseNode_) {
+            ++flagshipBaseTurns_;
+            if (flagshipBaseTurns_ >= 3)
+                sceneMode_ = SceneMode::GameOver;
+            return;
+        }
+
         ++flagshipJumpCounter_;
         if (flagshipJumpCounter_ < 2) return;
         flagshipJumpCounter_ = 0;
@@ -2098,6 +2108,7 @@ public:
             fleetPursuitDelay_ = 0;
             fleetPursuitProgress_ = 0.0f;
             fleetRow_ = -1;
+            advanceLastStandFlagshipAfterJump();
             return;
         }
 
