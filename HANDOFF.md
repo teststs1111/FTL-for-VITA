@@ -902,3 +902,19 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 2. Replace the current whole-nebula-sector flag with actual per-beacon `NEBULA_*` assignment from the supplied `ftl.dat`.
 3. Continue exact Rebel Fleet frontier behavior and Sector 8 individual-beacon takeover.
 4. Continue save/load and real-data regression coverage.
+
+
+## 2026-09-28 continuation — vanilla event-pool assignment
+
+- Commit `cd52f59` replaced visit-time sector event selection with map-generation-time beacon assignment using the sector definition's event order and min/max ranges.
+- Commit `3fe368d` also rebuilds those assignments when starting a new run/ship selection.
+- `NEBULA_*` pools are processed first, then ordinary pools in source order; start/exit beacons are excluded from normal pool consumption.
+- Assignments are stored per beacon, so revisiting a beacon no longer rerolls its sector pool entry.
+- Empty-beacon fallback uses the sector's `NOTHING*` pool when the compatibility map has more unassigned nodes than the source ranges cover.
+- This is closer to vanilla generation: source references confirm beacon events are assigned in sector-definition order with random min/max counts, while `NEBULA_*` lists are processed first. citeturn2search0
+- Host #810 and Vita #502 are currently running for `3fe368d`; not green yet.
+
+### Next target
+1. Tighten the nebula assignment step so overlap-generated nebula beacons use the default `NEBULA` pool semantics exactly.
+2. Validate normal-sector event counts against the supplied real `ftl.dat` sector definitions.
+3. Continue Rebel Fleet pursuit and Sector 8 fidelity.
