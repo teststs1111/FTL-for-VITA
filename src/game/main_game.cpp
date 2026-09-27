@@ -699,7 +699,7 @@ public:
         usedUniqueSectorTypes_.clear();
         mapRevealed_ = false;
         secretSectorPending_ = false;
-        if (saveV5 || saveV6 || saveV7 || saveV8) {
+        if (saveV5 || saveV6 || saveV7 || saveV8 || saveV9) {
             in >> key >> std::quoted(currentSectorType_);
             if (key != "current_sector") return false;
             in >> key >> count;
