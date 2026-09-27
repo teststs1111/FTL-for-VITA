@@ -584,13 +584,14 @@ public:
         std::ofstream out(savePath(), std::ios::trunc);
         if (!out) return false;
 
-        out << "FTL_VITA_SAVE 6\n";
+        out << "FTL_VITA_SAVE 7\n";
         out << "ship " << std::quoted(runtime_.content.blueprint.id) << "\n";
         out << "seed " << seed_ << "\n";
         out << "sector " << sector_ << "\n";
         out << "flagship " << flagshipPhase_ << "\n";
         out << "beacon " << currentBeacon_ << ' ' << selectedBeacon_ << "\n";
         out << "fleet " << fleetRow_ << "\n";
+        out << "fleet_pursuit_delay " << fleetPursuitDelay_ << "\n";
         const auto covered = sectorGraph_.fleetCoveredIndices();
         out << "fleet_covered " << covered.size() << "\n";
         for (const int index : covered) out << index << "\n";
@@ -651,7 +652,8 @@ public:
         const bool saveV4 = header == "FTL_VITA_SAVE 4";
         const bool saveV5 = header == "FTL_VITA_SAVE 5";
         const bool saveV6 = header == "FTL_VITA_SAVE 6";
-        const bool currentSave = saveV4 || saveV5 || saveV6;
+        const bool saveV7 = header == "FTL_VITA_SAVE 7";
+        const bool currentSave = saveV4 || saveV5 || saveV6 || saveV7;
         if (!legacySave && !saveV3 && !currentSave) return false;
 
         std::string key, shipId;
@@ -664,6 +666,12 @@ public:
         std::size_t count = 0;
         in >> key >> currentBeacon_ >> selectedBeacon_;
         in >> key >> fleetRow_;
+        fleetPursuitDelay_ = 0;
+        if (saveV7) {
+            in >> key >> fleetPursuitDelay_;
+            if (key != "fleet_pursuit_delay") return false;
+            fleetPursuitDelay_ = std::clamp(fleetPursuitDelay_, -32, 32);
+        }
         currentSectorType_.clear();
         usedUniqueSectorTypes_.clear();
         mapRevealed_ = false;
@@ -685,7 +693,7 @@ public:
             in >> key >> flag;
             if (key != "secret_pending") return false;
             secretSectorPending_ = flag != 0;
-            if (saveV6) {
+            if (saveV6 || saveV7) {
                 in >> key >> count;
                 if (key != "fleet_covered") return false;
                 std::vector<int> covered;
@@ -1474,9 +1482,8 @@ public:
 
     void applyEventSpecialEffects(const EventSpecialEffects& special) {
         if (special.modifyPursuit != 0) {
-            const int maxRow = std::max(0, sectorGraph_.exitRow() - 1);
-            fleetRow_ = std::clamp(fleetRow_ + special.modifyPursuit, -1, maxRow);
-            sectorGraph_.setFleetCoverageFromRow(fleetRow_);
+            fleetPursuitDelay_ = std::clamp(
+                fleetPursuitDelay_ + special.modifyPursuit, -32, 32);
         }
         if (special.revealMap) mapRevealed_ = true;
         if (special.secretSector) secretSectorPending_ = true;
@@ -1835,10 +1842,9 @@ public:
 
     void advanceRebelFleetAfterJump() {
         const int lastReachableRow = std::max(0, sectorGraph_.exitRow() - 1);
-        // The compatibility graph models the Rebel fleet as a row boundary.
-        // Vanilla FTL advances the fleet after each player jump; event
-        // modifyPursuit effects can then move that boundary backward/forward.
-        fleetRow_ = std::clamp(fleetRow_ + 1, -1, lastReachableRow);
+        const int steps = std::max(0, 1 + fleetPursuitDelay_);
+        fleetPursuitDelay_ = 0;
+        fleetRow_ = std::clamp(fleetRow_ + steps, -1, lastReachableRow);
         sectorGraph_.setFleetCoverageFromRow(fleetRow_);
     }
 
@@ -2922,6 +2928,7 @@ private:
     int selectedBeacon_{0};
     int currentBeacon_{-1};
     int fleetRow_{-1};
+    int fleetPursuitDelay_{0};
     unsigned seed_{0x51f7a21u};
     int visitedBeacons_{0};
     int fuel_{16};
