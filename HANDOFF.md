@@ -679,3 +679,13 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 - This keeps fleet movement consistent across normal navigation, post-combat navigation, and combat escape; aborted FTL charging still does not move the fleet.
 - Source commit: `4eeebc75` (behavior change), followed by `d040a421` to restore the file's original formatting/newline state.
 - Host CI run: `36283829547`; Vita CI run: `36283829552`. Both were running when this handoff entry was written.
+
+
+## 2026-09-27 continuation — match real Rebel Fleet Elite encounter/reward
+- Re-inspected the legitimate user-supplied `ftl.dat` directly. The archive's real Rebel ship blueprints use `REBEL_SKINNY_ELITE` (with `REBEL_SKINNY_ELITE_DLC` in the AE override layer); the previously used compatibility IDs `REBEL_FIGHTER` / `REBEL_SCOUT` / `REBEL_ELITE` are not the real blueprint names in this archive.
+- Updated the Rebel Fleet encounter selection to prefer `REBEL_SKINNY_ELITE`, then the archive's DLC elite variant, with the old generic IDs retained only as alternate-dataset fallbacks.
+- Rebel-controlled beacons now use the vanilla-style fixed reward path: defeating the fleet Elite Fighter grants **1 fuel** and does not grant the normal scrap/event reward.
+- Successful FTL retreat clears the fleet-encounter reward marker so a later unrelated combat cannot inherit the special reward.
+- The existing player-target PDS/ASB environment remains enabled for the fleet encounter.
+- Source commit: `7b0b50c8`.
+- The archive was inspected locally from the user's Library copy; no proprietary data was added to the repository.
