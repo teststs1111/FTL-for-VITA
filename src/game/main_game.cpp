@@ -1986,12 +1986,43 @@ public:
     }
 
     void advanceRebelFleetAfterJump() {
-        // The original game advances a pursuit counter by 0x40 per jump.
-        // Keep the counter in map-space rather than converting it into
-        // discrete beacon rows; this allows the fleet to overtake arbitrary
-        // beacons according to their actual generated positions.
-        if (sector_ >= 7) return;
+        if (sector_ >= 7) {
+            // The Last Stand does not use the normal left-to-right pursuit
+            // frontier. Instead the Rebel fleet overtakes individual beacons
+            // while the player advances toward the Flagship.
+            std::vector<int> candidates;
+            for (std::size_t i = 0; i < sectorGraph_.nodes().size(); ++i) {
+                const auto& beacon = sectorGraph_.nodes()[i];
+                if (static_cast<int>(i) == currentBeacon_ ||
+                    static_cast<int>(i) == sectorGraph_.exitNode() ||
+                    beacon.fleetCovered)
+                    continue;
+                candidates.push_back(static_cast<int>(i));
+            }
 
+            if (!candidates.empty()) {
+                const std::uint32_t salt =
+                    static_cast<std::uint32_t>(visitedBeacons_ * 0x9e3779b9u) ^
+                    static_cast<std::uint32_t>(currentBeacon_ + 1) ^
+                    static_cast<std::uint32_t>(flagshipPhase_ * 0x45d9f3bu);
+                std::mt19937 rng(seed_ ^ salt);
+                const int picked = candidates[
+                    static_cast<std::size_t>(rng() % candidates.size())];
+                sectorGraph_.setFleetCoveredIndices(
+                    [&]() {
+                        auto covered = sectorGraph_.fleetCoveredIndices();
+                        covered.push_back(picked);
+                        return covered;
+                    }());
+            }
+            fleetPursuitDelay_ = 0;
+            fleetPursuitProgress_ = 0.0f;
+            fleetRow_ = -1;
+            return;
+        }
+
+        // Normal sectors use the original pursuit counter: +0x40 per jump.
+        // Keep it in map-space so arbitrary beacon positions can be overtaken.
         const auto* destination = sectorGraph_.node(currentBeacon_);
         float multiplier = 1.0f;
         if (destination && destination->nebula)
@@ -1999,17 +2030,16 @@ public:
                           currentSectorType_ == "SLUG_SECTOR" ||
                           currentSectorType_ == "SLUG_HOME") ? 0.8f : 0.5f;
 
-        const float jumpAdvance = static_cast<float>(std::max(0, 1 + fleetPursuitDelay_)) * 64.0f * multiplier;
+        const float jumpAdvance = static_cast<float>(std::max(0, 1 + fleetPursuitDelay_)) *
+            64.0f * multiplier;
         fleetPursuitDelay_ = 0;
         fleetPursuitPosition_ += jumpAdvance;
         sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
 
-        // Keep the legacy row value only for save/UI compatibility.
         fleetRow_ = -1;
-        for (const auto& beacon : sectorGraph_.nodes()) {
+        for (const auto& beacon : sectorGraph_.nodes())
             if (beacon.fleetCovered)
                 fleetRow_ = std::max(fleetRow_, beacon.row);
-        }
     }
 
     void renderSectorMap() {
