@@ -66,7 +66,6 @@ public:
             sectorGraph_.generate(sector_, seed_);
             configureBeaconNebulaState();
             assignSectorBeaconEvents();
-            assignSectorBeaconEvents();
         sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
             if (sector_ >= 7)
                 initializeLastStandState();
@@ -2194,7 +2193,6 @@ public:
                     sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
                     configureBeaconNebulaState();
                     assignSectorBeaconEvents();
-            assignSectorBeaconEvents();
         sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
                     if (enteringLastStand) {
                         // Vanilla FTL grants a small resource/hull buffer on entry
