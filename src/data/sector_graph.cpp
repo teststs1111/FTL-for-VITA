@@ -9,21 +9,39 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
     rowStarts_.clear();
     rowCounts_.clear();
 
-    std::mt19937 rng(seed ^ (static_cast<std::uint32_t>(sector) * 0x9e3779b9u));
-    rowStarts_.resize(static_cast<std::size_t>(rows_), 0);
-    rowCounts_.resize(static_cast<std::size_t>(rows_), 0);
+    // Vanilla FTL builds the map before applying sector event data.
+    // The map uses a 6x4 logical grid and normally contains 19-24 beacons.
+    constexpr int kRows = 6;
+    constexpr int kColumns = 4;
+    rows_ = kRows;
+    columns_ = kColumns;
 
-    // Real FTL sectors are not a rigid 8x3 grid. Keep the familiar eight
-    // progression rows, but vary the number of beacons in each row and place
-    // them on a wider logical map. This gives the renderer sparse branches
-    // while keeping the graph deterministic and compact for Vita.
-    for (int r = 0; r < rows_; ++r) {
-        const int count = 3 + static_cast<int>(rng() % 3); // 3..5 beacons
-        rowStarts_[static_cast<std::size_t>(r)] = static_cast<int>(nodes_.size());
-        rowCounts_[static_cast<std::size_t>(r)] = count;
-        for (int i = 0; i < count; ++i) {
-            const int column = (i * (columns_ - 1)) / std::max(1, count - 1);
-            nodes_.push_back({r, column, {}, false, false, false});
+    std::mt19937 rng(seed ^ (static_cast<std::uint32_t>(sector) * 0x9e3779b9u));
+
+    std::vector<int> counts(static_cast<std::size_t>(rows_), 3);
+    const int targetTotal = 19 + static_cast<int>(rng() % 6u);
+    int remaining = targetTotal - rows_ * 3;
+    while (remaining > 0) {
+        const int row = static_cast<int>(rng() % static_cast<std::uint32_t>(rows_));
+        if (counts[static_cast<std::size_t>(row)] < columns) {
+            ++counts[static_cast<std::size_t>(row)];
+            --remaining;
+        }
+    }
+
+    rowStarts_.resize(static_cast<std::size_t>(rows_), 0);
+    rowCounts_ = counts;
+
+    for (int row = 0; row < rows_; ++row) {
+        std::vector<int> available{0, 1, 2, 3};
+        std::shuffle(available.begin(), available.end(), rng);
+        std::sort(available.begin(), available.begin() +
+            counts[static_cast<std::size_t>(row)]);
+        rowStarts_[static_cast<std::size_t>(row)] =
+            static_cast<int>(nodes_.size());
+        for (int i = 0; i < counts[static_cast<std::size_t>(row)]; ++i) {
+            nodes_.push_back({row, available[static_cast<std::size_t>(i)],
+                              {}, false, false, false});
         }
     }
 
@@ -31,48 +49,77 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
         return rowStarts_[static_cast<std::size_t>(row)] + index;
     };
 
-    // Build a connected forward graph. First establish one guaranteed spine
-    // from the random starting beacon to the exit, then give every node in
-    // each later row at least one parent and add deterministic nearby branches.
-    startNode_ = rowNode(0, static_cast<int>(rng() % rowCounts_[0]));
-    int spine = startNode_;
-    nodes_[spine].visited = true;
+    startNode_ = rowNode(0, static_cast<int>(
+        rng() % static_cast<std::uint32_t>(rowCounts_[0])));
+    nodes_[static_cast<std::size_t>(startNode_)].visited = true;
 
-    for (int r = 0; r < rows_ - 1; ++r) {
-        const int fromRowCount = rowCounts_[static_cast<std::size_t>(r)];
-        const int toRowCount = rowCounts_[static_cast<std::size_t>(r + 1)];
-        const int fromIndex = spine - rowStarts_[static_cast<std::size_t>(r)];
-        const int spineTarget = std::min(toRowCount - 1,
-            std::max(0, fromIndex + static_cast<int>(rng() % 3) - 1));
-        const int guaranteedTarget = rowNode(r + 1, spineTarget);
-        nodes_[spine].links.push_back(guaranteedTarget);
-        spine = guaranteedTarget;
+    auto nearest = [](const std::vector<int>& columns, int column) {
+        int best = 0;
+        int bestDistance = 1000000;
+        for (int i = 0; i < static_cast<int>(columns.size()); ++i) {
+            const int distance =
+                std::abs(columns[static_cast<std::size_t>(i)] - column);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = i;
+            }
+        }
+        return best;
+    };
 
-        // Every node in the next row gets at least one incoming edge. Prefer
-        // nearby columns to avoid implausible long jumps across the map.
-        for (int targetIndex = 0; targetIndex < toRowCount; ++targetIndex) {
-            const int target = rowNode(r + 1, targetIndex);
-            bool hasParent = false;
-            const int preferred = std::min(fromRowCount - 1,
-                std::max(0, targetIndex + static_cast<int>(rng() % 3) - 1));
-            const int parent = rowNode(r, preferred);
-            for (const int link : nodes_[parent].links)
-                if (link == target) hasParent = true;
-            if (!hasParent) nodes_[parent].links.push_back(target);
+    for (int row = 0; row < rows_ - 1; ++row) {
+        const int fromCount = rowCounts_[static_cast<std::size_t>(row)];
+        const int toCount = rowCounts_[static_cast<std::size_t>(row + 1)];
+
+        std::vector<int> fromColumns;
+        std::vector<int> toColumns;
+        for (int i = 0; i < fromCount; ++i)
+            fromColumns.push_back(
+                nodes_[static_cast<std::size_t>(rowNode(row, i))].column);
+        for (int i = 0; i < toCount; ++i)
+            toColumns.push_back(
+                nodes_[static_cast<std::size_t>(rowNode(row + 1, i))].column);
+
+        // Every destination gets at least one incoming route.
+        for (int targetIndex = 0; targetIndex < toCount; ++targetIndex) {
+            const int parentIndex = nearest(
+                fromColumns, toColumns[static_cast<std::size_t>(targetIndex)]);
+            auto& links =
+                nodes_[static_cast<std::size_t>(rowNode(row, parentIndex))].links;
+            const int target = rowNode(row + 1, targetIndex);
+            if (std::find(links.begin(), links.end(), target) == links.end())
+                links.push_back(target);
         }
 
-        // Add one or two nearby alternatives from each node, with the final
-        // row receiving slightly fewer branches to keep the exit leg readable.
-        for (int sourceIndex = 0; sourceIndex < fromRowCount; ++sourceIndex) {
-            auto& links = nodes_[rowNode(r, sourceIndex)].links;
-            const int extras = (r == rows_ - 2) ? 1 : 1 + static_cast<int>(rng() % 2);
-            for (int extra = 0; extra < extras; ++extra) {
-                const int offset = static_cast<int>(rng() % 3) - 1;
-                const int targetIndex = std::clamp(sourceIndex + offset, 0, toRowCount - 1);
-                const int target = rowNode(r + 1, targetIndex);
-                if (std::find(links.begin(), links.end(), target) == links.end())
-                    links.push_back(target);
+        // Every source gets at least one outgoing route.
+        for (int sourceIndex = 0; sourceIndex < fromCount; ++sourceIndex) {
+            auto& links =
+                nodes_[static_cast<std::size_t>(rowNode(row, sourceIndex))].links;
+            if (!links.empty()) continue;
+            const int targetIndex = nearest(
+                toColumns, fromColumns[static_cast<std::size_t>(sourceIndex)]);
+            links.push_back(rowNode(row + 1, targetIndex));
+        }
+
+        // Add nearby alternatives to produce the branching/converging map
+        // structure without permitting implausibly long row-to-row jumps.
+        for (int sourceIndex = 0; sourceIndex < fromCount; ++sourceIndex) {
+            auto& links =
+                nodes_[static_cast<std::size_t>(rowNode(row, sourceIndex))].links;
+            const int sourceColumn =
+                fromColumns[static_cast<std::size_t>(sourceIndex)];
+            std::vector<int> candidates;
+            for (int targetIndex = 0; targetIndex < toCount; ++targetIndex) {
+                const int target = rowNode(row + 1, targetIndex);
+                if (std::find(links.begin(), links.end(), target) != links.end())
+                    continue;
+                if (std::abs(toColumns[static_cast<std::size_t>(targetIndex)] -
+                             sourceColumn) <= 1)
+                    candidates.push_back(targetIndex);
             }
+            std::shuffle(candidates.begin(), candidates.end(), rng);
+            if (!candidates.empty() && (rng() % 100u) < 55u)
+                links.push_back(rowNode(row + 1, candidates.front()));
         }
     }
 }
