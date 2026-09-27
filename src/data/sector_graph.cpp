@@ -21,7 +21,7 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
     std::mt19937 rng(seed ^ (static_cast<std::uint32_t>(sector) * 0x9e3779b9u));
 
     std::vector<int> counts(static_cast<std::size_t>(rows_), 2);
-    const int targetTotal = 16 + static_cast<int>(rng() % 9u);
+    const int targetTotal = 19 + static_cast<int>(rng() % 6u);
     int remaining = targetTotal - rows_ * 2;
     while (remaining > 0) {
         const int row = static_cast<int>(rng() % static_cast<std::uint32_t>(rows_));
