@@ -148,6 +148,10 @@ static void testLastStandNavigation() {
             const float dx = source.x - target->x;
             const float dy = source.y - target->y;
             assert((dx * dx + dy * dy) <= (165.0f * 165.0f));
+            assert(std::find(source.links.begin(), source.links.end(), link) != source.links.end());
+            const auto* reverseSource = target;
+            assert(std::find(reverseSource->links.begin(), reverseSource->links.end(), static_cast<int>(i)) != reverseSource->links.end());
+            assert(std::count(source.links.begin(), source.links.end(), link) == 1);
             if (target->row <= source.row)
                 hasReverseOrSameRowLink = true;
         }
