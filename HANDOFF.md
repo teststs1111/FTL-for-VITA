@@ -799,3 +799,18 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 1. Verify Host/Vita CI for the Last Stand entry-resource change.
 2. Replace the Flagship route scaffold with explicit Last Stand start/base node selection and more faithful 3–5 jump routing.
 3. Add Last Stand save/load regression coverage and tighten random beacon takeover timing.
+
+## 2026-09-27 continuation — Last Stand Flagship 3–5 jump route
+
+- Corrected the Sector 8 Flagship route direction in `31cadcb8e3dc2e668729d152ef5178e7e2a543eb`.
+- The Flagship now starts on the rightmost map row and selects a deterministic 3, 4, or 5 Flagship-jump route toward the Federation Base, matching the documented vanilla 6/8/10 player-jump cadence.
+- Route construction was hardened in `e39933a3d061d30722969178b3e173c452d12ee4`: a breadth-first search follows actual incoming beacon links, preventing a greedy predecessor choice from producing a dead-end.
+- The stored route is ordered Flagship -> Base; `flagshipRouteIndex_` starts at 0 and advances toward the Base.
+- CI verified directly for `e39933a3d061d30722969178b3e173c452d12ee4`: Host build #769 and Vita build #461 both **success**.
+- No proprietary FTL assets were committed.
+
+### Next target
+1. Verify the Flagship route survives v10 save/load exactly.
+2. Add/strengthen Last Stand regression coverage for 2-player-jump movement, post-phase wait, and 3-turn Base countdown.
+3. Verify random beacon takeover timing and interaction with Flagship movement.
+4. Continue comparing Sector 8 map placement/behavior against vanilla mechanics.
