@@ -594,11 +594,16 @@ public:
         std::ofstream out(savePath(), std::ios::trunc);
         if (!out) return false;
 
-        out << "FTL_VITA_SAVE 9\n";
+        out << "FTL_VITA_SAVE 10\n";
         out << "ship " << std::quoted(runtime_.content.blueprint.id) << "\n";
         out << "seed " << seed_ << "\n";
         out << "sector " << sector_ << "\n";
         out << "flagship " << flagshipPhase_ << "\n";
+        out << "flagship_state " << flagshipNode_ << ' ' << flagshipBaseNode_ << ' '
+            << flagshipRouteIndex_ << ' ' << flagshipJumpCounter_ << ' '
+            << flagshipBaseTurns_ << ' ' << flagshipWaitTurns_ << "\n";
+        out << "flagship_route " << flagshipRoute_.size() << "\n";
+        for (const int node : flagshipRoute_) out << node << "\n";
         out << "beacon " << currentBeacon_ << ' ' << selectedBeacon_ << "\n";
         out << "fleet " << fleetRow_ << "\n";
         out << "fleet_pursuit_delay " << fleetPursuitDelay_ << "\n";
@@ -667,10 +672,13 @@ public:
         const bool saveV7 = header == "FTL_VITA_SAVE 7";
         const bool saveV8 = header == "FTL_VITA_SAVE 8";
         const bool saveV9 = header == "FTL_VITA_SAVE 9";
-        const bool currentSave = saveV4 || saveV5 || saveV6 || saveV7 || saveV8 || saveV9;
+        const bool saveV10 = header == "FTL_VITA_SAVE 10";
+        const bool currentSave = saveV4 || saveV5 || saveV6 || saveV7 || saveV8 || saveV9 || saveV10;
         if (!legacySave && !saveV3 && !currentSave) return false;
 
         std::string key, shipId;
+        std::vector<int> savedFleetCovered;
+        bool hasSavedFleetCovered = false;
         in >> key >> std::quoted(shipId);
         if (key != "ship" || shipId.empty()) return false;
         if (!content_.loadPlayerShip("data/blueprints.xml", shipId) || !runtime_.load(content_))
@@ -692,10 +700,31 @@ public:
                 fleetPursuitProgress_ = std::clamp(fleetPursuitProgress_, 0.0f, 0.9999f);
             }
             fleetPursuitPosition_ = -959.0f;
-            if (saveV9) {
+            if (saveV9 || saveV10) {
                 in >> key >> fleetPursuitPosition_;
                 if (key != "fleet_pursuit_position") return false;
                 fleetPursuitPosition_ = std::clamp(fleetPursuitPosition_, -959.0f, 4096.0f);
+            }
+        }
+
+        flagshipNode_ = -1;
+        flagshipBaseNode_ = -1;
+        flagshipRouteIndex_ = 0;
+        flagshipJumpCounter_ = 0;
+        flagshipBaseTurns_ = 0;
+        flagshipWaitTurns_ = 0;
+        flagshipRoute_.clear();
+        if (saveV10) {
+            in >> key >> flagshipNode_ >> flagshipBaseNode_ >> flagshipRouteIndex_
+                >> flagshipJumpCounter_ >> flagshipBaseTurns_ >> flagshipWaitTurns_;
+            if (key != "flagship_state") return false;
+            in >> key >> count;
+            if (key != "flagship_route") return false;
+            flagshipRoute_.reserve(count);
+            for (std::size_t i = 0; i < count; ++i) {
+                int node = -1;
+                in >> node;
+                flagshipRoute_.push_back(node);
             }
         }
         currentSectorType_.clear();
@@ -729,7 +758,8 @@ public:
                     in >> index;
                     covered.push_back(index);
                 }
-                sectorGraph_.setFleetCoveredIndices(covered);
+                savedFleetCovered = covered;
+                hasSavedFleetCovered = true;
             }
         }
         sectorEventUsage_.clear();
@@ -860,8 +890,13 @@ public:
             selectCurrentSectorDefinition();
         sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
         configureBeaconNebulaState();
-        if (!saveV6)
+        if (hasSavedFleetCovered) {
+            sectorGraph_.setFleetCoveredIndices(savedFleetCovered);
+        } else if (!saveV6) {
             sectorGraph_.setFleetCoverageFromRow(fleetRow_);
+        }
+        if (sector_ >= 7 && !saveV10)
+            initializeLastStandState();
         combat_.player = runtime_;
         currentBeacon_ = std::clamp(currentBeacon_, -1, static_cast<int>(sectorGraph_.nodes().size()) - 1);
         selectedBeacon_ = std::clamp(selectedBeacon_, 0, static_cast<int>(sectorGraph_.nodes().size()) - 1);
