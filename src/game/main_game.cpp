@@ -1756,7 +1756,18 @@ public:
                 return;
             }
             if (event->repair) {
-                runtime_.hull = std::min(runtime_.content.blueprint.maxHealth, runtime_.hull + 2);
+                if (sector_ >= 7) {
+                    // The Last Stand uses BOSS_REPAIR_STATION: 15 hull repair,
+                    // +22-44 scrap, +5 fuel, +4 missiles and +5 drone parts.
+                    runtime_.hull = std::min(runtime_.content.blueprint.maxHealth, runtime_.hull + 15);
+                    scrap_ = std::max(0, scrap_ + applyScrapAugments(rollEventRange(22, 44, 0xB051u)));
+                    fuel_ = std::min(30, fuel_ + 5);
+                    runtime_.missiles = std::min(50, runtime_.missiles + 4);
+                    combat_.player.missiles = runtime_.missiles;
+                    droneParts_ = std::min(50, droneParts_ + 5);
+                } else {
+                    runtime_.hull = std::min(runtime_.content.blueprint.maxHealth, runtime_.hull + 2);
+                }
             }
             ++visitedBeacons_;
             sceneMode_ = SceneMode::SectorMap;
