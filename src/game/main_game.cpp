@@ -850,7 +850,7 @@ public:
         sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
         configureBeaconNebulaState();
         if (!saveV6)
-            sectorGraph_.advanceFleetCoverage(steps);
+            sectorGraph_.setFleetCoverageFromRow(fleetRow_);
         combat_.player = runtime_;
         currentBeacon_ = std::clamp(currentBeacon_, -1, static_cast<int>(sectorGraph_.nodes().size()) - 1);
         selectedBeacon_ = std::clamp(selectedBeacon_, 0, static_cast<int>(sectorGraph_.nodes().size()) - 1);
@@ -1987,7 +1987,7 @@ public:
         const int steps = std::max(0, static_cast<int>(std::floor(fleetPursuitProgress_)));
         fleetPursuitProgress_ -= static_cast<float>(steps);
         fleetRow_ = std::clamp(fleetRow_ + steps, -1, lastReachableRow);
-        sectorGraph_.setFleetCoverageFromRow(fleetRow_);
+        sectorGraph_.advanceFleetCoverage(steps);
     }
 
     void renderSectorMap() {
