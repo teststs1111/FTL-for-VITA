@@ -97,6 +97,17 @@ static void testFleetCoverage() {
     graph.setFleetCoveredIndices({});
     graph.advanceFleetCoverage(1);
     assert(graph.fleetCoveredIndices().size() == 1);
+
+    graph.setFleetCoveredIndices({});
+    graph.setFleetCoverageFromPosition(320.0f);
+    for (std::size_t i = 0; i < graph.nodes().size(); ++i) {
+        const auto* node = graph.node(static_cast<int>(i));
+        assert(node);
+        if (static_cast<int>(i) == graph.exitNode())
+            assert(!node->fleetCovered);
+        else
+            assert(node->fleetCovered == (node->x <= 320.0f));
+    }
     const int firstCovered = graph.fleetCoveredIndices().front();
     assert(graph.node(firstCovered)->row == 0);
 
