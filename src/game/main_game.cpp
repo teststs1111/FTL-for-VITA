@@ -1847,8 +1847,17 @@ public:
             const bool selected = selectedNode && n.row != sectorGraph_.exitRow() && n.row == selectedNode->row && n.column == selectedNode->column;
             const bool current = static_cast<int>(index) == currentBeacon_;
             const bool reachable = std::find(choices.begin(),choices.end(),static_cast<int>(index)) != choices.end();
+            const bool fleetCovered = n.fleetCovered;
             const float r=current?8.f:(selected?9.f:6.f);
-            graphics_.fillRect(x-r,y-r,r*2.f,r*2.f,current?Color{0.40f,0.90f,0.55f,1.f}:(selected?Color{0.98f,0.75f,0.20f,1.f}:(reachable?Color{0.35f,0.65f,0.85f,1.f}:Color{0.20f,0.30f,0.38f,1.f})));
+            graphics_.fillRect(x-r,y-r,r*2.f,r*2.f,
+                fleetCovered ? Color{0.68f,0.18f,0.18f,1.f}
+                    : (current?Color{0.40f,0.90f,0.55f,1.f}
+                    :(selected?Color{0.98f,0.75f,0.20f,1.f}
+                    :(reachable?Color{0.35f,0.65f,0.85f,1.f}:Color{0.20f,0.30f,0.38f,1.f}))));
+            if (fleetCovered) {
+                text_.draw(graphics_, "!!", x - 10.f, y + 10.f, 11.f,
+                    {1.f, 0.72f, 0.72f, 1.f});
+            }
             if ((scanners || mapRevealed_) && (mapRevealed_ || reachable || current)) {
                 const auto label = scannerLabel(static_cast<int>(index));
                 if (!label.empty())
