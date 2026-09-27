@@ -2250,6 +2250,17 @@ public:
                 if(dst) graphics_.drawLine(x,y,dst->x,dst->y,{0.20f,0.34f,0.46f,1.f});
             }
         }
+        // Vanilla Last Stand shows the Flagship's next destination on the map.
+        // Draw the same route cue so the player can intercept the moving boss
+        // instead of having to infer its next beacon from the marker alone.
+        if (sector_ >= 7 && flagshipRouteIndex_ >= 0 &&
+            flagshipRouteIndex_ + 1 < static_cast<int>(flagshipRoute_.size())) {
+            const auto* from = sectorGraph_.node(flagshipRoute_[static_cast<std::size_t>(flagshipRouteIndex_)]);
+            const auto* to = sectorGraph_.node(flagshipRoute_[static_cast<std::size_t>(flagshipRouteIndex_ + 1)]);
+            if (from && to)
+                graphics_.drawLine(from->x, from->y, to->x, to->y,
+                    {0.92f, 0.30f, 0.30f, 1.f});
+        }
         const auto choices=sectorGraph_.selectable(currentBeacon_, fleetRow_);
         const bool scanners = hasAugment("LONG_RANGED_SCANNERS");
         auto scannerLabel = [&](int nodeIndex) {
