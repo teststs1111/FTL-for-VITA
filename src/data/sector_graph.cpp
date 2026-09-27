@@ -42,8 +42,14 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
         rowStarts_[static_cast<std::size_t>(row)] =
             static_cast<int>(nodes_.size());
         for (int i = 0; i < counts[static_cast<std::size_t>(row)]; ++i) {
-            nodes_.push_back({row, available[static_cast<std::size_t>(i)],
-                              {}, false, false, false});
+            BeaconNode beacon;
+            beacon.row = row;
+            beacon.column = available[static_cast<std::size_t>(i)];
+            beacon.x = 150.0f + beacon.column * 150.0f + 8.0f +
+                static_cast<float>(rng() % 134u);
+            beacon.y = 80.0f + row * 100.0f + 8.0f +
+                static_cast<float>(rng() % 84u);
+            nodes_.push_back(beacon);
         }
     }
 
@@ -53,6 +59,8 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
 
     startNode_ = rowNode(0, static_cast<int>(
         rng() % static_cast<std::uint32_t>(rowCounts_[0])));
+    exitNode_ = rowNode(rows_ - 1, static_cast<int>(
+        rng() % static_cast<std::uint32_t>(rowCounts_[rows_ - 1])));
     nodes_[static_cast<std::size_t>(startNode_)].visited = true;
 
     auto nearest = [](const std::vector<int>& columns, int column) {
@@ -139,13 +147,10 @@ std::vector<int> SectorGraph::selectable(int current, int fleetRow) const {
         if (nodes_.empty()) return out;
         const int firstStart = rowStarts_.front();
         const int firstCount = rowCounts_.front();
-        for (int i = 0; i < firstCount; ++i) {
-            const int index = firstStart + i;
-            const auto* target = node(index);
-            if (!target) continue;
-            if (target->fleetCovered || (fleetRow >= 0 && target->row <= fleetRow)) continue;
+        const int index = startNode_;
+        const auto* target = node(index);
+        if (target && !target->fleetCovered && !(fleetRow >= 0 && target->row <= fleetRow))
             out.push_back(index);
-        }
         return out;
     }
 
