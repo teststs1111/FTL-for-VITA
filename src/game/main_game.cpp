@@ -61,7 +61,7 @@ public:
             fleetPursuitProgress_ = 0.0f;
             applySectorStartFleetModifiers();
             sectorGraph_.generate(sector_, seed_);
-            sectorGraph_.setNebulaSector(currentSectorType_ == "NEBULA_SECTOR" || currentSectorType_ == "SLUG_SECTOR" || currentSectorType_ == "SLUG_HOME");
+            configureBeaconNebulaState();
             selectedBeacon_ = sectorGraph_.startNode();
             if (!content_.loadPlayerShip()) {
                 startupError_ = "Player ship blueprint could not be loaded";
@@ -113,7 +113,7 @@ public:
         eventOrder_ = eventDatabase_.ids();
         sectorDatabase_.load();
         sectorGraph_.generate(sector_, seed_);
-        sectorGraph_.setNebulaSector(currentSectorType_ == "NEBULA_SECTOR" || currentSectorType_ == "SLUG_SECTOR" || currentSectorType_ == "SLUG_HOME");
+        configureBeaconNebulaState();
         sectorGraph_.setFleetCoverageFromRow(-1);
         selectedBeacon_ = sectorGraph_.startNode();
         if (!content_.loadPlayerShip()) return false;
@@ -847,7 +847,7 @@ public:
         if (currentSectorType_.empty())
             selectCurrentSectorDefinition();
         sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
-        sectorGraph_.setNebulaSector(currentSectorType_ == "NEBULA_SECTOR" || currentSectorType_ == "SLUG_SECTOR" || currentSectorType_ == "SLUG_HOME");
+        configureBeaconNebulaState();
         if (!saveV6)
             sectorGraph_.setFleetCoverageFromRow(fleetRow_);
         combat_.player = runtime_;
@@ -908,7 +908,7 @@ public:
         fleetPursuitProgress_ = 0.0f;
         applySectorStartFleetModifiers();
         sectorGraph_.generate(sector_, seed_);
-        sectorGraph_.setNebulaSector(currentSectorType_ == "NEBULA_SECTOR" || currentSectorType_ == "SLUG_SECTOR" || currentSectorType_ == "SLUG_HOME");
+        configureBeaconNebulaState();
         fleetPursuitDelay_ = 0;
         fleetPursuitProgress_ = 0.0f;
         sectorGraph_.setFleetCoverageFromRow(-1);
@@ -1861,7 +1861,7 @@ public:
                     fleetPursuitProgress_ = 0.0f;
                     applySectorStartFleetModifiers();
                     sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
-                    sectorGraph_.setNebulaSector(currentSectorType_ == "NEBULA_SECTOR" || currentSectorType_ == "SLUG_SECTOR" || currentSectorType_ == "SLUG_HOME");
+                    configureBeaconNebulaState();
                     sectorGraph_.setFleetCoverageFromRow(-1);
                     currentBeacon_ = -1;
                     selectedBeacon_ = sectorGraph_.startNode();
@@ -1877,6 +1877,66 @@ public:
             sceneMode_ = SceneMode::Ship;
             return;
         }
+    }
+
+    void configureBeaconNebulaState() {
+        const bool fullNebulaSector =
+            currentSectorType_ == "NEBULA_SECTOR" ||
+            currentSectorType_ == "SLUG_SECTOR" ||
+            currentSectorType_ == "SLUG_HOME";
+        sectorGraph_.setNebulaSector(fullNebulaSector);
+        if (fullNebulaSector) return;
+
+        const auto* sector = sectorDatabase_.find(currentSectorType_);
+        if (!sector) return;
+
+        // Normal sectors create nebula graphics from every event list whose
+        // name begins with NEBULA_. The real generator may expand this set
+        // when nebula graphics overlap neighboring beacons; this pass keeps
+        // the data-driven minimum/maximum counts while retaining deterministic
+        // host/Vita behavior.
+        int minNebula = 0;
+        int maxNebula = 0;
+        for (const auto& pool : sector->events) {
+            if (pool.name.rfind("NEBULA_", 0) != 0) continue;
+            minNebula += std::max(0, pool.min);
+            maxNebula += std::max(pool.min, pool.max);
+        }
+        if (maxNebula <= 0) return;
+
+        const int nodeCount = static_cast<int>(sectorGraph_.nodes().size());
+        if (nodeCount <= 1) return;
+        minNebula = std::min(minNebula, nodeCount - 1);
+        maxNebula = std::min(maxNebula, nodeCount - 1);
+
+        std::uint32_t hash = seed_ ^
+            (static_cast<std::uint32_t>(sector_) * 0x9e3779b9u) ^
+            (static_cast<std::uint32_t>(nodeCount) * 0x85ebca6bu);
+        hash ^= hash >> 16;
+        hash *= 0x7feb352du;
+        hash ^= hash >> 15;
+        const int targetCount = minNebula >= maxNebula
+            ? minNebula
+            : minNebula + static_cast<int>(hash % static_cast<std::uint32_t>(maxNebula - minNebula + 1));
+
+        std::vector<int> candidates;
+        candidates.reserve(static_cast<std::size_t>(nodeCount - 1));
+        const int start = sectorGraph_.startNode();
+        for (int i = 0; i < nodeCount; ++i)
+            if (i != start) candidates.push_back(i);
+
+        // Fisher-Yates with a deterministic local state. Keep the starting
+        // beacon clear, matching the normal sector's initial beacon behavior.
+        std::uint32_t state = hash ^ 0xA5A5A5A5u;
+        for (int i = static_cast<int>(candidates.size()) - 1; i > 0; --i) {
+            state ^= state << 13;
+            state ^= state >> 17;
+            state ^= state << 5;
+            const int j = static_cast<int>(state % static_cast<std::uint32_t>(i + 1));
+            std::swap(candidates[static_cast<std::size_t>(i)], candidates[static_cast<std::size_t>(j)]);
+        }
+        candidates.resize(static_cast<std::size_t>(targetCount));
+        sectorGraph_.setNebulaIndices(candidates);
     }
 
     void applySectorStartFleetModifiers() {
