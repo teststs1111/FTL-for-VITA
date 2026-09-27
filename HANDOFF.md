@@ -105,6 +105,13 @@ Known approximation: exact vanilla beacon coordinate/occupancy sequence and exac
 
 Research checkpoint 2026-09-28: external references report that the Rebel Fleet pursuit value advances by 0x40 (64) per normal jump, and a long-standing pursuit-indicator mod reports the same 64-pixel visual advance. The exact mapping from the datamined pursuit counter's raw value to this implementation's generated beacon x-coordinates is still not sufficiently established. Keep the current mapping explicitly marked approximate until a stronger source or direct reference implementation confirms the transform.
 
+## Rebel Fleet save-format research checkpoint — 2026-09-28
+- Cross-checking the current open-source FTL save editor confirms that the vanilla save format stores three separate sector-map values: `RebelFleetOffset`, `RebelFleetFudge`, and `RebelPursuitMod`, immediately after the sector tree/layout seeds.
+- This independently corroborates that the fleet's map/frontier state is not represented solely by the raw pursuit counter used by the current Vita implementation.
+- The same editor treats Offset and Fudge as persisted values rather than deriving them from the beacon list at save-edit time.
+- No reliable public source found yet establishes the exact formula converting Offset/Fudge + pursuit progress into the original game's per-beacon takeover frontier.
+- Therefore no speculative transform is being committed. Current `setFleetCoverageFromPosition()` remains explicitly provisional.
+
 ## Event fidelity
 Implemented: real XML ingestion, event load references, weighted eventLists, AE resources/overwrites, common choices/requirements, stores, distress, hostile, repair, resource/crew effects, and original text IDs through data/text-ja.xml.
 
