@@ -1955,6 +1955,26 @@ public:
             if (input_.pressed(Button::Right) || input_.pressed(Button::Down)) pos = std::min(static_cast<int>(choices.size()) - 1, pos + 1);
             selectedBeacon_ = choices[static_cast<std::size_t>(pos)];
         }
+        // The Last Stand permits waiting at the current beacon without spending fuel.
+        // Waiting advances the same map tick as a jump: random Rebel takeovers and
+        // the Flagship timer/movement progress, and can trigger an immediate Flagship fight.
+        if (sector_ >= 7 && input_.pressed(Button::Square)) {
+            advanceRebelFleetAfterJump();
+            if (sceneMode_ == SceneMode::GameOver) return;
+            if (currentBeacon_ >= 0 && currentBeacon_ == flagshipNode_) {
+                const int nextPhase = flagshipPhase_ + 1;
+                const std::string flagshipId = "BOSS_" + std::to_string(nextPhase);
+                LoadedShip flagship;
+                if (nextPhase <= 3 && content_.loadShip(flagshipId, flagship) &&
+                    !flagship.blueprint.id.empty()) {
+                    flagshipPhase_ = nextPhase;
+                    enterCombatFromBeacon(flagshipId);
+                    return;
+                }
+            }
+            return;
+        }
+
         if (input_.pressed(Button::Cross) && !choices.empty()) {
             if (fuel_ <= 0) return;
             fuel_--;
@@ -2250,7 +2270,11 @@ public:
                 "旗艦: 2ジャンプごとに移動   連邦基地: " + std::to_string(remaining) + "ターン",
                 48.f, 478.f, 12.f, {0.92f, 0.72f, 0.72f, 1.f});
         }
-        text_.draw(graphics_,"十字キー: 接続ビーコン選択   ×: ジャンプ   ○: 戻る",48.f,500.f,14.f,{0.68f,0.76f,0.86f,1.f});
+        text_.draw(graphics_,
+            sector_ >= 7
+                ? "十字キー: 接続ビーコン選択   ×: ジャンプ   □: WAIT   ○: 戻る"
+                : "十字キー: 接続ビーコン選択   ×: ジャンプ   ○: 戻る",
+            48.f,500.f,14.f,{0.68f,0.76f,0.86f,1.f});
     }
 
     void updatePause() {
