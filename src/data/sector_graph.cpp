@@ -135,6 +135,31 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
         }
     }
 
+    // The Last Stand uses the same 6x4 beacon placement, but its navigation
+    // graph follows the vanilla adjacent-grid rule rather than the normal
+    // forward-only sector links. This allows the Flagship to route through
+    // vertical as well as diagonal/forward neighboring beacons.
+    if (sector >= 7) {
+        for (std::size_t i = 0; i < nodes_.size(); ++i) {
+            for (std::size_t j = 0; j < nodes_.size(); ++j) {
+                if (i == j) continue;
+                const auto& a = nodes_[i];
+                const auto& b = nodes_[j];
+                if (std::abs(a.row - b.row) > 1 ||
+                    std::abs(a.column - b.column) > 1)
+                    continue;
+                const float dx = a.x - b.x;
+                const float dy = a.y - b.y;
+                if ((dx * dx + dy * dy) > (165.0f * 165.0f))
+                    continue;
+                auto& links = nodes_[i].links;
+                if (std::find(links.begin(), links.end(), static_cast<int>(j)) ==
+                    links.end())
+                    links.push_back(static_cast<int>(j));
+            }
+        }
+    }
+
 
 }
 
