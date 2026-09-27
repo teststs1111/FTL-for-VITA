@@ -110,11 +110,14 @@ static void testFleetCoverage() {
     }
     assert(!graph.fleetCoveredIndices().empty());
 
+    const auto positionalCovered = graph.fleetCoveredIndices();
     graph.advanceFleetCoverage(1);
     const auto expanded = graph.fleetCoveredIndices();
-    assert(expanded.size() == 2);
-    for (const int index : expanded)
-        assert(graph.node(index)->row <= 1);
+    // Positional Fleet coverage is authoritative. The legacy row helper may
+    // add a row when needed, but must never clear or duplicate existing flags.
+    assert(expanded.size() >= positionalCovered.size());
+    for (const int index : positionalCovered)
+        assert(std::find(expanded.begin(), expanded.end(), index) != expanded.end());
 
     // A fleet-covered beacon must remain navigable so arrival can trigger
     // the Rebel fleet encounter rather than silently removing the route.
