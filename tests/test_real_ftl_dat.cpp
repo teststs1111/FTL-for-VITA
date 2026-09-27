@@ -79,6 +79,40 @@ int main() {
     assert(finalPool("BOSS_HOSTILE", 6, 6));
     assert(finalPool("BOSS_NEUTRAL", 7, 10));
 
+    const auto assertPool = [](const wormhole::SectorDefinition* sector,
+                               const char* name, int min, int max) {
+        assert(sector != nullptr);
+        for (const auto& pool : sector->events) {
+            if (pool.name == name) {
+                assert(pool.min == min && pool.max == max);
+                return;
+            }
+        }
+        assert(false);
+    };
+    const auto* standard = sectors.find("STANDARD_SPACE");
+    assertPool(standard, "STORE", 1, 2);
+    assertPool(standard, "NEBULA", 0, 4);
+    assertPool(standard, "HOSTILE1", 2, 2);
+    assertPool(standard, "QUESTS", 1, 1);
+
+    const auto* civilian = sectors.find("CIVILIAN_SECTOR");
+    assertPool(civilian, "NEBULA", 0, 8);
+    assertPool(civilian, "HOSTILE_CIVILIAN", 4, 6);
+    assertPool(civilian, "QUESTS", 0, 2);
+
+    const auto* nebula = sectors.find("NEBULA_SECTOR");
+    assertPool(nebula, "NEBULA_STORE", 1, 1);
+    assertPool(nebula, "NEBULA_EMPTY", 4, 4);
+    assertPool(nebula, "NEBULA_HOSTILE", 5, 6);
+    assertPool(nebula, "NEBULA_NEUTRAL", 7, 8);
+
+    const auto* slug = sectors.find("SLUG_SECTOR");
+    assertPool(slug, "NEBULA_STORE_SLUG", 2, 2);
+    assertPool(slug, "NEBULA_NOTHING_SLUG", 2, 4);
+    assertPool(slug, "NEBULA_HOSTILE_SLUG", 5, 7);
+    assertPool(slug, "NEBULA_NEUTRAL_SLUG", 3, 5);
+
     wormhole::ShipContent content;
     assert(content.open(env));
     content.setAdvancedEdition(false);
