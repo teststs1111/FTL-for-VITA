@@ -687,7 +687,7 @@ public:
         usedUniqueSectorTypes_.clear();
         mapRevealed_ = false;
         secretSectorPending_ = false;
-        if (saveV5 || saveV6) {
+        if (saveV5 || saveV6 || saveV7 || saveV8) {
             in >> key >> std::quoted(currentSectorType_);
             if (key != "current_sector") return false;
             in >> key >> count;
@@ -704,7 +704,7 @@ public:
             in >> key >> flag;
             if (key != "secret_pending") return false;
             secretSectorPending_ = flag != 0;
-            if (saveV6 || saveV7) {
+            if (saveV6 || saveV7 || saveV8) {
                 in >> key >> count;
                 if (key != "fleet_covered") return false;
                 std::vector<int> covered;
@@ -731,6 +731,15 @@ public:
         in >> key >> visitedBeacons_;
         in >> key >> fuel_ >> scrap_ >> droneParts_ >> runtime_.missiles;
         in >> key >> runtime_.hull;
+
+        in >> key >> count;
+        if (key != "augments") return false;
+        augmentIds_.clear();
+        for (std::size_t i = 0; i < count; ++i) {
+            std::string augment;
+            in >> std::quoted(augment);
+            if (!augment.empty()) augmentIds_.push_back(augment);
+        }
 
         in >> key >> count;
         for (std::size_t i = 0; i < count; ++i) {
