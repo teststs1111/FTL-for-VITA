@@ -18,6 +18,8 @@ static void testVanillaGridBounds() {
     assert(graph.startNode() >= 0);
     assert(graph.node(graph.startNode()));
     assert(graph.node(graph.startNode())->row == 0);
+    assert(graph.node(graph.exitNode())->row >= 4);
+    assert(graph.node(graph.exitNode())->row <= 5);
 
     std::vector<int> reachable(graph.nodes().size(), 0);
     std::queue<int> queue;
@@ -36,8 +38,13 @@ static void testVanillaGridBounds() {
         const auto* node = graph.node(current);
         assert(node);
         for (const int next : node->links) {
-            assert(next > current || graph.node(next)->row > node->row);
-            assert(graph.node(next)->row == node->row + 1);
+            const auto* target = graph.node(next);
+            assert(target);
+            assert(std::abs(target->row - node->row) <= 1);
+            assert(std::abs(target->column - node->column) <= 1);
+            const float dx = target->x - node->x;
+            const float dy = target->y - node->y;
+            assert((dx * dx + dy * dy) <= (165.0f * 165.0f));
             if (!reachable[static_cast<std::size_t>(next)]) {
                 reachable[static_cast<std::size_t>(next)] = 1;
                 queue.push(next);
@@ -136,7 +143,7 @@ static void testLastStandNavigation() {
     graph.generate(8, 0x13579BDFu);
 
     assert(graph.rows() == 6);
-    assert(graph.nodes().size() >= 16);
+    assert(graph.nodes().size() >= 19);
     assert(graph.nodes().size() <= 24);
 
     bool hasReverseOrSameRowLink = false;
@@ -159,8 +166,8 @@ static void testLastStandNavigation() {
         }
     }
 
-    // Last Stand permits adjacent-grid navigation in both directions, unlike
-    // normal sectors' forward-only row progression.
+    // Links are bidirectional in the vanilla map graph, so at least one
+    // connection must point backward or remain on the same grid row.
     assert(hasReverseOrSameRowLink);
 }
 
