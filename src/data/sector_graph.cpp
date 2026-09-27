@@ -23,7 +23,7 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
         rowCounts_[static_cast<std::size_t>(r)] = count;
         for (int i = 0; i < count; ++i) {
             const int column = (i * (columns_ - 1)) / std::max(1, count - 1);
-            nodes_.push_back({r, column, {}, false, false});
+            nodes_.push_back({r, column, {}, false, false, false});
         }
     }
 
@@ -113,6 +113,10 @@ std::vector<int> SectorGraph::selectable(int current, int fleetRow) const {
 
     // Per-beacon fleet flags are authoritative; fleetRow remains a compatibility fallback.
     return out;
+}
+
+void SectorGraph::setNebulaSector(bool enabled) {
+    for (auto& beacon : nodes_) beacon.nebula = enabled;
 }
 
 void SectorGraph::setFleetCoverageFromRow(int fleetRow) {
