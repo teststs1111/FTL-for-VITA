@@ -1303,12 +1303,12 @@ public:
         }
         if (activeEventId_.empty())
             activeEventId_ = eventOrder_[static_cast<std::size_t>((sector_ * 5 + beacon) % eventOrder_.size())];
-        beaconEventAssignments_[beacon] = activeEventId_;
         const auto* event = eventDatabase_.resolve(activeEventId_, seed_ + static_cast<unsigned>(visitedBeacons_) * 53u);
         if (!event) return false;
-        // A sector event pool resolves to a concrete event; keep that concrete
-        // id so update/render operate on the same definition.
+        // Store the resolved concrete event id only after resolution succeeds.
+        // This keeps a failed lookup from poisoning the per-beacon assignment.
         activeEventId_ = event->id;
+        beaconEventAssignments_[beacon] = activeEventId_;
         completeQuestForEvent(activeEventId_);
         applyEventImmediateEffects(*event);
         registerQuest(*event);
