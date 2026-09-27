@@ -787,3 +787,15 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 2. Add the vanilla Sector 8 entry resource behavior (fuel/hull repair) after confirming the existing initialization path does not already provide it.
 3. Replace the current Flagship route scaffold with explicit Last Stand start/base node selection and more faithful 3–5 Flagship-jump routing.
 4. Continue save/load regression coverage for Last Stand state and per-beacon Fleet/nebula state.
+
+
+## 2026-09-27 continuation — Last Stand entry resources
+- Added the vanilla Sector 8 entry resource behavior in commit `b09914b`: entering The Last Stand from Sector 7 grants +10 fuel and repairs +10 hull, capped at max hull.
+- This is applied only on the actual Sector 7 → Sector 8 transition, so save loading and normal map regeneration do not repeat the bonus.
+- The existing Flagship/wait implementation remains unchanged.
+- CI for `b09914b` must be verified before marking this change green.
+
+### Next target
+1. Verify Host/Vita CI for the Last Stand entry-resource change.
+2. Replace the Flagship route scaffold with explicit Last Stand start/base node selection and more faithful 3–5 jump routing.
+3. Add Last Stand save/load regression coverage and tighten random beacon takeover timing.
