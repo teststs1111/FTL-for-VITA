@@ -56,7 +56,9 @@ public:
             eventDatabase_.load();
             eventOrder_ = eventDatabase_.ids();
             sectorDatabase_.load();
+            selectCurrentSectorDefinition();
             sectorGraph_.generate(sector_, seed_);
+            sectorGraph_.setNebulaSector(currentSectorType_ == "NEBULA_SECTOR" || currentSectorType_ == "SLUG_SECTOR" || currentSectorType_ == "SLUG_HOME");
             selectedBeacon_ = sectorGraph_.startNode();
             if (!content_.loadPlayerShip()) {
                 startupError_ = "Player ship blueprint could not be loaded";
@@ -108,6 +110,7 @@ public:
         eventOrder_ = eventDatabase_.ids();
         sectorDatabase_.load();
         sectorGraph_.generate(sector_, seed_);
+        sectorGraph_.setNebulaSector(currentSectorType_ == "NEBULA_SECTOR" || currentSectorType_ == "SLUG_SECTOR" || currentSectorType_ == "SLUG_HOME");
         sectorGraph_.setFleetCoverageFromRow(-1);
         selectedBeacon_ = sectorGraph_.startNode();
         if (!content_.loadPlayerShip()) return false;
@@ -584,7 +587,7 @@ public:
         std::ofstream out(savePath(), std::ios::trunc);
         if (!out) return false;
 
-        out << "FTL_VITA_SAVE 7\n";
+        out << "FTL_VITA_SAVE 8\n";
         out << "ship " << std::quoted(runtime_.content.blueprint.id) << "\n";
         out << "seed " << seed_ << "\n";
         out << "sector " << sector_ << "\n";
@@ -592,6 +595,7 @@ public:
         out << "beacon " << currentBeacon_ << ' ' << selectedBeacon_ << "\n";
         out << "fleet " << fleetRow_ << "\n";
         out << "fleet_pursuit_delay " << fleetPursuitDelay_ << "\n";
+        out << "fleet_pursuit_progress " << fleetPursuitProgress_ << "\n";
         const auto covered = sectorGraph_.fleetCoveredIndices();
         out << "fleet_covered " << covered.size() << "\n";
         for (const int index : covered) out << index << "\n";
@@ -653,7 +657,8 @@ public:
         const bool saveV5 = header == "FTL_VITA_SAVE 5";
         const bool saveV6 = header == "FTL_VITA_SAVE 6";
         const bool saveV7 = header == "FTL_VITA_SAVE 7";
-        const bool currentSave = saveV4 || saveV5 || saveV6 || saveV7;
+        const bool saveV8 = header == "FTL_VITA_SAVE 8";
+        const bool currentSave = saveV4 || saveV5 || saveV6 || saveV7 || saveV8;
         if (!legacySave && !saveV3 && !currentSave) return false;
 
         std::string key, shipId;
@@ -667,10 +672,16 @@ public:
         in >> key >> currentBeacon_ >> selectedBeacon_;
         in >> key >> fleetRow_;
         fleetPursuitDelay_ = 0;
-        if (saveV7) {
+        if (saveV7 || saveV8) {
             in >> key >> fleetPursuitDelay_;
             if (key != "fleet_pursuit_delay") return false;
             fleetPursuitDelay_ = std::clamp(fleetPursuitDelay_, -32, 32);
+            fleetPursuitProgress_ = 0.0f;
+            if (saveV8) {
+                in >> key >> fleetPursuitProgress_;
+                if (key != "fleet_pursuit_progress") return false;
+                fleetPursuitProgress_ = std::clamp(fleetPursuitProgress_, 0.0f, 0.9999f);
+            }
         }
         currentSectorType_.clear();
         usedUniqueSectorTypes_.clear();
@@ -824,6 +835,7 @@ public:
         if (currentSectorType_.empty())
             selectCurrentSectorDefinition();
         sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
+        sectorGraph_.setNebulaSector(currentSectorType_ == "NEBULA_SECTOR" || currentSectorType_ == "SLUG_SECTOR" || currentSectorType_ == "SLUG_HOME");
         if (!saveV6)
             sectorGraph_.setFleetCoverageFromRow(fleetRow_);
         combat_.player = runtime_;
@@ -1824,6 +1836,7 @@ public:
                     currentSectorType_.clear();
                     selectCurrentSectorDefinition();
                     sectorGraph_.generate(sector_, static_cast<std::uint32_t>(seed_ + sector_));
+                    sectorGraph_.setNebulaSector(currentSectorType_ == "NEBULA_SECTOR" || currentSectorType_ == "SLUG_SECTOR" || currentSectorType_ == "SLUG_HOME");
                     currentBeacon_ = -1;
                     selectedBeacon_ = sectorGraph_.startNode();
                     mapRevealed_ = false;
@@ -1842,8 +1855,15 @@ public:
 
     void advanceRebelFleetAfterJump() {
         const int lastReachableRow = std::max(0, sectorGraph_.exitRow() - 1);
-        const int steps = std::max(0, 1 + fleetPursuitDelay_);
+        const int baseSteps = std::max(0, 1 + fleetPursuitDelay_);
+        const auto* destination = sectorGraph_.node(currentBeacon_);
+        float multiplier = 1.0f;
+        if (destination && destination->nebula)
+            multiplier = (currentSectorType_ == "NEBULA_SECTOR" || currentSectorType_ == "SLUG_SECTOR" || currentSectorType_ == "SLUG_HOME") ? 0.8f : 0.5f;
         fleetPursuitDelay_ = 0;
+        fleetPursuitProgress_ += static_cast<float>(baseSteps) * multiplier;
+        const int steps = std::max(0, static_cast<int>(std::floor(fleetPursuitProgress_)));
+        fleetPursuitProgress_ -= static_cast<float>(steps);
         fleetRow_ = std::clamp(fleetRow_ + steps, -1, lastReachableRow);
         sectorGraph_.setFleetCoverageFromRow(fleetRow_);
     }
@@ -2929,6 +2949,7 @@ private:
     int currentBeacon_{-1};
     int fleetRow_{-1};
     int fleetPursuitDelay_{0};
+    float fleetPursuitProgress_{0.0f};
     unsigned seed_{0x51f7a21u};
     int visitedBeacons_{0};
     int fuel_{16};
