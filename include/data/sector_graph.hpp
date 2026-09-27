@@ -29,6 +29,7 @@ public:
     std::vector<int> fleetCoveredIndices() const;
     bool isFleetCovered(int index) const;
     int startNode() const { return startNode_; }
+    int exitNode() const { return exitNode_; }
     int exitRow() const { return rows_ - 1; }
     int rows() const { return rows_; }
     int columns() const { return columns_; }
@@ -39,6 +40,7 @@ private:
     int rows_{6};
     int columns_{4};
     int startNode_{0};
+    int exitNode_{0};
 };
 
 }
