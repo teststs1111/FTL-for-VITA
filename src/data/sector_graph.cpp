@@ -136,19 +136,12 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
             exitCandidates.push_back(static_cast<int>(i));
     }
 
-    // Extremely sparse/random layouts can leave the far-side cells
-    // disconnected. In that case keep the generated graph intact and choose
-    // the furthest reachable beacon as the exit rather than introducing a
-    // non-vanilla link across empty cells.
     if (exitCandidates.empty()) {
-        int furthestRow = -1;
-        for (std::size_t i = 0; i < nodes_.size(); ++i) {
-            if (!reachable[i]) continue;
-            furthestRow = std::max(furthestRow, nodes_[i].row);
-        }
-        for (std::size_t i = 0; i < nodes_.size(); ++i)
-            if (reachable[i] && nodes_[i].row == furthestRow)
-                exitCandidates.push_back(static_cast<int>(i));
+        // Vanilla generation guarantees at least one route to the exit.
+        // Retry the random map layout instead of introducing a synthetic
+        // long-distance link or moving the exit into the wrong column.
+        generate(sector, seed + 0x9e3779b9u);
+        return;
     }
 
     exitNode_ = exitCandidates[static_cast<std::size_t>(
