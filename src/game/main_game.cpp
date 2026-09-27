@@ -1058,6 +1058,28 @@ public:
         combat_.setTargetRoom(combatTargetRoom_);
     }
 
+    void enterRebelFleetEncounter() {
+        // A beacon already occupied by the Rebel fleet is still reachable.
+        // Enter a Rebel encounter instead of silently removing the route.
+        std::string rebelShipId;
+        for (const auto& entry : content_.blueprints().ships()) {
+            if (entry.first.find("REBEL") == std::string::npos) continue;
+            if (entry.first.rfind("PLAYER_SHIP_", 0) == 0) continue;
+            if (entry.first.rfind("BOSS_", 0) == 0) continue;
+            if (entry.second.maxHealth <= 0 || entry.second.layout.empty()) continue;
+            rebelShipId = entry.first;
+            break;
+        }
+        if (rebelShipId.empty()) {
+            combatFeedback_ = "反乱軍艦データがありません";
+            combatFeedbackTimer_ = 2.0f;
+            return;
+        }
+        combatFeedback_ = "反乱軍艦隊と遭遇";
+        combatFeedbackTimer_ = 1.5f;
+        enterCombatFromBeacon(rebelShipId);
+    }
+
     void selectCurrentSectorDefinition() {
         const SectorDefinition* selected = nullptr;
         if (!currentSectorType_.empty())
@@ -1750,6 +1772,10 @@ public:
             currentBeacon_ = selectedBeacon_;
             advanceRebelFleetAfterJump();
             if (const auto* n = sectorGraph_.node(currentBeacon_)) {
+                if (n->fleetCovered) {
+                    enterRebelFleetEncounter();
+                    return;
+                }
                 if (n->row == sectorGraph_.exitRow()) {
                     if (sector_ >= 7) {
                         // The final sector leads into the Rebel Flagship battle.
