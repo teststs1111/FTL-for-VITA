@@ -925,3 +925,17 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 - During continuation review, found duplicate `assignSectorBeaconEvents()` calls in the new-game initialization and sector-transition paths. They were harmless to correctness because the helper clears/rebuilds state, but caused unnecessary double work.
 - Commit `1e55d452d39b05e385b47e091a76285e44fa6269` removes both duplicate calls; the intended paths now perform one assignment pass each.
 - Next target remains exact `NEBULA_*`/default `NEBULA` semantics and validation against the real supplied `ftl.dat`, followed by Rebel Fleet and Sector 8 fidelity.
+
+
+## 2026-09-28 continuation — default NEBULA filler correction
+
+- Commit `1c1260bf738c6be01aea84f65ff94f7ae3260e8a` fixes a vanilla-fidelity hole in beacon assignment.
+- After explicit `NEBULA_*` pools are populated, any remaining beacon already marked as nebula is now assigned to the default `NEBULA` event pool before ordinary sector event lines are consumed.
+- This prevents nebula beacons created by cloud overlap (and remaining nebula filler beacons in nebula sectors) from incorrectly receiving ordinary non-nebula sector events.
+- The change is code-only and does not embed or redistribute proprietary `ftl.dat` data.
+- CI status for this commit has not surfaced yet; do not mark it green until Host and Vita are directly verified.
+
+### Next target
+1. Verify Host/Vita CI for `1c1260b`.
+2. Validate that the real archive resolves the `NEBULA` eventList and compare the resulting specialized/default pool behavior against supplied real data when the archive is available for direct inspection.
+3. Continue exact Rebel Fleet pursuit and Sector 8 takeover behavior.
