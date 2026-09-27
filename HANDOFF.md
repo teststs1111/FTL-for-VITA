@@ -855,3 +855,18 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
   - `BOSS_NEUTRAL`: 7-10
 - These checks run only when `FTL_DAT_PATH` points at the user-supplied archive, so proprietary data remains outside CI/repository history.
 - Next target: make Last Stand beacon event assignment persist per beacon and verify the event pool min/max behavior against the actual map flow, then continue save/load and exact vanilla placement fidelity.
+
+
+## 2026-09-27 continuation — Last Stand event assignment hardening
+
+- Verified Host #797 and Vita #489 for commit `9a99b4639cee34a58fe3f34d4bce4fab6efd415f`: both **success**.
+- Confirmed v11 saves preserve the Last Stand Flagship route/state and per-beacon event assignments.
+- Hardened `beginBeaconEvent()` so a beacon assignment is written only after the selected event successfully resolves to a concrete event id; failed lookups no longer poison the assignment map.
+- New commit: `590010b48888fd67a547dff19b157955c976d0af`.
+- Host #798 is currently **in progress** and Vita #490 is **queued**; do not treat this commit as CI-green yet.
+- No proprietary `ftl.dat` or extracted FTL assets were committed.
+
+### Next target
+1. Verify Host/Vita CI for `590010b`.
+2. Strengthen Last Stand event-pool assignment so the generated beacon distribution follows the vanilla FINAL min/max pool more faithfully instead of relying only on visit order.
+3. Continue Last Stand save/load regression and exact vanilla placement/wait behavior.
