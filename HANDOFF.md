@@ -43,12 +43,16 @@ CI means GitHub Actions Continuous Integration. Do not substitute 'CI未取得' 
 - AE is inside the same ftl.dat. Do not revert to an external DLC-file model.
 
 ## Current verified main state — 2026-09-28
-- Latest code changes are being validated now:
+- Latest main commit: 73af221134b4fcdacda3d376263feeae07befaf9
+- Host #826: success
+- Vita #518: success
+- The latest pursuit-fidelity changes are therefore CI-green for both host and Vita.
+- Code commits included in this validation:
   - fa8f57a31aaf1d1798cea7cf2040401a5b2cb904 — Apply Rebel sector entry fleet advance
   - b46f88ecfa76d911873fe0a17fa3fc5c2c906ee8 — Verify pursuit modifiers in real FTL data
-- These changes use verified real-data behavior: Rebel Controlled Sector entry advances pursuit by one jump; modifyPursuit values are applied to the following jump.
-- Previous verified baseline: Host #823 / Vita #515 succeeded for main handoff commit 9024a89bb1200e04d0d670f5e8b75d61f73d4558.
-- Do not mark the new changes green until Host and Vita CI for the latest main commit complete successfully.
+- Rebel Controlled Sector entry now applies the documented +1-jump fleet advance.
+- Real-data regression checks cover FUEL_FLEET_DELAY (-1), FUEL_FLEET_DISTRESS (+1), and REBEL_SECTOR.
+- Previous verified baseline: Host #823 / Vita #515 succeeded for 9024a89bb1200e04d0d670f5e8b75d61f73d4558.
 - Sector graph, real archive/BXML, blueprint/event/sector databases, Japanese text loading, PNG pipeline, beacon event assignment, Rebel Fleet state, and Last Stand state are implemented to varying prototype/intermediate fidelity.
 
 ## Current change — vanilla default NEBULA resolution
@@ -80,16 +84,9 @@ All 15 were directly confirmed present in the supplied archive. The real-data te
 ## CI state
 After each code commit, check GitHub Actions directly for the newest main commit. Do not mark either commit green until both Host and Vita workflows for that exact commit succeed.
 
-Latest pursuit-fidelity work:
-- fa8f57a31aaf1d1798cea7cf2040401a5b2cb904 applies the documented +1-jump entry advance for REBEL_SECTOR.
-- b46f88ecfa76d911873fe0a17fa3fc5c2c906ee8 adds real-data regression checks for FUEL_FLEET_DELAY (-1), FUEL_FLEET_DISTRESS (+1), and REBEL_SECTOR.
-- CI for these new changes is pending; inspect the latest main commit directly before proceeding.
-
-Previous verified real-data regression:
-- 9fc176d9859cc41bd2c38660dd82ac1a3940ab5d — Verify real sector nebula pool definitions
-- Host #819 / Vita #511 succeeded.
-
-Previous verified pursuit fix:
+Latest verified pursuit-fidelity work:
+- Host #826 / Vita #518 both succeeded for main 73af221134b4fcdacda3d376263feeae07befaf9.
+- Do not treat older "Vita in progress" reports as current; the workflow has completed successfully.
 - 03118ce240003658b8031292d14accbbcc7bc9e5 — Distraction Buoys changed from +1 to -1.
 - Main handoff commit 9024a89bb1200e04d0d670f5e8b75d61f73d4558 had Host #823 / Vita #515 success.
 
@@ -106,7 +103,7 @@ Previous verified pursuit fix:
 
 Known approximation: exact vanilla beacon coordinate/occupancy sequence and exact cloud-overlap geometry are not yet reproduced. Current implementation selects explicit NEBULA_* beacon counts and grows connected groups, but it does not yet model the actual cloud graphics' overlap test. Do not claim current nebula placement is exact.
 
-Research checkpoint 2026-09-28: external technical references confirm that FTL first places the 6×4 beacon map, processes all NEBULA_* lists before ordinary pools, draws nebula clouds, and converts ordinary beacons overlapped by those clouds into additional nebula beacons assigned from the default NEBULA pool. The exact cloud placement/overlap geometry remains undocumented in the accessible sources, so implementation should not invent a false exact formula.
+Research checkpoint 2026-09-28: external references report that the Rebel Fleet pursuit value advances by 0x40 (64) per normal jump, and a long-standing pursuit-indicator mod reports the same 64-pixel visual advance. The exact mapping from the datamined pursuit counter's raw value to this implementation's generated beacon x-coordinates is still not sufficiently established. Keep the current mapping explicitly marked approximate until a stronger source or direct reference implementation confirms the transform. citeturn1search0turn1search3
 
 ## Event fidelity
 Implemented: real XML ingestion, event load references, weighted eventLists, AE resources/overwrites, common choices/requirements, stores, distress, hostile, repair, resource/crew effects, and original text IDs through data/text-ja.xml.
@@ -114,8 +111,8 @@ Implemented: real XML ingestion, event load references, weighted eventLists, AE 
 Still incomplete: complex nested requirements, full blue options, complete quest chains, complete reward semantics, exact unique-event limits, full environmental/ASB behavior, and enemy escape/fleet-pursuit effects.
 
 ## Rebel Fleet
-Implemented: per-beacon fleetCovered, navigable fleet beacons with Rebel encounters, save/load persistence, normal pursuit position, nebula pursuit modifiers, and Distraction Buoys delay.
-Approximation remains in exact fleet frontier/rate timing, special event pursuit changes, ASB/environment replacement, and exact Rebel Elite selection.
+Implemented: per-beacon fleetCovered, navigable fleet beacons with Rebel encounters, save/load persistence, normal pursuit position, nebula pursuit modifiers, Distraction Buoys delay, and Rebel Controlled Sector entry advance.
+Approximation remains in exact fleet frontier/rate timing, raw pursuit-to-map mapping, fleet-controlled beacon environment/ASB replacement, nebula takeover exceptions, and exact Rebel Elite selection.
 
 ## Last Stand
 Implemented: Sector 8 entry resources, Flagship/Base state and save/load, 3–5 jump route scaffold, two-player-jump cadence, wait/post-phase behavior, Base countdown, individual takeover, and FINAL event-pool checks.
@@ -141,12 +138,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Audio: pending
 - Save/load: partial
 - Mod support: pending
-- Overall engineering maturity: roughly 40–45% toward the stated actual-game-faithful playable target.
+- Overall project progress: ~50% toward the stated actual-game-faithful playable target.
 
 ## Immediate next work
-1. Verify Host/Vita CI for the latest pursuit-fidelity commits.
-2. Continue tightening Rebel Fleet beacon frontier / exact pursuit-to-map mapping; current raw-position-to-beacon mapping is still an approximation.
-3. Tighten fleet-controlled beacon environment/ASB exceptions using the real event data and documented vanilla rules.
+1. Tighten Rebel Fleet raw pursuit-to-map mapping without inventing an unsupported transform.
+2. Tighten fleet-controlled beacon environment/ASB exceptions using real event data and documented vanilla rules.
+3. Add regression coverage for nebula pursuit rate modifiers and fleet takeover edge cases.
 4. Continue Sector 8 takeover/Flagship fidelity.
 5. Continue deeper event-choice/effect fidelity.
 
