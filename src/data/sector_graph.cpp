@@ -11,47 +11,67 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
     rowStarts_.clear();
     rowCounts_.clear();
 
-    // Vanilla FTL builds the map before applying sector event data.
-    // The map uses a 6x4 logical grid and contains 16-24 beacons after randomly skipping grid positions.
+    // Vanilla FTL creates the map before sector events are assigned.
+    // The layout is a 6x4 grid. Each cell normally has an 80% chance to
+    // contain a beacon, with the generator enforcing the 19-beacon minimum.
     constexpr int kRows = 6;
     constexpr int kColumns = 4;
+    constexpr float kLinkDistance = 165.0f;
     rows_ = kRows;
     columns_ = kColumns;
 
     std::mt19937 rng(seed ^ (static_cast<std::uint32_t>(sector) * 0x9e3779b9u));
 
-    std::vector<int> counts(static_cast<std::size_t>(rows_), 2);
-    const int targetTotal = 19 + static_cast<int>(rng() % 6u);
-    int remaining = targetTotal - rows_ * 2;
-    while (remaining > 0) {
-        const int row = static_cast<int>(rng() % static_cast<std::uint32_t>(rows_));
-        if (counts[static_cast<std::size_t>(row)] < kColumns) {
-            ++counts[static_cast<std::size_t>(row)];
-            --remaining;
+    std::vector<std::pair<int, int>> occupied;
+    occupied.reserve(kRows * kColumns);
+    int remainingCells = kRows * kColumns;
+    int requiredBeacons = 19 + static_cast<int>(rng() % 6u);
+
+    for (int row = 0; row < kRows; ++row) {
+        for (int column = 0; column < kColumns; ++column) {
+            --remainingCells;
+            const int currentBeacons = static_cast<int>(occupied.size());
+
+            // Keep enough cells occupied to reach the vanilla 19-beacon
+            // minimum. The first column must also have a start beacon, and
+            // normal sectors must have an exit candidate in the final two
+            // columns of the 6-column map.
+            bool force = currentBeacons + remainingCells < requiredBeacons;
+            if (row == 0 && column == kColumns - 1) {
+                bool hasStart = false;
+                for (const auto& cell : occupied)
+                    if (cell.first == 0) hasStart = true;
+                if (!hasStart) force = true;
+            }
+            if (row >= kRows - 2 && column == kColumns - 1 && sector < 7) {
+                bool hasExit = false;
+                for (const auto& cell : occupied)
+                    if (cell.first >= kRows - 2) hasExit = true;
+                if (!hasExit) force = true;
+            }
+
+            if (force || (rng() % 100u) < 80u)
+                occupied.emplace_back(row, column);
         }
     }
 
-    rowStarts_.resize(static_cast<std::size_t>(rows_), 0);
-    rowCounts_ = counts;
+    rowStarts_.assign(static_cast<std::size_t>(rows_), 0);
+    rowCounts_.assign(static_cast<std::size_t>(rows_), 0);
 
     for (int row = 0; row < rows_; ++row) {
-        std::vector<int> available{0, 1, 2, 3};
-        std::shuffle(available.begin(), available.end(), rng);
-        std::sort(available.begin(), available.begin() +
-            counts[static_cast<std::size_t>(row)]);
         rowStarts_[static_cast<std::size_t>(row)] =
             static_cast<int>(nodes_.size());
-        for (int i = 0; i < counts[static_cast<std::size_t>(row)]; ++i) {
+        for (const auto& cell : occupied) {
+            if (cell.first != row) continue;
             BeaconNode beacon;
             beacon.row = row;
-            beacon.column = available[static_cast<std::size_t>(i)];
-            // The 6 grid columns are the horizontal progression of the
-            // vanilla sector map; the 4 rows are the vertical lanes.
+            beacon.column = cell.second;
             beacon.x = 150.0f + row * 150.0f + 8.0f +
                 static_cast<float>(rng() % 134u);
-            beacon.y = 80.0f + beacon.column * 100.0f + 8.0f +
+            beacon.y = 80.0f + cell.second * 100.0f + 8.0f +
                 static_cast<float>(rng() % 84u);
             nodes_.push_back(beacon);
+            ++rowCounts_[static_cast<std::size_t>(row)];
         }
     }
 
@@ -61,110 +81,89 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
 
     startNode_ = rowNode(0, static_cast<int>(
         rng() % static_cast<std::uint32_t>(rowCounts_[0])));
-    exitNode_ = rowNode(rows_ - 1, static_cast<int>(
-        rng() % static_cast<std::uint32_t>(rowCounts_[rows_ - 1])));
+
+    if (sector >= 7) {
+        // The Last Stand has its own runtime state machine, but its beacon
+        // graph still uses the same generated grid.
+        exitNode_ = rowNode(rows_ - 1, static_cast<int>(
+            rng() % static_cast<std::uint32_t>(rowCounts_[rows_ - 1])));
+    } else {
+        std::vector<int> exitCandidates;
+        for (int row = rows_ - 2; row < rows_; ++row) {
+            for (int i = 0; i < rowCounts_[static_cast<std::size_t>(row)]; ++i)
+                exitCandidates.push_back(rowNode(row, i));
+        }
+        exitNode_ = exitCandidates[static_cast<std::size_t>(
+            rng() % static_cast<std::uint32_t>(exitCandidates.size()))];
+    }
     nodes_[static_cast<std::size_t>(startNode_)].visited = true;
 
-    auto nearest = [](const std::vector<int>& columns, int column) {
-        int best = 0;
-        int bestDistance = 1000000;
-        for (int i = 0; i < static_cast<int>(columns.size()); ++i) {
-            const int distance =
-                std::abs(columns[static_cast<std::size_t>(i)] - column);
-            if (distance < bestDistance) {
-                bestDistance = distance;
-                best = i;
-            }
-        }
-        return best;
-    };
+    // Beacons connect to every beacon in an adjacent grid cell when the
+    // actual map-space distance is <=165 pixels. Links are bidirectional,
+    // which preserves the vanilla ability to revisit connected beacons.
+    for (std::size_t i = 0; i < nodes_.size(); ++i) {
+        for (std::size_t j = i + 1; j < nodes_.size(); ++j) {
+            const auto& a = nodes_[i];
+            const auto& b = nodes_[j];
+            if (std::abs(a.row - b.row) > 1 ||
+                std::abs(a.column - b.column) > 1)
+                continue;
 
-    for (int row = 0; row < rows_ - 1; ++row) {
-        const int fromCount = rowCounts_[static_cast<std::size_t>(row)];
-        const int toCount = rowCounts_[static_cast<std::size_t>(row + 1)];
+            const float dx = a.x - b.x;
+            const float dy = a.y - b.y;
+            if ((dx * dx + dy * dy) > (kLinkDistance * kLinkDistance))
+                continue;
 
-        std::vector<int> fromColumns;
-        std::vector<int> toColumns;
-        for (int i = 0; i < fromCount; ++i)
-            fromColumns.push_back(
-                nodes_[static_cast<std::size_t>(rowNode(row, i))].column);
-        for (int i = 0; i < toCount; ++i)
-            toColumns.push_back(
-                nodes_[static_cast<std::size_t>(rowNode(row + 1, i))].column);
-
-        // Every destination gets at least one incoming route.
-        for (int targetIndex = 0; targetIndex < toCount; ++targetIndex) {
-            const int parentIndex = nearest(
-                fromColumns, toColumns[static_cast<std::size_t>(targetIndex)]);
-            auto& links =
-                nodes_[static_cast<std::size_t>(rowNode(row, parentIndex))].links;
-            const int target = rowNode(row + 1, targetIndex);
-            if (std::find(links.begin(), links.end(), target) == links.end())
-                links.push_back(target);
-        }
-
-        // Every source gets at least one outgoing route.
-        for (int sourceIndex = 0; sourceIndex < fromCount; ++sourceIndex) {
-            auto& links =
-                nodes_[static_cast<std::size_t>(rowNode(row, sourceIndex))].links;
-            if (!links.empty()) continue;
-            const int targetIndex = nearest(
-                toColumns, fromColumns[static_cast<std::size_t>(sourceIndex)]);
-            links.push_back(rowNode(row + 1, targetIndex));
-        }
-
-        // Add nearby alternatives to produce the branching/converging map
-        // structure without permitting implausibly long row-to-row jumps.
-        for (int sourceIndex = 0; sourceIndex < fromCount; ++sourceIndex) {
-            auto& links =
-                nodes_[static_cast<std::size_t>(rowNode(row, sourceIndex))].links;
-            const int sourceColumn =
-                fromColumns[static_cast<std::size_t>(sourceIndex)];
-            std::vector<int> candidates;
-            for (int targetIndex = 0; targetIndex < toCount; ++targetIndex) {
-                const int target = rowNode(row + 1, targetIndex);
-                if (std::find(links.begin(), links.end(), target) != links.end())
-                    continue;
-                if (std::abs(toColumns[static_cast<std::size_t>(targetIndex)] -
-                             sourceColumn) <= 1)
-                    candidates.push_back(targetIndex);
-            }
-            std::shuffle(candidates.begin(), candidates.end(), rng);
-            if (!candidates.empty() && (rng() % 100u) < 55u)
-                links.push_back(rowNode(row + 1, candidates.front()));
+            nodes_[i].links.push_back(static_cast<int>(j));
+            nodes_[j].links.push_back(static_cast<int>(i));
         }
     }
 
-    // The Last Stand uses the same 6x4 beacon placement, but its navigation
-    // graph follows the vanilla adjacent-grid rule rather than the normal
-    // forward-only sector links. This allows the Flagship to route through
-    // vertical as well as diagonal/forward neighboring beacons.
-    if (sector >= 7) {
-        // Replace the normal forward-only links entirely. Last Stand uses
-        // the vanilla adjacent-grid navigation rule for all beacon movement.
-        for (auto& beacon : nodes_) beacon.links.clear();
+    // A valid FTL map must provide a route from the start to the exit.
+    // If a sparse random layout disconnects them, preserve the generated
+    // placement but add only the nearest adjacent-grid bridge needed to make
+    // the route traversable. This keeps the map shape random while preventing
+    // an unwinnable sector graph.
+    std::vector<int> reachable(nodes_.size(), 0);
+    std::vector<int> stack{startNode_};
+    while (!stack.empty()) {
+        const int current = stack.back();
+        stack.pop_back();
+        if (reachable[static_cast<std::size_t>(current)]) continue;
+        reachable[static_cast<std::size_t>(current)] = 1;
+        for (const int next : nodes_[static_cast<std::size_t>(current)].links)
+            if (!reachable[static_cast<std::size_t>(next)]) stack.push_back(next);
+    }
+
+    if (!reachable[static_cast<std::size_t>(exitNode_)]) {
+        int bestA = -1;
+        int bestB = -1;
+        float bestDistance = 1000000.0f;
         for (std::size_t i = 0; i < nodes_.size(); ++i) {
+            if (!reachable[i]) continue;
             for (std::size_t j = 0; j < nodes_.size(); ++j) {
-                if (i == j) continue;
-                const auto& a = nodes_[i];
-                const auto& b = nodes_[j];
-                if (std::abs(a.row - b.row) > 1 ||
-                    std::abs(a.column - b.column) > 1)
+                if (reachable[j]) continue;
+                if (std::abs(nodes_[i].row - nodes_[j].row) > 1 ||
+                    std::abs(nodes_[i].column - nodes_[j].column) > 1)
                     continue;
-                const float dx = a.x - b.x;
-                const float dy = a.y - b.y;
-                if ((dx * dx + dy * dy) > (165.0f * 165.0f))
-                    continue;
-                auto& links = nodes_[i].links;
-                if (std::find(links.begin(), links.end(), static_cast<int>(j)) ==
-                    links.end())
-                    links.push_back(static_cast<int>(j));
+                const float dx = nodes_[i].x - nodes_[j].x;
+                const float dy = nodes_[i].y - nodes_[j].y;
+                const float distance = dx * dx + dy * dy;
+                if (distance <= kLinkDistance * kLinkDistance &&
+                    distance < bestDistance) {
+                    bestDistance = distance;
+                    bestA = static_cast<int>(i);
+                    bestB = static_cast<int>(j);
+                }
             }
         }
+        if (bestA >= 0) {
+            nodes_[static_cast<std::size_t>(bestA)].links.push_back(bestB);
+            nodes_[static_cast<std::size_t>(bestB)].links.push_back(bestA);
+        }
     }
-
-
 }
+
 
 const BeaconNode* SectorGraph::node(int index) const {
     if (index < 0 || index >= static_cast<int>(nodes_.size())) return nullptr;
