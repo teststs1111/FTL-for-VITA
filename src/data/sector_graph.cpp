@@ -23,7 +23,7 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
         rowCounts_[static_cast<std::size_t>(r)] = count;
         for (int i = 0; i < count; ++i) {
             const int column = (i * (columns_ - 1)) / std::max(1, count - 1);
-            nodes_.push_back({r, column, {}, false});
+            nodes_.push_back({r, column, {}, false, false});
         }
     }
 
@@ -92,7 +92,7 @@ std::vector<int> SectorGraph::selectable(int current, int fleetRow) const {
             const int index = firstStart + i;
             const auto* target = node(index);
             if (!target) continue;
-            if (fleetRow >= 0 && target->row <= fleetRow) continue;
+            if (target->fleetCovered || (fleetRow >= 0 && target->row <= fleetRow)) continue;
             out.push_back(index);
         }
         return out;
@@ -109,20 +109,33 @@ std::vector<int> SectorGraph::selectable(int current, int fleetRow) const {
         out.push_back(link);
     }
 
-    // The simplified fleet model must not make a sector mathematically
-    // unwinnable. If the boundary blocks every connected destination, retain
-    // the furthest-forward connected beacon as an emergency escape route.
-    if (out.empty() && !n->links.empty()) {
-        int fallback = n->links.front();
-        for (const int link : n->links) {
-            const auto* candidate = node(link);
-            const auto* best = node(fallback);
-            if (candidate && best && candidate->row > best->row)
-                fallback = link;
-        }
-        out.push_back(fallback);
-    }
+    // Per-beacon fleet flags are authoritative; fleetRow remains a compatibility fallback.
     return out;
+}
+
+void SectorGraph::setFleetCoverageFromRow(int fleetRow) {
+    for (auto& beacon : nodes_)
+        beacon.fleetCovered = fleetRow >= 0 && beacon.row <= fleetRow;
+}
+
+void SectorGraph::setFleetCoveredIndices(const std::vector<int>& indices) {
+    for (auto& beacon : nodes_) beacon.fleetCovered = false;
+    for (const int index : indices) {
+        if (index >= 0 && index < static_cast<int>(nodes_.size()))
+            nodes_[static_cast<std::size_t>(index)].fleetCovered = true;
+    }
+}
+
+std::vector<int> SectorGraph::fleetCoveredIndices() const {
+    std::vector<int> result;
+    for (std::size_t i = 0; i < nodes_.size(); ++i)
+        if (nodes_[i].fleetCovered) result.push_back(static_cast<int>(i));
+    return result;
+}
+
+bool SectorGraph::isFleetCovered(int index) const {
+    const auto* beacon = node(index);
+    return beacon && beacon->fleetCovered;
 }
 
 }
