@@ -18,8 +18,14 @@ static void testVanillaGridBounds() {
 
     std::vector<int> reachable(graph.nodes().size(), 0);
     std::queue<int> queue;
-    queue.push(graph.startNode());
-    reachable[static_cast<std::size_t>(graph.startNode())] = 1;
+    for (const auto& beacon : graph.nodes()) {
+        if (beacon.row == 0) {
+            const int index = static_cast<int>(&beacon - graph.nodes().data());
+            reachable[static_cast<std::size_t>(index)] = 1;
+            queue.push(index);
+        }
+    }
+    assert(!queue.empty());
 
     while (!queue.empty()) {
         const int current = queue.front();
