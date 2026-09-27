@@ -1818,6 +1818,84 @@ public:
         }
     }
 
+    void initializeLastStandState() {
+        flagshipNode_ = -1;
+        flagshipBaseNode_ = -1;
+        flagshipRoute_.clear();
+        flagshipRouteIndex_ = 0;
+        flagshipJumpCounter_ = 0;
+        flagshipBaseTurns_ = 0;
+        flagshipWaitTurns_ = 0;
+
+        if (sector_ < 7 || sectorGraph_.nodes().empty()) return;
+
+        // The Flagship starts on the right side. Build a concrete route through
+        // the generated beacon graph so it can reach a base in the middle of
+        // the map in 3-5 Flagship jumps, matching vanilla Last Stand timing.
+        int current = sectorGraph_.exitNode();
+        flagshipRoute_.push_back(current);
+        const int desiredJumps = 3 + static_cast<int>((seed_ ^ visitedBeacons_) % 3u);
+        for (int step = 0; step < desiredJumps; ++step) {
+            std::vector<int> incoming;
+            const auto* currentNode = sectorGraph_.node(current);
+            if (!currentNode) break;
+            for (std::size_t i = 0; i < sectorGraph_.nodes().size(); ++i) {
+                const auto& candidate = sectorGraph_.nodes()[i];
+                if (candidate.row + 1 != currentNode->row) continue;
+                if (std::find(candidate.links.begin(), candidate.links.end(), current) != candidate.links.end())
+                    incoming.push_back(static_cast<int>(i));
+            }
+            if (incoming.empty()) break;
+
+            std::sort(incoming.begin(), incoming.end(), [&](int a, int b) {
+                const auto* na = sectorGraph_.node(a);
+                const auto* nb = sectorGraph_.node(b);
+                return na && nb && na->x > nb->x;
+            });
+            current = incoming.front();
+            flagshipRoute_.push_back(current);
+        }
+
+        // If the generated route is shorter than the requested timing window,
+        // use the farthest reachable predecessor as the base rather than
+        // inventing a disconnected beacon.
+        flagshipRouteIndex_ = 0;
+        flagshipNode_ = flagshipRoute_.front();
+        flagshipBaseNode_ = flagshipRoute_.back();
+        if (flagshipRoute_.size() < 3) {
+            flagshipBaseNode_ = flagshipRoute_.back();
+        }
+    }
+
+    void advanceLastStandFlagshipAfterJump() {
+        if (sector_ < 7 || flagshipNode_ < 0) return;
+
+        if (flagshipWaitTurns_ > 0) {
+            --flagshipWaitTurns_;
+            return;
+        }
+
+        ++flagshipJumpCounter_;
+        if (flagshipJumpCounter_ < 2) return;
+        flagshipJumpCounter_ = 0;
+
+        if (flagshipRouteIndex_ + 1 < static_cast<int>(flagshipRoute_.size())) {
+            ++flagshipRouteIndex_;
+            flagshipNode_ = flagshipRoute_[static_cast<std::size_t>(flagshipRouteIndex_)];
+            flagshipBaseTurns_ = 0;
+            // A beacon left by the Flagship becomes Rebel-controlled.
+            auto covered = sectorGraph_.fleetCoveredIndices();
+            if (std::find(covered.begin(), covered.end(), flagshipNode_) == covered.end())
+                covered.push_back(flagshipNode_);
+            sectorGraph_.setFleetCoveredIndices(covered);
+        } else {
+            ++flagshipBaseTurns_;
+            if (flagshipBaseTurns_ >= 3) {
+                sceneMode_ = SceneMode::GameOver;
+            }
+        }
+    }
+
     void updateSectorMap() {
         // FTL advances through a connected beacon map. The current geometry is
         // a compatibility graph for the original FTL sector flow; its encounter data now comes
@@ -3146,6 +3224,13 @@ private:
     bool mapRevealed_{false};
     bool secretSectorPending_{false};
     bool rebelFleetEncounter_{false};
+    int flagshipNode_{-1};
+    int flagshipBaseNode_{-1};
+    int flagshipRouteIndex_{0};
+    int flagshipJumpCounter_{0};
+    int flagshipBaseTurns_{0};
+    int flagshipWaitTurns_{0};
+    std::vector<int> flagshipRoute_;
 };
 
 } // namespace
