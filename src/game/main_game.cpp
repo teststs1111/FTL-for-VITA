@@ -2328,12 +2328,17 @@ public:
     }
 
     void applySectorStartFleetModifiers() {
-        // Distraction Buoys leave a false signal when entering a new sector,
-        // delaying the first Rebel Fleet advancement by one jump. The Last
-        // Stand uses a separate takeover model, so the augment has no effect
-        // there.
-        if (sector_ >= 7 || !hasAugment("DISTRACTION_BUOYS")) return;
-        fleetPursuitDelay_ = std::max(-32, fleetPursuitDelay_ - 1);
+        if (sector_ >= 7) return;
+
+        // Rebel Controlled sectors begin with the fleet already one jump
+        // closer. This is an entry-time modifier, not a normal jump.
+        if (currentSectorType_ == "REBEL_SECTOR")
+            fleetPursuitPosition_ += 64.0f;
+
+        // Distraction Buoys postpone the first fleet advancement by one jump.
+        // A one-turn pursuit delay is represented by -1 in modifyPursuit.
+        if (hasAugment("DISTRACTION_BUOYS"))
+            fleetPursuitDelay_ = std::max(-32, fleetPursuitDelay_ - 1);
     }
 
     void advanceRebelFleetAfterJump() {
