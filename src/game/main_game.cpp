@@ -1003,6 +1003,7 @@ public:
         applySectorStartFleetModifiers();
         sectorGraph_.generate(sector_, seed_);
         configureBeaconNebulaState();
+        assignSectorBeaconEvents();
         // Preserve the initial pursuit state, including Distraction Buoys.
         // Position-based coverage is the authoritative Fleet representation.
         sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
