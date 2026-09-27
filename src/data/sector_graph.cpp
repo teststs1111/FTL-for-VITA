@@ -181,6 +181,47 @@ void SectorGraph::setFleetCoverageFromRow(int fleetRow) {
         beacon.fleetCovered = fleetRow >= 0 && beacon.row <= fleetRow;
 }
 
+void SectorGraph::advanceFleetCoverage(int steps) {
+    if (steps <= 0 || nodes_.empty()) return;
+
+    for (int step = 0; step < steps; ++step) {
+        int frontierRow = -1;
+        for (const auto& beacon : nodes_) {
+            if (beacon.fleetCovered) frontierRow = std::max(frontierRow, beacon.row);
+        }
+
+        if (frontierRow < 0) frontierRow = -1;
+        const int nextRow = frontierRow + 1;
+        if (nextRow >= exitRow()) break;
+
+        std::vector<int> candidates;
+        for (std::size_t i = 0; i < nodes_.size(); ++i) {
+            const auto& beacon = nodes_[i];
+            if (beacon.row != nextRow || beacon.fleetCovered) continue;
+
+            bool adjacent = frontierRow < 0;
+            if (!adjacent) {
+                for (const auto& source : nodes_) {
+                    if (!source.fleetCovered) continue;
+                    if (std::find(source.links.begin(), source.links.end(),
+                                  static_cast<int>(i)) != source.links.end()) {
+                        adjacent = true;
+                        break;
+                    }
+                }
+            }
+            if (adjacent) candidates.push_back(static_cast<int>(i));
+        }
+
+        if (candidates.empty()) break;
+
+        // Keep the fleet as a connected, beacon-level frontier rather than
+        // capturing an entire row at once. The deterministic lowest-index
+        // candidate keeps saves/replays stable without introducing a new RNG.
+        nodes_[static_cast<std::size_t>(candidates.front())].fleetCovered = true;
+    }
+}
+
 void SectorGraph::setFleetCoveredIndices(const std::vector<int>& indices) {
     for (auto& beacon : nodes_) beacon.fleetCovered = false;
     for (const int index : indices) {
