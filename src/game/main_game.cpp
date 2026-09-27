@@ -1893,38 +1893,47 @@ public:
             if (aNode && bNode && aNode->x > bNode->x) start = index;
         }
 
-        // Build the Flagship path backwards through the actual map links.
-        // This keeps the route connected instead of reusing the normal-sector
-        // exit beacon or inventing a disconnected boss path.
-        std::vector<int> reverseRoute{start};
-        int current = start;
-        while (sectorGraph_.node(current) &&
-               sectorGraph_.node(current)->row > baseRow) {
+        // Build a connected Flagship -> Base path through the actual map links.
+        // Use a breadth-first search over incoming links rather than greedily
+        // picking a predecessor, because a locally far-right predecessor can
+        // lead to a dead end even when another connected path exists.
+        std::vector<int> queue{start};
+        std::vector<int> parent(sectorGraph_.nodes().size(), -1);
+        parent[static_cast<std::size_t>(start)] = start;
+        int base = -1;
+        for (std::size_t head = 0; head < queue.size() && base < 0; ++head) {
+            const int current = queue[head];
             const auto* target = sectorGraph_.node(current);
-            int previous = -1;
-            float bestX = -1.0e9f;
+            if (!target) continue;
+            if (target->row == baseRow) {
+                base = current;
+                break;
+            }
+
             for (std::size_t i = 0; i < sectorGraph_.nodes().size(); ++i) {
+                if (parent[i] != -1) continue;
                 const auto& candidate = sectorGraph_.nodes()[i];
                 if (candidate.row + 1 != target->row) continue;
                 if (std::find(candidate.links.begin(), candidate.links.end(), current) ==
                     candidate.links.end()) continue;
-                if (candidate.x > bestX) {
-                    bestX = candidate.x;
-                    previous = static_cast<int>(i);
-                }
+                parent[i] = current;
+                queue.push_back(static_cast<int>(i));
             }
-            if (previous < 0) break;
-            reverseRoute.push_back(previous);
-            current = previous;
         }
 
-        if (reverseRoute.empty() ||
-            sectorGraph_.node(reverseRoute.back())->row != baseRow)
-            return;
+        if (base < 0) return;
 
-        // reverseRoute is already ordered Flagship -> Base because each
-        // predecessor is appended while walking left through the map.
-        flagshipRoute_ = reverseRoute;
+        std::vector<int> reverseRoute;
+        for (int current = base; ; current = parent[static_cast<std::size_t>(current)]) {
+            reverseRoute.push_back(current);
+            if (current == start) break;
+        }
+        std::reverse(reverseRoute.begin(), reverseRoute.end());
+
+        // reverseRoute is ordered Flagship -> Base and therefore has exactly
+        // routeMoves edges because every map link advances one row.
+        if (static_cast<int>(reverseRoute.size()) != routeMoves + 1) return;
+        flagshipRoute_ = std::move(reverseRoute);
         flagshipRouteIndex_ = 0;
         flagshipNode_ = flagshipRoute_.front();
         flagshipBaseNode_ = flagshipRoute_.back();
