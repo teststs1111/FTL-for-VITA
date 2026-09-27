@@ -10,6 +10,7 @@ struct BeaconNode {
     std::vector<int> links;
     bool visited{false};
     bool fleetCovered{false};
+    bool nebula{false};
 };
 
 class SectorGraph {
@@ -19,6 +20,7 @@ public:
     const BeaconNode* node(int index) const;
     std::vector<int> selectable(int current, int fleetRow = -1) const;
     void setFleetCoverageFromRow(int fleetRow);
+    void setNebulaSector(bool enabled);
     void setFleetCoveredIndices(const std::vector<int>& indices);
     std::vector<int> fleetCoveredIndices() const;
     bool isFleetCovered(int index) const;
