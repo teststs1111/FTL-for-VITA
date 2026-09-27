@@ -1,5 +1,7 @@
 #include "data/sector_graph.hpp"
 #include <algorithm>
+#include <array>
+#include <cmath>
 #include <random>
 
 namespace wormhole {
