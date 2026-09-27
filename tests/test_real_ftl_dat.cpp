@@ -59,10 +59,18 @@ int main() {
     assert(crewRemoval->crewRemovals.size() == 1);
     assert(!crewRemoval->crewRemovals.front().clone);
 
+    const auto* fleetDelay = events.find("FUEL_FLEET_DELAY");
+    assert(fleetDelay != nullptr);
+    assert(fleetDelay->special.modifyPursuit == -1);
+    const auto* fleetAdvance = events.find("FUEL_FLEET_DISTRESS");
+    assert(fleetAdvance != nullptr);
+    assert(fleetAdvance->special.modifyPursuit == 1);
+
     wormhole::SectorDatabase sectors(assets);
     sectors.setAdvancedEdition(true);
     assert(sectors.load());
     assert(sectors.select(0, 0) != nullptr);
+    assert(sectors.find("REBEL_SECTOR") != nullptr);
     const auto* final = sectors.select(7, 0);
     assert(final != nullptr && final->name == "FINAL");
     auto finalPool = [&](const char* name, int min, int max) {
