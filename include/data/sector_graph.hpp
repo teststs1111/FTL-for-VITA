@@ -33,8 +33,8 @@ private:
     std::vector<BeaconNode> nodes_;
     std::vector<int> rowStarts_;
     std::vector<int> rowCounts_;
-    int rows_{8};
-    int columns_{5};
+    int rows_{6};
+    int columns_{4};
     int startNode_{0};
 };
 
