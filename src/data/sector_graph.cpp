@@ -119,6 +119,14 @@ void SectorGraph::setNebulaSector(bool enabled) {
     for (auto& beacon : nodes_) beacon.nebula = enabled;
 }
 
+void SectorGraph::setNebulaIndices(const std::vector<int>& indices) {
+    for (auto& beacon : nodes_) beacon.nebula = false;
+    for (const int index : indices) {
+        if (index >= 0 && index < static_cast<int>(nodes_.size()))
+            nodes_[static_cast<std::size_t>(index)].nebula = true;
+    }
+}
+
 void SectorGraph::setFleetCoverageFromRow(int fleetRow) {
     for (auto& beacon : nodes_)
         beacon.fleetCovered = fleetRow >= 0 && beacon.row <= fleetRow;
