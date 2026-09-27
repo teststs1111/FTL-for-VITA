@@ -1866,30 +1866,33 @@ public:
 
         if (sector_ < 7 || sectorGraph_.nodes().empty()) return;
 
-        // Last Stand is not a normal sector: there is no story-gate exit.
-        // Vanilla places the player at the far left, the Flagship on the
-        // right side, and the Federation Base around the middle/right.
-        // Keep those roles independent from SectorGraph::exitNode().
+        // Last Stand has no normal story-gate exit. Vanilla places the
+        // Flagship on the right side and the Federation Base around the
+        // middle/right, so select those roles independently of exitNode().
         const int rightRow = sectorGraph_.rows() - 1;
-        const int flagshipRow = rightRow - static_cast<int>((seed_ ^ visitedBeacons_) & 1u);
+        const int flagshipRow = rightRow -
+            static_cast<int>((seed_ ^ visitedBeacons_) & 1u);
         const int baseRow = std::max(0, flagshipRow - 3);
 
         std::vector<int> flagshipCandidates;
         std::vector<int> baseCandidates;
         for (std::size_t i = 0; i < sectorGraph_.nodes().size(); ++i) {
             const auto& beacon = sectorGraph_.nodes()[i];
-            if (beacon.row == flagshipRow) flagshipCandidates.push_back(static_cast<int>(i));
-            if (beacon.row == baseRow) baseCandidates.push_back(static_cast<int>(i));
+            if (beacon.row == flagshipRow)
+                flagshipCandidates.push_back(static_cast<int>(i));
+            if (beacon.row == baseRow)
+                baseCandidates.push_back(static_cast<int>(i));
         }
         if (flagshipCandidates.empty() || baseCandidates.empty()) return;
 
         auto chooseByX = [&](const std::vector<int>& candidates, bool rightSide) {
             int chosen = candidates.front();
             for (const int index : candidates) {
-                const auto* a = sectorGraph_.node(index);
-                const auto* b = sectorGraph_.node(chosen);
-                if (!a || !b) continue;
-                if ((rightSide && a->x > b->x) || (!rightSide && a->x < b->x))
+                const auto* aNode = sectorGraph_.node(index);
+                const auto* bNode = sectorGraph_.node(chosen);
+                if (!aNode || !bNode) continue;
+                if ((rightSide && aNode->x > bNode->x) ||
+                    (!rightSide && aNode->x < bNode->x))
                     chosen = index;
             }
             return chosen;
@@ -1898,50 +1901,22 @@ public:
         const int start = chooseByX(flagshipCandidates, true);
         const int base = chooseByX(baseCandidates, false);
 
-        // Follow actual generated links toward the base. For the normal
-        // 6-column map this produces the canonical 3-jump Last Stand layout;
-        // the remaining 4/5-jump vanilla variants are a follow-up fidelity
-        // target because their Flagship route is not the same as the normal
-        // sector exit graph.
+        // Flagship movement runs against the normal map direction. Walk
+        // incoming generated links from the right-side start until the
+        // selected base row, then reverse the path for forward movement.
+        std::vector<int> reverseRoute{start};
         int current = start;
-        flagshipRoute_.push_back(current);
         while (current != base) {
-            const auto* node = sectorGraph_.node(current);
-            if (!node) break;
-            int next = -1;
-            float bestDistance = 1.0e9f;
-            for (const int link : node->links) {
-                const auto* candidate = sectorGraph_.node(link);
-                if (!candidate || candidate->row <= node->row) continue;
-                const float distance = std::fabs(candidate->x - sectorGraph_.node(base)->x);
-                if (candidate->row <= baseRow && distance < bestDistance) {
-                    bestDistance = distance;
-                    next = link;
-                }
-            }
-            // The graph points rightward, so route backwards from the base
-            // when constructing the Flagship's approach path.
-            if (next >= 0) {
-                current = next;
-                flagshipRoute_.push_back(current);
-                continue;
-            }
-            break;
-        }
-
-        // Build a reliable route by walking incoming links from the base to
-        // the chosen right-side start, then reverse it for forward movement.
-        std::vector<int> reverseRoute{base};
-        current = base;
-        while (current != start) {
             const auto* target = sectorGraph_.node(current);
             if (!target) break;
+
             int previous = -1;
             float bestX = -1.0e9f;
             for (std::size_t i = 0; i < sectorGraph_.nodes().size(); ++i) {
                 const auto& candidate = sectorGraph_.nodes()[i];
                 if (candidate.row + 1 != target->row) continue;
-                if (std::find(candidate.links.begin(), candidate.links.end(), current) == candidate.links.end()) continue;
+                if (std::find(candidate.links.begin(), candidate.links.end(), current) ==
+                    candidate.links.end()) continue;
                 if (candidate.x > bestX) {
                     bestX = candidate.x;
                     previous = static_cast<int>(i);
@@ -1950,10 +1925,15 @@ public:
             if (previous < 0) break;
             reverseRoute.push_back(previous);
             current = previous;
+            if (static_cast<int>(reverseRoute.size()) > sectorGraph_.rows()) break;
         }
-        if (current == start) {
+
+        if (current == base) {
             flagshipRoute_.assign(reverseRoute.rbegin(), reverseRoute.rend());
         } else {
+            // The selected pair should normally be connected by the generated
+            // graph. Keep a deterministic fallback rather than creating an
+            // invalid empty Flagship state if a rare graph layout breaks it.
             flagshipRoute_.clear();
             flagshipRoute_.push_back(start);
             flagshipRoute_.push_back(base);
