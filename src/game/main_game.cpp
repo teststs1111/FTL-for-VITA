@@ -596,7 +596,7 @@ public:
         std::ofstream out(savePath(), std::ios::trunc);
         if (!out) return false;
 
-        out << "FTL_VITA_SAVE 10\n";
+        out << "FTL_VITA_SAVE 11\n";
         out << "ship " << std::quoted(runtime_.content.blueprint.id) << "\n";
         out << "seed " << seed_ << "\n";
         out << "sector " << sector_ << "\n";
@@ -622,6 +622,9 @@ public:
         out << "event_usage " << sectorEventUsage_.size() << "\n";
         for (const auto& entry : sectorEventUsage_)
             out << std::quoted(entry.first) << ' ' << entry.second << "\n";
+        out << "beacon_events " << beaconEventAssignments_.size() << "\n";
+        for (const auto& entry : beaconEventAssignments_)
+            out << entry.first << ' ' << std::quoted(entry.second) << "\n";
         out << "visited " << visitedBeacons_ << "\n";
         out << "resources " << fuel_ << ' ' << scrap_ << ' ' << droneParts_ << ' ' << runtime_.missiles << "\n";
         out << "hull " << runtime_.hull << "\n";
@@ -675,7 +678,8 @@ public:
         const bool saveV8 = header == "FTL_VITA_SAVE 8";
         const bool saveV9 = header == "FTL_VITA_SAVE 9";
         const bool saveV10 = header == "FTL_VITA_SAVE 10";
-        const bool currentSave = saveV4 || saveV5 || saveV6 || saveV7 || saveV8 || saveV9 || saveV10;
+        const bool saveV11 = header == "FTL_VITA_SAVE 11";
+        const bool currentSave = saveV4 || saveV5 || saveV6 || saveV7 || saveV8 || saveV9 || saveV10 || saveV11;
         if (!legacySave && !saveV3 && !currentSave) return false;
 
         std::string key, shipId;
@@ -691,18 +695,18 @@ public:
         in >> key >> currentBeacon_ >> selectedBeacon_;
         in >> key >> fleetRow_;
         fleetPursuitDelay_ = 0;
-        if (saveV7 || saveV8 || saveV9 || saveV10) {
+        if (saveV7 || saveV8 || saveV9 || saveV10 || saveV11) {
             in >> key >> fleetPursuitDelay_;
             if (key != "fleet_pursuit_delay") return false;
             fleetPursuitDelay_ = std::clamp(fleetPursuitDelay_, -32, 32);
             fleetPursuitProgress_ = 0.0f;
-            if (saveV8 || saveV9 || saveV10) {
+            if (saveV8 || saveV9 || saveV10 || saveV11) {
                 in >> key >> fleetPursuitProgress_;
                 if (key != "fleet_pursuit_progress") return false;
                 fleetPursuitProgress_ = std::clamp(fleetPursuitProgress_, 0.0f, 0.9999f);
             }
             fleetPursuitPosition_ = -959.0f;
-            if (saveV9 || saveV10) {
+            if (saveV9 || saveV10 || saveV11) {
                 in >> key >> fleetPursuitPosition_;
                 if (key != "fleet_pursuit_position") return false;
                 fleetPursuitPosition_ = std::clamp(fleetPursuitPosition_, -959.0f, 4096.0f);
@@ -716,7 +720,7 @@ public:
         flagshipBaseTurns_ = 0;
         flagshipWaitTurns_ = 0;
         flagshipRoute_.clear();
-        if (saveV10) {
+        if (saveV10 || saveV11) {
             in >> key >> flagshipNode_ >> flagshipBaseNode_ >> flagshipRouteIndex_
                 >> flagshipJumpCounter_ >> flagshipBaseTurns_ >> flagshipWaitTurns_;
             if (key != "flagship_state") return false;
@@ -750,7 +754,7 @@ public:
             in >> key >> flag;
             if (key != "secret_pending") return false;
             secretSectorPending_ = flag != 0;
-            if (saveV6 || saveV7 || saveV8 || saveV9 || saveV10) {
+            if (saveV6 || saveV7 || saveV8 || saveV9 || saveV10 || saveV11) {
                 in >> key >> count;
                 if (key != "fleet_covered") return false;
                 std::vector<int> covered;
@@ -765,6 +769,7 @@ public:
             }
         }
         sectorEventUsage_.clear();
+        beaconEventAssignments_.clear();
         if (currentSave) {
             in >> key >> count;
             if (key != "event_usage") return false;
@@ -773,6 +778,17 @@ public:
                 int usage = 0;
                 in >> std::quoted(eventName) >> usage;
                 if (!eventName.empty()) sectorEventUsage_[eventName] = std::max(0, usage);
+            }
+            if (saveV11) {
+                in >> key >> count;
+                if (key != "beacon_events") return false;
+                for (std::size_t i = 0; i < count; ++i) {
+                    int beacon = -1;
+                    std::string eventName;
+                    in >> beacon >> std::quoted(eventName);
+                    if (beacon >= 0 && !eventName.empty())
+                        beaconEventAssignments_[beacon] = eventName;
+                }
             }
         }
         in >> key >> visitedBeacons_;
@@ -914,7 +930,7 @@ public:
                 flagshipNode_ == flagshipRoute_[static_cast<std::size_t>(flagshipRouteIndex_)] &&
                 flagshipBaseNode_ == flagshipRoute_.back();
         }
-        if (saveV10 && sector_ >= 7 && !validSavedFlagshipState)
+        if ((saveV10 || saveV11) && sector_ >= 7 && !validSavedFlagshipState)
             initializeLastStandState();
 
         if (hasSavedFleetCovered) {
@@ -1276,13 +1292,18 @@ public:
         // loaded event table when a data file is unavailable.
         if (eventOrder_.empty()) return false;
         activeEventId_.clear();
+        const auto assigned = beaconEventAssignments_.find(beacon);
+        if (assigned != beaconEventAssignments_.end()) {
+            activeEventId_ = assigned->second;
+        }
         if (const auto* sector = sectorDatabase_.find(currentSectorType_)) {
-            if (!sector->events.empty())
+            if (!sector->events.empty() && activeEventId_.empty())
                 activeEventId_ = selectSectorEvent(*sector, beacon);
             if (activeEventId_.empty()) activeEventId_ = sector->startEvent;
         }
         if (activeEventId_.empty())
             activeEventId_ = eventOrder_[static_cast<std::size_t>((sector_ * 5 + beacon) % eventOrder_.size())];
+        beaconEventAssignments_[beacon] = activeEventId_;
         const auto* event = eventDatabase_.resolve(activeEventId_, seed_ + static_cast<unsigned>(visitedBeacons_) * 53u);
         if (!event) return false;
         // A sector event pool resolves to a concrete event; keep that concrete
@@ -2064,6 +2085,7 @@ public:
                     const bool enteringLastStand = (sector_ == 6);
                     ++sector_;
                     sectorEventUsage_.clear();
+                    beaconEventAssignments_.clear();
                     fleetRow_ = -1;
                     fleetPursuitDelay_ = 0;
                     fleetPursuitProgress_ = 0.0f;
@@ -3366,6 +3388,7 @@ private:
     std::vector<std::string> augmentIds_;
     std::unordered_map<std::string, std::string> questTargets_;
     std::unordered_map<std::string, int> sectorEventUsage_;
+    std::unordered_map<int, std::string> beaconEventAssignments_;
     std::string currentSectorType_;
     std::vector<std::string> usedUniqueSectorTypes_;
     std::vector<StoreOffer> storeOffers_;
