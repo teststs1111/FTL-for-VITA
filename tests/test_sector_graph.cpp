@@ -86,9 +86,13 @@ static void testFleetCoverage() {
     assert(graph.isFleetCovered(covered.front()));
     assert(graph.fleetCoveredIndices().size() == 1);
 
-    const auto filtered = graph.selectable(graph.startNode(), 0);
-    for (const int index : filtered)
-        assert(!graph.isFleetCovered(index));
+    // A fleet-covered beacon must remain navigable so arrival can trigger
+    // the Rebel fleet encounter rather than silently removing the route.
+    const auto links = graph.selectable(graph.startNode(), -1);
+    assert(!links.empty());
+    graph.setFleetCoveredIndices({links.front()});
+    const auto coveredSelectable = graph.selectable(graph.startNode(), 0);
+    assert(std::find(coveredSelectable.begin(), coveredSelectable.end(), links.front()) != coveredSelectable.end());
 }
 
 int main() {
