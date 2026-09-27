@@ -37,6 +37,22 @@ int main() {
     events.setAdvancedEdition(true);
     assert(events.load());
     assert(events.resolve("STORE_REBELSIDE_SEARCH", 0) != nullptr);
+    const char* nebulaPoolIds[] = {
+        "NEBULA_EMPTY", "NEBULA_REBEL", "NEBULA_AUTO",
+        "NEBULA_AUTO_WARNING", "NEBULA_PIRATE_SMUGGLE",
+        "NEBULA_AUTO_DEFENSE_ITEM", "NEBULA_TRADER", "STORM_REBEL",
+        "STORM_AUTO", "STORM_ITEMS", "NEBULA_LOST_SHIP",
+        "NEBULA_BOARDING", "STORM_BOARDING", "NEBULA_MANTIS_FIGHT",
+        "NEBULA_WEAPONS_TRADER"
+    };
+    for (unsigned seed = 0; seed < 64; ++seed) {
+        const auto* event = events.resolve("NEBULA", seed);
+        assert(event != nullptr);
+        bool known = false;
+        for (const char* id : nebulaPoolIds)
+            if (event->id == id) { known = true; break; }
+        assert(known);
+    }
 
     const auto* crewRemoval = events.find("CREW_DEAD_TEST");
     assert(crewRemoval != nullptr);
