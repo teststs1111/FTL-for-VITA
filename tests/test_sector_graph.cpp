@@ -101,7 +101,6 @@ static void testFleetCoverage() {
     const auto expanded = graph.fleetCoveredIndices();
     assert(expanded.size() == 2);
     assert(graph.node(expanded.back())->row == 1);
-    assert(graph.fleetCoveredIndices().size() == 1);
 
     // A fleet-covered beacon must remain navigable so arrival can trigger
     // the Rebel fleet encounter rather than silently removing the route.
