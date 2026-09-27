@@ -11,24 +11,21 @@
 - Target: a Vita-native playable FTL-style runtime reconstructed from the open-source Tachyon implementation
 - Proprietary FTL source/assets are **not** stored in this repository.
 
-## Current state — 2026-09-26
+## Current state — 2026-09-27
 
 ### Latest commits
 
-- `4ece88fd42df2b6cd4c2ff576b4360ca172a1587` — `Treat native Vita resolution as successful vitaGL init`
-- `645dade5ca9d0fe1d41654c3c41ea5f200451f98` — `Build vitaGL without splashscreen for Vita startup stability`
-- `5b454234140da23b66120a6efd9972b99a77b7aa` — `Allow returning from beacon map to ship management`
-- `2c23d522b7e9ce613c44f31a8372f486c5722c1e` — `Move gameplay flow closer to FTL beacon and pause progression`
-- `fe3d37b16a2e35c6f4e235f15d92c9bdf106160c` — `Set Vita application title to FTL: Faster Than Light`
+- `8391a2467c110abd4279c8cb0f389fafa35624a3` — `Test variable sector graph generation`
+- `660fee07e65d87f22f2e8730a2f81ad8cdce9f7f` — `Add sector graph reachability regression tests`
+- `3e41699b19c51936d35e577c99dacde124100ee1` — `Track variable sector graph row layout`
+- `868321f8e917fbc8a390388a4ed9561fda26a5ed` — `Use variable beacon rows for sector maps`
+- `d0fe6652c29ca73f0672b7d21d3a1fee4ee984cd` — `Document automatic Rebel fleet advancement`
 
 ### CI state
 
-- Latest Vita build for gameplay-flow changes: **in progress** (run #99)
-- Latest Host build for gameplay-flow changes: **in progress** (run #407)
-- Previous known-good Vita/Host builds remain successful; the new run must be green before calling this gameplay-flow change validated.
-- Vita VPK artifact is available and not expired.
-- Artifact size: 1,056,989 bytes
-- Artifact SHA-256: `0693d0783a06d63bbc9c7cb71bbbe7f7d67120aa7150d4fe92a5756ffd9ea407`
+- The latest sector-graph change has just been pushed; GitHub Actions validation is pending.
+- The last directly verified green Host/Vita pair remains commit `8e72b5b0bd7e474501ca8c56514d7f4ae064dac1`.
+- Do not mark the new sector-graph change green until both Host and Vita Actions complete successfully.
 
 ### Startup/crash milestone
 
@@ -213,7 +210,7 @@ Suggested tracking:
 | Japanese localization | Foundation implemented |
 | Japanese font rendering | Pending |
 | FTL UI/touch | Pending |
-| Sector/event flow | 🟡 Prototype beacon flow added; real sector/event data pending |
+| Sector/event flow | 🟡 Real sector database connected; variable beacon graph now implemented; individual fleet coverage and exact vanilla map rules remain pending |
 | Audio | Pending |
 | Save/load | Pending |
 | Mod support | Pending |
@@ -642,3 +639,19 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 2. Add explicit fleet-covered beacon state instead of only a row cutoff.
 3. Verify sector-specific generation constraints and exit/starting-beacon behavior against the supplied sector data.
 4. Add regression coverage for automatic fleet advancement and pursuit modifiers.
+
+
+## 2026-09-27 continuation: sector graph fidelity
+
+- Replaced the fixed 8x3 beacon grid with a deterministic variable-width graph.
+- Each of the eight progression rows now contains 3–5 beacons, placed across a wider logical column range.
+- Links only advance one row at a time, use nearby columns, and include a guaranteed spine from the selected start beacon to the exit row.
+- Added `tests/test_sector_graph.cpp` covering:
+  - deterministic generation;
+  - variable node counts;
+  - valid forward-only row links;
+  - reachable exit;
+  - initial beacon selection;
+  - fleet-row filtering.
+- This is intentionally an incremental compatibility step. The next map-fidelity step is to replace the remaining row-only Rebel fleet approximation with explicit covered-beacon state / movement while preserving deterministic tests and save compatibility.
+- CI for this change is pending; the previously verified green baseline is `8e72b5b0bd7e474501ca8c56514d7f4ae064dac1`.
