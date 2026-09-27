@@ -12,7 +12,7 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
     rowCounts_.clear();
 
     // Vanilla FTL builds the map before applying sector event data.
-    // The map uses a 6x4 logical grid and normally contains 19-24 beacons.
+    // The map uses a 6x4 logical grid and contains 16-24 beacons after randomly skipping grid positions.
     constexpr int kRows = 6;
     constexpr int kColumns = 4;
     rows_ = kRows;
@@ -20,9 +20,9 @@ void SectorGraph::generate(int sector, std::uint32_t seed) {
 
     std::mt19937 rng(seed ^ (static_cast<std::uint32_t>(sector) * 0x9e3779b9u));
 
-    std::vector<int> counts(static_cast<std::size_t>(rows_), 3);
-    const int targetTotal = 19 + static_cast<int>(rng() % 6u);
-    int remaining = targetTotal - rows_ * 3;
+    std::vector<int> counts(static_cast<std::size_t>(rows_), 2);
+    const int targetTotal = 16 + static_cast<int>(rng() % 9u);
+    int remaining = targetTotal - rows_ * 2;
     while (remaining > 0) {
         const int row = static_cast<int>(rng() % static_cast<std::uint32_t>(rows_));
         if (counts[static_cast<std::size_t>(row)] < kColumns) {
