@@ -1,7 +1,7 @@
 #include "data/sector_graph.hpp"
 #include <algorithm>
 #include <cassert>
-#include <cstdint>
+#include <cstdint>\n#include <cmath>
 #include <queue>
 #include <vector>
 
@@ -128,6 +128,35 @@ static void testFleetCoverage() {
     assert(std::find(coveredSelectable.begin(), coveredSelectable.end(), links.front()) != coveredSelectable.end());
 }
 
+static void testLastStandNavigation() {
+    wormhole::SectorGraph graph;
+    graph.generate(8, 0x13579BDFu);
+
+    assert(graph.rows() == 6);
+    assert(graph.nodes().size() >= 16);
+    assert(graph.nodes().size() <= 24);
+
+    bool hasReverseOrSameRowLink = false;
+    for (std::size_t i = 0; i < graph.nodes().size(); ++i) {
+        const auto& source = graph.nodes()[i];
+        for (const int link : source.links) {
+            const auto* target = graph.node(link);
+            assert(target);
+            assert(std::abs(source.row - target->row) <= 1);
+            assert(std::abs(source.column - target->column) <= 1);
+            const float dx = source.x - target->x;
+            const float dy = source.y - target->y;
+            assert((dx * dx + dy * dy) <= (165.0f * 165.0f));
+            if (target->row <= source.row)
+                hasReverseOrSameRowLink = true;
+        }
+    }
+
+    // Last Stand permits adjacent-grid navigation in both directions, unlike
+    // normal sectors' forward-only row progression.
+    assert(hasReverseOrSameRowLink);
+}
+
 static void testNebulaSector() {
     wormhole::SectorGraph graph;
     graph.generate(4, 0x1234u);
@@ -141,6 +170,6 @@ int main() {
     testVanillaGridBounds();
     testDeterminism();
     testFleetCoverage();
-    testNebulaSector();
+    testNebulaSector();\n    testLastStandNavigation();
     return 0;
 }
