@@ -103,7 +103,7 @@ Latest verified pursuit-fidelity work:
 
 Known approximation: exact vanilla beacon coordinate/occupancy sequence and exact cloud-overlap geometry are not yet reproduced. Current implementation selects explicit NEBULA_* beacon counts and grows connected groups, but it does not yet model the actual cloud graphics' overlap test. Do not claim current nebula placement is exact.
 
-Research checkpoint 2026-09-28: external references report that the Rebel Fleet pursuit value advances by 0x40 (64) per normal jump, and a long-standing pursuit-indicator mod reports the same 64-pixel visual advance. The exact mapping from the datamined pursuit counter's raw value to this implementation's generated beacon x-coordinates is still not sufficiently established. Keep the current mapping explicitly marked approximate until a stronger source or direct reference implementation confirms the transform. citeturn1search0turn1search3
+Research checkpoint 2026-09-28: external references report that the Rebel Fleet pursuit value advances by 0x40 (64) per normal jump, and a long-standing pursuit-indicator mod reports the same 64-pixel visual advance. The exact mapping from the datamined pursuit counter's raw value to this implementation's generated beacon x-coordinates is still not sufficiently established. Keep the current mapping explicitly marked approximate until a stronger source or direct reference implementation confirms the transform.
 
 ## Event fidelity
 Implemented: real XML ingestion, event load references, weighted eventLists, AE resources/overwrites, common choices/requirements, stores, distress, hostile, repair, resource/crew effects, and original text IDs through data/text-ja.xml.
