@@ -63,6 +63,7 @@ public:
             applySectorStartFleetModifiers();
             sectorGraph_.generate(sector_, seed_);
             configureBeaconNebulaState();
+            sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
             selectedBeacon_ = sectorGraph_.startNode();
             if (!content_.loadPlayerShip()) {
                 startupError_ = "Player ship blueprint could not be loaded";
@@ -919,9 +920,9 @@ public:
         applySectorStartFleetModifiers();
         sectorGraph_.generate(sector_, seed_);
         configureBeaconNebulaState();
-        fleetPursuitDelay_ = 0;
-        fleetPursuitProgress_ = 0.0f;
-        sectorGraph_.setFleetCoverageFromRow(-1);
+        // Preserve the initial pursuit state, including Distraction Buoys.
+        // Position-based coverage is the authoritative Fleet representation.
+        sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
         selectedBeacon_ = sectorGraph_.startNode();
         activeQuestIds_.clear();
         questTargets_.clear();
