@@ -247,7 +247,7 @@ static void testLastStandStateTransitions() {
     r = wormhole::advanceLastStandState(3, routeIndex, jumpCounter, baseTurns, waitTurns, false);
     assert(!r.moved && !r.gameOver && baseTurns == 1);
 }
-\nstatic void testNebulaSector() {
+static void testNebulaSector() {
     wormhole::SectorGraph graph;
     graph.generate(4, 0x1234u);
     graph.setNebulaSector(true);
