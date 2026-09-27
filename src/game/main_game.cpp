@@ -1830,7 +1830,7 @@ public:
                     enterRebelFleetEncounter();
                     return;
                 }
-                if (n->row == sectorGraph_.exitRow()) {
+                if (currentBeacon_ == sectorGraph_.exitNode()) {
                     if (sector_ >= 7) {
                         // The final sector leads into the Rebel Flagship battle.
                         // The three combat phases are kept as separate encounters
@@ -2003,10 +2003,10 @@ public:
 
         const float x0=150.f, dx=105.f, y0=145.f, dy=43.f;
         for (const auto& n : sectorGraph_.nodes()) {
-            const float x=x0+n.column*dx, y=y0+n.row*dy;
+            const float x=n.x, y=n.y;
             for (const int to:n.links) {
                 const auto* dst=sectorGraph_.node(to);
-                if(dst) graphics_.drawLine(x,y,x0+dst->column*dx,y0+dst->row*dy,{0.20f,0.34f,0.46f,1.f});
+                if(dst) graphics_.drawLine(x,y,dst->x,dst->y,{0.20f,0.34f,0.46f,1.f});
             }
         }
         const auto choices=sectorGraph_.selectable(currentBeacon_, fleetRow_);
@@ -2033,7 +2033,7 @@ public:
             const auto& n = sectorGraph_.nodes()[index];
             const float x=x0+n.column*dx,y=y0+n.row*dy;
             const auto* selectedNode = sectorGraph_.node(selectedBeacon_);
-            const bool selected = selectedNode && n.row != sectorGraph_.exitRow() && n.row == selectedNode->row && n.column == selectedNode->column;
+            const bool selected = selectedNode && static_cast<int>(index) != sectorGraph_.exitNode() && static_cast<int>(index) == selectedBeacon_;
             const bool current = static_cast<int>(index) == currentBeacon_;
             const bool reachable = std::find(choices.begin(),choices.end(),static_cast<int>(index)) != choices.end();
             const bool fleetCovered = n.fleetCovered;
