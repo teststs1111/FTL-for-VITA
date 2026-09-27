@@ -664,3 +664,11 @@ Overall maturity is roughly **40% toward the stated real-FTL gameplay target**. 
 
 Fleet-controlled beacons are now navigable instead of being removed from the route. On arrival, if the beacon is covered after the normal Fleet advance, MainGame enters a Rebel ship encounter before normal event selection. The current implementation dynamically chooses the first non-player/non-boss ship blueprint whose ID contains `REBEL`; this is a compatibility step toward exact Rebel Fleet/ASB encounter rules. The row-boundary model remains underneath the explicit per-beacon flags.
  The encounter now prefers conventional `REBEL_FIGHTER` / `REBEL_SCOUT` / `REBEL_ELITE` blueprint IDs when available and enables the existing player-target PDS/ASB combat hazard; alternate datasets still use a deterministic Rebel-ship fallback.
+
+## 2026-09-27 continuation — Rebel-controlled beacon navigation fix
+- Direct source inspection found a logic mismatch: MainGame correctly checks `fleetCovered` after arrival and starts a Rebel fleet encounter, but SectorGraph was still filtering covered destinations out of `selectable()`.
+- This made the new Rebel fleet encounter path unreachable from the map.
+- Fixed `SectorGraph::selectable()` so fleet-covered beacons remain navigable; the fleet flag is now interpreted at arrival, where MainGame starts the Rebel encounter and PDS/ASB environment.
+- Updated the sector-graph regression to require that a deliberately covered reachable beacon remains selectable.
+- Fix commits: `0726b23` and `695cbbd`.
+- CI verification is pending for these latest source changes.
