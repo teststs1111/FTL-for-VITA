@@ -76,12 +76,17 @@ The resolver now constructs the vanilla 15-entry equal-weight pool:
 All 15 were directly confirmed present in the supplied archive. The real-data test resolves NEBULA for 64 seeds and checks that every result belongs to this pool.
 
 ## CI state
-After the two commits above, check GitHub Actions directly for the newest main commit. Do not mark either commit green until both Host and Vita workflows for that exact commit succeed.
+After each code commit, check GitHub Actions directly for the newest main commit. Do not mark either commit green until both Host and Vita workflows for that exact commit succeed.
 
 Latest real-data regression extension:
 - 9fc176d9859cc41bd2c38660dd82ac1a3940ab5d — Verify real sector nebula pool definitions
 - Adds assertions for STANDARD_SPACE/CIVILIAN_SECTOR/NEBULA_SECTOR/SLUG_SECTOR pool ranges from the supplied archive.
 - Host #819 and Vita #511 have now completed successfully for this exact code commit. The regression is green.
+
+Latest code fix:
+- 03118ce240003658b8031292d14accbbcc7bc9e5 — Fix Distraction Buoys pursuit delay direction.
+- `modifyPursuit` uses positive/negative pursuit adjustments; a one-turn delay is represented by -1, so the previous Distraction Buoys `+1` was corrected to `-1`.
+- Host #822 / Vita #514 were triggered for this commit; at the latest check Host was queued and Vita was still running. Do not mark this fix green until both complete.
 
 ## Sector / nebula fidelity
 - 6 logical columns × 4 logical rows
@@ -138,7 +143,7 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 2. Add/extend real-data regression for standard-space and nebula-sector pool assignment.
 3. Tighten specialized NEBULA_* and default NEBULA unique/availability behavior.
 4. Tighten cloud-overlap nebula placement against the real map model.
-5. Tighten Rebel Fleet pursuit and fleet-controlled beacon/ASB behavior.
+5. Verify the Distraction Buoys pursuit fix, then tighten Rebel Fleet pursuit and fleet-controlled beacon/ASB behavior.
 6. Continue Sector 8 takeover/Flagship fidelity.
 7. Continue deeper event-choice/effect fidelity.
 
