@@ -43,10 +43,12 @@ CI means GitHub Actions Continuous Integration. Do not substitute 'CI未取得' 
 - AE is inside the same ftl.dat. Do not revert to an external DLC-file model.
 
 ## Current verified main state — 2026-09-28
-- Latest main commit: 34aa64a3ed54c0a2d677545ac0be71ac31f2d518
-- Host #819 for code commit 9fc176d9859cc41bd2c38660dd82ac1a3940ab5d: success
-- Vita #511 for code commit 9fc176d9859cc41bd2c38660dd82ac1a3940ab5d: success
-- Main currently includes the handoff-only commit 34aa64a3ed54c0a2d677545ac0be71ac31f2d518 on top of that verified code commit.
+- Latest code changes are being validated now:
+  - fa8f57a31aaf1d1798cea7cf2040401a5b2cb904 — Apply Rebel sector entry fleet advance
+  - b46f88ecfa76d911873fe0a17fa3fc5c2c906ee8 — Verify pursuit modifiers in real FTL data
+- These changes use verified real-data behavior: Rebel Controlled Sector entry advances pursuit by one jump; modifyPursuit values are applied to the following jump.
+- Previous verified baseline: Host #823 / Vita #515 succeeded for main handoff commit 9024a89bb1200e04d0d670f5e8b75d61f73d4558.
+- Do not mark the new changes green until Host and Vita CI for the latest main commit complete successfully.
 - Sector graph, real archive/BXML, blueprint/event/sector databases, Japanese text loading, PNG pipeline, beacon event assignment, Rebel Fleet state, and Last Stand state are implemented to varying prototype/intermediate fidelity.
 
 ## Current change — vanilla default NEBULA resolution
@@ -78,15 +80,18 @@ All 15 were directly confirmed present in the supplied archive. The real-data te
 ## CI state
 After each code commit, check GitHub Actions directly for the newest main commit. Do not mark either commit green until both Host and Vita workflows for that exact commit succeed.
 
-Latest real-data regression extension:
-- 9fc176d9859cc41bd2c38660dd82ac1a3940ab5d — Verify real sector nebula pool definitions
-- Adds assertions for STANDARD_SPACE/CIVILIAN_SECTOR/NEBULA_SECTOR/SLUG_SECTOR pool ranges from the supplied archive.
-- Host #819 and Vita #511 have now completed successfully for this exact code commit. The regression is green.
+Latest pursuit-fidelity work:
+- fa8f57a31aaf1d1798cea7cf2040401a5b2cb904 applies the documented +1-jump entry advance for REBEL_SECTOR.
+- b46f88ecfa76d911873fe0a17fa3fc5c2c906ee8 adds real-data regression checks for FUEL_FLEET_DELAY (-1), FUEL_FLEET_DISTRESS (+1), and REBEL_SECTOR.
+- CI for these new changes is pending; inspect the latest main commit directly before proceeding.
 
-Latest code fix:
-- 03118ce240003658b8031292d14accbbcc7bc9e5 — Fix Distraction Buoys pursuit delay direction.
-- `modifyPursuit` uses positive/negative pursuit adjustments; a one-turn delay is represented by -1, so the previous Distraction Buoys `+1` was corrected to `-1`.
-- Host #822 / Vita #514 were triggered for this commit; at the latest check Host was queued and Vita was still running. Do not mark this fix green until both complete.
+Previous verified real-data regression:
+- 9fc176d9859cc41bd2c38660dd82ac1a3940ab5d — Verify real sector nebula pool definitions
+- Host #819 / Vita #511 succeeded.
+
+Previous verified pursuit fix:
+- 03118ce240003658b8031292d14accbbcc7bc9e5 — Distraction Buoys changed from +1 to -1.
+- Main handoff commit 9024a89bb1200e04d0d670f5e8b75d61f73d4558 had Host #823 / Vita #515 success.
 
 ## Sector / nebula fidelity
 - 6 logical columns × 4 logical rows
@@ -139,13 +144,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Overall engineering maturity: roughly 40–45% toward the stated actual-game-faithful playable target.
 
 ## Immediate next work
-1. Verify Host/Vita CI directly for the NEBULA commits.
-2. Add/extend real-data regression for standard-space and nebula-sector pool assignment.
-3. Tighten specialized NEBULA_* and default NEBULA unique/availability behavior.
-4. Tighten cloud-overlap nebula placement against the real map model.
-5. Verify the Distraction Buoys pursuit fix, then tighten Rebel Fleet pursuit and fleet-controlled beacon/ASB behavior.
-6. Continue Sector 8 takeover/Flagship fidelity.
-7. Continue deeper event-choice/effect fidelity.
+1. Verify Host/Vita CI for the latest pursuit-fidelity commits.
+2. Continue tightening Rebel Fleet beacon frontier / exact pursuit-to-map mapping; current raw-position-to-beacon mapping is still an approximation.
+3. Tighten fleet-controlled beacon environment/ASB exceptions using the real event data and documented vanilla rules.
+4. Continue Sector 8 takeover/Flagship fidelity.
+5. Continue deeper event-choice/effect fidelity.
 
 ## Non-negotiable rules
 - Aim for actual FTL behavior, not a generic FTL-like approximation.
