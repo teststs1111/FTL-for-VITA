@@ -90,6 +90,17 @@ static void testFleetCoverage() {
 
     graph.setFleetCoveredIndices({covered.front()});
     assert(graph.isFleetCovered(covered.front()));
+
+    graph.setFleetCoveredIndices({});
+    graph.advanceFleetCoverage(1);
+    assert(graph.fleetCoveredIndices().size() == 1);
+    const int firstCovered = graph.fleetCoveredIndices().front();
+    assert(graph.node(firstCovered)->row == 0);
+
+    graph.advanceFleetCoverage(1);
+    const auto expanded = graph.fleetCoveredIndices();
+    assert(expanded.size() == 2);
+    assert(graph.node(expanded.back())->row == 1);
     assert(graph.fleetCoveredIndices().size() == 1);
 
     // A fleet-covered beacon must remain navigable so arrival can trigger
