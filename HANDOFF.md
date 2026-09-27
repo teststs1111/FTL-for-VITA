@@ -724,7 +724,7 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 ### Next target
 1. Implement scout/auto-ship escape pursuit doubling for the next jump.
 2. Replace generic sector-wide nebula flags with per-beacon NEBULA_* event assignment in normal sectors.
-3. Continue toward the original 6×4 / 19–24 beacon sector-generation constraints and sector-specific event weighting.
+3. Continue toward the original 6×4 / 16–24 beacon sector-generation constraints and sector-specific event weighting.
 
 
 ## 2026-09-27 continuation — data-driven nebula beacon assignment
@@ -736,7 +736,7 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 
 ### Next target
 1. Verify the queued Host/Vita builds for the nebula assignment change.
-2. Move the sector graph toward the documented 6×4 / ~19–24 beacon generation and adjacency rules.
+2. Move the sector graph toward the documented 6×4 / ~16–24 beacon generation and adjacency rules.
 3. Preserve per-beacon nebula state through save/load and fleet takeover transitions.
 4. Implement Rebel scout/auto-ship escape pursuit acceleration once the combat runtime has an explicit enemy-escape outcome.
 
@@ -751,12 +751,12 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 
 ### Next target
 1. Replace lowest-index fleet frontier selection with a map-aware deterministic rule closer to FTL's actual pursuit behavior.
-2. Continue tightening the 6×4 / 19–24 beacon generation and adjacency constraints against the real FTL map model.
+2. Continue tightening the 6×4 / 16–24 beacon generation and adjacency constraints against the real FTL map model.
 3. Keep per-beacon nebula and fleet state consistent through navigation, sector transitions, and save/load.
 
 
 ## 2026-09-27 continuation — vanilla 6x4 sector graph and Fleet state cleanup
-- SectorGraph now uses 6 logical rows x 4 logical columns, about 80% beacon occupancy, 19-24 beacons, randomized beacon coordinates, adjacent-row links with a distance limit, and retry-based start-to-exit reachability.
+- SectorGraph now uses 6 logical rows x 4 logical columns, about 80% beacon occupancy, 16–24 beacons, randomized beacon coordinates, adjacent-row links with a distance limit, and retry-based start-to-exit reachability.
 - The exit is one explicit beacon in the final row rather than an entire final-column exit zone.
 - Normal Rebel Fleet coverage uses continuous x-position pursuit; Sector 8 uses individual beacon takeover instead of the normal frontier model.
 - Commit 84382a2 fixed a regression-test assumption that positional coverage would always expand to exactly two nodes.
