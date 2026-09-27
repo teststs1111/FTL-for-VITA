@@ -725,3 +725,17 @@ Fleet-controlled beacons are now navigable instead of being removed from the rou
 1. Implement scout/auto-ship escape pursuit doubling for the next jump.
 2. Replace generic sector-wide nebula flags with per-beacon NEBULA_* event assignment in normal sectors.
 3. Continue toward the original 6×4 / 19–24 beacon sector-generation constraints and sector-specific event weighting.
+
+
+## 2026-09-27 continuation — data-driven nebula beacon assignment
+- Added per-beacon nebula state support in `SectorGraph` and replaced the previous normal-sector all-clear approximation in commit `cb3ae1193f7a73bd9b63e51b5b0c36ea8f397b91`.
+- For non-nebula sectors, the runtime now reads the original sector event pools and treats event-list names beginning with `NEBULA_` as the source of nebula beacon counts. The deterministic assignment respects the aggregate min/max ranges and keeps the starting beacon clear.
+- Nebula/Slug sectors that currently use the compatibility whole-sector nebula model are intentionally unchanged; the remaining fidelity work is to reproduce the original 6×4 placement/overlap algorithm so additional neighboring beacons can be converted into nebula beacons exactly as the game does.
+- This is a data-driven intermediate step, not a claim of exact vanilla map generation. The original generation process first places beacons on a 6×4 grid, then processes NEBULA_* lists before normal event assignment; overlapping nebula graphics can convert additional beacons. citeturn3search0
+- Host/Vita Actions for `cb3ae119` are currently queued (Host/Vita must both complete successfully before this change is marked green).
+
+### Next target
+1. Verify the queued Host/Vita builds for the nebula assignment change.
+2. Move the sector graph toward the documented 6×4 / ~19–24 beacon generation and adjacency rules.
+3. Preserve per-beacon nebula state through save/load and fleet takeover transitions.
+4. Implement Rebel scout/auto-ship escape pursuit acceleration once the combat runtime has an explicit enemy-escape outcome.
