@@ -105,7 +105,7 @@ std::vector<int> SectorGraph::selectable(int current, int fleetRow) const {
     for (const int link : n->links) {
         const auto* target = node(link);
         if (!target) continue;
-        if (fleetRow >= 0 && target->row <= fleetRow) continue;
+        if (target->fleetCovered) continue;
         out.push_back(link);
     }
 
