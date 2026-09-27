@@ -1059,7 +1059,11 @@ public:
     void enterRebelFleetEncounter() {
         // A beacon already occupied by the Rebel fleet is still reachable.
         // Enter a Rebel encounter instead of silently removing the route.
+        // The supplied archive uses REBEL_SKINNY_ELITE for the
+        // actual Rebel Fleet Elite Fighter encounter. Keep compatibility
+        // fallbacks for alternate datasets, but prefer the real blueprint.
         static constexpr const char* preferred[] = {
+            "REBEL_SKINNY_ELITE", "REBEL_SKINNY_ELITE_DLC",
             "REBEL_FIGHTER", "REBEL_SCOUT", "REBEL_ELITE"
         };
         std::string rebelShipId;
@@ -1086,6 +1090,7 @@ public:
         }
         // Fleet-controlled beacons carry the Advanced Sector Battery threat.
         pendingEnvironment_ = CombatEnvironment::PDSPlayer;
+        rebelFleetEncounter_ = true;
         combatFeedback_ = "反乱軍艦隊と遭遇";
         combatFeedbackTimer_ = 1.5f;
         enterCombatFromBeacon(rebelShipId);
@@ -2000,7 +2005,15 @@ public:
                     combatFeedbackTimer_ = 1.5f;
                 }
                 const bool defeatedByCrew = combat_.enemyDefeatedByCrewDamage();
-                if (const auto* outcome = eventDatabase_.findShipOutcome(
+                if (rebelFleetEncounter_) {
+                    // Rebel-controlled beacons replace their normal event and
+                    // encounter rewards. The supplied FTL data uses the Elite
+                    // Fighter encounter and the vanilla reward is one fuel.
+                    fuel_ = std::min(99, fuel_ + 1);
+                    combatFeedback_ = "反乱軍エリート艦撃破：燃料+1";
+                    combatFeedbackTimer_ = 1.8f;
+                    rebelFleetEncounter_ = false;
+                } else if (const auto* outcome = eventDatabase_.findShipOutcome(
                         combat_.enemy.content.blueprint.id, defeatedByCrew)) {
                     applyShipOutcome(*outcome);
                 } else if (!defeatedByCrew) {
@@ -2281,6 +2294,7 @@ public:
                 advanceRebelFleetAfterJump();
                 runtime_ = combat_.player;
                 combatMode_ = false;
+                rebelFleetEncounter_ = false;
                 jumpCharging_ = false;
                 jumpCharge_ = 0.0f;
                 visitedBeacons_++;
@@ -2928,6 +2942,7 @@ private:
     bool storeOpen_{false};
     bool mapRevealed_{false};
     bool secretSectorPending_{false};
+    bool rebelFleetEncounter_{false};
 };
 
 } // namespace
