@@ -71,5 +71,23 @@ static void testDeterminism() {
 int main() {
     testVariableReachableGraph();
     testDeterminism();
+    graph.setFleetCoverageFromRow(0);
+    const auto covered = graph.fleetCoveredIndices();
+    assert(!covered.empty());
+    for (const int index : covered) {
+        const auto* node = graph.node(index);
+        assert(node && node->fleetCovered);
+        assert(node->row == 0);
+        assert(graph.isFleetCovered(index));
+    }
+
+    graph.setFleetCoveredIndices({covered.front()});
+    assert(graph.isFleetCovered(covered.front()));
+    assert(graph.fleetCoveredIndices().size() == 1);
+
+    const auto filtered = graph.selectable(graph.startNode(), 0);
+    for (const int index : filtered)
+        assert(!graph.isFleetCovered(index));
+
     return 0;
 }
