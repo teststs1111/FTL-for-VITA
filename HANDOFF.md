@@ -77,6 +77,11 @@ All 15 were directly confirmed present in the supplied archive. The real-data te
 ## CI state
 After the two commits above, check GitHub Actions directly for the newest main commit. Do not mark either commit green until both Host and Vita workflows for that exact commit succeed.
 
+Latest real-data regression extension:
+- 9fc176d9859cc41bd2c38660dd82ac1a3940ab5d — Verify real sector nebula pool definitions
+- Adds assertions for STANDARD_SPACE/CIVILIAN_SECTOR/NEBULA_SECTOR/SLUG_SECTOR pool ranges from the supplied archive.
+- Host #819 and Vita #511 were observed running for this exact code commit; final status must be checked before declaring it green.
+
 ## Sector / nebula fidelity
 - 6 logical columns × 4 logical rows
 - approximately 80% beacon occupancy
