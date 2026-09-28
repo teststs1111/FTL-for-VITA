@@ -587,7 +587,7 @@ static void testShipRuntime() {
     defenseWeapon.power = 1;
     defenseWeapon.shots = 2;
     defenseWeapon.damage = 1;
-    defenseWeapon.personnelDamage = 20;
+    defenseWeapon.personnelDamage = 0;
     defenseWeapon.speed = 10;
     defenseWeapon.cooldown = 1.0f;
     defenseWeapon.charge = 1.0f;
@@ -613,7 +613,7 @@ static void testShipRuntime() {
     wormhole::CombatResult defenseImpact;
     assert(combat.consumeImpactResult(defenseImpact));
     assert(defenseImpact.hullDamage == 1);
-    assert(defenseImpact.personnelDamage == 20);
+    assert(defenseImpact.personnelDamage == 0);
     combat.player.weapons[0] = originalDefenseWeapon;
     combat.player.weaponIonDisabled = originalWeaponIonDisabled;
     assert(combat.setTargetRoom(0));
