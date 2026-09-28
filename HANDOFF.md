@@ -275,3 +275,10 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - This makes the documented Easy exit-beacon no-ASB exception reachable through the normal runtime path once the caller selects Easy.
 - Current commit sequence: 150466bc (header state) and 2694132c (runtime routing).
 - CI for the newest main commit must be checked before declaring this change green.
+
+
+## Rebel Fleet pursuit mapping evidence checkpoint — 2026-09-28
+- New cross-check: public technical documentation confirms the raw Rebel pursuit counter is signed 32-bit, starts at 0xFFFFFC41 (-959), and advances +0x40 (64) per jump; the source explicitly says the exact pixel mapping to beacon takeover is unconfirmed.
+- The saved-game editor documentation separately describes RebelFleetOffset as a sector-dependent negative pixel value approaching zero, with RebelFleetFudge as a random constant added to the offset. Therefore the current float frontier model must not be treated as proven vanilla math.
+- Decision: do not replace Offset/Fudge with a guessed linear formula. Keep the current mapping explicitly provisional and continue searching for a reproducible map-frontier relation or test data.
+- Sources: hintforge FTL mechanics documentation and Subset Games FTL Profile/SavedGame Editor research.
