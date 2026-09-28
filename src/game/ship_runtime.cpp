@@ -279,6 +279,13 @@ int ShipRuntime::resolveWeaponVolley(int weaponIndex, const std::vector<int>& pr
             continue;
         }
 
+        // Defense Drones get the first interception attempt against each
+        // eligible projectile. Bombs bypass them inside interceptWeaponWithDefenseDrone().
+        if (!beamLike && interceptWeaponWithDefenseDrone(weaponIndex)) {
+            ++resolved;
+            continue;
+        }
+
         // Beams do not use the normal projectile hit/miss roll; they always connect.
         // Other weapon projectiles have a per-shot chance to miss equal to target evasion.
         if (!beamLike && roll(rng) < evasion) {
