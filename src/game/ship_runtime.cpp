@@ -36,6 +36,7 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         system.maxPower = std::max(system.power, blueprint.maxPower);
         system.damage = 0;
         system.batteryPower = 0;
+        system.zoltanPower = 0;
         system.ionDamage = 0;
         system.ionTimer = 0.0f;
         system.ionDisabled = false;
@@ -515,6 +516,7 @@ bool ShipRuntime::setSystemPower(int systemIndex, int power) {
         const int zoltanFree = availableZoltanPowerForSystem(system);
         const int zoltanAdded = std::min(delta, zoltanFree);
         int remaining = delta - zoltanAdded;
+        system.zoltanPower += zoltanAdded;
 
         const int capacity = reactorPowerCap >= 0
             ? std::min(reactor, reactorPowerCap)
@@ -529,26 +531,35 @@ bool ShipRuntime::setSystemPower(int systemIndex, int power) {
             for (const auto& other : systems)
                 usedBattery += std::max(0, other.batteryPower);
             const int batteryFree = std::max(0, backupBatteryActivePower - usedBattery);
-            if (remaining > batteryFree) return false;
+            if (remaining > batteryFree) {
+                system.zoltanPower -= zoltanAdded;
+                return false;
+            }
             allocatedBattery = remaining;
         }
         system.batteryPower += allocatedBattery;
     } else {
-        const int removed = -delta;
+        int removed = -delta;
         const int reactorFunded = reactorFundedPowerForSystem(system);
         const int reactorRemoved = std::min(removed, reactorFunded);
-        const int batteryRemoved = removed - reactorRemoved;
-        if (batteryRemoved > 0)
-            system.batteryPower = std::max(0, system.batteryPower - batteryRemoved);
+        removed -= reactorRemoved;
+
+        const int batteryRemoved = std::min(removed, system.batteryPower);
+        system.batteryPower -= batteryRemoved;
+        removed -= batteryRemoved;
+
+        const int zoltanRemoved = std::min(removed, system.zoltanPower);
+        system.zoltanPower -= zoltanRemoved;
     }
 
     system.power = next;
-    const int zoltanPower = zoltanPowerForSystem(system);
     system.batteryPower = std::min(system.batteryPower,
-                                   std::max(0, system.power - zoltanPower));
+                                   std::max(0, system.power - system.zoltanPower));
+    system.zoltanPower = std::min(system.zoltanPower, std::max(0, system.power));
     if (system.power == 0) {
         system.powered = false;
         system.batteryPower = 0;
+        system.zoltanPower = 0;
     } else {
         system.powered = true;
     }
@@ -670,37 +681,29 @@ int ShipRuntime::availableZoltanPowerForSystem(const RuntimeSystem& system) cons
     for (const auto& other : systems) {
         if (&other == &system || other.room != system.room)
             continue;
-        allocated += zoltanPowerForSystem(other);
+        allocated += std::max(0, other.zoltanPower);
     }
-    allocated += zoltanPowerForSystem(system);
+    allocated += std::max(0, system.zoltanPower);
     return std::max(0, total - allocated);
 }
 
 int ShipRuntime::zoltanPowerForSystem(const RuntimeSystem& system) const {
-    // Zoltan power is free, ion-proof power supplied by living Zoltans
-    // standing in the system room. Subsystems receive no Zoltan power.
-    if (!system.powered || system.power <= 0 || system.room < 0 ||
-        system.type == "pilot" || system.type == "engines" ||
-        system.type == "oxygen" || system.type == "doors" ||
-        system.type == "sensors" || system.type == "battery")
+    // Explicit source allocation: do not infer the source of each bar from
+    // current crew placement. This keeps Zoltan-funded bars stable while
+    // Backup Battery and reactor capacity change.
+    if (!system.powered || system.power <= 0 || system.type == "pilot" ||
+        system.type == "engines" || system.type == "oxygen" ||
+        system.type == "doors" || system.type == "sensors" ||
+        system.type == "battery")
         return 0;
-
-    int zoltans = 0;
-    for (const auto& member : crew) {
-        if (!member.alive || member.room != system.room) continue;
-        std::string race = member.race;
-        std::transform(race.begin(), race.end(), race.begin(),
-            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-        if (race == "zoltan" || race == "energy")
-            ++zoltans;
-    }
-    return std::min(system.power, zoltans);
+    return std::min(system.power, std::max(0, system.zoltanPower));
 }
 
 int ShipRuntime::reactorFundedPowerForSystem(const RuntimeSystem& system) const {
     if (!system.powered || system.power <= 0 || system.type == "battery")
         return 0;
-    return std::max(0, system.power - zoltanPowerForSystem(system) - system.batteryPower);
+    return std::max(0, system.power - std::max(0, system.zoltanPower) -
+                       std::max(0, system.batteryPower));
 }
 
 int ShipRuntime::usedReactorPower() const {
