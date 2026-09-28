@@ -291,3 +291,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Decision: do not add a speculative partial fix. The next implementation step is to introduce explicit power-source accounting (reactor vs Zoltan vs temporary Backup Battery) before tightening Plasma Storm depowering. This is a fidelity requirement, not a build blocker.
 - Current Plasma Storm implementation remains intentionally provisional: it correctly enforces the reactor-only half-cap for the current simplified runtime, but it is not yet exact for mixed reactor/Zoltan/Battery allocations.
 - Sources checked: FTL Environmental Hazards; Advanced Edition Ship System FAQ; FTL Crew/Systems references. No proprietary data is being committed.
+
+### Backup Battery reactor-accounting checkpoint (2026-09-28)
+- Commit `387b05da` passed both Host and Vita CI (Host #869, Vita #561).
+- `ShipRuntime::usedReactorPower()` and `availableReactorPower()` now exclude the `battery` subsystem itself from reactor consumption.
+- This is intentionally limited: the runtime still does not model Backup Battery's temporary +2/+4 power allocation or cooldown state.
+- Do not subtract battery-provided power during Plasma Storm; the battery's temporary power remains outside the storm's reactor cap.
+- Next fidelity step remains explicit power-source accounting for reactor-funded power vs Zoltan-provided power vs Backup Battery temporary power.
+- No proprietary `ftl.dat` content is committed.
