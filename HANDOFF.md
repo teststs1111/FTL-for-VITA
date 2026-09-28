@@ -317,3 +317,13 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Regression coverage was updated to verify explicit Zoltan allocation survives the Backup Battery scenario.
 - This is still not the complete vanilla power model: Zoltan movement/reassignment timing and every edge case involving damage/ionization remain to be tightened.
 - Latest implementation commits: `1ce05d2`, `0c1ebc2`, `39d2a376`. GitHub status currently exposes no checks for the final commit, so it is not marked CI-green until an actual workflow result is available.
+
+
+## Zoltan source lifecycle correction — 2026-09-28
+- Fixed a real bookkeeping bug in setSystemPowered(): an already-assigned Zoltan bar is now counted as an existing free-power allocation when re-enabling a system, so a reactor cap of 0 no longer incorrectly prevents reactivation.
+- Added rebalanceZoltanPowerSources() to invalidate Zoltan-funded bars when a Zoltan leaves/dies and restore available Zoltan power to already-powered eligible main systems when a Zoltan returns/is added.
+- Damage and ionization now clamp Zoltan/Battery source allocations to the system's remaining power so source accounting cannot exceed actual bars.
+- Regression coverage now checks Zoltan movement/death loss and restoration in addition to the previous Backup Battery cases.
+- Also removed a duplicate availableZoltanPowerForSystem() declaration in the runtime header that could break compilation.
+- Latest commits: header cleanup/rebalance declaration 4998a56; lifecycle implementation a32227c; regression test 25dafa98.
+- The newest Host/Vita workflow runs for 25dafa98 were observed as in progress at the time of this handoff update; no pass is claimed yet.
