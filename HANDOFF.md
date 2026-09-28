@@ -524,3 +524,15 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Duplicate entries in each `blueprintList` remain intact and therefore continue to act as vanilla-style equal-weight repetitions.
 - Commit: `e079f78590e18bd5b65afda2590a9a5c7aa12d56`.
 - The remaining limitation is that the complete vanilla RNG stream/order is not yet reproduced; this change keeps autoBlueprint selection on the same encounter RNG foundation rather than introducing another independent generator.
+
+
+## Enemy loadout generation from canonical autoBlueprints — 2026-09-29
+
+- Direct inspection of the real `ftl.dat` confirmed `data/autoBlueprints.xml` contains 40 blueprint lists and 25 enemy ship blueprints.
+- Enemy ship blueprints use `weaponList load="WEAPONS_*"` and `droneList load="DRONES_*"`; these are not fixed equipment lists.
+- Implemented parsing of the load-list attributes in `ShipBlueprint`.
+- `ShipContent::loadShip()` now resolves enemy weapon/drone load lists into concrete blueprints, selecting entries that fit the available system power and preserving duplicate entries as valid random choices.
+- Enemy loadout generation accepts an encounter seed; combat now derives that seed from the existing encounter RNG rather than using a separate RNG source.
+- Added a real-`ftl.dat` regression check for `AUTO_BASIC` and its `WEAPONS_AUTO` loadout.
+- This is the first step toward the full vanilla enemy-generation model. The remaining important gap is sector/difficulty-based enemy system budgeting: current generation still uses the blueprint's base starting power rather than reproducing vanilla progression-sector budgeting.
+- Relevant commits: `5c0b52e`, `a270319`, `b605e95`, `d36d30a`, `5d21910`.
