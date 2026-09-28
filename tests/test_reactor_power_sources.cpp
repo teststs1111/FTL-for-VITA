@@ -510,6 +510,10 @@ int main() {
     {
         ShipRuntime evasion;
         evasion.valid = true;
+        evasion.roomDamage.assign(62, 0);
+        evasion.roomOxygen.assign(62, 100);
+        evasion.roomFire.assign(62, false);
+        evasion.roomBreach.assign(62, false);
         evasion.hull = 10;
         evasion.maxHull = 10;
         RuntimeSystem weaponsSystem;
@@ -534,8 +538,10 @@ int main() {
 
         assert(evasion.fireWeapon(0));
         assert(evasion.resolveWeaponVolley(0, 61, 100) == 1);
-        assert(evasion.hull == 0);
+        assert(evasion.hull == 10);
 
+        // Run the guaranteed-hit case from a fresh four-hull state.
+        evasion.hull = 4;
         evasion.weapons[0].charge = evasion.weapons[0].cooldown;
         evasion.weapons[0].ready = true;
         evasion.updateWeapons(0.1f);
