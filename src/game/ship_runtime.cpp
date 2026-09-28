@@ -127,6 +127,18 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
     return true;
 }
 
+int ShipRuntime::roomAtLayoutPoint(int x, int y) const {
+    // Layout room rectangles are the authoritative geometry already parsed from
+    // the ship layout data. Use half-open bounds so adjacent rooms do not overlap.
+    for (const auto& room : content.layout.rooms) {
+        if (x >= room.x && x < room.x + room.w &&
+            y >= room.y && y < room.y + room.h) {
+            return room.id;
+        }
+    }
+    return -1;
+}
+
 void ShipRuntime::updateWeapons(float dt, float cooldownMultiplier) {
     if (!valid || dt <= 0.f) return;
 
