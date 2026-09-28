@@ -74,7 +74,9 @@ if(VITA)
         -Wl,-z,max-page-size=0x1000
         -Wl,-z,common-page-size=0x1000
     )
-    vita_create_self(eboot.bin vita_wormhole_prototype UNSAFE)
+    # vita-elf-create appends SCE module metadata to PT_LOAD segment 0.
+    # Strip debug sections first so the metadata has guaranteed room in the segment.
+    vita_create_self(eboot.bin vita_wormhole_prototype UNSAFE STRIPPED)
     vita_create_vpk(FTL-for-VITA.vpk ${VITA_TITLEID} eboot.bin
         VERSION ${VITA_VERSION}
         NAME ${VITA_APP_NAME}
