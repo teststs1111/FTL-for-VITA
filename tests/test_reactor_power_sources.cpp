@@ -48,12 +48,15 @@ int main() {
     ship.setReactorPowerCap(5);
     assert(ship.availableReactorPower() == 3);
 
-    // A Zoltan can supply the missing bar even when the reactor is capped.
+    // A Zoltan can supply a new power bar even when the reactor is capped.
+    ship.systems[0].power = 0;
+    ship.systems[0].powered = false;
     ship.setReactorPowerCap(0);
-    assert(ship.setSystemPower(0, 4));
-    assert(ship.systems[0].power == 4);
-    assert(ship.zoltanPowerForSystem(ship.systems[0]) == 2);
-    assert(ship.reactorFundedPowerForSystem(ship.systems[0]) == 2);
+    assert(ship.setSystemPower(0, 1));
+    assert(ship.systems[0].power == 1);
+    assert(ship.systems[0].powered);
+    assert(ship.zoltanPowerForSystem(ship.systems[0]) == 1);
+    assert(ship.reactorFundedPowerForSystem(ship.systems[0]) == 0);
     assert(ship.availableReactorPower() == 0);
 
     // Turning on a preallocated system can likewise use a Zoltan bar.
