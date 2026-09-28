@@ -153,6 +153,10 @@ int main() {
     // A Zoltan can supply a new power bar even when the reactor is capped.
     ship.systems[0].power = 0;
     ship.systems[0].powered = false;
+    // This fixture changes the raw power field directly; clear the stale source
+    // allocation too so the following bar is genuinely supplied by a Zoltan.
+    ship.systems[0].zoltanPower = 0;
+    ship.systems[0].batteryPower = 0;
     ship.setReactorPowerCap(0);
     assert(ship.setSystemPower(0, 1));
     assert(ship.systems[0].power == 1);
