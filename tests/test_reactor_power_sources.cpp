@@ -488,5 +488,42 @@ int main() {
         assert(combat.systems[1].damage == 1);
     }
 
+    // Projectile evasion: each projectile is rolled independently. A 100% evasion
+    // target causes a projectile to miss, while a 0% evasion target is guaranteed hit.
+    {
+        ShipRuntime evasion;
+        evasion.valid = true;
+        RuntimeSystem weaponsSystem;
+        weaponsSystem.type = "weapons";
+        weaponsSystem.room = 60;
+        weaponsSystem.power = 1;
+        weaponsSystem.maxPower = 1;
+        weaponsSystem.powered = true;
+        evasion.systems.push_back(weaponsSystem);
+
+        RuntimeWeapon laser;
+        laser.type = "laser";
+        laser.power = 1;
+        laser.shots = 1;
+        laser.damage = 2;
+        laser.cooldown = 1.0f;
+        laser.charge = 1.0f;
+        laser.ready = true;
+        evasion.weapons.push_back(laser);
+        evasion.weaponIonDisabled.assign(1, false);
+        evasion.updateWeapons(0.1f);
+
+        assert(evasion.fireWeapon(0));
+        assert(evasion.resolveWeaponVolley(0, 61, 100) == 1);
+        assert(evasion.hull == 0);
+
+        evasion.weapons[0].charge = evasion.weapons[0].cooldown;
+        evasion.weapons[0].ready = true;
+        evasion.updateWeapons(0.1f);
+        assert(evasion.fireWeapon(0));
+        assert(evasion.resolveWeaponVolley(0, 61, 0) == 1);
+        assert(evasion.hull == 2);
+    }
+
     return 0;
 }
