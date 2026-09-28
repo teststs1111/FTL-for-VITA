@@ -307,3 +307,13 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Battery expiry removes tracked temporary bars from their systems instead of only clearing an aggregate bonus.
 - Regression coverage exercises battery-funded allocation and removal at expiry.
 - Still provisional: persistent Zoltan per-bar source allocation and the combined Zoltan/Battery redistribution rules need further refinement.
+
+
+## Explicit Zoltan power-source checkpoint — 2026-09-28
+- Added explicit per-system `zoltanPower` source allocation alongside existing `batteryPower`.
+- Reactor-funded, Zoltan-funded, and Backup Battery-funded bars are now tracked independently instead of recomputing Zoltan allocation solely from current room occupancy.
+- Increasing system power allocates available Zoltan bars first, then reactor power, then active Backup Battery power; failed allocation rolls back the tentative Zoltan assignment.
+- Reducing power removes reactor-funded, then battery-funded, then Zoltan-funded bars while preserving the remaining source assignments.
+- Regression coverage was updated to verify explicit Zoltan allocation survives the Backup Battery scenario.
+- This is still not the complete vanilla power model: Zoltan movement/reassignment timing and every edge case involving damage/ionization remain to be tightened.
+- Latest implementation commits: `1ce05d2`, `0c1ebc2`, `39d2a376`. GitHub status currently exposes no checks for the final commit, so it is not marked CI-green until an actual workflow result is available.
