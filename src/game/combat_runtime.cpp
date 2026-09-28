@@ -142,13 +142,30 @@ void CombatRuntime::applyPlasmaStormPowerCap() {
         // or Backup Battery separately, so only reactor-backed system power is
         // constrained here.
         while (ship.usedReactorPower() > cap) {
-            std::vector<int> powered;
+            std::vector<int> poweredSystems;
             for (int i = 0; i < static_cast<int>(ship.systems.size()); ++i)
                 if (ship.systems[i].powered && ship.systems[i].power > 0)
-                    powered.push_back(i);
-            if (powered.empty()) break;
-            const int index = powered[nextRandom() % powered.size()];
-            ship.setSystemPower(index, ship.systems[index].power - 1);
+                    poweredSystems.push_back(i);
+
+            std::vector<int> poweredDrones;
+            for (int i = 0; i < static_cast<int>(ship.drones.size()); ++i)
+                if (ship.drones[i].powered && ship.drones[i].power > 0)
+                    poweredDrones.push_back(i);
+
+            const std::size_t totalChoices =
+                poweredSystems.size() + poweredDrones.size();
+            if (totalChoices == 0) break;
+
+            const std::size_t choice =
+                static_cast<std::size_t>(nextRandom() % totalChoices);
+            if (choice < poweredSystems.size()) {
+                const int index = poweredSystems[choice];
+                ship.setSystemPower(index, ship.systems[index].power - 1);
+            } else {
+                const int index =
+                    poweredDrones[choice - poweredSystems.size()];
+                ship.setDronePowered(index, false);
+            }
         }
     };
     capShip(player);
