@@ -579,6 +579,8 @@ static void testShipRuntime() {
     combat.enemy.drones.push_back(defenseDrone);
 
     assert(!combat.player.weapons.empty());
+    const RuntimeWeapon originalDefenseWeapon = combat.player.weapons[0];
+    const std::vector<bool> originalWeaponIonDisabled = combat.player.weaponIonDisabled;
     RuntimeWeapon defenseWeapon;
     defenseWeapon.name = "DefenseRegressionLaser";
     defenseWeapon.type = "LASER";
@@ -612,6 +614,8 @@ static void testShipRuntime() {
     assert(combat.consumeImpactResult(defenseImpact));
     assert(defenseImpact.hullDamage == 1);
     assert(defenseImpact.personnelDamage == 20);
+    combat.player.weapons[0] = originalDefenseWeapon;
+    combat.player.weaponIonDisabled = originalWeaponIonDisabled;
     assert(combat.setTargetRoom(0));
     assert(combat.player.setSystemPowered(2, true));
     combat.player.updateWeapons(2.5f);
