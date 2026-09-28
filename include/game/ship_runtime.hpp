@@ -27,6 +27,7 @@ struct RuntimeWeapon {
     std::string name;
     std::string type;
     int power{1};
+    int allocatedPower{0};
     float cooldown{5.0f};
     float charge{0.0f};
     int speed{0};
