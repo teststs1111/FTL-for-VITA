@@ -355,3 +355,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Vanilla references: Ion removes one normal power bar per Ion damage and returns it to reactor; Zoltan power is unaffected. Sources: FTL Ion Weapons wiki and Subset Games forum testing. citeturn0search0turn0search8
 - Implementation commit: fb05fca73487b9f4a189a8b1b764bc27c8d191ca plus the regression-test follow-ups.
 - CI is not claimed green until an actual workflow result for the newest commit is available.
+
+
+## Ion stacking correction — 2026-09-28
+- Fixed Ion stacking: each additional ion point adds 5 seconds to the lock instead of resetting it to 5 seconds.
+- Ion damage is capped at 5 points / 25 seconds, matching vanilla behavior; additional Ion hits after the cap have no further effect.
+- Added regression coverage for 2 -> 4 -> 5 ion points and 10 -> 20 -> 25 second lock progression.
+- Vanilla references confirm Ion damage stacks and the timer is capped at 25 seconds. citeturn0search0turn0search5
+- Latest implementation commits: `d0f6b4a` (runtime) and the following regression-test commit. CI is not claimed green until a workflow result is exposed.
