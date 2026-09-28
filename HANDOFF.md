@@ -373,3 +373,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Added regression coverage for a 4-power Glaive with one Zoltan and for a 2-ion hit disabling two 1-power weapons.
 - This remains bounded to the current runtime's weapon model: explicit manual weapon slot reordering/power allocation is not yet exposed by the runtime API, so the right-to-left selection uses the loaded weapon order.
 - Latest implementation commits: `3989b9e` (runtime/header) and `a78750f` (regression tests). CI status for the newest commit must be checked before declaring it green.
+
+
+## Weapon power allocation / damage correction — 2026-09-28
+- Added per-weapon `allocatedPower` to prevent every weapon from charging merely because its individual cost fits inside the total Weapons-system power.
+- Weapons now consume the shared power cumulatively in loaded slot order; a later weapon remains unallocated when earlier slots consume the available power.
+- Weapons-system damage now deallocates affected weapon slots from the right side and clears charge/ready state for weapons that no longer have enough power.
+- Added regression coverage for a 3-power Weapons system with 1+1+2 power weapons and progressive system damage.
+- This is still a runtime-level slot-order model; explicit player weapon-slot reordering is not yet exposed by the current API.
+- Latest commits: `22360f9` runtime allocation/damage logic and `8d90f4d` regression tests.
