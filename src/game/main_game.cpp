@@ -1143,10 +1143,14 @@ public:
             // encounter seed.
             if (const auto* list = content_.blueprints().findBlueprintList(resolvedEnemyId)) {
                 if (!list->empty()) {
-                    const unsigned selectionSeed =
-                        seed_ + static_cast<unsigned>(visitedBeacons_ * 53u) +
-                        static_cast<unsigned>(std::max(0, currentBeacon_));
-                    resolvedEnemyId = (*list)[selectionSeed % list->size()];
+                    // autoBlueprint entries are an equal-weight random
+                    // selection in vanilla; duplicate entries intentionally
+                    // remain as additional weight. Use the same deterministic
+                    // encounter RNG used by other event effects rather than a
+                    // separate ad-hoc seed formula.
+                    const int selection = rollEventRange(
+                        0, static_cast<int>(list->size()) - 1, 0xAB710001u);
+                    resolvedEnemyId = (*list)[static_cast<std::size_t>(selection)];
                 }
             }
         }
