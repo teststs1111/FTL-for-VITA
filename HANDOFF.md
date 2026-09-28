@@ -235,3 +235,9 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Rebel Fleet encounter selection now uses `PlasmaStorm` for fleet-controlled nebula beacons and `PDSPlayer` for non-nebula beacons.
 - This matches the documented core distinction: normal fleet beacons use ASB, while captured nebula beacons use an ion/plasma storm. The Easy-mode exit exception and the special zero-fuel/waiting transition remain separate fidelity work because difficulty state and waiting-at-beacon takeover are not yet represented.
 - Exact Rebel Fleet frontier Offset/Fudge mapping remains untouched and provisional.
+
+## Reporting format — 2026-09-28
+- Future continuation reports should be kept more concise to reduce chat-log usage.
+- Prefer a short status block: progress %, current state, what is being worked on, CI result, and only important problems/blockers.
+- Do not repeat detailed background already recorded in HANDOFF.md unless it changed or is directly relevant.
+- Keep technical investigation and implementation detail in HANDOFF.md, while chat reports summarize only the latest changes and next step.
