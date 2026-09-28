@@ -446,3 +446,10 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Added regression coverage that exercises the interception path through `resolveWeaponVolley`.
 - Room geometry is already present in `RoomBlueprint` (`x/y/w/h`) and layout data is parsed from the game assets. The next Flak step can therefore use real room geometry rather than invented room coordinates.
 - Commit: `6c39630` (runtime), `096df4f` (regression test).
+
+
+## Build-blocking regression correction — 2026-09-28
+- Latest host build failure was traced to an existing declaration typo in `ShipRuntime::setSystemPowered`: `reactorCapacity` was missing its type.
+- Corrected it to `const int reactorCapacity`.
+- This failure occurred during compilation of `ship_runtime.cpp`, before tests could run.
+- Commit: `89a2eb7`.
