@@ -589,7 +589,9 @@ int ShipRuntime::ionizeSystemInRoom(int roomId, int amount) {
                 if (allocated < weapons[i].power) break;
             }
 
-            for (int i = static_cast<int>(weapons.size()) - 1; i >= 0; --i) {
+            int weaponIonHits = hit;
+            for (int i = static_cast<int>(weapons.size()) - 1;
+                 i >= 0 && weaponIonHits > 0; --i) {
                 if (i < static_cast<int>(weaponIonDisabled.size()) && weaponIonDisabled[i]) continue;
                 const int allocated = std::min(weapons[i].power, std::max(0, system.power));
                 if (allocated < weapons[i].power) continue;
@@ -600,9 +602,8 @@ int ShipRuntime::ionizeSystemInRoom(int roomId, int amount) {
                     weapons[i].charge = 0.0f;
                     weapons[i].ready = false;
                 }
-                removed = std::min(normalWeaponPower,
-                    std::max(0, system.power - system.zoltanPower));
-                break;
+                removed += normalWeaponPower;
+                --weaponIonHits;
             }
         } else {
             const int normalPower = std::max(0, system.power - system.zoltanPower);
