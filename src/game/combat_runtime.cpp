@@ -1,6 +1,8 @@
 #include "game/combat_runtime.hpp"
 #include <algorithm>
+#include <cctype>
 #include <cstdint>
+#include <cmath>
 #include <unordered_map>
 #include <vector>
 
@@ -96,16 +98,54 @@ bool CombatRuntime::loadFlagshipPhase(ShipContent& contentSource, const LoadedSh
     return true;
 }
 
+int CombatRuntime::flakProjectileTarget(const ShipRuntime& target, int targetRoom,
+                                            const RuntimeWeapon& weapon) {
+    if (targetRoom < 0 || targetRoom >= static_cast<int>(target.content.layout.rooms.size()))
+        return -1;
+
+    std::string kind = weapon.type;
+    std::transform(kind.begin(), kind.end(), kind.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    if (kind.find("flak") == std::string::npos)
+        return targetRoom;
+
+    int radius = 42; // Flak I
+    if (kind.find("artillery") != std::string::npos ||
+        weapon.name.find("Artillery") != std::string::npos)
+        radius = 35;
+    else if (weapon.shots >= 7)
+        radius = 55; // Flak II
+    else if (weapon.name.find("Adv") != std::string::npos ||
+             weapon.name.find("ADV") != std::string::npos)
+        radius = 40;
+
+    const auto& room = target.content.layout.rooms[static_cast<std::size_t>(targetRoom)];
+    const int centerX = room.x + room.w / 2;
+    const int centerY = room.y + room.h / 2;
+
+    // Uniform integer sampling inside a circle. A point outside every room is
+    // a genuine Flak scatter miss and remains -1 regardless of evasion.
+    for (int attempt = 0; attempt < 64; ++attempt) {
+        const int span = radius * 2 + 1;
+        const int dx = static_cast<int>(nextRandom() % static_cast<std::uint32_t>(span)) - radius;
+        const int dy = static_cast<int>(nextRandom() % static_cast<std::uint32_t>(span)) - radius;
+        if (dx * dx + dy * dy > radius * radius) continue;
+        return target.roomAtLayoutPoint(centerX + dx, centerY + dy);
+    }
+    return target.roomAtLayoutPoint(centerX, centerY);
+}
+
 void CombatRuntime::enqueueWeapon(bool fromPlayer, int weaponIndex,
                                   const RuntimeWeapon& weapon, int room) {
     const int projectileCount = std::max(1, weapon.shots);
+    const ShipRuntime& target = fromPlayer ? enemy : player;
     for (int i = 0; i < projectileCount; ++i) {
         CombatShot shot;
         shot.fromPlayer = fromPlayer;
         shot.weaponIndex = weaponIndex;
         shot.weapon = weapon;
         shot.weapon.shots = 1;
-        shot.targetRoom = room;
+        shot.targetRoom = flakProjectileTarget(target, room, weapon);
         // Convert FTL's projectile speed into a stable gameplay flight time until
         // the renderer has the exact ship/projectile coordinates available.
         const float speed = static_cast<float>(std::max(1, weapon.speed));
