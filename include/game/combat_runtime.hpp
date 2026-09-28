@@ -92,6 +92,8 @@ private:
 
     void enqueueWeapon(bool fromPlayer, int weaponIndex, const RuntimeWeapon& weapon,
                        int targetRoom);
+    int flakProjectileTarget(const ShipRuntime& target, int targetRoom,
+                             const RuntimeWeapon& weapon);
     std::vector<CombatShot> shots_;
     std::deque<CombatResult> impactResults_;
     CombatResult lastImpactResult_{};
