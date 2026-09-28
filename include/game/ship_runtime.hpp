@@ -11,6 +11,7 @@ struct RuntimeSystem {
     int level{0};
     int power{0};
     int maxPower{0};
+    int batteryPower{0};
     int damage{0};
     int ionDamage{0};
     float ionTimer{0.0f};
