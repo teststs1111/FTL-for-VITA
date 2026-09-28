@@ -468,6 +468,8 @@ static void testShipRuntime() {
     assert(runtime.stunSystemsInRoom(0, 1.0f) >= 1);
     assert(!runtime.fireWeapon(0));
     runtime.updateEnvironment(1.0f);
+    // Weapon allocation is updated by the combat/frame loop after a stun ends.
+    runtime.updateWeapons(0.0f);
     assert(runtime.fireWeapon(0));
     assert(runtime.missiles == 6);
     assert(!runtime.weapons[0].ready);
