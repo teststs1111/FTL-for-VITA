@@ -299,3 +299,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Do not subtract battery-provided power during Plasma Storm; the battery's temporary power remains outside the storm's reactor cap.
 - Next fidelity step remains explicit power-source accounting for reactor-funded power vs Zoltan-provided power vs Backup Battery temporary power.
 - No proprietary `ftl.dat` content is committed.
+
+
+## Backup Battery source-allocation refinement — 2026-09-28
+- Added per-system `batteryPower` tracking so temporary Backup Battery-funded bars are distinct from reactor-funded bars.
+- `setSystemPower()` now uses regular reactor power before allocating remaining power from Backup Battery.
+- Battery expiry removes tracked temporary bars from their systems instead of only clearing an aggregate bonus.
+- Regression coverage exercises battery-funded allocation and removal at expiry.
+- Still provisional: persistent Zoltan per-bar source allocation and the combined Zoltan/Battery redistribution rules need further refinement.
