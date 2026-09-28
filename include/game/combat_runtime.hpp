@@ -10,6 +10,10 @@ namespace wormhole {
 enum class CombatOutcome { Ongoing, PlayerDestroyed, EnemyDestroyed };
 enum class CombatEnvironment { None, Asteroid, Sun, PlasmaStorm, PDSPlayer, PDSEnemy };
 
+// Vanilla Rebel Fleet environment selection. Difficulty is explicit so the
+// Easy-mode exit exception remains independently testable.
+CombatEnvironment selectRebelFleetEnvironment(bool nebulaBeacon, bool exitBeacon, bool easyMode);
+
 struct CombatResult {
     bool fired{false};
     int shotsFired{0};
