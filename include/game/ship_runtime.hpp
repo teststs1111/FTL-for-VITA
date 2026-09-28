@@ -44,6 +44,7 @@ struct RuntimeWeapon {
     int stunChance{0};
     int stunDuration{0};
     bool ready{false};
+    bool volleyPending{false};
 };
 
 struct RuntimeDrone {
