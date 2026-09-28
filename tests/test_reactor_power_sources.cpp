@@ -33,7 +33,8 @@ int main() {
     RuntimeCrew z2 = z1;
     ship.crew.push_back(z2);
 
-    // Two Zoltans cover two of the three weapon power bars.
+    // Two Zoltans are initially assigned to the existing weapon power bars.
+    ship.systems[0].zoltanPower = 2;
     assert(ship.zoltanPowerForSystem(ship.systems[0]) == 2);
     assert(ship.reactorFundedPowerForSystem(ship.systems[0]) == 1);
 
@@ -65,6 +66,7 @@ int main() {
     ship.setReactorPowerCap(2);
     assert(ship.setSystemPower(0, 4));
     assert(ship.systems[0].batteryPower == 1);
+    assert(ship.systems[0].zoltanPower == 2);
     assert(ship.reactorFundedPowerForSystem(ship.systems[0]) == 1);
     ship.updateBackupBattery(30.0f);
     assert(ship.backupBatteryPower() == 0);
