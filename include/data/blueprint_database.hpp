@@ -30,6 +30,9 @@ public:
     const std::unordered_map<std::string, AugmentBlueprint>& augments() const { return augments_; }
     const AugmentBlueprint* findAugment(const std::string& id) const;
     const std::unordered_map<std::string, ShipBlueprint>& ships() const { return ships_; }
+    const std::unordered_map<std::string, std::vector<std::string>>& blueprintLists() const { return blueprintLists_; }
+    const std::vector<std::string>* findBlueprintList(const std::string& id) const;
+    const std::string* selectBlueprint(const std::string& listId, unsigned seed) const;
     void clear();
 
 private:
@@ -38,6 +41,9 @@ private:
     std::unordered_map<std::string, WeaponBlueprint> weapons_;
     std::unordered_map<std::string, DroneBlueprint> drones_;
     std::unordered_map<std::string, AugmentBlueprint> augments_;
+    // FTL autoBlueprints.xml lists are ordered entries; duplicate names are
+    // intentional and act as weighting, so preserve every entry.
+    std::unordered_map<std::string, std::vector<std::string>> blueprintLists_;
 };
 
 }
