@@ -43,17 +43,15 @@ CI means GitHub Actions Continuous Integration. Do not substitute 'CI未取得' 
 - AE is inside the same ftl.dat. Do not revert to an external DLC-file model.
 
 ## Current verified main state — 2026-09-28
-- Latest main commit: 73af221134b4fcdacda3d376263feeae07befaf9
-- Host #826: success
-- Vita #518: success
-- The latest pursuit-fidelity changes are therefore CI-green for both host and Vita.
-- Code commits included in this validation:
-  - fa8f57a31aaf1d1798cea7cf2040401a5b2cb904 — Apply Rebel sector entry fleet advance
-  - b46f88ecfa76d911873fe0a17fa3fc5c2c906ee8 — Verify pursuit modifiers in real FTL data
-- Rebel Controlled Sector entry now applies the documented +1-jump fleet advance.
-- Real-data regression checks cover FUEL_FLEET_DELAY (-1), FUEL_FLEET_DISTRESS (+1), and REBEL_SECTOR.
-- Previous verified baseline: Host #823 / Vita #515 succeeded for 9024a89bb1200e04d0d670f5e8b75d61f73d4558.
-- Sector graph, real archive/BXML, blueprint/event/sector databases, Japanese text loading, PNG pipeline, beacon event assignment, Rebel Fleet state, and Last Stand state are implemented to varying prototype/intermediate fidelity.
+- Rebel Fleet environment selector/test commits are now on main:
+  - 1fec7b4eba83ff22aede8986b0724800253296d3 — Implement selector
+  - fc9db5acc7a016b69c7f889551a1e0ba8a313d56 — Use selector
+  - 0affeecda97c340a323c7528c4358c7943bcccef — Register regression test
+- 2ffa020c2a19974602e74247bc6a9bb5147c5740 records the checkpoint.
+- The selector covers normal fleet ASB, captured nebula Plasma Storm, nebula exit without ASB, Easy-mode exit without ASB, and normal/hard exit ASB.
+- MainGame currently passes easyMode=false because difficulty state is not yet represented; the selector is isolated so the Easy exception can become exact once difficulty state exists.
+- The regression test documents the zero-fuel-after-jump captured-nebula branch as Plasma Storm; fuel-state branching itself remains in MainGame.
+- CI for the newest implementation commit must be checked directly before declaring this change green.
 
 ## Current change — vanilla default NEBULA resolution
 Direct inspection of the real Library ftl.dat found a concrete gap: sector_data.xml refers to a special pool named NEBULA, but the archive does not serialize a literal eventList named NEBULA. The default pool is an engine-level vanilla pool.
