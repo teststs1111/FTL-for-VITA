@@ -327,3 +327,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Also removed a duplicate availableZoltanPowerForSystem() declaration in the runtime header that could break compilation.
 - Latest commits: header cleanup/rebalance declaration 4998a56; lifecycle implementation a32227c; regression test 25dafa98.
 - The newest Host/Vita workflow runs for 25dafa98 were observed as in progress at the time of this handoff update; no pass is claimed yet.
+
+## Plasma Storm mixed power-source correction — 2026-09-28
+- Rechecked vanilla behavior before extending the current Storm implementation: Plasma/Ion Storm halves reactor capacity (rounded up), while Zoltan power and Backup Battery power are unaffected.
+- Storm entry removes excess ordinary reactor-funded power; the removed bars are not treated as automatically restored when leaving the storm. The reactor ceiling returns, but the player may need to reallocate power.
+- Current source accounting now preserves this distinction: `zoltanPower` and `batteryPower` are retained while `setSystemPower()` removes reactor-funded bars first.
+- Added `tests/test_plasma_storm_power.cpp` covering a mixed Zoltan + Backup Battery + reactor allocation through Storm entry/exit.
+- Removed an unused storm-restoration field; no automatic repower mechanism is being added.
+- Latest test/CMake commit: `04dcd745614d650802cfb39e90b0cc1007a262f2`. No workflow result is currently exposed for this commit, so it is not marked CI-green yet.
+- This narrows the remaining Storm gap to exact vanilla power-removal ordering/edge cases and broader combat/environment integration; the core source distinction is now regression-tested.
