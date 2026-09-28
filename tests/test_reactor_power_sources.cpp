@@ -28,7 +28,9 @@ int main() {
     assert(ship.backupBatteryCooldownRemaining() > 19.9f);
     assert(ship.availableReactorPower() == 8);
 
-    // Level II supplies four temporary bars.
+    // Level II supplies four temporary bars after the normal cooldown.
+    ship.updateBackupBattery(20.0f);
+    assert(ship.backupBatteryCooldownRemaining() == 0.0f);
     battery.level = 2;
     battery.powered = true;
     assert(ship.activateBackupBattery());
