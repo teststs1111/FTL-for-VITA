@@ -382,3 +382,15 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Added regression coverage for a 3-power Weapons system with 1+1+2 power weapons and progressive system damage.
 - This is still a runtime-level slot-order model; explicit player weapon-slot reordering is not yet exposed by the current API.
 - Latest commits: `22360f9` runtime allocation/damage logic and `8d90f4d` regression tests.
+
+
+## Weapon firing / volley ammunition fidelity correction — 2026-09-28
+
+- `fireWeapon()` now requires the individual weapon slot to have its full `allocatedPower`, rather than checking only the total Weapons-system power.
+- `missilesUsed` is treated as the ammunition cost of one firing volley. `shots` describes the number of projectiles in that volley and does not multiply the missile cost.
+- A successful firing consumes the configured volley ammunition and resets charge/ready state.
+- A failed firing due to insufficient missiles leaves ammunition and ready state unchanged.
+- Regression coverage was added to `tests/test_reactor_power_sources.cpp`.
+- Commit: `12f1488` — runtime firing correction.
+- Commit: `c3eb280` — firing/multi-shot regression tests.
+- Current limitation: the runtime still models weapon firing as a state transition; projectile trajectories, target selection, and individual projectile resolution are not yet represented as runtime entities. Those should be implemented before claiming full combat fidelity.
