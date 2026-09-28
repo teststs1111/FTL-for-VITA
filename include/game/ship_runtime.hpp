@@ -92,6 +92,7 @@ struct ShipRuntime {
     std::vector<RuntimeCrew> crew;
     std::vector<RuntimeDrone> drones;
     std::vector<RuntimeWeapon> weapons;
+    std::vector<bool> weaponIonDisabled;
     int missiles{0};
     int shieldLayers{0};
     int maxShieldLayers{0};
