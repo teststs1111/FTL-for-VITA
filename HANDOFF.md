@@ -241,3 +241,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Prefer a short status block: progress %, current state, what is being worked on, CI result, and only important problems/blockers.
 - Do not repeat detailed background already recorded in HANDOFF.md unless it changed or is directly relevant.
 - Keep technical investigation and implementation detail in HANDOFF.md, while chat reports summarize only the latest changes and next step.
+
+
+## Rebel Fleet environment regression checkpoint — 2026-09-28
+- Added a dedicated selectRebelFleetEnvironment() selector and a host regression test.
+- Covered normal fleet beacon -> PDSPlayer, captured non-exit nebula -> PlasmaStorm, nebula exit -> None, Easy-mode non-nebula exit -> None, and normal/hard non-nebula exit -> PDSPlayer.
+- MainGame currently passes easyMode=false because difficulty state is not yet modeled; the selector keeps the vanilla Easy exception explicit for later integration.
+- Zero-fuel arrival at a captured non-exit nebula is covered at the environment-selection level; waiting-at-beacon takeover remains a separate state-model gap.
+- ShipRuntime::setReactorPowerCap() was implemented in f1f4b3504197d96c446653e3cf9481fb36de7f66; Host #843 and Vita #535 both completed successfully for that commit.
