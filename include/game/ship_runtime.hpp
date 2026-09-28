@@ -100,6 +100,9 @@ struct ShipRuntime {
     std::vector<float> roomFireDamageTimer;
     bool valid{false};
     int reactorPowerCap{-1};
+    int backupBatteryActivePower{0};
+    float backupBatteryTimer{0.0f};
+    float backupBatteryCooldownTimer{0.0f};
 
     bool load(ShipContent& source);
     bool load(const LoadedShip& loaded);
@@ -129,6 +132,11 @@ struct ShipRuntime {
     int usedReactorPower() const;
     int availableReactorPower() const;
     void setReactorPowerCap(int cap);
+    bool activateBackupBattery();
+    void updateBackupBattery(float dt);
+    int backupBatteryPower() const { return backupBatteryActivePower; }
+    float backupBatteryRemaining() const { return backupBatteryTimer; }
+    float backupBatteryCooldownRemaining() const { return backupBatteryCooldownTimer; }
     void updateWeapons(float dt, float cooldownMultiplier = 1.0f);
     void updateShields(float dt, float rechargeMultiplier = 1.0f);
     bool damageShields(int amount);
