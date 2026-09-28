@@ -144,7 +144,8 @@ void CombatRuntime::applyPlasmaStormPowerCap() {
         while (ship.usedReactorPower() > cap) {
             std::vector<int> poweredSystems;
             for (int i = 0; i < static_cast<int>(ship.systems.size()); ++i)
-                if (ship.systems[i].powered && ship.systems[i].power > 0)
+                if (ship.systems[i].powered &&
+                    ship.reactorFundedPowerForSystem(ship.systems[i]) > 0)
                     poweredSystems.push_back(i);
 
             std::vector<int> poweredDrones;
