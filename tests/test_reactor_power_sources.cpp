@@ -38,6 +38,28 @@ int main() {
     assert(ship.zoltanPowerForSystem(ship.systems[0]) == 2);
     assert(ship.reactorFundedPowerForSystem(ship.systems[0]) == 1);
 
+    // A Zoltan leaving the room removes only its free bar; returning restores it.
+    ship.crew[0].room = 2;
+    ship.rebalanceZoltanPowerSources();
+    assert(ship.systems[0].zoltanPower == 1);
+    assert(ship.systems[0].power == 2);
+    ship.crew[0].room = 1;
+    ship.rebalanceZoltanPowerSources();
+    assert(ship.systems[0].zoltanPower == 2);
+    assert(ship.systems[0].power == 3);
+
+    // A dead Zoltan likewise loses its supplied bar.
+    ship.crew[1].health = 0;
+    ship.crew[1].alive = false;
+    ship.rebalanceZoltanPowerSources();
+    assert(ship.systems[0].zoltanPower == 1);
+    assert(ship.systems[0].power == 2);
+    ship.crew[1].alive = true;
+    ship.crew[1].health = ship.crew[1].maxHealth;
+    ship.rebalanceZoltanPowerSources();
+    assert(ship.systems[0].zoltanPower == 2);
+    assert(ship.systems[0].power == 3);
+
     // Subsystems do not receive Zoltan power.
     assert(ship.zoltanPowerForSystem(ship.systems[1]) == 0);
     assert(ship.reactorFundedPowerForSystem(ship.systems[1]) == 1);
