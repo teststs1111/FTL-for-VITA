@@ -98,7 +98,7 @@ struct ShipRuntime {
     std::vector<bool> roomFire;
     std::vector<bool> roomBreach;
     std::vector<float> roomFireDamageTimer;
-    bool valid{false};
+    bool valid{false};\n    int reactorPowerCap{-1};
 
     bool load(ShipContent& source);
     bool load(const LoadedShip& loaded);
@@ -123,7 +123,7 @@ struct ShipRuntime {
     bool setRoomBreach(int roomId, bool breached);
     void updateEnvironment(float dt);
     int usedReactorPower() const;
-    int availableReactorPower() const;
+    int availableReactorPower() const;\n    void setReactorPowerCap(int cap);
     void updateWeapons(float dt, float cooldownMultiplier = 1.0f);
     void updateShields(float dt, float rechargeMultiplier = 1.0f);
     bool damageShields(int amount);
