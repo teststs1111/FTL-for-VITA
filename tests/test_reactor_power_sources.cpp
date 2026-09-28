@@ -75,7 +75,7 @@ int main() {
 
     RuntimeSystem artillery;
     artillery.type = "artillery";
-    artillery.room = 2;
+    artillery.room = 3;
     artillery.power = 1;
     artillery.maxPower = 4;
     artillery.powered = true;
@@ -88,6 +88,7 @@ int main() {
     assert(ship.zoltanPowerForSystem(ship.systems[3]) == 0);
 
     RuntimeCrew z4 = z3;
+    z4.room = 3;
     ship.crew.push_back(z4);
     assert(ship.zoltanPowerForSystem(ship.systems[3]) == 1);
 
