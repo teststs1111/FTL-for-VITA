@@ -134,14 +134,31 @@ void ShipRuntime::updateWeapons(float dt, float cooldownMultiplier) {
         if (system.type == "weapons" && system.powered && system.stunTimer <= 0.0f)
             weaponSystemPower = std::max(weaponSystemPower, system.power);
     }
-    if (weaponSystemPower <= 0) return;
+    if (weaponSystemPower <= 0) {
+        for (auto& weapon : weapons) weapon.allocatedPower = 0;
+        return;
+    }
 
-    for (auto& weapon : weapons) {
-        if (weapon.power > weaponSystemPower || weapon.ready) continue;
-        const int weaponIndex = static_cast<int>(&weapon - weapons.data());
-        if (weaponIndex >= 0 && weaponIndex < static_cast<int>(weaponIonDisabled.size()) && weaponIonDisabled[weaponIndex]) continue;
-        weapon.charge = std::min(weapon.cooldown, weapon.charge + dt);
-        if (weapon.charge >= weapon.cooldown) weapon.ready = true;
+    // Weapon slots consume the shared Weapons-system power cumulatively.
+    // Keep the loaded slot order as the runtime's current weapon ordering.
+    int remainingPower = weaponSystemPower;
+    for (int i = 0; i < static_cast<int>(weapons.size()); ++i) {
+        auto& weapon = weapons[i];
+        weapon.allocatedPower = 0;
+        const bool ionDisabled = i < static_cast<int>(weaponIonDisabled.size()) &&
+                                 weaponIonDisabled[i];
+        if (ionDisabled || remainingPower < weapon.power)
+            continue;
+
+        weapon.allocatedPower = weapon.power;
+        remainingPower -= weapon.power;
+        if (weapon.ready) continue;
+
+        const float rate = std::max(0.0f, cooldownMultiplier);
+        weapon.charge = std::min(weapon.cooldown,
+            weapon.charge + dt * rate);
+        if (weapon.charge >= weapon.cooldown)
+            weapon.ready = true;
     }
 }
 
@@ -284,6 +301,31 @@ int ShipRuntime::damageSystemInRoom(int roomId, int amount) {
         system.power = std::min(system.power, std::max(0, system.maxPower - system.damage - system.ionDamage));
         system.zoltanPower = std::min(system.zoltanPower, system.power);
         system.batteryPower = std::min(system.batteryPower, std::max(0, system.power - system.zoltanPower));
+
+        // Losing Weapons-system power deallocates whole weapon slots from the
+        // rightmost side. A partially funded weapon cannot remain active.
+        if (system.type == "weapons") {
+            int remainingPower = system.power;
+            for (int weaponIndex = 0; weaponIndex < static_cast<int>(weapons.size()); ++weaponIndex) {
+                auto& weapon = weapons[weaponIndex];
+                const bool ionDisabled = weaponIndex < static_cast<int>(weaponIonDisabled.size()) &&
+                                         weaponIonDisabled[weaponIndex];
+                if (ionDisabled || remainingPower < weapon.power) {
+                    weapon.allocatedPower = 0;
+                    continue;
+                }
+                weapon.allocatedPower = weapon.power;
+                remainingPower -= weapon.power;
+            }
+            for (int weaponIndex = static_cast<int>(weapons.size()) - 1; weaponIndex >= 0; --weaponIndex) {
+                auto& weapon = weapons[weaponIndex];
+                if (weapon.allocatedPower == 0) {
+                    weapon.ready = false;
+                    weapon.charge = 0.0f;
+                }
+            }
+        }
+
         if (system.power == 0) system.powered = false;
         applied += hit;
         if (applied >= amount) break;
