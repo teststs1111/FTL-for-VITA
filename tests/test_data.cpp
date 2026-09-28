@@ -570,6 +570,10 @@ static void testShipRuntime() {
         weapon.charge = 0.0f;
     }
     combat.enemy.setSystemPowered(1, true);
+    // Force the regression scenario to use a multi-shot volley so one defense-drone
+    // interception can be distinguished from incorrectly intercepting the whole volley.
+    assert(!combat.enemy.weapons.empty());
+    combat.enemy.weapons[0].shots = 2;
     combat.enemy.updateWeapons(2.5f);
     combat.player.shieldLayers = 0;
     // Start fully charged so this regression test isolates interception behavior.
