@@ -232,9 +232,15 @@ bool ShipRuntime::fireWeapon(int weaponIndex) {
 
 
 int ShipRuntime::resolveWeaponVolley(int weaponIndex, int targetRoom, int targetEvasion) {
-    if (!valid || weaponIndex < 0 || weaponIndex >= static_cast<int>(weapons.size()) ||
-        targetRoom < 0) return 0;
+    if (targetRoom < 0) return 0;
+    return resolveWeaponVolley(weaponIndex, std::vector<int>{targetRoom}, targetEvasion);
+}
 
+int ShipRuntime::resolveWeaponVolley(int weaponIndex, const std::vector<int>& projectileTargets, int targetEvasion) {
+    if (!valid || weaponIndex < 0 || weaponIndex >= static_cast<int>(weapons.size()) ||
+        projectileTargets.empty()) return 0;
+
+    const int fallbackTargetRoom = projectileTargets.front();
     RuntimeWeapon& weapon = weapons[weaponIndex];
     if (!weapon.volleyPending || weapon.allocatedPower < weapon.power) return 0;
     if (weaponIndex < static_cast<int>(weaponIonDisabled.size()) && weaponIonDisabled[weaponIndex])
@@ -265,6 +271,14 @@ int ShipRuntime::resolveWeaponVolley(int weaponIndex, int targetRoom, int target
     std::uniform_int_distribution<int> roll(0, 99);
 
     for (int shot = 0; shot < shots; ++shot) {
+        const int targetRoom = shot < static_cast<int>(projectileTargets.size())
+            ? projectileTargets[shot]
+            : fallbackTargetRoom;
+        if (targetRoom < 0) {
+            ++resolved;
+            continue;
+        }
+
         // Beams do not use the normal projectile hit/miss roll; they always connect.
         // Other weapon projectiles have a per-shot chance to miss equal to target evasion.
         if (!beamLike && roll(rng) < evasion) {
