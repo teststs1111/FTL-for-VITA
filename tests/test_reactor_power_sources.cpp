@@ -230,7 +230,8 @@ int main() {
         assert(!ionShip.setSystemPower(0, 1));
         assert(ionShip.systems[0].power == 2);
 
-        ionShip.updateEnvironment(5.0f);
+        // Two ion damage points stack to a ten-second lock (five seconds each).
+        ionShip.updateEnvironment(10.0f);
         assert(ionShip.systems[0].ionDamage == 0);
         assert(ionShip.systems[0].ionRemovedPower == 0);
         assert(ionShip.systems[0].power == 4);
