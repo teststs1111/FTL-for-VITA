@@ -209,6 +209,8 @@ int main() {
         ionSystem.zoltanPower = 1;
         ionSystem.batteryPower = 2;
         ionShip.systems.push_back(ionSystem);
+        ionShip.backupBatteryActivePower = 2;
+        ionShip.backupBatteryTimer = 20.0f;
 
         assert(ionShip.usedReactorPower() == 1);
         assert(ionShip.ionizeSystemInRoom(10, 2) == 2);
@@ -225,10 +227,9 @@ int main() {
         assert(ionShip.systems[0].ionRemovedPower == 0);
         assert(ionShip.systems[0].power == 4);
         assert(ionShip.systems[0].zoltanPower == 1);
-        // The temporary battery bars were gone during the ion lock, so the
-        // restored bars come back as reactor power when capacity permits.
-        assert(ionShip.systems[0].batteryPower == 0);
-        assert(ionShip.reactorFundedPowerForSystem(ionShip.systems[0]) == 3);
+        // The lost bars can return as Battery power while the Battery remains active.
+        assert(ionShip.systems[0].batteryPower == 2);
+        assert(ionShip.reactorFundedPowerForSystem(ionShip.systems[0]) == 1);
     }
 
     return 0;
