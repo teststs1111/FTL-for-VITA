@@ -394,3 +394,18 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Commit: `12f1488` — runtime firing correction.
 - Commit: `c3eb280` — firing/multi-shot regression tests.
 - Current limitation: the runtime still models weapon firing as a state transition; projectile trajectories, target selection, and individual projectile resolution are not yet represented as runtime entities. Those should be implemented before claiming full combat fidelity.
+
+
+## Weapon volley resolution foundation — 2026-09-28
+
+- Added `RuntimeWeapon::volleyPending` so firing and projectile resolution are separate runtime phases.
+- Added `resolveWeaponVolley(weaponIndex, targetRoom)`.
+- Projectile-style weapons consume one shield layer per projectile before room damage when normal shields remain.
+- Missile/bomb-style weapons bypass normal shields and apply their configured hull/system/crew effects directly.
+- Ion weapons apply ion damage to the shield system when blocked by shields, otherwise to the selected target room.
+- Beam weapons do not remove shield layers; their room damage is reduced by the number of active shield layers.
+- Multi-shot volleys resolve `shots` times, while missile ammunition remains the per-volley cost already consumed by `fireWeapon()`.
+- Regression tests cover a two-shot laser volley stripping two shield layers and a shield-bypassing missile applying hull/system damage.
+- Research basis: vanilla weapon/shield mechanics from FTL mechanics references; missiles/bombs bypass regular shields, beams reduce damage per shield layer, and ion weapons apply ion damage to shields when blocked. citeturn0search1turn0search3turn0search4
+- Commits: `a90c65a`, `caed6c9`, `e87befa`, `c79cc88`, `c4a5309`.
+- Current limitation: projectile travel, evasion/miss rolls, Defense Drone interception, flak spread, beam path geometry, and per-tile beam effects are not yet represented. Do not treat this foundation as full combat fidelity.
