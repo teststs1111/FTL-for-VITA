@@ -21,6 +21,7 @@ int main() {
     assert(archive.contains("data/dlcBlueprints.xml"));
     assert(archive.contains("data/dlcBlueprintsOverwrite.xml"));
     assert(archive.contains("data/dlcEvents.xml"));
+    assert(archive.contains("data/dlcEvents_anaerobic.xml"));
     assert(archive.contains("data/dlcEventsOverwrite.xml"));
     assert(archive.contains("data/sector_data.xml"));
     assert(archive.contains("data/text-ja.xml"));
@@ -37,6 +38,11 @@ int main() {
     events.setAdvancedEdition(true);
     assert(events.load());
     assert(events.resolve("STORE_REBELSIDE_SEARCH", 0) != nullptr);
+    // Lanius event pools live in data/dlcEvents_anaerobic.xml in the real
+    // archive and must be available when AE is enabled.
+    assert(events.resolve("HOSTILE_LANIUS", 0) != nullptr);
+    assert(events.resolve("NEUTRAL_LANIUS", 0) != nullptr);
+    assert(events.find("LANIUS_FIGHT") != nullptr);
     const char* nebulaPoolIds[] = {
         "NEBULA_EMPTY", "NEBULA_REBEL", "NEBULA_AUTO",
         "NEBULA_AUTO_WARNING", "NEBULA_PIRATE_SMUGGLE",
