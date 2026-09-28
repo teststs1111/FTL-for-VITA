@@ -232,5 +232,30 @@ int main() {
         assert(ionShip.reactorFundedPowerForSystem(ionShip.systems[0]) == 1);
     }
 
+    // Ion damage stacks: each additional point adds five seconds, capped at
+    // five ion points / twenty-five seconds.
+    {
+        ShipRuntime ionStack;
+        ionStack.valid = true;
+        RuntimeSystem system;
+        system.type = "shields";
+        system.room = 3;
+        system.power = 5;
+        system.maxPower = 5;
+        system.powered = true;
+        ionStack.systems.push_back(system);
+
+        assert(ionStack.ionizeSystemInRoom(3, 2) == 2);
+        assert(ionStack.systems[0].ionDamage == 2);
+        assert(ionStack.systems[0].ionTimer == 10.0f);
+        assert(ionStack.ionizeSystemInRoom(3, 2) == 2);
+        assert(ionStack.systems[0].ionDamage == 4);
+        assert(ionStack.systems[0].ionTimer == 20.0f);
+        assert(ionStack.ionizeSystemInRoom(3, 2) == 1);
+        assert(ionStack.systems[0].ionDamage == 5);
+        assert(ionStack.systems[0].ionTimer == 25.0f);
+        assert(ionStack.ionizeSystemInRoom(3, 1) == 0);
+    }
+
     return 0;
 }
