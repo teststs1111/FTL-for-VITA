@@ -309,12 +309,14 @@ int ShipRuntime::ionizeSystemInRoom(int roomId, int amount) {
     for (auto& system : systems) {
         if (system.room != roomId || system.maxPower <= 0) continue;
 
-        const int remaining = std::max(0, system.maxPower - system.damage - system.ionDamage);
-        const int hit = std::min(amount - applied, remaining);
+        // Ion damage stacks up to 5 points / 25 seconds.
+        // Additional ion damage can still be recorded even after all normal
+        // power has been forced out, but the lock itself caps at 25 seconds.
+        const int hit = std::min(amount - applied, 5 - system.ionDamage);
         if (hit <= 0) continue;
 
         system.ionDamage += hit;
-        system.ionTimer = 5.0f;
+        system.ionTimer = std::min(25.0f, system.ionTimer + 5.0f * hit);
 
         // Ion damage can force out only normal power. Zoltan power is ion-proof.
         // The removed bars are remembered so the system can attempt to reclaim
