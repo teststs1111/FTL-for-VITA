@@ -108,7 +108,8 @@ private:
     CombatEnvironment environment_{CombatEnvironment::None};
     float environmentTimer_{0.0f};
     std::uint32_t nextRandom();
-    void updateEnvironmentHazard(float dt);\n    void applyPlasmaStormPowerCap();
+    void updateEnvironmentHazard(float dt);
+    void applyPlasmaStormPowerCap();
 };
 
 } 
