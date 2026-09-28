@@ -19,7 +19,8 @@ public:
     bool open(const std::string& archivePath);
     bool openArchives(const std::vector<std::string>& archivePaths);
     bool loadShip(const std::string& shipId, LoadedShip& out,
-                  const std::string& blueprintPath = "data/blueprints.xml");
+                  const std::string& blueprintPath = "data/blueprints.xml",
+                  unsigned randomSeed = 0);
     bool loadPlayerShip(const std::string& blueprintPath = "data/blueprints.xml",
                         const std::string& shipId = "PLAYER_SHIP_HARD");
     void setAdvancedEdition(bool enabled) { advancedEdition_ = enabled; }
