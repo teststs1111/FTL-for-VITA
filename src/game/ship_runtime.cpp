@@ -627,7 +627,7 @@ bool ShipRuntime::setSystemPowered(int systemIndex, bool powered) {
         const int allocatedFree = std::min(system.power,
             std::max(0, system.zoltanPower) + std::max(0, system.batteryPower));
         const int reactorNeeded = std::max(0, system.power - allocatedFree);
-        const reactorCapacity = reactorPowerCap >= 0
+        const int reactorCapacity = reactorPowerCap >= 0
             ? std::min(reactor, reactorPowerCap)
             : reactor;
         if (std::max(0, reactorCapacity - usedReactorPower()) < reactorNeeded)
