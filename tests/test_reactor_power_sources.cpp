@@ -527,6 +527,47 @@ int main() {
         assert(evasion.hull == 2);
     }
 
+    // Flak projectiles resolve independently against their individual target rooms.
+    // One shield layer absorbs only the projectile that encounters it; later projectiles
+    // can hit different rooms in the same volley.
+    {
+        ShipRuntime flak;
+        flak.valid = true;
+        flak.hull = 10;
+        flak.maxHull = 10;
+        flak.roomDamage.assign(4, 0);
+        flak.shieldLayers = 1;
+        flak.maxShieldLayers = 1;
+
+        RuntimeSystem weaponsSystem;
+        weaponsSystem.type = "weapons";
+        weaponsSystem.room = 80;
+        weaponsSystem.power = 3;
+        weaponsSystem.maxPower = 3;
+        weaponsSystem.powered = true;
+        flak.systems.push_back(weaponsSystem);
+
+        RuntimeWeapon weapon;
+        weapon.type = "flak";
+        weapon.power = 3;
+        weapon.shots = 3;
+        weapon.damage = 1;
+        weapon.cooldown = 1.0f;
+        weapon.allocatedPower = 3;
+        weapon.volleyPending = true;
+        flak.weapons.push_back(weapon);
+        flak.weaponIonDisabled.assign(1, false);
+
+        const std::vector<int> targets{1, 2, 3};
+        assert(flak.resolveWeaponVolley(0, targets, 0) == 3);
+        assert(flak.shieldLayers == 0);
+        assert(flak.hull == 8);
+        assert(flak.roomDamage[1] == 0);
+        assert(flak.roomDamage[2] == 1);
+        assert(flak.roomDamage[3] == 1);
+        assert(!flak.weapons[0].volleyPending);
+    }
+
     // Defense Drones intercept individual eligible projectiles before evasion.
     // Bombs bypass them, while Mark I cannot intercept lasers/ions.
     {
