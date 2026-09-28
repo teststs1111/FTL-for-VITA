@@ -143,6 +143,16 @@ int main() {
     assert(selectedZoltan != nullptr);
     assert(content.blueprints().findShip(*selectedZoltan) != nullptr);
     assert(content.blueprints().findBlueprintList("WEAPONS_MISSILES") != nullptr);
+    wormhole::LoadedShip autoBasic;
+    assert(content.loadShip("AUTO_BASIC", autoBasic, "data/blueprints.xml", 12345u));
+    assert(autoBasic.blueprint.weaponLoadList == "WEAPONS_AUTO");
+    assert(!autoBasic.initialWeaponBlueprints.empty());
+    int autoWeaponPower = 0;
+    for (const auto& weapon : autoBasic.initialWeaponBlueprints) {
+        assert(weapon.power > 0);
+        autoWeaponPower += weapon.power;
+    }
+    assert(autoWeaponPower <= 2);
 
     content.setAdvancedEdition(true);
     assert(content.loadPlayerShip("data/blueprints.xml", "PLAYER_SHIP_ANAEROBIC"));
