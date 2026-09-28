@@ -228,6 +228,103 @@ bool ShipRuntime::fireWeapon(int weaponIndex) {
     return true;
 }
 
+
+int ShipRuntime::resolveWeaponVolley(int weaponIndex, int targetRoom) {
+    if (!valid || weaponIndex < 0 || weaponIndex >= static_cast<int>(weapons.size()) ||
+        targetRoom < 0) return 0;
+
+    RuntimeWeapon& weapon = weapons[weaponIndex];
+    if (!weapon.ready || weapon.allocatedPower < weapon.power) return 0;
+    if (weaponIndex < static_cast<int>(weaponIonDisabled.size()) && weaponIonDisabled[weaponIndex])
+        return 0;
+
+    // A volley contains the configured number of projectiles. Missile/bomb
+    // ammunition was already consumed by fireWeapon(), so resolving the volley
+    // never charges ammo again.
+    const int shots = std::max(1, weapon.shots);
+    const std::string type = weapon.type;
+    int resolved = 0;
+
+    auto lower = [](std::string value) {
+        std::transform(value.begin(), value.end(), value.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        return value;
+    };
+    const std::string kind = lower(type);
+    const bool missileLike = kind.find("missile") != std::string::npos ||
+                             kind.find("bomb") != std::string::npos;
+    const bool ionLike = kind.find("ion") != std::string::npos;
+    const bool beamLike = kind.find("beam") != std::string::npos;
+    const bool bypassShields = missileLike;
+
+    for (int shot = 0; shot < shots; ++shot) {
+        if (ionLike) {
+            // Ion shots that meet a normal shield apply their ion damage to the
+            // shield system itself; otherwise they ionize the selected room.
+            int shieldIndex = -1;
+            for (int i = 0; i < static_cast<int>(systems.size()); ++i) {
+                if (systems[i].type == "shields" && systems[i].maxPower > 0) {
+                    shieldIndex = i;
+                    break;
+                }
+            }
+            if (shieldLayers > 0 && shieldIndex >= 0) {
+                ionizeSystemInRoom(systems[shieldIndex].room, std::max(1, weapon.ionDamage));
+            } else if (weapon.ionDamage > 0) {
+                ionizeSystemInRoom(targetRoom, weapon.ionDamage);
+            }
+            ++resolved;
+            continue;
+        }
+
+        if (!beamLike && !bypassShields && shieldLayers > 0) {
+            // Lasers, flak and crystal-style projectiles remove one shield
+            // layer per projectile. A crystal piercing value describes its
+            // special ability, but the vanilla multi-layer behavior still
+            // consumes the encountered shield layer before room damage.
+            --shieldLayers;
+            shieldCharge = 0.0f;
+            ++resolved;
+            continue;
+        }
+
+        if (beamLike) {
+            // Beams never consume shield layers. Their damage is reduced by one
+            // for every regular shield layer currently present.
+            const int effectiveDamage = std::max(0, weapon.damage - shieldLayers);
+            if (effectiveDamage > 0) {
+                damageRoom(targetRoom, effectiveDamage);
+                if (weapon.systemDamage > 0)
+                    damageSystemInRoom(targetRoom, std::min(weapon.systemDamage, effectiveDamage));
+                if (weapon.personnelDamage > 0)
+                    damageCrewInRoom(targetRoom, weapon.personnelDamage);
+            }
+            ++resolved;
+            continue;
+        }
+
+        // Shield-bypassing missiles/bombs and unblocked projectiles apply both
+        // hull and system effects to the targeted room. A weapon's damage and
+        // systemDamage are separate effects in the blueprint data.
+        if (weapon.damage > 0)
+            damageRoom(targetRoom, weapon.damage);
+        if (weapon.systemDamage > 0)
+            damageSystemInRoom(targetRoom, weapon.systemDamage);
+        if (weapon.personnelDamage > 0)
+            damageCrewInRoom(targetRoom, weapon.personnelDamage);
+        if (weapon.ionDamage > 0)
+            ionizeSystemInRoom(targetRoom, weapon.ionDamage);
+        if (weapon.stunDuration > 0)
+            stunSystemsInRoom(targetRoom, static_cast<float>(weapon.stunDuration));
+
+        ++resolved;
+    }
+
+    // The charge was spent by fireWeapon(); this is the point at which the
+    // volley has actually resolved in the combat runtime.
+    return resolved;
+}
+
 void ShipRuntime::updateDrones(float dt) {
     if (!valid || dt <= 0.f) return;
     for (auto& drone : drones) {
