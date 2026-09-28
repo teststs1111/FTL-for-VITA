@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cctype>
 #include <queue>
+#include <random>
 #include <vector>
 
 namespace wormhole {
@@ -230,7 +231,7 @@ bool ShipRuntime::fireWeapon(int weaponIndex) {
 }
 
 
-int ShipRuntime::resolveWeaponVolley(int weaponIndex, int targetRoom) {
+int ShipRuntime::resolveWeaponVolley(int weaponIndex, int targetRoom, int targetEvasion) {
     if (!valid || weaponIndex < 0 || weaponIndex >= static_cast<int>(weapons.size()) ||
         targetRoom < 0) return 0;
 
@@ -257,8 +258,19 @@ int ShipRuntime::resolveWeaponVolley(int weaponIndex, int targetRoom) {
     const bool ionLike = kind.find("ion") != std::string::npos;
     const bool beamLike = kind.find("beam") != std::string::npos;
     const bool bypassShields = missileLike;
+    const int evasion = std::clamp(targetEvasion, 0, 100);
+    // FTL resolves each projectile independently against the target's evasion.
+    // Keep the RNG local to volley resolution so the result is not tied to frame timing.
+    static thread_local std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> roll(0, 99);
 
     for (int shot = 0; shot < shots; ++shot) {
+        // Beams do not use the normal projectile hit/miss roll; they always connect.
+        // Other weapon projectiles have a per-shot chance to miss equal to target evasion.
+        if (!beamLike && roll(rng) < evasion) {
+            ++resolved;
+            continue;
+        }
         if (ionLike) {
             // Ion shots that meet a normal shield apply their ion damage to the
             // shield system itself; otherwise they ionize the selected room.
