@@ -371,18 +371,20 @@ int main() {
         assert(weaponPower.weapons[1].charge > 0.0f);
         assert(weaponPower.weapons[2].charge == 0.0f);
 
-        // Losing one Weapons-system power removes the rightmost allocated slot.
+        // One system damage lowers effective max power from 4 to 3. Existing
+        // power at 3 therefore remains valid and no weapon slot is dropped.
         assert(weaponPower.damageSystemInRoom(30, 1) == 1);
-        assert(weaponPower.systems[0].power == 2);
+        assert(weaponPower.systems[0].power == 3);
         assert(weaponPower.weapons[0].allocatedPower == 1);
         assert(weaponPower.weapons[1].allocatedPower == 1);
         assert(weaponPower.weapons[2].allocatedPower == 0);
 
-        // With only one power remaining, the second slot is the one that drops.
+        // A second damage point lowers effective max power to 2; the two
+        // one-power weapons still fit, while the later two-power gun remains off.
         assert(weaponPower.damageSystemInRoom(30, 1) == 1);
-        assert(weaponPower.systems[0].power == 1);
+        assert(weaponPower.systems[0].power == 2);
         assert(weaponPower.weapons[0].allocatedPower == 1);
-        assert(weaponPower.weapons[1].allocatedPower == 0);
+        assert(weaponPower.weapons[1].allocatedPower == 1);
         assert(weaponPower.weapons[1].charge == 0.0f);
         assert(weaponPower.weapons[2].allocatedPower == 0);
     }
