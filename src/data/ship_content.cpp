@@ -18,7 +18,8 @@ bool ShipContent::openArchives(const std::vector<std::string>& archivePaths) {
 }
 
 bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
-                             const std::string& blueprintPath) {
+                             const std::string& blueprintPath,
+                             unsigned randomSeed) {
     database_.clear();
     out = {};
 
