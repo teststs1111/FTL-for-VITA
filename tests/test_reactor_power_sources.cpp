@@ -60,8 +60,16 @@ int main() {
     assert(ship.backupBatteryPower() == 2);
     assert(ship.backupBatteryRemaining() > 29.9f);
     assert(ship.availableReactorPower() == 10);
+
+    // Battery bars are allocated only after regular reactor power is exhausted.
+    ship.setReactorPowerCap(2);
+    assert(ship.setSystemPower(0, 4));
+    assert(ship.systems[0].batteryPower == 1);
+    assert(ship.reactorFundedPowerForSystem(ship.systems[0]) == 1);
     ship.updateBackupBattery(30.0f);
     assert(ship.backupBatteryPower() == 0);
+    assert(ship.systems[0].power == 3);
+    assert(ship.systems[0].batteryPower == 0);
     assert(ship.backupBatteryCooldownRemaining() > 19.9f);
     assert(ship.availableReactorPower() == 8);
 
