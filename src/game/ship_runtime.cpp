@@ -604,8 +604,12 @@ void ShipRuntime::updateEnvironment(float dt) {
 
 int ShipRuntime::usedReactorPower() const {
     int used = 0;
-    for (const auto& system : systems)
+    for (const auto& system : systems) {
+        // Backup Battery is a subsystem: its own level is not reactor
+        // consumption. Its temporary power bars are modeled separately.
+        if (system.type == "battery") continue;
         if (system.powered) used += std::max(0, system.power);
+    }
     for (const auto& drone : drones)
         if (drone.powered) used += std::max(1, drone.power);
     return used;
@@ -617,8 +621,10 @@ void ShipRuntime::setReactorPowerCap(int cap) {
 
 int ShipRuntime::availableReactorPower() const {
     int used = 0;
-    for (const auto& system : systems)
+    for (const auto& system : systems) {
+        if (system.type == "battery") continue;
         if (system.powered) used += std::max(0, system.power);
+    }
     for (const auto& drone : drones)
         if (drone.powered) used += std::max(1, drone.power);
     const int capacity = reactorPowerCap >= 0
