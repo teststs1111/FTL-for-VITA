@@ -132,7 +132,7 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
         }
     }
     return true;
-
+}
 
 bool ShipContent::loadPlayerShip(const std::string& blueprintPath,
                                   const std::string& shipId) {
