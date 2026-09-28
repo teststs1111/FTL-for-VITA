@@ -112,6 +112,14 @@ Research checkpoint 2026-09-28: external references report that the Rebel Fleet 
 - No reliable public source found yet establishes the exact formula converting Offset/Fudge + pursuit progress into the original game's per-beacon takeover frontier.
 - Therefore no speculative transform is being committed. Current `setFleetCoverageFromPosition()` remains explicitly provisional.
 
+## Rebel Fleet environment/ASB research checkpoint — 2026-09-28
+- Direct comparison with current fleet encounter code found a concrete fidelity gap: `enterRebelFleetEncounter()` currently always assigns `CombatEnvironment::PDSPlayer`.
+- Vanilla behavior is conditional. A normal non-nebula fleet-controlled beacon uses the Rebel ASB, but a fleet takeover overwrites the beacon's previous event/environment; taken-over nebula beacons use an ion/plasma-storm-style nebula environment rather than an ASB, with the exit beacon treated specially. Easy-mode exit beacons also have an ASB exception.
+- Public references also document the zero-fuel special case at a nebula beacon: depending on whether the player is waiting or has just jumped in, the nebula/ASB combination differs. Do not collapse these cases into one generic `PDSPlayer` state.
+- Current `CombatEnvironment` has no dedicated plasma/ion-storm environment, so implementing this correctly requires extending the combat environment model rather than merely changing the fleet encounter flag.
+- No change was made yet from this checkpoint because the current difficulty state and the exact vanilla zero-fuel/exit environment transition are not represented cleanly enough in the existing runtime. Avoid a partial fix that would replace one approximation with another.
+- The exact Rebel Fleet frontier mapping remains provisional; do not couple this environment correction to an unproven Offset/Fudge -> beacon-position formula.
+
 ## Event fidelity
 Implemented: real XML ingestion, event load references, weighted eventLists, AE resources/overwrites, common choices/requirements, stores, distress, hostile, repair, resource/crew effects, and original text IDs through data/text-ja.xml.
 
