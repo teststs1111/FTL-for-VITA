@@ -378,5 +378,49 @@ int main() {
         assert(weaponPower.weapons[2].allocatedPower == 0);
     }
 
+    // Weapon firing uses the per-slot allocation, consumes one missile cost
+    // per volley, and resets the volley charge. A multi-shot weapon does not
+    // multiply its ammunition cost by the number of projectiles.
+    {
+        ShipRuntime firing;
+        firing.valid = true;
+        RuntimeSystem system;
+        system.type = "weapons";
+        system.room = 40;
+        system.power = 2;
+        system.maxPower = 2;
+        system.powered = true;
+        firing.systems.push_back(system);
+        firing.missiles = 5;
+
+        RuntimeWeapon multi;
+        multi.power = 2;
+        multi.shots = 3;
+        multi.missilesUsed = 1;
+        multi.cooldown = 4.0f;
+        multi.charge = 4.0f;
+        multi.ready = true;
+        firing.weapons.push_back(multi);
+        firing.weaponIonDisabled.assign(1, false);
+
+        // Without allocation, total system power alone is not enough to fire.
+        assert(!firing.fireWeapon(0));
+
+        firing.updateWeapons(0.1f);
+        assert(firing.weapons[0].allocatedPower == 2);
+        assert(firing.fireWeapon(0));
+        assert(firing.missiles == 4);
+        assert(firing.weapons[0].charge == 0.0f);
+        assert(!firing.weapons[0].ready);
+
+        // Not enough missiles blocks the entire volley without consuming ammo.
+        firing.missiles = 0;
+        firing.weapons[0].charge = firing.weapons[0].cooldown;
+        firing.weapons[0].ready = true;
+        assert(!firing.fireWeapon(0));
+        assert(firing.missiles == 0);
+        assert(firing.weapons[0].ready);
+    }
+
     return 0;
 }
