@@ -80,6 +80,10 @@ struct ShipBlueprint {
     int startingMissiles{0};
     std::vector<std::string> initialWeapons;
     std::vector<std::string> initialDrones;
+    // Enemy ship blueprints use load=\"WEAPONS_*\" / \"DRONES_*\"; these
+    // lists are resolved into concrete loadouts when the enemy is generated.
+    std::string weaponLoadList;
+    std::string droneLoadList;
     std::vector<RoomBlueprint> rooms;
     std::vector<DoorBlueprint> doors;
     std::vector<SystemSlotBlueprint> systems;
