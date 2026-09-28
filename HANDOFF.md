@@ -344,3 +344,14 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Fixed `setSystemPowered()` so unused global Backup Battery capacity cannot be mistaken for a battery bar already assigned to the system. Existing free-source allocations are honored, but any remaining requirement must fit the reactor cap.
 - Extended `tests/test_reactor_power_sources.cpp` with subsystem and full-room Zoltan redistribution coverage.
 - No CI-green claim is made for these latest changes until a workflow result is exposed.
+
+
+## Ion / mixed power-source correction — 2026-09-28
+- Fixed a concrete vanilla-fidelity gap in ShipRuntime: Ion damage no longer removes Zoltan-funded power.
+- Added RuntimeSystem::ionRemovedPower to remember only normal power forced out by Ion.
+- Ionized systems now reject manual power changes while the Ion lock is active.
+- When the Ion timer expires, the runtime attempts to restore the previously removed normal power using currently available reactor capacity, then active Backup Battery capacity. This allows Battery-backed power to recover as Battery power when the Battery is still active, while avoiding restoration that exceeds current capacity.
+- Added regression coverage for Zoltan immunity, Battery interaction, 5-second recovery, and the Ion power-lock.
+- Vanilla references: Ion removes one normal power bar per Ion damage and returns it to reactor; Zoltan power is unaffected. Sources: FTL Ion Weapons wiki and Subset Games forum testing. citeturn0search0turn0search8
+- Implementation commit: fb05fca73487b9f4a189a8b1b764bc27c8d191ca plus the regression-test follow-ups.
+- CI is not claimed green until an actual workflow result for the newest commit is available.
