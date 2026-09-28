@@ -1155,7 +1155,8 @@ public:
             }
         }
         if (!resolvedEnemyId.empty()) {
-            if (!content_.loadShip(resolvedEnemyId, enemyShip) || enemyShip.blueprint.id.empty()) {
+            const unsigned loadoutSeed = static_cast<unsigned>(rollEventRange(0, 0x7fffffff, 0xAB710002u));
+        if (!content_.loadShip(resolvedEnemyId, enemyShip, "data/blueprints.xml", loadoutSeed) || enemyShip.blueprint.id.empty()) {
                 combatFeedback_ = "敵艦の読み込みに失敗";
                 combatFeedbackTimer_ = 2.0f;
                 return;
