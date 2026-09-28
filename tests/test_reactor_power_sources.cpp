@@ -4,6 +4,44 @@
 using namespace wormhole;
 
 int main() {
+    // Zoltan source redistribution: subsystems cannot receive free power,
+    // and a Zoltan entering a full main system displaces Battery power first.
+    {
+        ShipRuntime sourceTest;
+        sourceTest.valid = true;
+        sourceTest.reactor = 10;
+        RuntimeSystem mainSystem;
+        mainSystem.type = "weapons";
+        mainSystem.room = 1;
+        mainSystem.power = 4;
+        mainSystem.maxPower = 4;
+        mainSystem.powered = true;
+        mainSystem.batteryPower = 2;
+        sourceTest.systems.push_back(mainSystem);
+        RuntimeSystem subSystem;
+        subSystem.type = "pilot";
+        subSystem.room = 1;
+        subSystem.power = 1;
+        subSystem.maxPower = 1;
+        subSystem.powered = true;
+        sourceTest.systems.push_back(subSystem);
+        RuntimeCrew z;
+        z.race = "zoltan";
+        z.room = 1;
+        z.alive = true;
+        sourceTest.crew.push_back(z);
+        assert(sourceTest.availableZoltanPowerForSystem(sourceTest.systems[1]) == 0);
+        sourceTest.rebalanceZoltanPowerSources();
+        assert(sourceTest.systems[0].power == 4);
+        assert(sourceTest.systems[0].zoltanPower == 1);
+        assert(sourceTest.systems[0].batteryPower == 1);
+        sourceTest.crew[0].room = 2;
+        sourceTest.rebalanceZoltanPowerSources();
+        assert(sourceTest.systems[0].power == 3);
+        assert(sourceTest.systems[0].zoltanPower == 0);
+        assert(sourceTest.systems[0].batteryPower == 1);
+    }
+
     ShipRuntime ship;
     ship.valid = true;
     ship.reactor = 10;
