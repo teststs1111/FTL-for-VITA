@@ -606,6 +606,8 @@ int ShipRuntime::usedReactorPower() const {
     int used = 0;
     for (const auto& system : systems)
         if (system.powered) used += std::max(0, system.power);
+    for (const auto& drone : drones)
+        if (drone.powered) used += std::max(1, drone.power);
     return used;
 }
 
