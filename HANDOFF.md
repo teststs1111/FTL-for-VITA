@@ -479,3 +479,13 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Surviving fake debris produces a MISS-style impact result (`evaded = 1`) so the combat result stream can represent the extra vanilla MISS notices.
 - Defense Drone eligibility in the queued combat path was narrowed to vanilla projectile classes: Mark I can intercept Flak/missile/crystal/fake Flak; Mark II additionally intercepts laser/ion projectiles. Bombs remain excluded.
 - Regression test added for Flak I's 3 real + 3 fake projectiles and fake MISS results.
+
+
+## ftl.dat canonical-data architecture update — 2026-09-29
+- Policy is now explicit: `ftl.dat` is the canonical runtime data source. AE content remains inside the same archive and must be consumed through the same archive reader; do not introduce a separate DLC archive/file model.
+- Existing `FtlDat -> AssetStore -> XML/BXML -> data databases -> runtime` architecture is the foundation for this direction. Proprietary archive contents remain external and are never committed to GitHub.
+- Direct inspection of the supplied real archive found `data/dlcEvents_anaerobic.xml`, containing the Lanius-specific event pools/events. This file was previously present in the archive but was not loaded by `EventDatabase`.
+- Commit `2169f6c1356b88acda6a866ab38bd3485b11b908` adds `data/dlcEvents_anaerobic.xml` to the AE event ingestion pass before `dlcEventsOverwrite.xml`.
+- Commit `b30dd4468da2deb2bba3fee0daea2828e0d72008` adds real-archive regression checks for `HOSTILE_LANIUS`, `NEUTRAL_LANIUS`, and `LANIUS_FIGHT`.
+- This is a concrete data-fidelity correction: Lanius AE event pools now come from the actual `ftl.dat` rather than being approximated or hardcoded.
+- Next implementation priority: continue auditing the actual archive's remaining `data/dlc*.xml` resources against every data-loader path, then tighten blueprint/ship/event semantics using the real definitions.
