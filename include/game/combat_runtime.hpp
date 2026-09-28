@@ -31,6 +31,7 @@ struct CombatResult {
 
 struct CombatShot {
     bool fromPlayer{true};
+    bool fakeFlak{false};
     int weaponIndex{-1};
     RuntimeWeapon weapon;
     int targetRoom{-1};

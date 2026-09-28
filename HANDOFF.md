@@ -470,3 +470,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Each real projectile gets its own scatter result; the existing projectile-level evasion and Defense Drone flow remains separate.
 - Added deterministic regression coverage using `CombatRuntime::setRandomSeed()`.
 - Fake visual Flak projectiles are not yet modeled as separate combat shots; they must not be allowed to damage shields/rooms.
+
+
+## Fake Flak projectile implementation — 2026-09-29
+- Added explicit `CombatShot::fakeFlak` state so vanilla fake Flak debris is represented separately from damaging projectiles.
+- Vanilla fake counts are modeled as Advanced Flak 3, Flak I 3, Flak II 6, and Flak Artillery 7.
+- Fake debris can be intercepted by Defense Drones as a distraction, but never enters shield, hull, system, ion, crew, fire, breach, or stun damage resolution.
+- Surviving fake debris produces a MISS-style impact result (`evaded = 1`) so the combat result stream can represent the extra vanilla MISS notices.
+- Defense Drone eligibility in the queued combat path was narrowed to vanilla projectile classes: Mark I can intercept Flak/missile/crystal/fake Flak; Mark II additionally intercepts laser/ion projectiles. Bombs remain excluded.
+- Regression test added for Flak I's 3 real + 3 fake projectiles and fake MISS results.

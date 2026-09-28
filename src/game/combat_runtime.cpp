@@ -98,6 +98,22 @@ bool CombatRuntime::loadFlagshipPhase(ShipContent& contentSource, const LoadedSh
     return true;
 }
 
+static int flakFakeProjectileCount(const RuntimeWeapon& weapon) {
+    std::string kind = weapon.type;
+    std::transform(kind.begin(), kind.end(), kind.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    std::string name = weapon.name;
+    std::transform(name.begin(), name.end(), name.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    if (kind.find("flak") == std::string::npos && name.find("flak") == std::string::npos)
+        return 0;
+    if (kind.find("artillery") != std::string::npos || name.find("artillery") != std::string::npos)
+        return 7;
+    if (weapon.shots >= 7)
+        return 6;
+    return 3;
+}
+
 int CombatRuntime::flakProjectileTarget(const ShipRuntime& target, int targetRoom,
                                             const RuntimeWeapon& weapon) {
     if (targetRoom < 0 || targetRoom >= static_cast<int>(target.content.layout.rooms.size()))
@@ -106,7 +122,8 @@ int CombatRuntime::flakProjectileTarget(const ShipRuntime& target, int targetRoo
     std::string kind = weapon.type;
     std::transform(kind.begin(), kind.end(), kind.begin(),
         [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    if (kind.find("flak") == std::string::npos)
+    if (kind.find("flak") == std::string::npos && weapon.name.find("Flak") == std::string::npos &&
+        weapon.name.find("flak") == std::string::npos)
         return targetRoom;
 
     int radius = 42; // Flak I
@@ -138,14 +155,18 @@ int CombatRuntime::flakProjectileTarget(const ShipRuntime& target, int targetRoo
 void CombatRuntime::enqueueWeapon(bool fromPlayer, int weaponIndex,
                                   const RuntimeWeapon& weapon, int room) {
     const int projectileCount = std::max(1, weapon.shots);
+    const int fakeProjectileCount = flakFakeProjectileCount(weapon);
     const ShipRuntime& target = fromPlayer ? enemy : player;
-    for (int i = 0; i < projectileCount; ++i) {
+    for (int i = 0; i < projectileCount + fakeProjectileCount; ++i) {
         CombatShot shot;
         shot.fromPlayer = fromPlayer;
+        shot.fakeFlak = i >= projectileCount;
         shot.weaponIndex = weaponIndex;
         shot.weapon = weapon;
         shot.weapon.shots = 1;
         shot.targetRoom = flakProjectileTarget(target, room, weapon);
+        // Fake Flak is a real projectile for interception/visual timing, but
+        // never enters shield or damage resolution.
         // Convert FTL's projectile speed into a stable gameplay flight time until
         // the renderer has the exact ship/projectile coordinates available.
         const float speed = static_cast<float>(std::max(1, weapon.speed));
@@ -438,16 +459,37 @@ void CombatRuntime::update(float dt) {
     }
 
     // Defense drones intercept at most one eligible incoming projectile per update.
+    // Fake Flak participates here intentionally: vanilla uses the extra debris to
+    // distract defense drones even though fake pieces never damage shields/rooms.
     bool defenseInterceptedThisUpdate = false;
     for (auto it = shots_.begin(); it != shots_.end();) {
         ShipRuntime& defender = it->fromPlayer ? enemy : player;
         bool intercepted = false;
+        std::string kind = it->weapon.type;
+        std::transform(kind.begin(), kind.end(), kind.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        const bool flakLike = it->fakeFlak || kind.find("flak") != std::string::npos;
+        const bool missileLike = kind.find("missile") != std::string::npos;
+        const bool crystalLike = kind.find("crystal") != std::string::npos;
+        const bool ionLike = kind.find("ion") != std::string::npos;
+        const bool laserLike = kind.find("laser") != std::string::npos;
+
         for (auto& drone : defender.drones) {
             if (defenseInterceptedThisUpdate ||
                 drone.type != DroneBlueprint::Type::Defense || !drone.powered || !drone.active)
                 continue;
-            const bool laserTarget = drone.defenceTarget.empty() || drone.defenceTarget == "LASERS";
-            if (!laserTarget) continue;
+
+            std::string droneName = drone.name;
+            std::transform(droneName.begin(), droneName.end(), droneName.begin(),
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            const bool markTwo = droneName.find("mark ii") != std::string::npos ||
+                                 droneName.find("mk ii") != std::string::npos ||
+                                 droneName.find("defense ii") != std::string::npos ||
+                                 droneName.find("defence ii") != std::string::npos;
+            const bool eligible = flakLike || missileLike || crystalLike ||
+                                  (markTwo && (ionLike || laserLike));
+            if (!eligible) continue;
+
             drone.active = false;
             drone.charge = 0;
             intercepted = true;
@@ -497,7 +539,16 @@ void CombatRuntime::update(float dt) {
 
         ShipRuntime& attacker = it->fromPlayer ? player : enemy;
         ShipRuntime& target = it->fromPlayer ? enemy : player;
-        CombatResult result = resolveWeapon(attacker, target, it->weapon, it->targetRoom);
+        CombatResult result;
+        if (it->fakeFlak) {
+            // Vanilla fake debris can generate a MISS notification when it
+            // survives interception, but has no gameplay damage.
+            result.fired = true;
+            result.shotsFired = 1;
+            result.evaded = 1;
+        } else {
+            result = resolveWeapon(attacker, target, it->weapon, it->targetRoom);
+        }
         const bool targetDestroyed = result.targetDestroyed;
         const bool hitEnemy = it->fromPlayer;
         impactResults_.push_back(result);
