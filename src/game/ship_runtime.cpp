@@ -235,7 +235,8 @@ bool ShipRuntime::setDronePowered(int droneIndex, bool powered) {
 
 void ShipRuntime::reset() {
     content = {};
-    hull = maxHull = reactor = 0;\n    reactorPowerCap = -1;
+    hull = maxHull = reactor = 0;
+    reactorPowerCap = -1;
     roomDamage.clear();
     roomOxygen.clear();
     roomFire.clear();
