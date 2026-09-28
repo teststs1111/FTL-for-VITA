@@ -38,6 +38,7 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         system.batteryPower = 0;
         system.zoltanPower = 0;
         system.ionDamage = 0;
+        system.ionRemovedPower = 0;
         system.ionTimer = 0.0f;
         system.ionDisabled = false;
         system.stunTimer = 0.0f;
@@ -314,10 +315,20 @@ int ShipRuntime::ionizeSystemInRoom(int roomId, int amount) {
 
         system.ionDamage += hit;
         system.ionTimer = 5.0f;
-        system.power = std::min(system.power,
-                                std::max(0, system.maxPower - system.damage - system.ionDamage));
-        system.zoltanPower = std::min(system.zoltanPower, system.power);
-        system.batteryPower = std::min(system.batteryPower, std::max(0, system.power - system.zoltanPower));
+
+        // Ion damage can force out only normal power. Zoltan power is ion-proof.
+        // The removed bars are remembered so the system can attempt to reclaim
+        // its previous power allocation when the ion lock expires.
+        const int normalPower = std::max(0, system.power - system.zoltanPower);
+        const int removed = std::min(hit, normalPower);
+        if (removed > 0) {
+            const int batteryRemoved = std::min(removed, system.batteryPower);
+            system.batteryPower -= batteryRemoved;
+            const int reactorRemoved = removed - batteryRemoved;
+            system.power = std::max(0, system.power - removed);
+            system.ionRemovedPower += reactorRemoved + batteryRemoved;
+        }
+
         if (system.power == 0) {
             system.ionDisabled = system.powered;
             system.powered = false;
@@ -340,6 +351,7 @@ bool ShipRuntime::repairRoom(int roomId, int amount) {
 bool ShipRuntime::setSystemPowered(int systemIndex, bool powered) {
     if (!valid || systemIndex < 0 || systemIndex >= static_cast<int>(systems.size())) return false;
     RuntimeSystem& system = systems[systemIndex];
+    if (system.ionDamage > 0) return false;
     if (system.powered == powered) return true;
     if (powered) {
         // Existing Zoltan/battery allocations already belong to this system.
@@ -524,6 +536,7 @@ bool ShipRuntime::setDoorOpen(int doorIndex, bool open) {
 bool ShipRuntime::setSystemPower(int systemIndex, int power) {
     if (!valid || systemIndex < 0 || systemIndex >= static_cast<int>(systems.size())) return false;
     RuntimeSystem& system = systems[systemIndex];
+    if (system.ionDamage > 0) return false;
     const int next = std::max(0, std::min(power, system.maxPower));
     if (next == system.power) return false;
 
@@ -609,12 +622,36 @@ void ShipRuntime::updateEnvironment(float dt) {
         system.ionTimer = std::max(0.0f, system.ionTimer - dt);
         if (system.ionTimer > 0.0f) continue;
 
-        const int restored = system.ionDamage;
+        const int restoreTarget = system.ionRemovedPower;
         const bool restorePowered = system.ionDisabled;
         system.ionDamage = 0;
+        system.ionRemovedPower = 0;
         system.ionDisabled = false;
-        const int effectiveMax = std::max(0, system.maxPower - system.damage);
-        system.power = std::min(effectiveMax, system.power + restored);
+
+        // The lost normal bars return to the reactor while ionized. When the
+        // lock expires, FTL attempts to restore the system's previous power,
+        // subject to the reactor/Battery power currently available.
+        int remaining = std::min(restoreTarget,
+            std::max(0, system.maxPower - system.damage - system.power));
+        const int capacity = reactorPowerCap >= 0
+            ? std::min(reactor, reactorPowerCap)
+            : reactor;
+        const int reactorFree = std::max(0, capacity - usedReactorPower());
+        const int reactorAdded = std::min(remaining, reactorFree);
+        system.power += reactorAdded;
+        remaining -= reactorAdded;
+
+        if (remaining > 0 && backupBatteryActivePower > 0) {
+            int usedBattery = 0;
+            for (const auto& other : systems)
+                usedBattery += std::max(0, other.batteryPower);
+            const int batteryFree = std::max(0, backupBatteryActivePower - usedBattery);
+            const int batteryAdded = std::min(remaining, batteryFree);
+            system.power += batteryAdded;
+            system.batteryPower += batteryAdded;
+            remaining -= batteryAdded;
+        }
+
         if (restorePowered && system.power > 0)
             system.powered = true;
     }
