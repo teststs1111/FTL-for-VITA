@@ -438,3 +438,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Added regression coverage for a 3-projectile Flak volley targeting rooms 1/2/3: one shield layer absorbs only the first projectile, while the remaining projectiles damage their own rooms.
 - This is the data/API foundation for vanilla Flak's area-spread behavior; actual scatter/room-selection geometry is intentionally not invented until the ship layout/weapon targeting data can supply it.
 - Commit: `db27c77` (API), `32cbac0` (runtime), `0826abc` (regression test).
+
+
+## Flak follow-up / Defense Drone regression — 2026-09-28
+- Reviewed the new per-projectile Flak path against the existing Defense Drone implementation.
+- Restored Defense Drone interception into the actual projectile-resolution loop so eligible projectiles are checked individually before evasion.
+- Added regression coverage that exercises the interception path through `resolveWeaponVolley`.
+- Room geometry is already present in `RoomBlueprint` (`x/y/w/h`) and layout data is parsed from the game assets. The next Flak step can therefore use real room geometry rather than invented room coordinates.
+- Commit: `6c39630` (runtime), `096df4f` (regression test).
