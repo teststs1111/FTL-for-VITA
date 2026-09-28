@@ -429,3 +429,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Regression coverage verifies Mark I missile interception, bomb bypass, Mark I laser exclusion, and Mark II laser interception.
 - Vanilla references: citeturn1search0turn1search2turn1search3
 - Commits: `984800c` (API), `397ce96` (runtime), with regression coverage added alongside this checkpoint.
+
+
+## Per-projectile Flak target resolution — 2026-09-28
+- Added an overload of `resolveWeaponVolley` that accepts a target room for each projectile.
+- The existing single-target API remains as a compatibility wrapper and resolves every projectile against the same target room.
+- Volley resolution now selects the corresponding projectile target before Defense Drone interception/evasion and weapon-effect resolution.
+- Added regression coverage for a 3-projectile Flak volley targeting rooms 1/2/3: one shield layer absorbs only the first projectile, while the remaining projectiles damage their own rooms.
+- This is the data/API foundation for vanilla Flak's area-spread behavior; actual scatter/room-selection geometry is intentionally not invented until the ship layout/weapon targeting data can supply it.
+- Commit: `db27c77` (API), `32cbac0` (runtime), `0826abc` (regression test).
