@@ -422,5 +422,71 @@ int main() {
         assert(firing.weapons[0].ready);
     }
 
+    // Volley resolution: a fired multi-shot projectile volley consumes shields
+    // one projectile at a time, while a shield-bypassing missile applies room
+    // damage directly. Resolution occurs after fireWeapon() via volleyPending.
+    {
+        ShipRuntime combat;
+        combat.valid = true;
+        combat.missiles = 2;
+
+        RuntimeSystem weaponsSystem;
+        weaponsSystem.type = "weapons";
+        weaponsSystem.room = 50;
+        weaponsSystem.power = 2;
+        weaponsSystem.maxPower = 2;
+        weaponsSystem.powered = true;
+        combat.systems.push_back(weaponsSystem);
+
+        RuntimeSystem enemyShields;
+        enemyShields.type = "shields";
+        enemyShields.room = 51;
+        enemyShields.power = 2;
+        enemyShields.maxPower = 2;
+        enemyShields.powered = true;
+        combat.systems.push_back(enemyShields);
+        combat.shieldLayers = 2;
+        combat.maxShieldLayers = 2;
+
+        RuntimeWeapon laser;
+        laser.type = "laser";
+        laser.power = 2;
+        laser.shots = 2;
+        laser.damage = 1;
+        laser.systemDamage = 1;
+        laser.cooldown = 1.0f;
+        laser.charge = 1.0f;
+        laser.ready = true;
+        combat.weapons.push_back(laser);
+        combat.weaponIonDisabled.assign(1, false);
+
+        combat.updateWeapons(0.1f);
+        assert(combat.fireWeapon(0));
+        assert(combat.weapons[0].volleyPending);
+        assert(combat.resolveWeaponVolley(0, 51) == 2);
+        assert(combat.shieldLayers == 0);
+        assert(!combat.weapons[0].volleyPending);
+        assert(combat.hull == 0);
+
+        RuntimeWeapon missile;
+        missile.type = "missile";
+        missile.power = 2;
+        missile.shots = 1;
+        missile.damage = 2;
+        missile.systemDamage = 1;
+        missile.missilesUsed = 1;
+        missile.cooldown = 1.0f;
+        missile.charge = 1.0f;
+        missile.ready = true;
+        combat.weapons.push_back(missile);
+        combat.weaponIonDisabled.assign(2, false);
+        combat.updateWeapons(0.1f);
+        assert(combat.fireWeapon(1));
+        assert(combat.missiles == 1);
+        assert(combat.resolveWeaponVolley(1, 51) == 1);
+        assert(combat.hull == 2);
+        assert(combat.systems[1].damage == 1);
+    }
+
     return 0;
 }
