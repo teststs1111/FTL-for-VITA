@@ -534,5 +534,5 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - `ShipContent::loadShip()` now resolves enemy weapon/drone load lists into concrete blueprints, selecting entries that fit the available system power and preserving duplicate entries as valid random choices.
 - Enemy loadout generation accepts an encounter seed; combat now derives that seed from the existing encounter RNG rather than using a separate RNG source.
 - Added a real-`ftl.dat` regression check for `AUTO_BASIC` and its `WEAPONS_AUTO` loadout.
-- This is the first step toward the full vanilla enemy-generation model. The remaining important gap is sector/difficulty-based enemy system budgeting: current generation still uses the blueprint's base starting power rather than reproducing vanilla progression-sector budgeting.
+- This is the first step toward the full vanilla enemy-generation model. Current loadout generation now matches the documented no-repeat random selection behavior, while the larger remaining gap is the sector/difficulty-based system generation that determines each enemy's rolled system levels before weapon/drone loadout generation.
 - Relevant commits: `5c0b52e`, `a270319`, `b605e95`, `d36d30a`, `5d21910`.
