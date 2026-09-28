@@ -453,3 +453,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Corrected it to `const int reactorCapacity`.
 - This failure occurred during compilation of `ship_runtime.cpp`, before tests could run.
 - Commit: `89a2eb7`.
+
+
+## Flak geometry foundation — 2026-09-28
+- Added `ShipRuntime::roomAtLayoutPoint(x, y)`.
+- The lookup uses the already parsed `LayoutBlueprint::rooms` rectangles (`x/y/w/h`) with half-open bounds, so adjacent rooms do not overlap.
+- Added `test_layout_room_lookup` regression coverage and registered it in CMake.
+- This is intentionally a geometry foundation only: no Flak scatter radius/coordinate generation is invented until the original-game coordinate behavior is verified.
+- Build-blocking reactor declaration fix remains at commit `b538586`.
