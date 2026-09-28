@@ -339,6 +339,52 @@ int ShipRuntime::resolveWeaponVolley(int weaponIndex, int targetRoom, int target
     return resolved;
 }
 
+
+bool ShipRuntime::interceptWeaponWithDefenseDrone(int weaponIndex) {
+    if (!valid || weaponIndex < 0 || weaponIndex >= static_cast<int>(weapons.size())) return false;
+    const std::string kind = [&]() {
+        std::string value = weapons[weaponIndex].type;
+        std::transform(value.begin(), value.end(), value.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        return value;
+    }();
+
+    const bool bombLike = kind.find("bomb") != std::string::npos;
+    if (bombLike) return false; // Bombs teleport directly into rooms and bypass Defense Drones.
+
+    const bool missileLike = kind.find("missile") != std::string::npos;
+    const bool flakLike = kind.find("flak") != std::string::npos;
+    const bool crystalLike = kind.find("crystal") != std::string::npos;
+    const bool laserLike = kind.find("laser") != std::string::npos;
+    const bool ionLike = kind.find("ion") != std::string::npos;
+    const bool markIEligible = missileLike || flakLike || crystalLike;
+    const bool markIIEligible = markIEligible || laserLike || ionLike;
+    if (!markIIEligible) return false;
+
+    static thread_local std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> roll(0, 99);
+    for (auto& drone : drones) {
+        if (!drone.powered || !drone.active) continue;
+        std::string name = drone.name;
+        std::transform(name.begin(), name.end(), name.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (name.find("defense") == std::string::npos && name.find("defence") == std::string::npos)
+            continue;
+
+        const bool markII = name.find("mark ii") != std::string::npos ||
+                            name.find("mk ii") != std::string::npos ||
+                            name.find("defense ii") != std::string::npos ||
+                            name.find("defence ii") != std::string::npos;
+        if ((markII ? markIIEligible : markIEligible) && roll(rng) < 90) {
+            // One defense-drone shot is consumed by one incoming projectile.
+            drone.active = false;
+            drone.weaponCharge = 0.0f;
+            return true;
+        }
+    }
+    return false;
+}
+
 void ShipRuntime::updateDrones(float dt) {
     if (!valid || dt <= 0.f) return;
     for (auto& drone : drones) {
