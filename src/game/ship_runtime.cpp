@@ -211,7 +211,15 @@ bool ShipRuntime::fireWeapon(int weaponIndex) {
         if (system.type == "weapons" && system.powered && system.stunTimer <= 0.0f)
             weaponSystemPower = std::max(weaponSystemPower, system.power);
     }
-    if (weaponSystemPower < weapon.power) return false;
+    // A weapon can only fire when its own slot is actually funded by the
+    // shared Weapons-system allocation. Checking only total system power would
+    // incorrectly allow a later weapon to fire while an earlier slot consumes
+    // the available bars.
+    if (weapon.allocatedPower < weapon.power) return false;
+
+    // missilesUsed is the weapon's per-volley ammunition cost. Multi-shot
+    // weapons still consume that single volley cost; shots describes how many
+    // projectiles the volley produces rather than multiplying missile usage.
     if (weapon.missilesUsed > missiles) return false;
 
     missiles -= weapon.missilesUsed;
