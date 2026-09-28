@@ -125,6 +125,29 @@ void CombatRuntime::configureFlagshipPhase(int phase) {
     superShield_ = flagshipPhase_ == 3 ? 10 : 0;
 }
 
+void CombatRuntime::applyPlasmaStormPowerCap() {
+    auto capShip = [&](ShipRuntime& ship) {
+        const int cap = (ship.reactor + 1) / 2;
+        ship.setReactorPowerCap(cap);
+
+        // Vanilla removes reactor-funded system power at random when entering
+        // an ion/plasma storm. This runtime does not yet model Zoltan room power
+        // or Backup Battery separately, so only reactor-backed system power is
+        // constrained here.
+        while (ship.usedReactorPower() > cap) {
+            std::vector<int> powered;
+            for (int i = 0; i < static_cast<int>(ship.systems.size()); ++i)
+                if (ship.systems[i].powered && ship.systems[i].power > 0)
+                    powered.push_back(i);
+            if (powered.empty()) break;
+            const int index = powered[nextRandom() % powered.size()];
+            ship.setSystemPower(index, ship.systems[index].power - 1);
+        }
+    };
+    capShip(player);
+    capShip(enemy);
+}
+
 void CombatRuntime::updateEnvironmentHazard(float dt) {
     if (environment_ == CombatEnvironment::None || outcome != CombatOutcome::Ongoing) return;
     environmentTimer_ -= dt;
@@ -140,6 +163,12 @@ void CombatRuntime::updateEnvironmentHazard(float dt) {
         const float offset = span == 0 ? 0.0f : static_cast<float>(nextRandom() % (span + 1)) / 1000.0f;
         environmentTimer_ = minimum + offset;
     };
+
+    if (environment_ == CombatEnvironment::PlasmaStorm) {
+        // Plasma/ion storms are a persistent power-allocation environment, not
+        // a periodic damage hazard. The reactor cap is applied on entry.
+        return;
+    }
 
     if (environment_ == CombatEnvironment::Asteroid) {
         ShipRuntime* ships[2] = {&player, &enemy};
