@@ -461,3 +461,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Added `test_layout_room_lookup` regression coverage and registered it in CMake.
 - This is intentionally a geometry foundation only: no Flak scatter radius/coordinate generation is invented until the original-game coordinate behavior is verified.
 - Build-blocking reactor declaration fix remains at commit `b538586`.
+
+
+## Flak scatter implementation — 2026-09-28
+- Flak projectile landing is now generated from the selected target room center and a circular scatter radius, then mapped through the real layout rectangles.
+- Verified documented vanilla radii: Advanced Flak 40, Flak I 42, Flak II 55, Flak Artillery 35.
+- A scatter point outside all room rectangles becomes a genuine room miss (`targetRoom == -1`), independent of evasion.
+- Each real projectile gets its own scatter result; the existing projectile-level evasion and Defense Drone flow remains separate.
+- Added deterministic regression coverage using `CombatRuntime::setRandomSeed()`.
+- Fake visual Flak projectiles are not yet modeled as separate combat shots; they must not be allowed to damage shields/rooms.
