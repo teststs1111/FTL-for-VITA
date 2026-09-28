@@ -247,3 +247,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - MainGame currently passes easyMode=false because difficulty state is not yet modeled; the selector keeps the vanilla Easy exception explicit for later integration.
 - Zero-fuel arrival at a captured non-exit nebula is covered at the environment-selection level; waiting-at-beacon takeover remains a separate state-model gap.
 - ShipRuntime::setReactorPowerCap() was implemented in f1f4b3504197d96c446653e3cf9481fb36de7f66; Host #843 and Vita #535 both completed successfully for that commit.
+
+
+## Rebel Fleet mapping research update — 2026-09-28
+- Host #857 and Vita #549 both completed successfully for main `affcc11a626db54a013c5a267f1d7f46f690bb53`.
+- Additional public evidence confirms the pursuit indicator itself is pixel-accurate at exactly 64 pixels per regular jump, while nebula jumps require reduced marker spacing; this supports keeping the jump-rate constants but does not reveal the internal map-frontier transform.
+- Historical save-editor documentation explicitly describes `RebelFleetOffset` as a sector-dependent large negative pixel value approaching zero, with `RebelFleetFudge` as a per-sector random constant added to that offset. This confirms that the current direct comparison of raw `-959 + pursuit` against generated beacon X coordinates is not a faithful model.
+- No public source found in this pass that provides the exact Offset/Fudge-to-beacon collision formula. Do not replace the provisional mapping with an invented linear transform.
+- Next target is to recover the actual sector-map frontier representation/coordinate space from a reference implementation, mod asset behavior, or sufficiently documented save/map traces before changing coverage logic.
