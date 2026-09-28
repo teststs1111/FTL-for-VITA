@@ -192,5 +192,44 @@ int main() {
     ship.crew.push_back(z4);
     assert(ship.zoltanPowerForSystem(ship.systems[4]) == 1);
 
+    // Ion damage removes normal power but leaves Zoltan power intact, locks
+    // manual allocation, and restores the lost power after the 5-second lock.
+    {
+        ShipRuntime ionShip;
+        ionShip.valid = true;
+        ionShip.reactor = 1;
+        ionShip.setReactorPowerCap(1);
+
+        RuntimeSystem ionSystem;
+        ionSystem.type = "shields";
+        ionSystem.room = 10;
+        ionSystem.power = 4;
+        ionSystem.maxPower = 4;
+        ionSystem.powered = true;
+        ionSystem.zoltanPower = 1;
+        ionSystem.batteryPower = 2;
+        ionShip.systems.push_back(ionSystem);
+
+        assert(ionShip.usedReactorPower() == 1);
+        assert(ionShip.ionizeSystemInRoom(10, 2) == 2);
+        assert(ionShip.systems[0].ionDamage == 2);
+        assert(ionShip.systems[0].ionRemovedPower == 2);
+        assert(ionShip.systems[0].power == 2);
+        assert(ionShip.systems[0].zoltanPower == 1);
+        assert(ionShip.systems[0].batteryPower == 0);
+        assert(!ionShip.setSystemPower(0, 1));
+        assert(ionShip.systems[0].power == 2);
+
+        ionShip.updateEnvironment(5.0f);
+        assert(ionShip.systems[0].ionDamage == 0);
+        assert(ionShip.systems[0].ionRemovedPower == 0);
+        assert(ionShip.systems[0].power == 4);
+        assert(ionShip.systems[0].zoltanPower == 1);
+        // The temporary battery bars were gone during the ion lock, so the
+        // restored bars come back as reactor power when capacity permits.
+        assert(ionShip.systems[0].batteryPower == 0);
+        assert(ionShip.reactorFundedPowerForSystem(ionShip.systems[0]) == 3);
+    }
+
     return 0;
 }
