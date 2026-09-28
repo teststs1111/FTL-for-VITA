@@ -267,3 +267,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Fixed a runtime consistency gap found during continuation review: powered drones are now included in ShipRuntime::usedReactorPower(), matching availableReactorPower().
 - Plasma Storm entry depowering now considers both powered systems and powered drones instead of potentially leaving reactor usage above the storm cap when drones were active.
 - This is a narrow consistency/fidelity fix; Zoltan room power and Backup Battery remain unmodeled, so Plasma Storm is still not an exact implementation of every vanilla power-source exception.
+
+
+## Difficulty / Rebel Fleet integration checkpoint — 2026-09-28
+- Added explicit MainGame difficulty state: Easy, Normal, Hard; default is Normal.
+- ShipScene now receives the selected difficulty and Rebel Fleet encounter environment selection uses Easy-mode state instead of a hardcoded false.
+- This makes the documented Easy exit-beacon no-ASB exception reachable through the normal runtime path once the caller selects Easy.
+- Current commit sequence: 150466bc (header state) and 2694132c (runtime routing).
+- CI for the newest main commit must be checked before declaring this change green.
