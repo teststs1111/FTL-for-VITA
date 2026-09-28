@@ -336,3 +336,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Removed an unused storm-restoration field; no automatic repower mechanism is being added.
 - Latest test/CMake commit: `04dcd745614d650802cfb39e90b0cc1007a262f2`. No workflow result is currently exposed for this commit, so it is not marked CI-green yet.
 - This narrows the remaining Storm gap to exact vanilla power-removal ordering/edge cases and broader combat/environment integration; the core source distinction is now regression-tested.
+
+## Zoltan source redistribution refinement — 2026-09-28
+- Corrected a source-accounting edge case: Zoltan power is restricted to eligible main systems; pilot/engines/oxygen/doors/sensors/battery cannot receive Zoltan bars through generic power allocation.
+- When a Zoltan enters an already-full eligible system, the runtime now displaces Backup Battery-funded bars before reactor-funded bars while keeping total system power unchanged. This matches documented vanilla allocation behavior. citeturn0search1turn0search9
+- When the Zoltan leaves, only the Zoltan-funded bar is removed; the system does not automatically reclaim reactor power for the missing bar.
+- Fixed `setSystemPowered()` so unused global Backup Battery capacity cannot be mistaken for a battery bar already assigned to the system. Existing free-source allocations are honored, but any remaining requirement must fit the reactor cap.
+- Extended `tests/test_reactor_power_sources.cpp` with subsystem and full-room Zoltan redistribution coverage.
+- No CI-green claim is made for these latest changes until a workflow result is exposed.
