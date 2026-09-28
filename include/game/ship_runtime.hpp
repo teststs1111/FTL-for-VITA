@@ -150,6 +150,7 @@ struct ShipRuntime {
     bool fireWeapon(int weaponIndex);
     int resolveWeaponVolley(int weaponIndex, int targetRoom, int targetEvasion = 0);
     int resolveWeaponVolley(int weaponIndex, const std::vector<int>& projectileTargets, int targetEvasion = 0);
+    int roomAtLayoutPoint(int x, int y) const;
     bool interceptWeaponWithDefenseDrone(int weaponIndex);
     bool setDronePowered(int droneIndex, bool powered);
     void updateDrones(float dt);
