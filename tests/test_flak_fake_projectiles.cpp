@@ -18,6 +18,14 @@ int main() {
     room.h = 30;
     combat.enemy.content.layout.rooms.push_back(room);
 
+    RuntimeSystem weaponsSystem;
+    weaponsSystem.type = "weapons";
+    weaponsSystem.room = 1;
+    weaponsSystem.power = 1;
+    weaponsSystem.maxPower = 1;
+    weaponsSystem.powered = true;
+    combat.player.systems.push_back(weaponsSystem);
+
     RuntimeWeapon flak;
     flak.name = "Flak I";
     flak.type = "FLAK";
