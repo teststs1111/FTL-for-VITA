@@ -235,7 +235,7 @@ bool ShipRuntime::setDronePowered(int droneIndex, bool powered) {
 
 void ShipRuntime::reset() {
     content = {};
-    hull = maxHull = reactor = 0;
+    hull = maxHull = reactor = 0;\n    reactorPowerCap = -1;
     roomDamage.clear();
     roomOxygen.clear();
     roomFire.clear();
@@ -614,7 +614,10 @@ int ShipRuntime::availableReactorPower() const {
         if (system.powered) used += std::max(0, system.power);
     for (const auto& drone : drones)
         if (drone.powered) used += std::max(1, drone.power);
-    return std::max(0, reactor - used);
+    const int capacity = reactorPowerCap >= 0
+        ? std::min(reactor, reactorPowerCap)
+        : reactor;
+    return std::max(0, capacity - used);
 }
 
 }
