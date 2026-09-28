@@ -1,4 +1,7 @@
 #include "data/ship_content.hpp"
+#include <algorithm>
+#include <cstdint>
+#include <functional>
 
 namespace wormhole {
 
@@ -40,13 +43,64 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
 
     out.blueprint = *blueprint;
     out.layout = std::move(layout);
+
+    std::uint32_t rng = static_cast<std::uint32_t>(randomSeed);
+    if (rng == 0) rng = static_cast<std::uint32_t>(std::hash<std::string>{}(shipId));
+    auto nextRandom = [&]() {
+        rng ^= rng << 13;
+        rng ^= rng >> 17;
+        rng ^= rng << 5;
+        return rng;
+    };
+    auto systemPower = [&](const char* name) {
+        for (const auto& system : blueprint->systems)
+            if (system.system == name && system.availableByDefault)
+                return std::max(0, system.startingPower);
+        return 0;
+    };
+
+    if (!out.blueprint.weaponLoadList.empty() && out.initialWeapons.empty()) {
+        if (const auto* list = database_.findBlueprintList(out.blueprint.weaponLoadList)) {
+            int remaining = systemPower("weapons");
+            const int slots = out.blueprint.weaponSlots > 0 ? out.blueprint.weaponSlots : 4;
+            for (int slot = 0; slot < slots && remaining > 0; ++slot) {
+                std::vector<std::string> candidates;
+                for (const auto& id : *list) {
+                    if (const auto* weapon = database_.findWeapon(id);
+                        weapon && weapon->power > 0 && weapon->power <= remaining)
+                        candidates.push_back(id);
+                }
+                if (candidates.empty()) break;
+                const auto& selected = candidates[nextRandom() % candidates.size()];
+                out.blueprint.initialWeapons.push_back(selected);
+                remaining -= database_.findWeapon(selected)->power;
+            }
+        }
+    }
     for (const auto& weaponId : out.blueprint.initialWeapons) {
         if (const auto* weapon = database_.findWeapon(weaponId))
             out.initialWeaponBlueprints.push_back(*weapon);
     }
+
+    if (!out.blueprint.droneLoadList.empty() && out.initialDrones.empty()) {
+        if (const auto* list = database_.findBlueprintList(out.blueprint.droneLoadList)) {
+            int remaining = systemPower("drones");
+            const int slots = out.blueprint.droneSlots > 0 ? out.blueprint.droneSlots : 2;
+            for (int slot = 0; slot < slots && remaining > 0; ++slot) {
+                std::vector<std::string> candidates;
+                for (const auto& id : *list) {
+                    if (const auto* drone = database_.findDrone(id);
+                        drone && drone->power > 0 && drone->power <= remaining)
+                        candidates.push_back(id);
+                }
+                if (candidates.empty()) break;
+                const auto& selected = candidates[nextRandom() % candidates.size()];
+                out.blueprint.initialDrones.push_back(selected);
+                remaining -= database_.findDrone(selected)->power;
+            }
+        }
+    }
     for (const auto& droneId : out.blueprint.initialDrones) {
-        // Drone blueprints are loaded from the same database and copied into
-        // the runtime ship just like starting weapons.
         const auto* drone = database_.findDrone(droneId);
         if (drone) {
             DroneBlueprint resolved = *drone;
@@ -65,7 +119,7 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
         }
     }
     return true;
-}
+
 
 bool ShipContent::loadPlayerShip(const std::string& blueprintPath,
                                   const std::string& shipId) {
