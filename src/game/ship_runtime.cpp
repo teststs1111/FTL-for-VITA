@@ -700,7 +700,7 @@ bool ShipRuntime::activateBackupBattery() {
 
     // Backup Battery I supplies +2 power; level II supplies +4.
     // The subsystem itself is not reactor-funded.
-    backupBatteryActivePower = battery->maxPower >= 2 ? 4 : 2;
+    backupBatteryActivePower = battery->level >= 2 ? 4 : 2;
     backupBatteryTimer = 30.0f;
     return true;
 }
