@@ -282,3 +282,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - The saved-game editor documentation separately describes RebelFleetOffset as a sector-dependent negative pixel value approaching zero, with RebelFleetFudge as a random constant added to the offset. Therefore the current float frontier model must not be treated as proven vanilla math.
 - Decision: do not replace Offset/Fudge with a guessed linear formula. Keep the current mapping explicitly provisional and continue searching for a reproducible map-frontier relation or test data.
 - Sources: hintforge FTL mechanics documentation and Subset Games FTL Profile/SavedGame Editor research.
+
+
+## Plasma Storm power-source fidelity research checkpoint — 2026-09-28
+- Rechecked the Library ftl.dat and current runtime before changing power accounting. The archive is still the persistent real-data source at /ftl.dat; it contains the AE battery system blueprint (type=battery, startPower=1, maxPower=2) and the Zoltan crew blueprint.
+- External vanilla mechanics references independently confirm the important rule: Plasma/Ion Storm halves only reactor-funded power, rounded up; Zoltan crew power and Backup Battery power are not reduced by the storm.
+- Current ShipRuntime collapses all powered system/drone bars into one reactor usage count and has no separate Zoltan-power or active Backup-Battery allocation state. Therefore simply subtracting one from system.power until usedReactorPower() <= half-reactor would incorrectly remove Zoltan/Battery power in some states.
+- Decision: do not add a speculative partial fix. The next implementation step is to introduce explicit power-source accounting (reactor vs Zoltan vs temporary Backup Battery) before tightening Plasma Storm depowering. This is a fidelity requirement, not a build blocker.
+- Current Plasma Storm implementation remains intentionally provisional: it correctly enforces the reactor-only half-cap for the current simplified runtime, but it is not yet exact for mixed reactor/Zoltan/Battery allocations.
+- Sources checked: FTL Environmental Hazards; Advanced Edition Ship System FAQ; FTL Crew/Systems references. No proprietary data is being committed.
