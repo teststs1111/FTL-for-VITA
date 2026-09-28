@@ -646,10 +646,7 @@ int ShipRuntime::zoltanPowerForSystem(const RuntimeSystem& system) const {
     if (!system.powered || system.power <= 0 || system.room < 0 ||
         system.type == "pilot" || system.type == "engines" ||
         system.type == "oxygen" || system.type == "doors" ||
-        system.type == "sensors" || system.type == "drones" ||
-        system.type == "teleporter" || system.type == "cloaking" ||
-        system.type == "mind" || system.type == "hacking" ||
-        system.type == "artillery" || system.type == "battery")
+        system.type == "sensors" || system.type == "battery")
         return 0;
 
     int zoltans = 0;
