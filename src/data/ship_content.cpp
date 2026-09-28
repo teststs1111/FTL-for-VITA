@@ -60,7 +60,7 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
         return 0;
     };
 
-    if (!out.blueprint.weaponLoadList.empty() && out.initialWeapons.empty()) {
+    if (!out.blueprint.weaponLoadList.empty() && out.blueprint.initialWeapons.empty()) {
         if (const auto* list = database_.findBlueprintList(out.blueprint.weaponLoadList)) {
             int remaining = systemPower("weapons");
             const int slots = out.blueprint.weaponSlots > 0 ? out.blueprint.weaponSlots : 4;
@@ -90,7 +90,7 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
             out.initialWeaponBlueprints.push_back(*weapon);
     }
 
-    if (!out.blueprint.droneLoadList.empty() && out.initialDrones.empty()) {
+    if (!out.blueprint.droneLoadList.empty() && out.blueprint.initialDrones.empty()) {
         if (const auto* list = database_.findBlueprintList(out.blueprint.droneLoadList)) {
             int remaining = systemPower("drones");
             const int slots = out.blueprint.droneSlots > 0 ? out.blueprint.droneSlots : 2;
