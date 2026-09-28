@@ -135,7 +135,7 @@ int main() {
     // autoBlueprints.xml is canonical base-game data and must expose enemy auto ships.
     assert(content.loadPlayerShip("data/blueprints.xml", "AUTO_BASIC"));
     assert(content.playerShip()->blueprint.id == "AUTO_BASIC");
-    const autoLists = content.blueprints().blueprintLists();
+    const auto& autoLists = content.blueprints().blueprintLists();
     assert(autoLists.size() == 40);
     const std::vector<std::string>* zoltanList = content.blueprints().findBlueprintList("SHIPS_ZOLTAN");
     assert(zoltanList != nullptr && !zoltanList->empty());
