@@ -602,14 +602,37 @@ void ShipRuntime::updateEnvironment(float dt) {
     }
 }
 
+int ShipRuntime::zoltanPowerForSystem(const RuntimeSystem& system) const {
+    // Zoltan power is free, ion-proof power supplied by living Zoltans
+    // standing in the system room. Subsystems receive no Zoltan power.
+    if (!system.powered || system.power <= 0 || system.room < 0 ||
+        system.type == "pilot" || system.type == "engines" ||
+        system.type == "oxygen" || system.type == "doors" ||
+        system.type == "sensors" || system.type == "battery")
+        return 0;
+
+    int zoltans = 0;
+    for (const auto& member : crew) {
+        if (!member.alive || member.room != system.room) continue;
+        std::string race = member.race;
+        std::transform(race.begin(), race.end(), race.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (race == "zoltan" || race == "energy")
+            ++zoltans;
+    }
+    return std::min(system.power, zoltans);
+}
+
+int ShipRuntime::reactorFundedPowerForSystem(const RuntimeSystem& system) const {
+    if (!system.powered || system.power <= 0 || system.type == "battery")
+        return 0;
+    return std::max(0, system.power - zoltanPowerForSystem(system));
+}
+
 int ShipRuntime::usedReactorPower() const {
     int used = 0;
-    for (const auto& system : systems) {
-        // Backup Battery is a subsystem: its own level is not reactor
-        // consumption. Its temporary power bars are modeled separately.
-        if (system.type == "battery") continue;
-        if (system.powered) used += std::max(0, system.power);
-    }
+    for (const auto& system : systems)
+        used += reactorFundedPowerForSystem(system);
     for (const auto& drone : drones)
         if (drone.powered) used += std::max(1, drone.power);
     return used;
@@ -620,17 +643,10 @@ void ShipRuntime::setReactorPowerCap(int cap) {
 }
 
 int ShipRuntime::availableReactorPower() const {
-    int used = 0;
-    for (const auto& system : systems) {
-        if (system.type == "battery") continue;
-        if (system.powered) used += std::max(0, system.power);
-    }
-    for (const auto& drone : drones)
-        if (drone.powered) used += std::max(1, drone.power);
     const int capacity = reactorPowerCap >= 0
         ? std::min(reactor, reactorPowerCap)
         : reactor;
-    return std::max(0, capacity - used);
+    return std::max(0, capacity - usedReactorPower());
 }
 
 }
