@@ -8,7 +8,7 @@
 namespace wormhole {
 
 enum class CombatOutcome { Ongoing, PlayerDestroyed, EnemyDestroyed };
-enum class CombatEnvironment { None, Asteroid, Sun, PDSPlayer, PDSEnemy };
+enum class CombatEnvironment { None, Asteroid, Sun, PlasmaStorm, PDSPlayer, PDSEnemy };
 
 struct CombatResult {
     bool fired{false};
@@ -66,6 +66,12 @@ public:
     void setEnvironment(CombatEnvironment environment) {
         environment_ = environment;
         environmentTimer_ = 0.0f;
+        if (environment_ == CombatEnvironment::PlasmaStorm)
+            applyPlasmaStormPowerCap();
+        else {
+            player.setReactorPowerCap(-1);
+            enemy.setReactorPowerCap(-1);
+        }
     }
     CombatEnvironment environment() const { return environment_; }
     bool activateCloaking();
@@ -102,7 +108,7 @@ private:
     CombatEnvironment environment_{CombatEnvironment::None};
     float environmentTimer_{0.0f};
     std::uint32_t nextRandom();
-    void updateEnvironmentHazard(float dt);
+    void updateEnvironmentHazard(float dt);\n    void applyPlasmaStormPowerCap();
 };
 
 } 
