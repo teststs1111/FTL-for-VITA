@@ -508,3 +508,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Current loader coverage: `BlueprintDatabase/ShipContent` consumes the canonical blueprint files including `dlcBlueprints.xml`, `dlcBlueprintsOverwrite.xml`, and `dlcPirateBlueprints.xml`; `EventDatabase` consumes `dlcEvents.xml`, `dlcEvents_anaerobic.xml`, and `dlcEventsOverwrite.xml`. `dlcAnimations.xml` and `dlcSounds.xml` have no dedicated animation/sound database yet and should be handled when those runtime subsystems are implemented.
 - `autoBlueprints.xml` was identified as a separate base-game gap. It contains 40 blueprint lists and 25 enemy/auto ship definitions. `ShipContent` now loads it from the same canonical archive, and the real-archive regression test verifies `AUTO_BASIC`; commits `21018b7733eb894c6a0779d70dfae5e5b8bed37c` and `a260aeaef545ea748a3cb772e97e042da01f5fb1`.
 - Important remaining data-fidelity work: implement the semantics of `autoBlueprints.xml` blueprint lists (randomized enemy weapons/drones/etc.), then add dedicated animation/sound resource consumers rather than hardcoding AE behavior.
+
+
+## autoBlueprint enemy-spawn integration — 2026-09-29
+- A Host build failure on commit `4a5e0a89f389e8898e1cf47f4c93e04a99a387cf` was traced to a real compile typo in `blueprint_database.cpp`: `const it` was missing the `auto` type. It was corrected in commit `352b175471ae9f31bfd9d4996ffd32d0e8a93c9e`.
+- Hostile event parsing now recognizes the canonical FTL `auto_blueprint` attribute on `<ship>` nodes for both top-level events and choice-loaded events. Commit: `1a70753457cd58846ddd8fdb770ca0edcd6fe4f7`.
+- `enterCombatFromBeacon()` now treats a hostile id that is an `autoBlueprints.xml` list as a weighted list reference and selects one concrete ship blueprint deterministically from the encounter seed. Duplicate list entries are preserved, so the source data's weighting is retained. Commit: `cdc25a61ab90e0362fa5fea05273bf52b3bbc168`.
+- Real-archive regression coverage now verifies that the first `SHIPS_ZOLTAN` list selection resolves to an actual loaded ship blueprint. Commit: `91750fefc94e8e8a1170d53f0a023cbcfa9a4d95`.
+- This keeps base-game and AE content inside the same `ftl.dat` path; no external DLC mechanism is introduced.
+- Latest Host/Vita workflow results for the new commits must be checked before calling this green.
