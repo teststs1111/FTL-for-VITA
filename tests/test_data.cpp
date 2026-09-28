@@ -562,37 +562,48 @@ static void testShipRuntime() {
     assert(combat.enemy.hull == droneHullBefore - 1);
     assert(combat.player.setDronePowered(0, false));
     assert(combat.player.setDronePowered(1, false));
-    assert(combat.setTargetRoom(0));
     assert(combat.load(content, enemyForCombat));
-    assert(combat.player.setDronePowered(1, true));
-    for (auto& weapon : combat.enemy.weapons) {
-        weapon.ready = false;
-        weapon.charge = 0.0f;
-    }
-    combat.enemy.setSystemPowered(1, true);
-    // Force the regression scenario to use a multi-shot volley so one defense-drone
-    // interception can be distinguished from incorrectly intercepting the whole volley.
-    assert(!combat.enemy.weapons.empty());
-    combat.enemy.weapons[0].shots = 2;
-    combat.enemy.updateWeapons(2.5f);
-    // Ensure the first slot is the one the simple enemy AI fires in this regression.
-    for (auto& weapon : combat.enemy.weapons) weapon.ready = false;
-    assert(!combat.enemy.weapons.empty());
-    combat.enemy.weapons[0].ready = true;
-    combat.enemy.weapons[0].charge = combat.enemy.weapons[0].cooldown;
-    combat.player.shieldLayers = 0;
-    // Start fully charged so this regression test isolates interception behavior.
-    combat.player.drones[1].charge = combat.player.drones[1].cooldown;
-    combat.player.drones[1].active = true;
-    const int defenseHullBefore = combat.player.hull;
-    combat.update(0.1f);
-    // The defense drone intercepts the incoming laser on this update and immediately spends its charge.\n    assert(combat.player.drones[1].active == false);
+    assert(combat.setTargetRoom(0));
+    // Isolate the Defense Drone regression from the prototype enemy-AI scheduler:
+    // two explicit laser projectiles are queued in one volley.
+    combat.enemy.drones.clear();
+    RuntimeDrone defenseDrone;
+    defenseDrone.type = DroneBlueprint::Type::Defense;
+    defenseDrone.name = "Defense Drone Mark II";
+    defenseDrone.powered = true;
+    defenseDrone.active = true;
+    defenseDrone.cooldown = 1000;
+    defenseDrone.charge = 1000;
+    combat.enemy.drones.push_back(defenseDrone);
+
+    assert(!combat.player.weapons.empty());
+    RuntimeWeapon defenseWeapon;
+    defenseWeapon.name = "DefenseRegressionLaser";
+    defenseWeapon.type = "LASER";
+    defenseWeapon.power = 1;
+    defenseWeapon.shots = 2;
+    defenseWeapon.damage = 1;
+    defenseWeapon.personnelDamage = 20;
+    defenseWeapon.speed = 10;
+    defenseWeapon.cooldown = 1.0f;
+    defenseWeapon.charge = 1.0f;
+    defenseWeapon.ready = true;
+    defenseWeapon.allocatedPower = 1;
+    combat.player.weapons[0] = defenseWeapon;
+    combat.player.weaponIonDisabled = std::vector<bool>{false};
+    const int defenseHullBefore = combat.enemy.hull;
+    const auto defenseFired = combat.fireWeapon(0);
+    assert(defenseFired.fired);
+    assert(combat.pendingShotCount() == 2);
+
+    // One Defense Drone charge intercepts one projectile, not the whole volley.
     combat.update(0.01f);
-    // Defense drones intercept one projectile, not an entire multi-shot volley.
-    assert(combat.player.hull == defenseHullBefore);
+    assert(combat.enemy.drones[0].active == false);
     assert(combat.pendingShotCount() == 1);
+    assert(combat.enemy.hull == defenseHullBefore);
+
     combat.update(0.30f);
-    assert(combat.player.hull == defenseHullBefore - 1);
+    assert(combat.enemy.hull == defenseHullBefore - 1);
     assert(combat.pendingShotCount() == 0);
     wormhole::CombatResult defenseImpact;
     assert(combat.consumeImpactResult(defenseImpact));
