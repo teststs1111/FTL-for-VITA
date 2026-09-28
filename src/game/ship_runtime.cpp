@@ -237,6 +237,9 @@ void ShipRuntime::reset() {
     content = {};
     hull = maxHull = reactor = 0;
     reactorPowerCap = -1;
+    backupBatteryActivePower = 0;
+    backupBatteryTimer = 0.0f;
+    backupBatteryCooldownTimer = 0.0f;
     roomDamage.clear();
     roomOxygen.clear();
     roomFire.clear();
@@ -680,11 +683,52 @@ void ShipRuntime::setReactorPowerCap(int cap) {
     reactorPowerCap = cap < 0 ? -1 : std::min(cap, reactor);
 }
 
+bool ShipRuntime::activateBackupBattery() {
+    if (!valid || backupBatteryActivePower > 0 || backupBatteryCooldownTimer > 0.0f)
+        return false;
+
+    const RuntimeSystem* battery = nullptr;
+    for (const auto& system : systems) {
+        if (system.type == "battery" && system.damage < system.maxPower &&
+            system.maxPower > 0) {
+            battery = &system;
+            break;
+        }
+    }
+    if (!battery)
+        return false;
+
+    // Backup Battery I supplies +2 power; level II supplies +4.
+    // The subsystem itself is not reactor-funded.
+    backupBatteryActivePower = battery->maxPower >= 2 ? 4 : 2;
+    backupBatteryTimer = 30.0f;
+    return true;
+}
+
+void ShipRuntime::updateBackupBattery(float dt) {
+    if (!valid || dt <= 0.0f)
+        return;
+
+    if (backupBatteryCooldownTimer > 0.0f) {
+        backupBatteryCooldownTimer = std::max(0.0f, backupBatteryCooldownTimer - dt);
+    }
+
+    if (backupBatteryActivePower <= 0)
+        return;
+
+    backupBatteryTimer = std::max(0.0f, backupBatteryTimer - dt);
+    if (backupBatteryTimer > 0.0f)
+        return;
+
+    backupBatteryActivePower = 0;
+    backupBatteryCooldownTimer = 20.0f;
+}
+
 int ShipRuntime::availableReactorPower() const {
     const int capacity = reactorPowerCap >= 0
         ? std::min(reactor, reactorPowerCap)
         : reactor;
-    return std::max(0, capacity - usedReactorPower());
+    return std::max(0, capacity + backupBatteryActivePower - usedReactorPower());
 }
 
 }
