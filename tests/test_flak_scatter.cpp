@@ -47,7 +47,9 @@ int main() {
     combat.setRandomSeed(4);
     const CombatResult fired = combat.fireWeapon(0);
     assert(fired.fired);
-    assert(combat.pendingShotCount() == 3);
+    // Flak I has three damaging projectiles plus three non-damaging fake
+    // debris projectiles, which participate in Defense Drone distraction.
+    assert(combat.pendingShotCount() == 6);
 
     bool sawScatter = false;
     for (const auto& shot : combat.pendingShots()) {
