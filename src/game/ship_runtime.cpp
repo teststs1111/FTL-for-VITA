@@ -331,7 +331,12 @@ bool ShipRuntime::repairRoom(int roomId, int amount) {
 bool ShipRuntime::setSystemPowered(int systemIndex, bool powered) {
     if (!valid || systemIndex < 0 || systemIndex >= static_cast<int>(systems.size())) return false;
     RuntimeSystem& system = systems[systemIndex];
-    if (powered && availableReactorPower() < system.power) return false;
+    if (system.powered == powered) return false;
+    if (powered) {
+        const int zoltanFree = availableZoltanPowerForSystem(system);
+        const int reactorNeeded = std::max(0, system.power - zoltanFree);
+        if (availableReactorPower() < reactorNeeded) return false;
+    }
     system.powered = powered;
     return true;
 }
@@ -502,10 +507,15 @@ bool ShipRuntime::setSystemPower(int systemIndex, int power) {
     if (next == system.power) return false;
 
     const int delta = next - system.power;
-    if (delta > 0 && availableReactorPower() < delta) return false;
+    if (delta > 0) {
+        const int zoltanFree = availableZoltanPowerForSystem(system);
+        const int available = availableReactorPower() + zoltanFree;
+        if (available < delta) return false;
+    }
 
     system.power = next;
     if (system.power == 0) system.powered = false;
+    else system.powered = true;
     return true;
 }
 
@@ -600,6 +610,34 @@ void ShipRuntime::updateEnvironment(float dt) {
         if (rightFire && roomOxygen[door.leftRoom] > 0)
             roomFire[door.leftRoom] = true;
     }
+}
+
+int ShipRuntime::availableZoltanPowerForSystem(const RuntimeSystem& system) const {
+    if (system.room < 0)
+        return 0;
+
+    const auto isZoltan = [](const RuntimeCrew& member) {
+        if (!member.alive || member.room < 0)
+            return false;
+        std::string race = member.race;
+        std::transform(race.begin(), race.end(), race.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        return race == "zoltan" || race == "energy";
+    };
+
+    int total = 0;
+    for (const auto& member : crew)
+        if (isZoltan(member) && member.room == system.room)
+            ++total;
+
+    int allocated = 0;
+    for (const auto& other : systems) {
+        if (&other == &system || other.room != system.room)
+            continue;
+        allocated += zoltanPowerForSystem(other);
+    }
+    allocated += zoltanPowerForSystem(system);
+    return std::max(0, total - allocated);
 }
 
 int ShipRuntime::zoltanPowerForSystem(const RuntimeSystem& system) const {
