@@ -226,3 +226,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Distinguish compile failures from test/verification failures.
 - Keep changes small and testable.
 - Update HANDOFF.md after meaningful changes so a future '続き' can resume without asking the user to repeat context.
+
+
+## Rebel Fleet environment implementation checkpoint — 2026-09-28
+- Added a dedicated `CombatEnvironment::PlasmaStorm` state.
+- Plasma Storm now caps reactor-funded power at half capacity, rounded up, on combat entry and constrains later reactor allocation through `ShipRuntime::reactorPowerCap`.
+- On entry, excess reactor-funded system power is removed using the runtime RNG. This intentionally avoids claiming an exact vanilla depower ordering; Zoltan room power and Backup Battery are still not modeled separately.
+- Rebel Fleet encounter selection now uses `PlasmaStorm` for fleet-controlled nebula beacons and `PDSPlayer` for non-nebula beacons.
+- This matches the documented core distinction: normal fleet beacons use ASB, while captured nebula beacons use an ion/plasma storm. The Easy-mode exit exception and the special zero-fuel/waiting transition remain separate fidelity work because difficulty state and waiting-at-beacon takeover are not yet represented.
+- Exact Rebel Fleet frontier Offset/Fudge mapping remains untouched and provisional.
