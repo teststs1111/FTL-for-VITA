@@ -331,7 +331,7 @@ bool ShipRuntime::repairRoom(int roomId, int amount) {
 bool ShipRuntime::setSystemPowered(int systemIndex, bool powered) {
     if (!valid || systemIndex < 0 || systemIndex >= static_cast<int>(systems.size())) return false;
     RuntimeSystem& system = systems[systemIndex];
-    if (system.powered == powered) return false;
+    if (system.powered == powered) return true;
     if (powered) {
         const int zoltanFree = availableZoltanPowerForSystem(system);
         const int reactorNeeded = std::max(0, system.power - zoltanFree);
