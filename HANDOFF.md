@@ -234,6 +234,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - This matches the documented core distinction: normal fleet beacons use ASB, while captured nebula beacons use an ion/plasma storm. The Easy-mode exit exception and the special zero-fuel/waiting transition remain separate fidelity work because difficulty state and waiting-at-beacon takeover are not yet represented.
 - Exact Rebel Fleet frontier Offset/Fudge mapping remains untouched and provisional.
 
+## Rebel Fleet / sector-map research update — 2026-09-28
+- Latest main commit `6fc4d79946b800d92e19ea252c8ae0a261023f5a` is CI-green: Host #858 and Vita #550 both completed successfully.
+- Library verification still finds the user-supplied `ftl.dat` at `/ftl.dat`, 280,573,482 bytes. Use it as the real-data source of truth; do not commit or redistribute it. 
+- Additional map-generation references confirm the core generation order: the beacon map is created before sector events; the map is a 6×4 grid, each cell normally has an 80% beacon chance, and placed beacons connect to beacons in adjacent grid cells when their map-space distance is <=165 px. The exit is generated as part of the map rather than as a normal sector event entry. These facts support the current graph-generation direction but do not establish the exact vanilla coordinate RNG or fleet-frontier transform. citeturn5search0turn5search10
+- The exact `RebelFleetOffset`/`RebelFleetFudge` -> per-beacon takeover boundary remains unresolved. Keep `setFleetCoverageFromPosition()` provisional; do not replace it with a guessed linear transform.
+
 ## Reporting format — 2026-09-28
 - Future continuation reports should be kept more concise to reduce chat-log usage.
 - Prefer a short status block: progress %, current state, what is being worked on, CI result, and only important problems/blockers.
