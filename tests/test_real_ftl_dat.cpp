@@ -132,6 +132,9 @@ int main() {
     content.setAdvancedEdition(false);
     assert(content.loadPlayerShip());
     assert(content.playerShip()->blueprint.id == "PLAYER_SHIP_HARD");
+    // autoBlueprints.xml is canonical base-game data and must expose enemy auto ships.
+    assert(content.loadPlayerShip("data/blueprints.xml", "AUTO_BASIC"));
+    assert(content.playerShip()->blueprint.id == "AUTO_BASIC");
 
     content.setAdvancedEdition(true);
     assert(content.loadPlayerShip("data/blueprints.xml", "PLAYER_SHIP_ANAEROBIC"));
