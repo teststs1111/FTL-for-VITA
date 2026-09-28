@@ -133,7 +133,9 @@ int main() {
     assert(ship.systems[0].power == 3);
     assert(ship.systems[0].batteryPower == 0);
     assert(ship.backupBatteryCooldownRemaining() > 19.9f);
-    assert(ship.availableReactorPower() == 8);
+    // The reactor cap remains active after the Battery expires, so only
+    // cap(2) - reactor-funded(1) is currently available.
+    assert(ship.availableReactorPower() == 1);
 
     // Level II supplies four temporary bars after the normal cooldown.
     ship.updateBackupBattery(20.0f);
