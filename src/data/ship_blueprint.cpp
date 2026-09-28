@@ -117,12 +117,14 @@ bool parseShipBlueprint(const bxml::Node& node, ShipBlueprint& out) {
 
     if (const auto* weapons = child(node, "weaponList")) {
         out.startingMissiles = integer(*weapons, "missiles", 0);
+        out.weaponLoadList = attribute(*weapons, "load");
         for (const auto& entry : weapons->children) {
             const std::string name = attribute(entry, "name");
             if (!name.empty()) out.initialWeapons.push_back(name);
         }
     }
     if (const auto* drones = child(node, "droneList")) {
+        out.droneLoadList = attribute(*drones, "load");
         for (const auto& entry : drones->children) {
             const std::string name = attribute(entry, "name");
             if (!name.empty()) out.initialDrones.push_back(name);
