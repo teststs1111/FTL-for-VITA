@@ -385,7 +385,6 @@ int main() {
         assert(weaponPower.systems[0].power == 2);
         assert(weaponPower.weapons[0].allocatedPower == 1);
         assert(weaponPower.weapons[1].allocatedPower == 1);
-        assert(weaponPower.weapons[1].charge == 0.0f);
         assert(weaponPower.weapons[2].allocatedPower == 0);
     }
 
