@@ -261,3 +261,9 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Historical save-editor documentation explicitly describes `RebelFleetOffset` as a sector-dependent large negative pixel value approaching zero, with `RebelFleetFudge` as a per-sector random constant added to that offset. This confirms that the current direct comparison of raw `-959 + pursuit` against generated beacon X coordinates is not a faithful model.
 - No public source found in this pass that provides the exact Offset/Fudge-to-beacon collision formula. Do not replace the provisional mapping with an invented linear transform.
 - Next target is to recover the actual sector-map frontier representation/coordinate space from a reference implementation, mod asset behavior, or sufficiently documented save/map traces before changing coverage logic.
+
+
+## Rebel Fleet Plasma Storm power-accounting checkpoint — 2026-09-28
+- Fixed a runtime consistency gap found during continuation review: powered drones are now included in ShipRuntime::usedReactorPower(), matching availableReactorPower().
+- Plasma Storm entry depowering now considers both powered systems and powered drones instead of potentially leaving reactor usage above the storm cap when drones were active.
+- This is a narrow consistency/fidelity fix; Zoltan room power and Backup Battery remain unmodeled, so Plasma Storm is still not an exact implementation of every vanilla power-source exception.
