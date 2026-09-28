@@ -517,3 +517,10 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Real-archive regression coverage now verifies that the first `SHIPS_ZOLTAN` list selection resolves to an actual loaded ship blueprint. Commit: `91750fefc94e8e8a1170d53f0a023cbcfa9a4d95`.
 - This keeps base-game and AE content inside the same `ftl.dat` path; no external DLC mechanism is introduced.
 - Latest Host/Vita workflow results for the new commits must be checked before calling this green.
+
+
+## autoBlueprint RNG refinement — 2026-09-29
+- Replaced the first autoBlueprint selection formula with the existing deterministic encounter RNG used by event effects, avoiding a separate ad-hoc seed calculation.
+- Duplicate entries in each `blueprintList` remain intact and therefore continue to act as vanilla-style equal-weight repetitions.
+- Commit: `e079f78590e18bd5b65afda2590a9a5c7aa12d56`.
+- The remaining limitation is that the complete vanilla RNG stream/order is not yet reproduced; this change keeps autoBlueprint selection on the same encounter RNG foundation rather than introducing another independent generator.
