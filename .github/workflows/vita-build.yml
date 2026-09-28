@@ -20,6 +20,10 @@ jobs:
           make -C /tmp/vitaGL install
       - name: Configure Vita build
         run: cmake -S . -B build-vita -DCMAKE_TOOLCHAIN_FILE=$VITASDK/share/vita.toolchain.cmake -DBUILD_TESTS=OFF
+      - name: Inspect Vita ELF layout
+        run: |
+          cmake --build build-vita --target vita_wormhole_prototype --parallel 2
+          arm-vita-eabi-readelf -l build-vita/vita_wormhole_prototype
       - name: Build Vita VPK
         run: cmake --build build-vita --parallel 2
       - name: Upload VPK
