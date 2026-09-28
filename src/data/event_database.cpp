@@ -171,7 +171,11 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
         const auto it = ship->attributes.find("hostile");
         event.hostile = it != ship->attributes.end() && it->second == "true";
         const auto name = ship->attributes.find("name");
-        if (name != ship->attributes.end()) event.hostileShipId = name->second;
+        const auto autoBlueprint = ship->attributes.find("auto_blueprint");
+        if (autoBlueprint != ship->attributes.end() && !autoBlueprint->second.empty())
+            event.hostileShipId = autoBlueprint->second;
+        else if (name != ship->attributes.end())
+            event.hostileShipId = name->second;
     }
     if (const auto* quest = child(node, "quest")) {
         const auto target = quest->attributes.find("event");
@@ -241,7 +245,11 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
                 const auto hit = ship->attributes.find("hostile");
                 choice.hostile = hit != ship->attributes.end() && hit->second == "true";
                 const auto name = ship->attributes.find("name");
-                if (name != ship->attributes.end()) choice.hostileShipId = name->second;
+                const auto autoBlueprint = ship->attributes.find("auto_blueprint");
+                if (autoBlueprint != ship->attributes.end() && !autoBlueprint->second.empty())
+                    choice.hostileShipId = autoBlueprint->second;
+                else if (name != ship->attributes.end())
+                    choice.hostileShipId = name->second;
             }
             if (const auto* quest = child(*e, "quest")) {
                 const auto target = quest->attributes.find("event");
