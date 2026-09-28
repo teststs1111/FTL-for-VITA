@@ -575,6 +575,11 @@ static void testShipRuntime() {
     assert(!combat.enemy.weapons.empty());
     combat.enemy.weapons[0].shots = 2;
     combat.enemy.updateWeapons(2.5f);
+    // Ensure the first slot is the one the simple enemy AI fires in this regression.
+    for (auto& weapon : combat.enemy.weapons) weapon.ready = false;
+    assert(!combat.enemy.weapons.empty());
+    combat.enemy.weapons[0].ready = true;
+    combat.enemy.weapons[0].charge = combat.enemy.weapons[0].cooldown;
     combat.player.shieldLayers = 0;
     // Start fully charged so this regression test isolates interception behavior.
     combat.player.drones[1].charge = combat.player.drones[1].cooldown;
