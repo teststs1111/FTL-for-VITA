@@ -478,6 +478,9 @@ int main() {
         assert(!combat.weapons[0].volleyPending);
         assert(combat.hull == 0);
 
+        // Reset hull for the independent missile-resolution assertion.
+        combat.hull = 4;
+        combat.maxHull = 4;
         RuntimeWeapon missile;
         missile.type = "missile";
         missile.power = 2;
