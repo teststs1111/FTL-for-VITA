@@ -448,7 +448,13 @@ bool EventDatabase::load() {
     if (!nebulaPool.entries.empty()) eventPools_["NEBULA"] = std::move(nebulaPool);
 
     if (advancedEdition_) {
-        const char* extra[] = {"data/dlcEvents.xml"};
+        // AE event data is stored in the same ftl.dat.  Load every canonical
+        // dlcEvents resource before the overwrite pass so Lanius/other AE
+        // event pools are available without introducing a separate DLC archive.
+        const char* extra[] = {
+            "data/dlcEvents.xml",
+            "data/dlcEvents_anaerobic.xml"
+        };
         for (const char* name : extra) {
             const auto* bytes = assets_.getBytes(name);
             if (!bytes || bytes->empty()) continue;
