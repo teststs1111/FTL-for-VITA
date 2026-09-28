@@ -1133,8 +1133,25 @@ public:
         // Start every encounter from a clean CombatRuntime state. This resets
         // the previous outcome, projectile queue, boarding timers and enemy
         // fire timers while preserving the persistent player ship below.
-        LoadedShip enemyShip;        if (!enemyShipId.empty()) {
-            if (!content_.loadShip(enemyShipId, enemyShip) || enemyShip.blueprint.id.empty()) {
+        LoadedShip enemyShip;
+        std::string resolvedEnemyId = enemyShipId;
+        if (!resolvedEnemyId.empty() && !content_.blueprints().findShip(resolvedEnemyId)) {
+            // Original FTL event data uses auto_blueprint to reference a
+            // weighted blueprintList rather than a concrete ship id.
+            // Keep the list entries (including duplicates) as the source of
+            // the selection weights and choose deterministically from the
+            // encounter seed.
+            if (const auto* list = content_.blueprints().findBlueprintList(resolvedEnemyId)) {
+                if (!list->empty()) {
+                    const unsigned selectionSeed =
+                        seed_ + static_cast<unsigned>(visitedBeacons_ * 53u) +
+                        static_cast<unsigned>(std::max(0, currentBeacon_));
+                    resolvedEnemyId = (*list)[selectionSeed % list->size()];
+                }
+            }
+        }
+        if (!resolvedEnemyId.empty()) {
+            if (!content_.loadShip(resolvedEnemyId, enemyShip) || enemyShip.blueprint.id.empty()) {
                 combatFeedback_ = "敵艦の読み込みに失敗";
                 combatFeedbackTimer_ = 2.0f;
                 return;
