@@ -125,7 +125,7 @@ struct ShipRuntime {
     int healCrew(int crewIndex, int amount);
     bool extinguishFire(int crewIndex);
     bool setDoorOpen(int doorIndex, bool open);
-    bool setRoomFire(int roomId, bool breached);
+    bool setRoomFire(int roomId, bool fire);
     bool setRoomBreach(int roomId, bool breached);
     void updateEnvironment(float dt);
     int zoltanPowerForSystem(const RuntimeSystem& system) const;
