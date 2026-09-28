@@ -1221,8 +1221,19 @@ public:
             combatFeedbackTimer_ = 2.0f;
             return;
         }
-        // Fleet-controlled beacons carry the Advanced Sector Battery threat.
-        pendingEnvironment_ = CombatEnvironment::PDSPlayer;
+        // Fleet takeover replaces the beacon's normal event. Normal
+        // fleet-controlled beacons use the Rebel ASB; captured nebula
+        // beacons use a plasma/ion storm, except for the nebula exit.
+        const auto* beacon = sectorGraph_.node(currentBeacon_);
+        const bool nebulaBeacon = beacon && beacon->nebula;
+        const bool exitBeacon = currentBeacon_ == sectorGraph_.exitNode();
+        if (nebulaBeacon && !exitBeacon) {
+            pendingEnvironment_ = CombatEnvironment::PlasmaStorm;
+        } else if (nebulaBeacon && exitBeacon) {
+            pendingEnvironment_ = CombatEnvironment::None;
+        } else {
+            pendingEnvironment_ = CombatEnvironment::PDSPlayer;
+        }
         rebelFleetEncounter_ = true;
         combatFeedback_ = "反乱軍艦隊と遭遇";
         combatFeedbackTimer_ = 1.5f;
