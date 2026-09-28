@@ -347,7 +347,11 @@ bool ShipRuntime::setSystemPowered(int systemIndex, bool powered) {
         const int allocatedFree = std::min(system.power,
             std::max(0, system.zoltanPower) + std::max(0, system.batteryPower));
         const int reactorNeeded = std::max(0, system.power - allocatedFree);
-        if (availableReactorPower() < reactorNeeded) return false;
+        const reactorCapacity = reactorPowerCap >= 0
+            ? std::min(reactor, reactorPowerCap)
+            : reactor;
+        if (std::max(0, reactorCapacity - usedReactorPower()) < reactorNeeded)
+            return false;
     }
     system.powered = powered;
     return true;
@@ -682,7 +686,8 @@ void ShipRuntime::rebalanceZoltanPowerSources() {
         return race == "zoltan" || race == "energy";
     };
 
-    // First remove allocations whose Zoltan source no longer exists in the room.
+    // A Zoltan leaving a room removes only its own free bar. The system does
+    // not automatically reclaim reactor power for that missing bar.
     for (auto& system : systems) {
         if (system.zoltanPower <= 0 || system.room < 0) continue;
         int roomZoltans = 0;
@@ -705,24 +710,44 @@ void ShipRuntime::rebalanceZoltanPowerSources() {
         }
     }
 
-    // Newly available Zoltans supply already-powered eligible main systems.
+    // Newly available Zoltan power is assigned to eligible powered main
+    // systems. If the target is already full, the game pushes Battery-funded
+    // bars out first, then reactor-funded bars, without lowering total power.
     for (auto& system : systems) {
         if (!system.powered || system.power <= 0 || system.room < 0 ||
             system.type == "pilot" || system.type == "engines" || system.type == "oxygen" ||
             system.type == "doors" || system.type == "sensors" || system.type == "battery")
             continue;
+
         const int free = availableZoltanPowerForSystem(system);
         if (free <= 0) continue;
-        const int add = std::min(free, system.maxPower - system.power);
-        if (add > 0) {
-            system.power += add;
-            system.zoltanPower += add;
+
+        const int add = std::min(free, system.maxPower - system.zoltanPower);
+        if (add <= 0) continue;
+
+        int displaced = 0;
+        const int pushedBattery = std::min(add, system.batteryPower);
+        system.batteryPower -= pushedBattery;
+        displaced += pushedBattery;
+
+        if (displaced < add) {
+            const int reactorBars = reactorFundedPowerForSystem(system);
+            displaced += std::min(add - displaced, reactorBars);
         }
+
+        // Zoltan replaces an existing source bar when the system is full;
+        // otherwise it adds a new bar.
+        system.zoltanPower += add;
+
+        system.batteryPower = std::min(system.batteryPower,
+                                       std::max(0, system.power - system.zoltanPower));
     }
 }
 
 int ShipRuntime::availableZoltanPowerForSystem(const RuntimeSystem& system) const {
-    if (system.room < 0)
+    if (system.room < 0 ||
+        system.type == "pilot" || system.type == "engines" || system.type == "oxygen" ||
+        system.type == "doors" || system.type == "sensors" || system.type == "battery")
         return 0;
 
     const auto isZoltan = [](const RuntimeCrew& member) {
