@@ -190,6 +190,7 @@ int main() {
     RuntimeCrew z3 = z1;
     z3.room = 2;
     ship.crew.push_back(z3);
+    ship.rebalanceZoltanPowerSources();
     assert(ship.zoltanPowerForSystem(ship.systems[3]) == 1);
     assert(ship.zoltanPowerForSystem(ship.systems[4]) == 0);
 
