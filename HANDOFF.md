@@ -418,3 +418,14 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Added deterministic regression boundaries: 100% evasion must miss, 0% evasion must hit.
 - The runtime still does not derive target evasion from pilot/engines/cloaking state, and Defense Drone interception is not yet implemented. These remain the next combat-fidelity steps.
 - Commits: `6475b6b` (API), `fd45125` (runtime), with regression coverage added alongside this checkpoint.
+
+
+## Defense Drone interception correction — 2026-09-28
+- Added per-projectile Defense Drone interception before the ship evasion roll.
+- Defense Drone Mark I can intercept missile/flak/crystal projectiles; Mark II additionally intercepts laser and ion projectiles.
+- Bombs explicitly bypass Defense Drones.
+- A charged defensive drone shot is consumed after one interception attempt; the runtime keeps the existing autonomous charge model.
+- Interception currently uses a 90% hit roll, matching the documented vanilla 10% intended miss rate; geometry/targeting blind spots are not yet modeled.
+- Regression coverage verifies Mark I missile interception, bomb bypass, Mark I laser exclusion, and Mark II laser interception.
+- Vanilla references: citeturn1search0turn1search2turn1search3
+- Commits: `984800c` (API), `397ce96` (runtime), with regression coverage added alongside this checkpoint.
