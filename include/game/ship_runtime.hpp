@@ -148,7 +148,7 @@ struct ShipRuntime {
     void updateShields(float dt, float rechargeMultiplier = 1.0f);
     bool damageShields(int amount);
     bool fireWeapon(int weaponIndex);
-    int resolveWeaponVolley(int weaponIndex, int targetRoom);
+    int resolveWeaponVolley(int weaponIndex, int targetRoom, int targetEvasion = 0);
     bool setDronePowered(int droneIndex, bool powered);
     void updateDrones(float dt);
 };
