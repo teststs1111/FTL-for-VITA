@@ -12,6 +12,7 @@ struct RuntimeSystem {
     int power{0};
     int maxPower{0};
     int batteryPower{0};
+    int zoltanPower{0};
     int damage{0};
     int ionDamage{0};
     float ionTimer{0.0f};
@@ -128,6 +129,7 @@ struct ShipRuntime {
     bool setRoomBreach(int roomId, bool breached);
     void updateEnvironment(float dt);
     int zoltanPowerForSystem(const RuntimeSystem& system) const;
+    int availableZoltanPowerForSystem(const RuntimeSystem& system) const;
     int availableZoltanPowerForSystem(const RuntimeSystem& system) const;
     int reactorFundedPowerForSystem(const RuntimeSystem& system) const;
     int usedReactorPower() const;
