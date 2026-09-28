@@ -197,6 +197,7 @@ int main() {
     RuntimeCrew z4 = z3;
     z4.room = 3;
     ship.crew.push_back(z4);
+    ship.rebalanceZoltanPowerSources();
     assert(ship.zoltanPowerForSystem(ship.systems[4]) == 1);
 
     // Ion damage removes normal power but leaves Zoltan power intact, locks
