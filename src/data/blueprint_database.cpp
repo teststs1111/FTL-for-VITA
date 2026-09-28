@@ -33,7 +33,17 @@ std::size_t BlueprintDatabase::loadShipBlueprints(const std::vector<std::string>
         bxml::Node root;
         try { root = bxml::read(*data); } catch (...) { continue; }
         std::function<void(const bxml::Node&)> visit = [&](const bxml::Node& node) {
-            if (node.name == "augBlueprint") {
+            if (node.name == "blueprintList") {
+                const it = node.attributes.find("name");
+                if (it != node.attributes.end() && !it->second.empty()) {
+                    auto& list = blueprintLists_[it->second];
+                    list.clear();
+                    for (const auto& entry : node.children) {
+                        if (entry.name == "name" && !entry.text.empty())
+                            list.push_back(entry.text);
+                    }
+                }
+            } else if (node.name == "augBlueprint") {
                 AugmentBlueprint augment;
                 const auto attr = [&](const char* name) -> std::string { const auto it=node.attributes.find(name); return it==node.attributes.end()?std::string{}:it->second; };
                 const auto child = [&](const char* name) -> std::string { for (const auto& c:node.children) if(c.name==name) return c.text; return {}; };
@@ -100,11 +110,23 @@ const DroneBlueprint* BlueprintDatabase::findDrone(const std::string& id) const 
     return it == drones_.end() ? nullptr : &it->second;
 }
 
+const std::vector<std::string>* BlueprintDatabase::findBlueprintList(const std::string& id) const {
+    const auto it = blueprintLists_.find(id);
+    return it == blueprintLists_.end() ? nullptr : &it->second;
+}
+
+const std::string* BlueprintDatabase::selectBlueprint(const std::string& listId, unsigned seed) const {
+    const auto* list = findBlueprintList(listId);
+    if (!list || list->empty()) return nullptr;
+    return &(*list)[seed % list->size()];
+}
+
 void BlueprintDatabase::clear() {
     ships_.clear();
     weapons_.clear();
     drones_.clear();
     augments_.clear();
+    blueprintLists_.clear();
 }
 
 }
