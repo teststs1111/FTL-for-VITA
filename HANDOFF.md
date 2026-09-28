@@ -489,3 +489,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Commit `b30dd4468da2deb2bba3fee0daea2828e0d72008` adds real-archive regression checks for `HOSTILE_LANIUS`, `NEUTRAL_LANIUS`, and `LANIUS_FIGHT`.
 - This is a concrete data-fidelity correction: Lanius AE event pools now come from the actual `ftl.dat` rather than being approximated or hardcoded.
 - Next implementation priority: continue auditing the actual archive's remaining `data/dlc*.xml` resources against every data-loader path, then tighten blueprint/ship/event semantics using the real definitions.
+
+
+## Build regression follow-up — 2026-09-29
+- The latest Host/Vita runs for commit `178485ae` completed with failures; source compilation itself succeeded on both targets.
+- Host CTest exposed three regression-fixture issues: the Defense Drone test was not actually using a multi-shot enemy volley, the reactor test directly zeroed a system power field while leaving stale Zoltan source allocation, and the Flak fake-projectile test had no powered Weapons system even though firing now correctly requires one.
+- Corrected those fixtures in commits `f4bf33599807cfc031425e79d0a4a434fa627503`, `f25749301df48d52114e39393ab89e0a8fa9490e`, and `f2435c447f5d6b45b773b0b0f55c610b53eef19e`.
+- Vita compilation reached the final ELF conversion stage, then `vita-elf-create` failed because SCE module metadata could not fit at the end of PT_LOAD segment 0. The CMake Vita packaging path now requests the documented `STRIPPED` mode so the input ELF is stripped before SCE metadata is appended; this is in commit `1738f2fd86cde42e453310739634fd345406f42b`.
+- These changes address the observed failures rather than weakening runtime assertions. The next step is to verify the new Host/Vita runs, then return to the canonical `ftl.dat` loader-coverage audit.
