@@ -493,6 +493,8 @@ int main() {
     {
         ShipRuntime evasion;
         evasion.valid = true;
+        evasion.hull = 10;
+        evasion.maxHull = 10;
         RuntimeSystem weaponsSystem;
         weaponsSystem.type = "weapons";
         weaponsSystem.room = 60;
