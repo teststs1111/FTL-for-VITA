@@ -276,6 +276,8 @@ int ShipRuntime::damageSystemInRoom(int roomId, int amount) {
         if (hit <= 0) continue;
         system.damage += hit;
         system.power = std::min(system.power, std::max(0, system.maxPower - system.damage - system.ionDamage));
+        system.zoltanPower = std::min(system.zoltanPower, system.power);
+        system.batteryPower = std::min(system.batteryPower, std::max(0, system.power - system.zoltanPower));
         if (system.power == 0) system.powered = false;
         applied += hit;
         if (applied >= amount) break;
@@ -314,6 +316,8 @@ int ShipRuntime::ionizeSystemInRoom(int roomId, int amount) {
         system.ionTimer = 5.0f;
         system.power = std::min(system.power,
                                 std::max(0, system.maxPower - system.damage - system.ionDamage));
+        system.zoltanPower = std::min(system.zoltanPower, system.power);
+        system.batteryPower = std::min(system.batteryPower, std::max(0, system.power - system.zoltanPower));
         if (system.power == 0) {
             system.ionDisabled = system.powered;
             system.powered = false;
@@ -338,8 +342,11 @@ bool ShipRuntime::setSystemPowered(int systemIndex, bool powered) {
     RuntimeSystem& system = systems[systemIndex];
     if (system.powered == powered) return true;
     if (powered) {
-        const int zoltanFree = availableZoltanPowerForSystem(system);
-        const int reactorNeeded = std::max(0, system.power - zoltanFree);
+        // Existing Zoltan/battery allocations already belong to this system.
+        // Only newly uncovered reactor-funded bars need capacity.
+        const int allocatedFree = std::min(system.power,
+            std::max(0, system.zoltanPower) + std::max(0, system.batteryPower));
+        const int reactorNeeded = std::max(0, system.power - allocatedFree);
         if (availableReactorPower() < reactorNeeded) return false;
     }
     system.powered = powered;
@@ -362,9 +369,11 @@ int ShipRuntime::addCrew(const RuntimeCrew& input) {
     for (std::size_t i = 0; i < crew.size(); ++i) {
         if (crew[i].alive) continue;
         crew[i] = member;
+        rebalanceZoltanPowerSources();
         return static_cast<int>(i);
     }
     crew.push_back(std::move(member));
+    rebalanceZoltanPowerSources();
     return static_cast<int>(crew.size() - 1);
 }
 
@@ -399,6 +408,7 @@ int ShipRuntime::removeCrewByRace(const std::string& race, bool cloneIfPossible)
             member.alive = false;
             member.room = -1;
         }
+        rebalanceZoltanPowerSources();
         return 1;
     }
     return 0;
@@ -440,6 +450,7 @@ bool ShipRuntime::moveCrew(int crewIndex, int targetRoom) {
             visited[next] = true;
             if (next == targetRoom) {
                 member.room = targetRoom;
+                rebalanceZoltanPowerSources();
                 return true;
             }
             queue.push_back(next);
@@ -462,6 +473,7 @@ int ShipRuntime::damageCrewInRoom(int roomId, int amount) {
             member.alive = false;
         }
     }
+    rebalanceZoltanPowerSources();
     return applied;
 }
 
@@ -656,6 +668,56 @@ void ShipRuntime::updateEnvironment(float dt) {
             roomFire[door.rightRoom] = true;
         if (rightFire && roomOxygen[door.leftRoom] > 0)
             roomFire[door.leftRoom] = true;
+    }
+}
+
+void ShipRuntime::rebalanceZoltanPowerSources() {
+    if (!valid) return;
+
+    const auto isZoltan = [](const RuntimeCrew& member) {
+        if (!member.alive || member.room < 0) return false;
+        std::string race = member.race;
+        std::transform(race.begin(), race.end(), race.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        return race == "zoltan" || race == "energy";
+    };
+
+    // First remove allocations whose Zoltan source no longer exists in the room.
+    for (auto& system : systems) {
+        if (system.zoltanPower <= 0 || system.room < 0) continue;
+        int roomZoltans = 0;
+        for (const auto& member : crew)
+            if (isZoltan(member) && member.room == system.room) ++roomZoltans;
+
+        int usedElsewhere = 0;
+        for (const auto& other : systems) {
+            if (&other != &system && other.room == system.room)
+                usedElsewhere += std::max(0, other.zoltanPower);
+        }
+        const int allowed = std::max(0, roomZoltans - usedElsewhere);
+        if (system.zoltanPower > allowed) {
+            const int lost = system.zoltanPower - allowed;
+            system.zoltanPower = allowed;
+            system.power = std::max(0, system.power - lost);
+            system.batteryPower = std::min(system.batteryPower,
+                                           std::max(0, system.power - system.zoltanPower));
+            if (system.power == 0) system.powered = false;
+        }
+    }
+
+    // Newly available Zoltans supply already-powered eligible main systems.
+    for (auto& system : systems) {
+        if (!system.powered || system.power <= 0 || system.room < 0 ||
+            system.type == "pilot" || system.type == "engines" || system.type == "oxygen" ||
+            system.type == "doors" || system.type == "sensors" || system.type == "battery")
+            continue;
+        const int free = availableZoltanPowerForSystem(system);
+        if (free <= 0) continue;
+        const int add = std::min(free, system.maxPower - system.power);
+        if (add > 0) {
+            system.power += add;
+            system.zoltanPower += add;
+        }
     }
 }
 
