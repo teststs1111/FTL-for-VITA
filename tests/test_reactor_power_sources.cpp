@@ -8,6 +8,32 @@ int main() {
     ship.valid = true;
     ship.reactor = 10;
 
+    // Backup Battery I adds +2 temporary power without consuming reactor power.
+    RuntimeSystem battery;
+    battery.type = "battery";
+    battery.room = 0;
+    battery.level = 1;
+    battery.power = 1;
+    battery.maxPower = 2;
+    battery.powered = true;
+    ship.systems.push_back(battery);
+    assert(ship.usedReactorPower() == 2);
+    assert(ship.availableReactorPower() == 8);
+    assert(ship.activateBackupBattery());
+    assert(ship.backupBatteryPower() == 2);
+    assert(ship.backupBatteryRemaining() > 29.9f);
+    assert(ship.availableReactorPower() == 10);
+    ship.updateBackupBattery(30.0f);
+    assert(ship.backupBatteryPower() == 0);
+    assert(ship.backupBatteryCooldownRemaining() > 19.9f);
+    assert(ship.availableReactorPower() == 8);
+
+    // Level II supplies four temporary bars.
+    battery.level = 2;
+    battery.powered = true;
+    assert(ship.activateBackupBattery());
+    assert(ship.backupBatteryPower() == 4);
+
     RuntimeSystem weapons;
     weapons.type = "weapons";
     weapons.room = 1;
