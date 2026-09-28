@@ -438,6 +438,10 @@ int main() {
     {
         ShipRuntime combat;
         combat.valid = true;
+        combat.roomDamage.assign(52, 0);
+        combat.roomOxygen.assign(52, 100);
+        combat.roomFire.assign(52, false);
+        combat.roomBreach.assign(52, false);
         combat.missiles = 2;
 
         RuntimeSystem weaponsSystem;
