@@ -527,5 +527,71 @@ int main() {
         assert(evasion.hull == 2);
     }
 
+    // Defense Drones intercept individual eligible projectiles before evasion.
+    // Bombs bypass them, while Mark I cannot intercept lasers/ions.
+    {
+        ShipRuntime defense;
+        defense.valid = true;
+        defense.hull = 10;
+        defense.maxHull = 10;
+        RuntimeSystem weaponsSystem;
+        weaponsSystem.type = "weapons";
+        weaponsSystem.room = 70;
+        weaponsSystem.power = 1;
+        weaponsSystem.maxPower = 1;
+        weaponsSystem.powered = true;
+        defense.systems.push_back(weaponsSystem);
+
+        RuntimeWeapon missile;
+        missile.type = "missile";
+        missile.power = 1;
+        missile.damage = 2;
+        missile.cooldown = 1.0f;
+        missile.charge = 1.0f;
+        missile.ready = true;
+        defense.weapons.push_back(missile);
+        defense.weaponIonDisabled.assign(1, false);
+
+        RuntimeDrone dd1;
+        dd1.name = "Defense Drone Mark I";
+        dd1.powered = true;
+        dd1.active = true;
+        defense.drones.push_back(dd1);
+        assert(defense.interceptWeaponWithDefenseDrone(0));
+        assert(!defense.drones[0].active);
+
+        RuntimeWeapon bomb;
+        bomb.type = "bomb";
+        bomb.power = 1;
+        bomb.damage = 2;
+        bomb.cooldown = 1.0f;
+        bomb.charge = 1.0f;
+        bomb.ready = true;
+        defense.weapons.push_back(bomb);
+        defense.weaponIonDisabled.assign(2, false);
+        defense.drones[0].active = true;
+        assert(!defense.interceptWeaponWithDefenseDrone(1));
+
+        RuntimeWeapon laser;
+        laser.type = "laser";
+        laser.power = 1;
+        laser.damage = 1;
+        laser.cooldown = 1.0f;
+        laser.charge = 1.0f;
+        laser.ready = true;
+        defense.weapons.push_back(laser);
+        defense.weaponIonDisabled.assign(3, false);
+        defense.drones[0].active = true;
+        assert(!defense.interceptWeaponWithDefenseDrone(2));
+
+        RuntimeDrone dd2;
+        dd2.name = "Defense Drone Mark II";
+        dd2.powered = true;
+        dd2.active = true;
+        defense.drones.push_back(dd2);
+        assert(defense.interceptWeaponWithDefenseDrone(2));
+        assert(!defense.drones[1].active);
+    }
+
     return 0;
 }
