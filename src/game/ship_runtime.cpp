@@ -725,18 +725,21 @@ void ShipRuntime::rebalanceZoltanPowerSources() {
         const int add = std::min(free, system.maxPower - system.zoltanPower);
         if (add <= 0) continue;
 
-        int displaced = 0;
-        const int pushedBattery = std::min(add, system.batteryPower);
-        system.batteryPower -= pushedBattery;
-        displaced += pushedBattery;
-
-        if (displaced < add) {
+        // If the system is not full, the Zoltan adds a new power bar.
+        // If it is full, it replaces Battery bars first, then reactor bars.
+        const int newBars = std::min(add, std::max(0, system.maxPower - system.power));
+        int replacement = add - newBars;
+        if (replacement > 0) {
+            const int pushedBattery = std::min(replacement, system.batteryPower);
+            system.batteryPower -= pushedBattery;
+            replacement -= pushedBattery;
+        }
+        if (replacement > 0) {
             const int reactorBars = reactorFundedPowerForSystem(system);
-            displaced += std::min(add - displaced, reactorBars);
+            replacement -= std::min(replacement, reactorBars);
         }
 
-        // Zoltan replaces an existing source bar when the system is full;
-        // otherwise it adds a new bar.
+        system.power += newBars;
         system.zoltanPower += add;
 
         system.batteryPower = std::min(system.batteryPower,
