@@ -34,7 +34,9 @@ std::vector<std::string> loadArchiveSet(const char* basePath) {
 
 class ShipScene final : public GameState {
 public:
-    ShipScene(Graphics& graphics, Input& input, Localization& localization, const char* archivePath) : graphics_(graphics), input_(input), localization_(localization), archivePath_(archivePath ? archivePath : "") {
+    ShipScene(Graphics& graphics, Input& input, Localization& localization, const char* archivePath,
+              Difficulty difficulty = Difficulty::Normal)
+        : graphics_(graphics), input_(input), localization_(localization), archivePath_(archivePath ? archivePath : ""), difficulty_(difficulty) {
         // Initialize text first so archive failures can be diagnosed on-device.
         if (!text_.init()) {
             startupError_ = "Text renderer initialization failed";
@@ -107,6 +109,8 @@ public:
             sceneMode_ = shipChoices_.empty() ? SceneMode::SectorMap : SceneMode::ShipSelect;
         }
     }
+
+    void setDifficulty(Difficulty difficulty) { difficulty_ = difficulty; }
 
     bool reloadContentForAe(bool enabled) {
         if (archivePath_.empty()) return false;
@@ -1227,11 +1231,9 @@ public:
         const auto* beacon = sectorGraph_.node(currentBeacon_);
         const bool nebulaBeacon = beacon && beacon->nebula;
         const bool exitBeacon = currentBeacon_ == sectorGraph_.exitNode();
-        // Difficulty state is not yet represented in MainGame, so the current
-        // runtime path passes false; the selector keeps the Easy-mode
-        // exception explicit and unit-testable.
+        const bool easyMode = difficulty_ == Difficulty::Easy;
         pendingEnvironment_ = selectRebelFleetEnvironment(
-            nebulaBeacon, exitBeacon, false);
+            nebulaBeacon, exitBeacon, easyMode);
         rebelFleetEncounter_ = true;
         combatFeedback_ = "反乱軍艦隊と遭遇";
         combatFeedbackTimer_ = 1.5f;
@@ -3464,6 +3466,7 @@ public:
 private:
     std::string archivePath_;
     bool aeEnabled_{true};
+    Difficulty difficulty_{Difficulty::Normal};
 
     Graphics& graphics_;
     Input& input_;
@@ -3544,7 +3547,7 @@ MainGame::~MainGame() { shutdown(); }
 
 void MainGame::init(Graphics& graphics, Input& input, const char* archivePath) {
     if (initialized_) return;
-    state_ = std::make_unique<ShipScene>(graphics, input, localization_, archivePath);
+    state_ = std::make_unique<ShipScene>(graphics, input, localization_, archivePath, difficulty_);
     initialized_ = true;
 }
 
@@ -3563,6 +3566,12 @@ void MainGame::shutdown() {
 
 void MainGame::setState(std::unique_ptr<GameState> state) {
     state_ = std::move(state);
+}
+
+void MainGame::setDifficulty(Difficulty difficulty) {
+    difficulty_ = difficulty;
+    if (auto* scene = dynamic_cast<ShipScene*>(state_.get()))
+        scene->setDifficulty(difficulty);
 }
 
 }
