@@ -331,5 +331,52 @@ int main() {
         assert(!multiWeapon.weapons[1].ready);
     }
 
+
+    // Weapons consume system power cumulatively by slot order. A 3-power
+    // Weapons system can run two 1-power weapons, but not a later 2-power gun.
+    {
+        ShipRuntime weaponPower;
+        weaponPower.valid = true;
+        RuntimeSystem system;
+        system.type = "weapons";
+        system.room = 30;
+        system.power = 3;
+        system.maxPower = 4;
+        system.powered = true;
+        weaponPower.systems.push_back(system);
+
+        RuntimeWeapon first;
+        first.power = 1;
+        RuntimeWeapon second;
+        second.power = 1;
+        RuntimeWeapon heavy;
+        heavy.power = 2;
+        weaponPower.weapons = {first, second, heavy};
+        weaponPower.weaponIonDisabled.assign(3, false);
+
+        weaponPower.updateWeapons(1.0f);
+        assert(weaponPower.weapons[0].allocatedPower == 1);
+        assert(weaponPower.weapons[1].allocatedPower == 1);
+        assert(weaponPower.weapons[2].allocatedPower == 0);
+        assert(weaponPower.weapons[0].charge > 0.0f);
+        assert(weaponPower.weapons[1].charge > 0.0f);
+        assert(weaponPower.weapons[2].charge == 0.0f);
+
+        // Losing one Weapons-system power removes the rightmost allocated slot.
+        assert(weaponPower.damageSystemInRoom(30, 1) == 1);
+        assert(weaponPower.systems[0].power == 2);
+        assert(weaponPower.weapons[0].allocatedPower == 1);
+        assert(weaponPower.weapons[1].allocatedPower == 1);
+        assert(weaponPower.weapons[2].allocatedPower == 0);
+
+        // With only one power remaining, the second slot is the one that drops.
+        assert(weaponPower.damageSystemInRoom(30, 1) == 1);
+        assert(weaponPower.systems[0].power == 1);
+        assert(weaponPower.weapons[0].allocatedPower == 1);
+        assert(weaponPower.weapons[1].allocatedPower == 0);
+        assert(weaponPower.weapons[1].charge == 0.0f);
+        assert(weaponPower.weapons[2].allocatedPower == 0);
+    }
+
     return 0;
 }
