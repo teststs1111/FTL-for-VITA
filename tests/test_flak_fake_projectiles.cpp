@@ -7,6 +7,8 @@ int main() {
     CombatRuntime combat;
     combat.player.valid = true;
     combat.enemy.valid = true;
+    combat.enemy.hull = 100;
+    combat.enemy.maxHull = 100;
 
     RoomBlueprint room;
     room.id = 0;
