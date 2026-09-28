@@ -593,6 +593,7 @@ static void testShipRuntime() {
     defenseWeapon.allocatedPower = 1;
     combat.player.weapons[0] = defenseWeapon;
     combat.player.weaponIonDisabled = std::vector<bool>{false};
+    assert(combat.player.setSystemPowered(2, true));
     const int defenseHullBefore = combat.enemy.hull;
     const auto defenseFired = combat.fireWeapon(0);
     assert(defenseFired.fired);
