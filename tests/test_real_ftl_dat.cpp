@@ -139,7 +139,9 @@ int main() {
     assert(autoLists.size() == 40);
     const std::vector<std::string>* zoltanList = content.blueprints().findBlueprintList("SHIPS_ZOLTAN");
     assert(zoltanList != nullptr && !zoltanList->empty());
-    assert(content.blueprints().selectBlueprint("SHIPS_ZOLTAN", 0) != nullptr);
+    const auto* selectedZoltan = content.blueprints().selectBlueprint("SHIPS_ZOLTAN", 0);
+    assert(selectedZoltan != nullptr);
+    assert(content.blueprints().findShip(*selectedZoltan) != nullptr);
     assert(content.blueprints().findBlueprintList("WEAPONS_MISSILES") != nullptr);
 
     content.setAdvancedEdition(true);
