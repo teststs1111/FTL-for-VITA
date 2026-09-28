@@ -6,6 +6,13 @@
 
 namespace wormhole {
 
+CombatEnvironment selectRebelFleetEnvironment(bool nebulaBeacon, bool exitBeacon, bool easyMode) {
+    if (nebulaBeacon && !exitBeacon) return CombatEnvironment::PlasmaStorm;
+    if (nebulaBeacon && exitBeacon) return CombatEnvironment::None;
+    if (exitBeacon && easyMode) return CombatEnvironment::None;
+    return CombatEnvironment::PDSPlayer;
+}
+
 bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip) {
     player.reset();
     enemy.reset();
