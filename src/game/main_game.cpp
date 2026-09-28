@@ -1227,13 +1227,11 @@ public:
         const auto* beacon = sectorGraph_.node(currentBeacon_);
         const bool nebulaBeacon = beacon && beacon->nebula;
         const bool exitBeacon = currentBeacon_ == sectorGraph_.exitNode();
-        if (nebulaBeacon && !exitBeacon) {
-            pendingEnvironment_ = CombatEnvironment::PlasmaStorm;
-        } else if (nebulaBeacon && exitBeacon) {
-            pendingEnvironment_ = CombatEnvironment::None;
-        } else {
-            pendingEnvironment_ = CombatEnvironment::PDSPlayer;
-        }
+        // Difficulty state is not yet represented in MainGame, so the current
+        // runtime path passes false; the selector keeps the Easy-mode
+        // exception explicit and unit-testable.
+        pendingEnvironment_ = selectRebelFleetEnvironment(
+            nebulaBeacon, exitBeacon, false);
         rebelFleetEncounter_ = true;
         combatFeedback_ = "反乱軍艦隊と遭遇";
         combatFeedbackTimer_ = 1.5f;
