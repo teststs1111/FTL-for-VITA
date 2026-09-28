@@ -13,7 +13,6 @@ struct RuntimeSystem {
     int maxPower{0};
     int batteryPower{0};
     int zoltanPower{0};
-    int reactorSuppressedPower{0};
     int damage{0};
     int ionDamage{0};
     float ionTimer{0.0f};
