@@ -609,6 +609,10 @@ int ShipRuntime::usedReactorPower() const {
     return used;
 }
 
+void ShipRuntime::setReactorPowerCap(int cap) {
+    reactorPowerCap = cap < 0 ? -1 : std::min(cap, reactor);
+}
+
 int ShipRuntime::availableReactorPower() const {
     int used = 0;
     for (const auto& system : systems)
