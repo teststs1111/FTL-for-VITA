@@ -220,10 +220,18 @@ bool ShipRuntime::fireWeapon(int weaponIndex) {
     if (!weapon.ready) return false;
 
     int weaponSystemPower = 0;
+    bool weaponsSystemStunned = false;
     for (const auto& system : systems) {
-        if (system.type == "weapons" && system.powered && system.stunTimer <= 0.0f)
-            weaponSystemPower = std::max(weaponSystemPower, system.power);
+        if (system.type != "weapons" || !system.powered) continue;
+        if (system.stunTimer > 0.0f) {
+            weaponsSystemStunned = true;
+            continue;
+        }
+        weaponSystemPower = std::max(weaponSystemPower, system.power);
     }
+    if (weaponsSystemStunned || weaponSystemPower <= 0)
+        return false;
+
     // A weapon can only fire when its own slot is actually funded by the
     // shared Weapons-system allocation. Checking only total system power would
     // incorrectly allow a later weapon to fire while an earlier slot consumes
