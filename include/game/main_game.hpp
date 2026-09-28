@@ -4,6 +4,7 @@
 
 namespace wormhole { class Input; }
 namespace wormhole {
+enum class Difficulty { Easy, Normal, Hard };
 class GameState;
 class Graphics;
 class MainGame {
@@ -20,10 +21,12 @@ public:
     // catalog without coupling game logic to translated strings.
     const Localization& localization() const { return localization_; }
     void setLocale(Locale locale) { localization_.setLocale(locale); }
+    void setDifficulty(Difficulty difficulty);
 
 private:
     std::unique_ptr<GameState> state_;
     Localization localization_;
     bool initialized_{false};
+    Difficulty difficulty_{Difficulty::Normal};
 };
 }
