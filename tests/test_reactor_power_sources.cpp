@@ -257,5 +257,79 @@ int main() {
         assert(ionStack.ionizeSystemInRoom(3, 1) == 0);
     }
 
+
+    // Weapons have special Ion behavior: each Ion point shuts down one whole
+    // active weapon from right to left, rather than removing one generic bar.
+    // Zoltan-funded power remains available to the weapon.
+    {
+        ShipRuntime weaponIon;
+        weaponIon.valid = true;
+        weaponIon.reactor = 3;
+
+        RuntimeSystem weaponSystem;
+        weaponSystem.type = "weapons";
+        weaponSystem.room = 20;
+        weaponSystem.power = 4;
+        weaponSystem.maxPower = 4;
+        weaponSystem.powered = true;
+        weaponSystem.zoltanPower = 1;
+        weaponIon.systems.push_back(weaponSystem);
+
+        RuntimeWeapon glaive;
+        glaive.name = "Glaive Beam";
+        glaive.power = 4;
+        glaive.charge = 7.0f;
+        glaive.ready = true;
+        weaponIon.weapons.push_back(glaive);
+        weaponIon.weaponIonDisabled.assign(1, false);
+
+        assert(weaponIon.ionizeSystemInRoom(20, 1) == 1);
+        assert(weaponIon.systems[0].ionDamage == 1);
+        assert(weaponIon.systems[0].power == 1);
+        assert(weaponIon.systems[0].zoltanPower == 1);
+        assert(weaponIon.systems[0].ionRemovedPower == 3);
+        assert(weaponIon.weaponIonDisabled[0]);
+        assert(weaponIon.weapons[0].charge == 0.0f);
+        assert(!weaponIon.weapons[0].ready);
+        assert(!weaponIon.fireWeapon(0));
+
+        weaponIon.updateEnvironment(5.0f);
+        assert(weaponIon.systems[0].power == 4);
+        assert(weaponIon.systems[0].zoltanPower == 1);
+        assert(weaponIon.systems[0].ionDamage == 0);
+        assert(!weaponIon.weaponIonDisabled[0]);
+
+        // A 2-ion hit can take two 1-power weapons offline in one volley.
+        ShipRuntime multiWeapon;
+        multiWeapon.valid = true;
+        multiWeapon.reactor = 2;
+
+        RuntimeSystem multiSystem;
+        multiSystem.type = "weapons";
+        multiSystem.room = 21;
+        multiSystem.power = 2;
+        multiSystem.maxPower = 2;
+        multiSystem.powered = true;
+        multiWeapon.systems.push_back(multiSystem);
+
+        RuntimeWeapon first;
+        first.power = 1;
+        first.ready = true;
+        RuntimeWeapon second;
+        second.power = 1;
+        second.ready = true;
+        multiWeapon.weapons.push_back(first);
+        multiWeapon.weapons.push_back(second);
+        multiWeapon.weaponIonDisabled.assign(2, false);
+
+        assert(multiWeapon.ionizeSystemInRoom(21, 2) == 2);
+        assert(multiWeapon.systems[0].power == 0);
+        assert(multiWeapon.systems[0].ionRemovedPower == 2);
+        assert(multiWeapon.weaponIonDisabled[0]);
+        assert(multiWeapon.weaponIonDisabled[1]);
+        assert(!multiWeapon.weapons[0].ready);
+        assert(!multiWeapon.weapons[1].ready);
+    }
+
     return 0;
 }
