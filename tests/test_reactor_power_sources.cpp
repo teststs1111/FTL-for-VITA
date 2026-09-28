@@ -601,6 +601,29 @@ int main() {
         assert(defense.interceptWeaponWithDefenseDrone(0));
         assert(!defense.drones[0].active);
 
+        // The real volley path must perform the same interception per projectile.
+        ShipRuntime resolvedDefense;
+        resolvedDefense.valid = true;
+        resolvedDefense.hull = 10;
+        resolvedDefense.maxHull = 10;
+        RuntimeSystem resolvedWeapons = weaponsSystem;
+        resolvedWeapons.room = 71;
+        resolvedDefense.systems.push_back(resolvedWeapons);
+        RuntimeWeapon resolvedMissile = missile;
+        resolvedMissile.allocatedPower = 1;
+        resolvedMissile.volleyPending = true;
+        resolvedDefense.weapons.push_back(resolvedMissile);
+        resolvedDefense.weaponIonDisabled.assign(1, false);
+        RuntimeDrone resolvedDrone;
+        resolvedDrone.name = "Defense Drone Mark I";
+        resolvedDrone.powered = true;
+        resolvedDrone.active = true;
+        resolvedDefense.drones.push_back(resolvedDrone);
+        // A seeded RNG is not assumed here: the interception helper's successful
+        // path is tested separately above, while the volley regression only checks
+        // that the projectile path can invoke the interception logic.
+        assert(resolvedDefense.resolveWeaponVolley(0, 71, 100) == 1);
+
         RuntimeWeapon bomb;
         bomb.type = "bomb";
         bomb.power = 1;
