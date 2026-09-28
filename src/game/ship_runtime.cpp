@@ -225,6 +225,7 @@ bool ShipRuntime::fireWeapon(int weaponIndex) {
     missiles -= weapon.missilesUsed;
     weapon.charge = 0.0f;
     weapon.ready = false;
+    weapon.volleyPending = true;
     return true;
 }
 
@@ -234,7 +235,7 @@ int ShipRuntime::resolveWeaponVolley(int weaponIndex, int targetRoom) {
         targetRoom < 0) return 0;
 
     RuntimeWeapon& weapon = weapons[weaponIndex];
-    if (!weapon.ready || weapon.allocatedPower < weapon.power) return 0;
+    if (!weapon.volleyPending || weapon.allocatedPower < weapon.power) return 0;
     if (weaponIndex < static_cast<int>(weaponIonDisabled.size()) && weaponIonDisabled[weaponIndex])
         return 0;
 
@@ -320,8 +321,9 @@ int ShipRuntime::resolveWeaponVolley(int weaponIndex, int targetRoom) {
         ++resolved;
     }
 
-    // The charge was spent by fireWeapon(); this is the point at which the
-    // volley has actually resolved in the combat runtime.
+    // The charge was spent by fireWeapon(); this consumes the pending volley
+    // when its projectiles have resolved in the combat runtime.
+    weapon.volleyPending = false;
     return resolved;
 }
 
