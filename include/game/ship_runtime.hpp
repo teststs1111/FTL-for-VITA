@@ -124,6 +124,7 @@ struct ShipRuntime {
     bool setRoomBreach(int roomId, bool breached);
     void updateEnvironment(float dt);
     int zoltanPowerForSystem(const RuntimeSystem& system) const;
+    int availableZoltanPowerForSystem(const RuntimeSystem& system) const;
     int reactorFundedPowerForSystem(const RuntimeSystem& system) const;
     int usedReactorPower() const;
     int availableReactorPower() const;
