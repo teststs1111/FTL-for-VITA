@@ -19,7 +19,9 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
     database_.clear();
     out = {};
 
-    std::vector<std::string> sources{blueprintPath};
+    // autoBlueprints.xml is part of the canonical base ftl.dat and contains
+    // the generated/enemy ship definitions used by normal gameplay.
+    std::vector<std::string> sources{blueprintPath, "data/autoBlueprints.xml"};
     if (advancedEdition_) {
         sources.push_back("data/dlcBlueprints.xml");
         sources.push_back("data/dlcBlueprintsOverwrite.xml");
