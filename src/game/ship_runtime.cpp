@@ -108,6 +108,7 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         weapon.stunDuration = std::max(0, blueprint.stunDuration);
         weapons.push_back(std::move(weapon));
     }
+    weaponIonDisabled.assign(weapons.size(), false);
 
     crew.clear();
     for (const auto& blueprint : content.blueprint.crew) {
@@ -137,6 +138,8 @@ void ShipRuntime::updateWeapons(float dt, float cooldownMultiplier) {
 
     for (auto& weapon : weapons) {
         if (weapon.power > weaponSystemPower || weapon.ready) continue;
+        const int weaponIndex = static_cast<int>(&weapon - weapons.data());
+        if (weaponIndex >= 0 && weaponIndex < static_cast<int>(weaponIonDisabled.size()) && weaponIonDisabled[weaponIndex]) continue;
         weapon.charge = std::min(weapon.cooldown, weapon.charge + dt);
         if (weapon.charge >= weapon.cooldown) weapon.ready = true;
     }
@@ -183,6 +186,7 @@ bool ShipRuntime::damageShields(int amount) {
 bool ShipRuntime::fireWeapon(int weaponIndex) {
     if (!valid || weaponIndex < 0 || weaponIndex >= static_cast<int>(weapons.size())) return false;
     RuntimeWeapon& weapon = weapons[weaponIndex];
+    if (weaponIndex < static_cast<int>(weaponIonDisabled.size()) && weaponIonDisabled[weaponIndex]) return false;
     if (!weapon.ready) return false;
 
     int weaponSystemPower = 0;
@@ -253,6 +257,7 @@ void ShipRuntime::reset() {
     drones.clear();
     doorOpen.clear();
     weapons.clear();
+    weaponIonDisabled.clear();
     missiles = 0;
     shieldLayers = 0;
     maxShieldLayers = 0;
@@ -319,10 +324,43 @@ int ShipRuntime::ionizeSystemInRoom(int roomId, int amount) {
         system.ionTimer = std::min(25.0f, system.ionTimer + 5.0f * hit);
 
         // Ion damage can force out only normal power. Zoltan power is ion-proof.
-        // The removed bars are remembered so the system can attempt to reclaim
-        // its previous power allocation when the ion lock expires.
-        const int normalPower = std::max(0, system.power - system.zoltanPower);
-        const int removed = std::min(hit, normalPower);
+        // Weapons are special: each ion point shuts down one whole active weapon,
+        // starting from the rightmost slot. The weapon's normal (non-Zoltan)
+        // power is removed, while any Zoltan-funded portion remains available.
+        int removed = 0;
+        if (system.type == "weapons" && !weapons.empty()) {
+            int zoltanRemaining = std::max(0, system.zoltanPower);
+            int poweredBudget = std::max(0, system.power);
+            std::vector<int> zoltanForWeapon(weapons.size(), 0);
+            for (std::size_t i = 0; i < weapons.size(); ++i) {
+                const int allocated = std::min(weapons[i].power, poweredBudget);
+                const int zoltanAllocated = std::min(allocated, zoltanRemaining);
+                zoltanForWeapon[i] = zoltanAllocated;
+                zoltanRemaining -= zoltanAllocated;
+                poweredBudget -= allocated;
+                if (allocated < weapons[i].power) break;
+            }
+
+            for (int i = static_cast<int>(weapons.size()) - 1; i >= 0; --i) {
+                if (i < static_cast<int>(weaponIonDisabled.size()) && weaponIonDisabled[i]) continue;
+                const int allocated = std::min(weapons[i].power, std::max(0, system.power));
+                if (allocated < weapons[i].power) continue;
+                const int normalWeaponPower = std::max(0, weapons[i].power - zoltanForWeapon[i]);
+                if (normalWeaponPower <= 0) continue;
+                if (i < static_cast<int>(weaponIonDisabled.size())) {
+                    weaponIonDisabled[i] = true;
+                    weapons[i].charge = 0.0f;
+                    weapons[i].ready = false;
+                }
+                removed = std::min(normalWeaponPower,
+                    std::max(0, system.power - system.zoltanPower));
+                break;
+            }
+        } else {
+            const int normalPower = std::max(0, system.power - system.zoltanPower);
+            removed = std::min(hit, normalPower);
+        }
+
         if (removed > 0) {
             const int batteryRemoved = std::min(removed, system.batteryPower);
             system.batteryPower -= batteryRemoved;
@@ -629,6 +667,10 @@ void ShipRuntime::updateEnvironment(float dt) {
         system.ionDamage = 0;
         system.ionRemovedPower = 0;
         system.ionDisabled = false;
+        if (system.type == "weapons") {
+            for (int weaponIndex = 0; weaponIndex < static_cast<int>(weaponIonDisabled.size()); ++weaponIndex)
+                weaponIonDisabled[weaponIndex] = false;
+        }
 
         // The lost normal bars return to the reactor while ionized. When the
         // lock expires, FTL attempts to restore the system's previous power,
