@@ -114,13 +114,13 @@ int main() {
     RuntimeCrew z3 = z1;
     z3.room = 2;
     ship.crew.push_back(z3);
-    assert(ship.zoltanPowerForSystem(ship.systems[2]) == 1);
-    assert(ship.zoltanPowerForSystem(ship.systems[3]) == 0);
+    assert(ship.zoltanPowerForSystem(ship.systems[3]) == 1);
+    assert(ship.zoltanPowerForSystem(ship.systems[4]) == 0);
 
     RuntimeCrew z4 = z3;
     z4.room = 3;
     ship.crew.push_back(z4);
-    assert(ship.zoltanPowerForSystem(ship.systems[3]) == 1);
+    assert(ship.zoltanPowerForSystem(ship.systems[4]) == 1);
 
     return 0;
 }
