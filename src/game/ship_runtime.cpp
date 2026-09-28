@@ -35,6 +35,7 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         if (system.power == 0) system.power = system.level;
         system.maxPower = std::max(system.power, blueprint.maxPower);
         system.damage = 0;
+        system.batteryPower = 0;
         system.ionDamage = 0;
         system.ionTimer = 0.0f;
         system.ionDisabled = false;
@@ -512,13 +513,45 @@ bool ShipRuntime::setSystemPower(int systemIndex, int power) {
     const int delta = next - system.power;
     if (delta > 0) {
         const int zoltanFree = availableZoltanPowerForSystem(system);
-        const int available = availableReactorPower() + zoltanFree;
-        if (available < delta) return false;
+        const int zoltanAdded = std::min(delta, zoltanFree);
+        int remaining = delta - zoltanAdded;
+
+        const int capacity = reactorPowerCap >= 0
+            ? std::min(reactor, reactorPowerCap)
+            : reactor;
+        const int regularReactorFree = std::max(0, capacity - usedReactorPower());
+        const int reactorAdded = std::min(remaining, regularReactorFree);
+        remaining -= reactorAdded;
+
+        int allocatedBattery = 0;
+        if (remaining > 0) {
+            int usedBattery = 0;
+            for (const auto& other : systems)
+                usedBattery += std::max(0, other.batteryPower);
+            const int batteryFree = std::max(0, backupBatteryActivePower - usedBattery);
+            if (remaining > batteryFree) return false;
+            allocatedBattery = remaining;
+        }
+        system.batteryPower += allocatedBattery;
+    } else {
+        const int removed = -delta;
+        const int reactorFunded = reactorFundedPowerForSystem(system);
+        const int reactorRemoved = std::min(removed, reactorFunded);
+        const int batteryRemoved = removed - reactorRemoved;
+        if (batteryRemoved > 0)
+            system.batteryPower = std::max(0, system.batteryPower - batteryRemoved);
     }
 
     system.power = next;
-    if (system.power == 0) system.powered = false;
-    else system.powered = true;
+    const int zoltanPower = zoltanPowerForSystem(system);
+    system.batteryPower = std::min(system.batteryPower,
+                                   std::max(0, system.power - zoltanPower));
+    if (system.power == 0) {
+        system.powered = false;
+        system.batteryPower = 0;
+    } else {
+        system.powered = true;
+    }
     return true;
 }
 
@@ -667,7 +700,7 @@ int ShipRuntime::zoltanPowerForSystem(const RuntimeSystem& system) const {
 int ShipRuntime::reactorFundedPowerForSystem(const RuntimeSystem& system) const {
     if (!system.powered || system.power <= 0 || system.type == "battery")
         return 0;
-    return std::max(0, system.power - zoltanPowerForSystem(system));
+    return std::max(0, system.power - zoltanPowerForSystem(system) - system.batteryPower);
 }
 
 int ShipRuntime::usedReactorPower() const {
@@ -720,6 +753,13 @@ void ShipRuntime::updateBackupBattery(float dt) {
     if (backupBatteryTimer > 0.0f)
         return;
 
+    // Temporary battery-funded bars disappear when the work cycle ends.
+    for (auto& system : systems) {
+        if (system.batteryPower <= 0) continue;
+        system.power = std::max(0, system.power - system.batteryPower);
+        system.batteryPower = 0;
+        if (system.power == 0) system.powered = false;
+    }
     backupBatteryActivePower = 0;
     backupBatteryCooldownTimer = 20.0f;
 }
