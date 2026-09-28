@@ -443,8 +443,8 @@ int main() {
         RuntimeSystem weaponsSystem;
         weaponsSystem.type = "weapons";
         weaponsSystem.room = 50;
-        weaponsSystem.power = 2;
-        weaponsSystem.maxPower = 2;
+        weaponsSystem.power = 4;
+        weaponsSystem.maxPower = 4;
         weaponsSystem.powered = true;
         combat.systems.push_back(weaponsSystem);
 
