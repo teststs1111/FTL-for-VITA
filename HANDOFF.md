@@ -363,3 +363,13 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Added regression coverage for 2 -> 4 -> 5 ion points and 10 -> 20 -> 25 second lock progression.
 - Vanilla references confirm Ion damage stacks and the timer is capped at 25 seconds. citeturn0search0turn0search5
 - Latest implementation commits: `d0f6b4a` (runtime) and the following regression-test commit. CI is not claimed green until a workflow result is exposed.
+
+
+## Weapon-specific Ion fidelity correction — 2026-09-28
+- Vanilla Weapons behavior was cross-checked: Ion damage disables whole active weapons from the rightmost slot, rather than simply removing one generic power bar per ion point. A single Ion can therefore take a 4-power weapon offline; additional Ion points can disable additional weapons. citeturn1search0turn1search1
+- Added per-weapon `weaponIonDisabled` runtime state.
+- Weapon Ion shutdown now selects active weapons right-to-left, clears their charge/ready state, and removes the weapon's normal (reactor/Battery) power while preserving any Zoltan-funded portion.
+- When the shared Ion lock expires, weapon Ion-disabled flags are cleared and the removed normal system power can be restored subject to current reactor/Battery capacity.
+- Added regression coverage for a 4-power Glaive with one Zoltan and for a 2-ion hit disabling two 1-power weapons.
+- This remains bounded to the current runtime's weapon model: explicit manual weapon slot reordering/power allocation is not yet exposed by the runtime API, so the right-to-left selection uses the loaded weapon order.
+- Latest implementation commits: `3989b9e` (runtime/header) and `a78750f` (regression tests). CI status for the newest commit must be checked before declaring it green.
