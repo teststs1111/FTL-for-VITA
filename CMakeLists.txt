@@ -67,11 +67,11 @@ if(VITA)
         SceTouch_stub
         ScePvf_stub
     )
-    # Vita ELF conversion needs compact PT_LOAD spacing. Newer binutils
-    # use a larger maximum page size, leaving no room for injected metadata.
+    # vita-elf-create appends SCE module metadata to PT_LOAD segment 0.
+    # Keep a full page-aligned gap before the next load segment so metadata can
+    # be inserted without overlapping segment 1 on newer VitaSDK/binutils.
     target_link_options(vita_wormhole_prototype PRIVATE
-        -Wl,-z,noseparate-code
-        -Wl,-z,max-page-size=0x1000
+        -Wl,-z,max-page-size=0x10000
         -Wl,-z,common-page-size=0x1000
     )
     # vita-elf-create appends SCE module metadata to PT_LOAD segment 0.
