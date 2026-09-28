@@ -34,7 +34,7 @@ std::size_t BlueprintDatabase::loadShipBlueprints(const std::vector<std::string>
         try { root = bxml::read(*data); } catch (...) { continue; }
         std::function<void(const bxml::Node&)> visit = [&](const bxml::Node& node) {
             if (node.name == "blueprintList") {
-                const it = node.attributes.find("name");
+                const auto it = node.attributes.find("name");
                 if (it != node.attributes.end() && !it->second.empty()) {
                     auto& list = blueprintLists_[it->second];
                     list.clear();
