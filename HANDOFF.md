@@ -409,3 +409,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Research basis: vanilla weapon/shield mechanics from FTL mechanics references; missiles/bombs bypass regular shields, beams reduce damage per shield layer, and ion weapons apply ion damage to shields when blocked. citeturn0search1turn0search3turn0search4
 - Commits: `a90c65a`, `caed6c9`, `e87befa`, `c79cc88`, `c4a5309`.
 - Current limitation: projectile travel, evasion/miss rolls, Defense Drone interception, flak spread, beam path geometry, and per-tile beam effects are not yet represented. Do not treat this foundation as full combat fidelity.
+
+
+## Weapon hit/evasion correction — 2026-09-28
+- Extended weapon volley resolution with a target-evasion parameter and a per-projectile hit/miss roll.
+- Projectile-style weapons now roll independently against target evasion; a miss consumes that projectile's resolution without applying damage/effects.
+- Beam weapons bypass the normal projectile miss roll because beams are resolved as guaranteed-contact attacks in the current combat model.
+- Added deterministic regression boundaries: 100% evasion must miss, 0% evasion must hit.
+- The runtime still does not derive target evasion from pilot/engines/cloaking state, and Defense Drone interception is not yet implemented. These remain the next combat-fidelity steps.
+- Commits: `6475b6b` (API), `fd45125` (runtime), with regression coverage added alongside this checkpoint.
