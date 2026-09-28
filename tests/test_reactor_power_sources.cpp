@@ -63,5 +63,33 @@ int main() {
     ship.systems[0].powered = false;
     assert(ship.setSystemPowered(0, true));
 
+    // Drone Control and Artillery are main systems, not subsystems:
+    // Zoltan power can supply them as well.
+    RuntimeSystem drones;
+    drones.type = "drones";
+    drones.room = 2;
+    drones.power = 1;
+    drones.maxPower = 2;
+    drones.powered = true;
+    ship.systems.push_back(drones);
+
+    RuntimeSystem artillery;
+    artillery.type = "artillery";
+    artillery.room = 2;
+    artillery.power = 1;
+    artillery.maxPower = 4;
+    artillery.powered = true;
+    ship.systems.push_back(artillery);
+
+    RuntimeCrew z3 = z1;
+    z3.room = 2;
+    ship.crew.push_back(z3);
+    assert(ship.zoltanPowerForSystem(ship.systems[2]) == 1);
+    assert(ship.zoltanPowerForSystem(ship.systems[3]) == 0);
+
+    RuntimeCrew z4 = z3;
+    ship.crew.push_back(z4);
+    assert(ship.zoltanPowerForSystem(ship.systems[3]) == 1);
+
     return 0;
 }
