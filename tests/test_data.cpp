@@ -16,6 +16,8 @@
 #include <string>
 #include <vector>
 
+using namespace wormhole;
+
 static std::vector<std::uint8_t> makeArchive(const std::vector<std::pair<std::string, std::string>>& files) {
     const std::size_t count = files.size();
     std::size_t names = 0, payloads = 0;
