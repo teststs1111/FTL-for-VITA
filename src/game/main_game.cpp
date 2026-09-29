@@ -88,7 +88,7 @@ public:
                     if (entry.first != player->blueprint.id) { enemyId = entry.first; break; }
                 }
             }
-            if (enemyId.empty() || !content_.loadEnemyShip(enemyId, enemy, sector_ + 1, static_cast<int>(difficulty_), seed_ + static_cast<unsigned>(std::max(0, currentBeacon_)) + static_cast<unsigned>(visitedBeacons_) * 131u)) {
+            if (enemyId.empty() || !content_.loadEnemyShip(enemyId, enemy, sector_ + 1, static_cast<int>(difficulty_), seed_ + static_cast<unsigned>(std::max(0, currentBeacon_)) + static_cast<unsigned>(visitedBeacons_) * 131u), currentSectorType_)) {
                 startupError_ = "Enemy ship blueprint could not be loaded";
                 return;
             }
@@ -1129,7 +1129,8 @@ public:
         }
     }
 
-    void enterCombatFromBeacon(const std::string& enemyShipId = {}) {
+    void enterCombatFromBeacon(const std::string& enemyShipId = {},
+                               const std::vector<CrewOverrideEntry>* crewOverride = nullptr) {
         // Start every encounter from a clean CombatRuntime state. This resets
         // the previous outcome, projectile queue, boarding timers and enemy
         // fire timers while preserving the persistent player ship below.
@@ -1156,7 +1157,8 @@ public:
         }
         if (!resolvedEnemyId.empty()) {
             const unsigned loadoutSeed = static_cast<unsigned>(rollEventRange(0, 0x7fffffff, 0xAB710002u));
-        if (!content_.loadEnemyShip(resolvedEnemyId, enemyShip, sector_ + 1, static_cast<int>(difficulty_), loadoutSeed, "data/blueprints.xml") || enemyShip.blueprint.id.empty()) {
+        if (!content_.loadEnemyShip(resolvedEnemyId, enemyShip, sector_ + 1, static_cast<int>(difficulty_), loadoutSeed,
+                                            "data/blueprints.xml", currentSectorType_, crewOverride) || enemyShip.blueprint.id.empty()) {
                 combatFeedback_ = "敵艦の読み込みに失敗";
                 combatFeedbackTimer_ = 2.0f;
                 return;
@@ -1922,7 +1924,7 @@ public:
                 return;
             }
             if (event->hostile) {
-                enterCombatFromBeacon(event->hostileShipId);
+                enterCombatFromBeacon(event->hostileShipId, &event->crewOverride);
                 return;
             }
             if (event->repair) {
@@ -1995,7 +1997,7 @@ public:
         if (!choice.load.empty()) {
             const auto* next = eventDatabase_.resolve(choice.load, seed_ + static_cast<unsigned>(activeEventChoice_) * 71u + static_cast<unsigned>(visitedBeacons_));
             if (next && next->hostile) {
-                enterCombatFromBeacon(next->hostileShipId);
+                enterCombatFromBeacon(next->hostileShipId, &next->crewOverride);
                 return;
             }
             if (next) {
@@ -2007,7 +2009,7 @@ public:
             }
         }
         if (choice.hostile) {
-            enterCombatFromBeacon(choice.hostileShipId);
+            enterCombatFromBeacon(choice.hostileShipId, &choice.crewOverride);
             return;
         }
         ++visitedBeacons_;
