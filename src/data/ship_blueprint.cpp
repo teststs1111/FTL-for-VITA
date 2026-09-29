@@ -84,19 +84,22 @@ void collectCrew(const bxml::Node& node, std::vector<CrewBlueprint>& crew) {
         if (member.race.empty()) member.race = attribute(node, "race");
         member.name = attribute(node, "name");
         member.room = integer(node, "room", -1);
+        member.minCount = member.maxCount = 1;
         crew.push_back(std::move(member));
     } else if (node.name == "crewCount") {
         const int amount = std::max(0, integer(node, "amount", 0));
+        const int maximum = std::max(amount, integer(node, "max", amount));
         const std::string race = attribute(node, "class").empty() ? "human" : attribute(node, "class");
-        for (int i = 0; i < amount; ++i) {
-            CrewBlueprint member;
-            member.race = race;
-            member.name = race + "_" + std::to_string(i + 1);
-            member.room = -1;
-            crew.push_back(std::move(member));
-        }
+        CrewBlueprint member;
+        member.race = race;
+        member.name = race;
+        member.room = -1;
+        member.minCount = amount;
+        member.maxCount = maximum;
+        crew.push_back(std::move(member));
     }
     for (const auto& c : node.children) collectCrew(c, crew);
+}
 }
 
 }
@@ -123,6 +126,10 @@ bool parseShipBlueprint(const bxml::Node& node, ShipBlueprint& out) {
     if (const auto* health = child(node, "health")) out.maxHealth = integer(*health, "amount", 0);
     if (const auto* power = child(node, "maxPower")) out.startingReactorPower = integer(*power, "amount", 0);
     collectCrew(node, out.crew);
+    for (const auto& member : out.crew) {
+        out.minCrew += member.minCount;
+        out.maxCrew += member.maxCount;
+    }
 
     if (const auto* weapons = child(node, "weaponList")) {
         out.startingMissiles = integer(*weapons, "missiles", 0);
