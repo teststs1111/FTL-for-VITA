@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <functional>
+#include <set>
 #include <string>
 
 
@@ -303,6 +304,8 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
                     if (!weapon || weapon->power <= 0 || weapon->power > remaining) continue;
                     if (weapon->power != 1 && weapon->power >= systemPower("weapons")) continue;
                     if (weapon->power * 4 <= remaining) continue;
+                    if (out.blueprint.initialWeapons.empty() && systemPower("weapons") >= 3 &&
+                        weapon->power < 2) continue;
                     candidates.push_back(id);
                 }
                 if (candidates.empty()) break;
@@ -323,9 +326,11 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
             const int slots = out.blueprint.droneListCount >= 0
                 ? out.blueprint.droneListCount
                 : (out.blueprint.droneSlots > 0 ? out.blueprint.droneSlots : 2);
+            std::set<std::string> usedDrones;
             for (int slot = 0; slot < slots && remaining > 0; ++slot) {
                 std::vector<std::string> candidates;
                 for (const auto& id : *list) {
+                    if (usedDrones.count(id)) continue;
                     const auto* drone = database_.findDrone(id);
                     if (!drone || drone->power <= 0 || drone->power > remaining) continue;
                     if (totalPower >= 4 && drone->power >= totalPower) continue;
@@ -333,6 +338,7 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
                 }
                 if (candidates.empty()) break;
                 const auto& selected = candidates[enemyNextRandom(rng) % candidates.size()];
+                usedDrones.insert(selected);
                 out.blueprint.initialDrones.push_back(selected);
                 remaining -= database_.findDrone(selected)->power;
             }
