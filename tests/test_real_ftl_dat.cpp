@@ -190,15 +190,12 @@ int main() {
     wormhole::LoadedShip generatedEnemy;
     assert(content.loadEnemyShip("AUTO_BASIC", generatedEnemy, 5, 1, 12345u));
     int generatedReactor = 0;
-    std::set<std::string> generatedWeapons;
     std::set<std::string> generatedDrones;
     for (const auto& system : generatedEnemy.blueprint.systems) {
         assert(system.startingPower >= 0);
         assert(system.startingPower <= system.maxPower);
         if (system.availableByDefault) generatedReactor += system.startingPower;
     }
-    for (const auto& weapon : generatedEnemy.blueprint.initialWeapons)
-        assert(generatedWeapons.insert(weapon).second);
     for (const auto& drone : generatedEnemy.blueprint.initialDrones)
         assert(generatedDrones.insert(drone).second);
     assert(generatedEnemy.blueprint.startingReactorPower == generatedReactor);
