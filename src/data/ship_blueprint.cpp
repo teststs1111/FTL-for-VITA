@@ -100,9 +100,6 @@ void collectCrew(const bxml::Node& node, std::vector<CrewBlueprint>& crew) {
     }
     for (const auto& c : node.children) collectCrew(c, crew);
 }
-}
-
-}
 
 bool parseShipBlueprint(const bxml::Node& node, ShipBlueprint& out) {
     if (node.name != "shipBlueprint" && node.name != "ship") return false;
@@ -169,7 +166,7 @@ bool parseShipBlueprint(const bxml::Node& node, ShipBlueprint& out) {
 
 }
 
-bool wormhole::parseLayoutBlueprint(const std::string& text, wormhole::LayoutBlueprint& out) {
+bool parseLayoutBlueprint(const std::string& text, LayoutBlueprint& out) {
     out = {};
     std::istringstream in(text);
     std::string line;
