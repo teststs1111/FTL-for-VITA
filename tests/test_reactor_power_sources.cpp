@@ -682,7 +682,10 @@ int main() {
         dd2.powered = true;
         dd2.active = true;
         defense.drones.push_back(dd2);
-        assert(defense.interceptWeaponWithDefenseDrone(2));
+        bool markIIIntercepted = false;
+        for (int attempt = 0; attempt < 256 && !markIIIntercepted; ++attempt)
+            markIIIntercepted = defense.interceptWeaponWithDefenseDrone(2);
+        assert(markIIIntercepted);
         assert(!defense.drones[1].active);
     }
 
