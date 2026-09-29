@@ -2515,9 +2515,20 @@ public:
                           currentSectorType_ == "SLUG_SECTOR" ||
                           currentSectorType_ == "SLUG_HOME") ? 0.8f : 0.5f;
 
-        const float jumpAdvance = static_cast<float>(std::max(0, 1 + fleetPursuitDelay_)) *
+        // modifyPursuit changes the pursuit counter itself. A negative
+        // modifier therefore suppresses advancement for that many subsequent
+        // jumps, while a positive modifier adds that many extra advancement
+        // units and then decays back toward the normal rate. This is why the
+        // canonical mercenary -2 effect lasts two jumps rather than only one.
+        const int pursuitModifier = fleetPursuitDelay_;
+        const int advanceUnits = std::max(0, 1 + pursuitModifier);
+        if (pursuitModifier > 0)
+            --fleetPursuitDelay_;
+        else if (pursuitModifier < 0)
+            ++fleetPursuitDelay_;
+
+        const float jumpAdvance = static_cast<float>(advanceUnits) *
             64.0f * multiplier;
-        fleetPursuitDelay_ = 0;
         fleetPursuitPosition_ += jumpAdvance;
         sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
 
