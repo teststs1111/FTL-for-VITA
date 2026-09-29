@@ -556,3 +556,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Host run `36518783932` and Vita run `36518783893` both completed successfully on `14058de`.
 - Important fidelity correction: the current enemy loadout generator's "no-repeat" selection behavior is an implementation assumption, not yet a sufficiently authoritative vanilla-engine finding. The canonical sources confirm that enemy ships randomly select from their referenced autoBlueprint lists and that duplicate list entries provide weighting, but the exact repeat/duplicate handling and RNG stream still need direct verification before treating the current algorithm as final.
 - Do not implement generic sector/difficulty weapon-power budgeting yet. The canonical enemy ship blueprints already define their own starting/max system powers; the remaining task is to reproduce the game's actual loadout-selection/RNG semantics around those values.
+
+
+## Enemy loadout duplicate-selection correction — 2026-09-29
+- Public FTL modding/gameplay references establish that enemy weapon lists are randomized loadout pools and that repeated weapons can occur in actual enemy encounters; one documented example explicitly notes seeing multiple Burst Laser II weapons. This contradicts the previous no-repeat implementation assumption. citeturn2search0turn1search6
+- Commit `30443acf65c887c98af0262ce377920eaa29764a` removes the no-repeat filter for generated enemy weapons and drones. Each slot now samples from the remaining-power-compatible canonical list, so the same blueprint may be selected more than once.
+- The canonical list entries themselves remain preserved, including duplicate entries as weighting. The runtime still constrains each selection to the remaining system power and declared load count.
+- The exact vanilla RNG stream and any deeper retry/selection details remain unresolved; do not claim byte-for-byte RNG equivalence yet.
+- This correction supersedes the earlier HANDOFF wording that described no-repeat selection as the current vanilla behavior.
