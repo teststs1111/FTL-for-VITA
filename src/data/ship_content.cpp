@@ -298,7 +298,7 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
             generated.push_back({race, 1.0});
         }
 
-        auto randomRace = [&](std::uint32_t& state) {
+        auto randomRace = [&](std::uint32_t& state) -> std::string {
             std::string type = sectorType;
             std::transform(type.begin(), type.end(), type.begin(),
                 [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
