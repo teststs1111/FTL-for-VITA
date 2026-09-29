@@ -1187,6 +1187,23 @@ public:
             return;
         }
 
+        // Out-of-fuel hostile events use the canonical 80-second escape
+        // countdown. Rebel/Auto warning events are the special 40-second
+        // fleet-warning encounters and start their escape timer immediately.
+        // Ordinary hostile encounters after spending the last fuel retain the
+        // separate 90-second post-jump timer.
+        if (eventDatabase_.find(activeEventId_)) {
+            std::string eventId = activeEventId_;
+            std::transform(eventId.begin(), eventId.end(), eventId.begin(),
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            const bool noFuelEvent = eventId.rfind("fuel_", 0) == 0;
+            const bool warningEvent = eventId.find("warning") != std::string::npos;
+            if (noFuelEvent && warningEvent)
+                combat_.setEnemyEscapeTimer(40.0f);
+            else if (noFuelEvent)
+                combat_.setEnemyEscapeTimer(80.0f);
+        }
+
         // Combat owns a working copy while the player is in the combat scene.
         // The persistent ship remains the source of truth between encounters.
         combat_.player = runtime_;
