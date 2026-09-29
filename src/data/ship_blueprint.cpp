@@ -206,3 +206,5 @@ bool parseLayoutBlueprint(const std::string& text, LayoutBlueprint& out) {
         throw std::runtime_error("layout missing ELLIPSE");
     return true;
 }
+
+}
