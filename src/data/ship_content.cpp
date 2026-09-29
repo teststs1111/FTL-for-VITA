@@ -93,7 +93,7 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
     if (!out.blueprint.droneLoadList.empty() && out.blueprint.initialDrones.empty()) {
         if (const auto* list = database_.findBlueprintList(out.blueprint.droneLoadList)) {
             int remaining = systemPower("drones");
-            const int slots = out.blueprint.droneSlots > 0 ? out.blueprint.droneSlots : 2;
+            const int slots = out.blueprint.droneListCount >= 0\n                ? out.blueprint.droneListCount\n                : (out.blueprint.droneSlots > 0 ? out.blueprint.droneSlots : 2);
             // Drone loadouts follow the same no-repeat selection rule.
             std::vector<std::string> selectedDrones;
             for (int slot = 0; slot < slots && remaining > 0; ++slot) {
