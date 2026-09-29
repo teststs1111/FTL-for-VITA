@@ -1,5 +1,6 @@
 #include "data/ship_content.hpp"
 #include <algorithm>
+#include <cctype>
 #include <cstdint>
 #include <functional>
 #include <set>
@@ -271,7 +272,9 @@ int generateEnemyCrewCount(const ShipBlueprint& ship, int sector, int difficulty
 
 bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int sector,
                                  int difficulty, unsigned randomSeed,
-                                 const std::string& blueprintPath) {
+                                 const std::string& blueprintPath,
+                                 const std::string& sectorType,
+                                 const std::vector<CrewOverrideEntry>* crewOverride) {
     if (!loadShip(shipId, out, blueprintPath, randomSeed))
         return false;
 
@@ -282,14 +285,98 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
 
     if (out.blueprint.maxCrew > 0) {
         const int count = generateEnemyCrewCount(out.blueprint, sector, difficulty);
-        const std::string race = out.blueprint.crew.empty() ? "human" : out.blueprint.crew.front().race;
+
+        // Vanilla first applies an event-level crew override. Without one,
+        // the first blueprint race owns the generated crew count. Pirate
+        // blueprints use class="random", which samples the sector's crew
+        // rarity table instead of treating "random" as a literal race.
+        std::vector<CrewOverrideEntry> generated;
+        if (crewOverride && !crewOverride->empty()) {
+            generated = *crewOverride;
+        } else {
+            const std::string race = out.blueprint.crew.empty() ? "human" : out.blueprint.crew.front().race;
+            generated.push_back({race, 1.0});
+        }
+
+        auto randomRace = [&](std::uint32_t& state) {
+            std::string type = sectorType;
+            std::transform(type.begin(), type.end(), type.begin(),
+                [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+
+            struct RaceWeight { const char* race; int rarity; };
+            static constexpr RaceWeight civilian[] = {
+                {"human",1},{"engi",2},{"mantis",2},{"rock",3},{"zoltan",5}
+            };
+            static constexpr RaceWeight engi[] = {
+                {"engi",1},{"human",3},{"zoltan",4}
+            };
+            static constexpr RaceWeight zoltan[] = {
+                {"zoltan",1},{"human",2},{"engi",3},{"mantis",3},{"rock",3},{"slug",3}
+            };
+            static constexpr RaceWeight mantis[] = {
+                {"mantis",1},{"human",2},{"engi",3},{"rock",4}
+            };
+            static constexpr RaceWeight rock[] = {
+                {"rock",1},{"human",2},{"engi",2},{"zoltan",3},{"slug",3}
+            };
+            static constexpr RaceWeight abandoned[] = {
+                {"lanius",2},{"human",2},{"engi",3},{"mantis",3},{"rock",3},{"zoltan",4},{"slug",4}
+            };
+            static constexpr RaceWeight slugNebula[] = {
+                {"slug",2},{"human",2},{"zoltan",4},{"rock",4},{"engi",4},{"mantis",4}
+            };
+            static constexpr RaceWeight uncharted[] = {
+                {"human",1},{"slug",3},{"zoltan",4},{"rock",4},{"engi",4},{"mantis",4}
+            };
+            static constexpr RaceWeight crystal[] = {{"crystal",1}};
+            static constexpr RaceWeight lastStand[] = {
+                {"human",1},{"engi",2},{"mantis",2},{"rock",3},{"zoltan",5}
+            };
+
+            const RaceWeight* table = civilian;
+            std::size_t size = std::size(civilian);
+            if (type.find("ENGI") != std::string::npos) { table = engi; size = std::size(engi); }
+            else if (type.find("ZOLTAN") != std::string::npos) { table = zoltan; size = std::size(zoltan); }
+            else if (type.find("MANTIS") != std::string::npos) { table = mantis; size = std::size(mantis); }
+            else if (type.find("ROCK") != std::string::npos) { table = rock; size = std::size(rock); }
+            else if (type.find("ABANDONED") != std::string::npos || type.find("LANIUS") != std::string::npos) { table = abandoned; size = std::size(abandoned); }
+            else if (type.find("SLUG") != std::string::npos) { table = slugNebula; size = std::size(slugNebula); }
+            else if (type.find("NEBULA") != std::string::npos || type.find("DEEP_SPACE") != std::string::npos) { table = uncharted; size = std::size(uncharted); }
+            else if (type.find("CRYSTAL") != std::string::npos) { table = crystal; size = std::size(crystal); }
+            else if (type.find("FINAL") != std::string::npos) { table = lastStand; size = std::size(lastStand); }
+
+            int totalWeight = 0;
+            for (std::size_t i = 0; i < size; ++i)
+                totalWeight += std::max(1, 6 - table[i].rarity);
+            if (totalWeight <= 0) return std::string("human");
+            int roll = static_cast<int>(enemyRandom(state) % static_cast<std::uint32_t>(totalWeight));
+            for (std::size_t i = 0; i < size; ++i) {
+                roll -= std::max(1, 6 - table[i].rarity);
+                if (roll < 0) return table[i].race;
+            }
+            return table[size - 1].race;
+        };
+
         out.blueprint.crew.clear();
-        for (int i = 0; i < count; ++i) {
-            CrewBlueprint member;
-            member.race = race;
-            member.name = race + "_" + std::to_string(i + 1);
-            member.room = -1;
-            out.blueprint.crew.push_back(std::move(member));
+        int generatedIndex = 0;
+        for (const auto& overrideEntry : generated) {
+            if (overrideEntry.race.empty()) continue;
+            int amount = 0;
+            if (overrideEntry.proportion > 0.0) {
+                amount = std::max(1, static_cast<int>(overrideEntry.proportion * count));
+            } else {
+                amount = std::max(0, static_cast<int>(-overrideEntry.proportion));
+            }
+            for (int i = 0; i < amount; ++i) {
+                std::string race = overrideEntry.race;
+                if (race == "random")
+                    race = randomRace(rng);
+                CrewBlueprint member;
+                member.race = race;
+                member.name = race + "_" + std::to_string(++generatedIndex);
+                member.room = -1;
+                out.blueprint.crew.push_back(std::move(member));
+            }
         }
     }
 
