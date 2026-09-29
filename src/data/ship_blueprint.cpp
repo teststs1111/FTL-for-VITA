@@ -119,17 +119,27 @@ bool parseShipBlueprint(const bxml::Node& node, ShipBlueprint& out) {
         out.startingMissiles = integer(*weapons, "missiles", 0);
         out.weaponListCount = integer(*weapons, "count", -1);
         out.weaponLoadList = attribute(*weapons, "load");
+        int loadedWeaponEntries = 0;
         for (const auto& entry : weapons->children) {
+            if (out.weaponListCount >= 0 && loadedWeaponEntries >= out.weaponListCount) break;
             const std::string name = attribute(entry, "name");
-            if (!name.empty()) out.initialWeapons.push_back(name);
+            if (!name.empty()) {
+                out.initialWeapons.push_back(name);
+                ++loadedWeaponEntries;
+            }
         }
     }
     if (const auto* drones = child(node, "droneList")) {
         out.droneListCount = integer(*drones, "count", -1);
         out.droneLoadList = attribute(*drones, "load");
+        int loadedDroneEntries = 0;
         for (const auto& entry : drones->children) {
+            if (out.droneListCount >= 0 && loadedDroneEntries >= out.droneListCount) break;
             const std::string name = attribute(entry, "name");
-            if (!name.empty()) out.initialDrones.push_back(name);
+            if (!name.empty()) {
+                out.initialDrones.push_back(name);
+                ++loadedDroneEntries;
+            }
         }
     }
     if (const auto* weaponSlots = child(node, "weaponSlots"))
