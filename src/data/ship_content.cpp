@@ -203,6 +203,8 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
             // Each generated slot samples the canonical pool independently.
             // Duplicate blueprint selections are valid; duplicate entries in
             // autoBlueprints.xml remain intentional additional weight.
+            bool needsShieldBreaker = true;
+            bool needsHullDamage = true;
             for (int slot = 0; slot < slots && remaining > 0; ++slot) {
                 std::vector<std::string> candidates;
                 for (const auto& id : *list) {
@@ -241,6 +243,180 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
                 const auto& selected = candidates[nextRandom() % candidates.size()];
                 out.blueprint.initialDrones.push_back(selected);
                 remaining -= database_.findDrone(selected)->power;
+            }
+        }
+    }
+    for (const auto& droneId : out.blueprint.initialDrones) {
+        const auto* drone = database_.findDrone(droneId);
+        if (drone) {
+            DroneBlueprint resolved = *drone;
+            if (!resolved.weaponBlueprint.empty()) {
+                if (const auto* weapon = database_.findWeapon(resolved.weaponBlueprint)) {
+                    resolved.weaponCooldown = weapon->cooldown;
+                    resolved.weaponShots = weapon->shots;
+                    resolved.weaponDamage = weapon->damage;
+                    resolved.weaponSystemDamage = weapon->systemDamage;
+                    resolved.weaponIonDamage = weapon->ionDamage;
+                    resolved.weaponShieldPiercing = weapon->shieldPiercing;
+                    resolved.weaponPersonnelDamage = weapon->personnelDamage;
+                }
+            }
+            out.initialDroneBlueprints.push_back(std::move(resolved));
+        }
+    }
+    return true;
+}
+
+bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int sector,
+                              int difficulty, unsigned randomSeed,
+                              const std::string& blueprintPath) {
+    if (!loadShip(shipId, out, blueprintPath, randomSeed))
+        return false;
+
+    std::uint32_t rng = static_cast<std::uint32_t>(randomSeed);
+    if (rng == 0)
+        rng = static_cast<std::uint32_t>(std::hash<std::string>{}(shipId));
+    generateEnemySystems(out.blueprint, sector, difficulty, rng);
+
+    // The system generator runs before enemy loadout generation in FTL.
+    // Rebuild generated weapons/drones from the now-final system power.
+    out.blueprint.initialWeapons.clear();
+    out.blueprint.initialDrones.clear();
+    out.initialWeaponBlueprints.clear();
+    out.initialDroneBlueprints.clear();
+
+    auto systemPower = [&](const char* name) {
+        for (const auto& system : out.blueprint.systems)
+            if (system.system == name && system.availableByDefault)
+                return std::max(0, system.startingPower);
+        return 0;
+    };
+
+    if (!out.blueprint.weaponLoadList.empty()) {
+        if (const auto* list = database_.findBlueprintList(out.blueprint.weaponLoadList)) {
+            int remaining = systemPower("weapons");
+            const int slots = out.blueprint.weaponListCount >= 0
+                ? out.blueprint.weaponListCount
+                : (out.blueprint.weaponSlots > 0 ? out.blueprint.weaponSlots : 4);
+                for (int slot = 0; slot < slots && remaining > 0; ++slot) {
+                std::vector<std::string> candidates;
+                for (const auto& id : *list) {
+                    const auto* weapon = database_.findWeapon(id);
+                    if (!weapon || weapon->power <= 0 || weapon->power > remaining) continue;
+                    if (weapon->power != 1 && weapon->power >= systemPower("weapons")) continue;
+                    if (weapon->power * 4 <= remaining) continue;
+                    if (out.blueprint.initialWeapons.empty() && systemPower("weapons") >= 3 &&
+                        weapon->power < 2) continue;
+                    candidates.push_back(id);
+                }
+                if (candidates.empty()) break;
+                const auto& selected = candidates[enemyNextRandom(rng) % candidates.size()];
+                out.blueprint.initialWeapons.push_back(selected);
+                remaining -= database_.findWeapon(selected)->power;
+            }
+        }
+    }
+    for (const auto& weaponId : out.blueprint.initialWeapons)
+        if (const auto* weapon = database_.findWeapon(weaponId))
+            out.initialWeaponBlueprints.push_back(*weapon);
+
+    if (!out.blueprint.droneLoadList.empty()) {
+        if (const auto* list = database_.findBlueprintList(out.blueprint.droneLoadList)) {
+            int remaining = systemPower("drones");
+            const int totalPower = remaining;
+            const int slots = out.blueprint.droneListCount >= 0
+                ? out.blueprint.droneListCount
+                : (out.blueprint.droneSlots > 0 ? out.blueprint.droneSlots : 2);
+            std::set<std::string> usedDrones;
+            for (int slot = 0; slot < slots && remaining > 0; ++slot) {
+                std::vector<std::string> candidates;
+                for (const auto& id : *list) {
+                    if (usedDrones.count(id)) continue;
+                    const auto* drone = database_.findDrone(id);
+                    if (!drone || drone->power <= 0 || drone->power > remaining) continue;
+                    if (totalPower >= 4 && drone->power >= totalPower) continue;
+                    candidates.push_back(id);
+                }
+                if (candidates.empty()) break;
+                const auto& selected = candidates[enemyNextRandom(rng) % candidates.size()];
+                usedDrones.insert(selected);
+                out.blueprint.initialDrones.push_back(selected);
+                remaining -= database_.findDrone(selected)->power;
+            }
+        }
+    }
+    for (const auto& droneId : out.blueprint.initialDrones) {
+        const auto* drone = database_.findDrone(droneId);
+        if (!drone) continue;
+        DroneBlueprint resolved = *drone;
+        if (!resolved.weaponBlueprint.empty()) {
+            if (const auto* weapon = database_.findWeapon(resolved.weaponBlueprint)) {
+                resolved.weaponCooldown = weapon->cooldown;
+                resolved.weaponShots = weapon->shots;
+                resolved.weaponDamage = weapon->damage;
+                resolved.weaponSystemDamage = weapon->systemDamage;
+                resolved.weaponIonDamage = weapon->ionDamage;
+                resolved.weaponShieldPiercing = weapon->shieldPiercing;
+                resolved.weaponPersonnelDamage = weapon->personnelDamage;
+            }
+        }
+        out.initialDroneBlueprints.push_back(std::move(resolved));
+    }
+    return true;
+}
+
+bool ShipContent::loadPlayerShip(const std::string& blueprintPath,
+                                  const std::string& shipId) {
+    loaded_ = false;
+    LoadedShip loaded;
+    if (!loadShip(shipId, loaded, blueprintPath)) return false;
+    ship_ = std::move(loaded);
+    loaded_ = true;
+    return true;
+}
+
+                std::set<std::string> usedDrones;
+                bool needsShieldBreaker = true;
+                bool needsHullDamage = true;
+                for (const auto& weaponId : out.blueprint.initialWeapons) {
+                    const auto* weapon = database_.findWeapon(weaponId);
+                    if (!weapon) continue;
+                    if (weapon->type == "LASER" ||
+                        (weapon->type == "MISSILE" && weapon->shieldPiercing <= 3))
+                        needsShieldBreaker = false;
+                    if (weapon->damage > 0) needsHullDamage = false;
+                }
+                for (int slot = 0; slot < slots && remaining > 0; ++slot) {
+                    std::vector<std::string> candidates;
+                    for (const auto& id : *list) {
+                        if (usedDrones.count(id)) continue;
+                        const auto* drone = database_.findDrone(id);
+                        if (!drone || drone->power <= 0 || drone->power > remaining) continue;
+                        if (totalPower >= 4 && drone->power >= totalPower) continue;
+                        if ((needsShieldBreaker || needsHullDamage) &&
+                            drone->type != DroneBlueprint::Type::Combat) continue;
+                        candidates.push_back(id);
+                    }
+                    if (candidates.empty()) {
+                        for (const auto& id : *list) {
+                            if (usedDrones.count(id)) continue;
+                            const auto* drone = database_.findDrone(id);
+                            if (!drone || drone->power <= 0 || drone->power > remaining) continue;
+                            if (totalPower >= 4 && drone->power >= totalPower) continue;
+                            candidates.push_back(id);
+                        }
+                    }
+                    if (candidates.empty()) break;
+                    const auto& selected = candidates[enemyNextRandom(rng) % candidates.size()];
+                    const auto* drone = database_.findDrone(selected);
+                    usedDrones.insert(selected);
+                    out.blueprint.initialDrones.push_back(selected);
+                    remaining -= drone->power;
+                    if (drone->type == DroneBlueprint::Type::Combat) {
+                        needsShieldBreaker = false;
+                        needsHullDamage = false;
+                    }
+                }
             }
         }
     }
