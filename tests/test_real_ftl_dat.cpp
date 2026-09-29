@@ -170,6 +170,18 @@ int main() {
     assert(systemBlueprint.systems.front().maxPower == 8);
     assert(systemBlueprint.systems.front().optional);
     assert(!systemBlueprint.systems.front().availableByDefault);
+    wormhole::bxml::Node crewCountNode;
+    crewCountNode.name = "crewCount";
+    crewCountNode.attributes["amount"] = "2";
+    crewCountNode.attributes["max"] = "5";
+    crewCountNode.attributes["class"] = "rock";
+    countedShip.children.push_back(crewCountNode);
+    wormhole::ShipBlueprint crewBlueprint;
+    assert(wormhole::parseShipBlueprint(countedShip, crewBlueprint));
+    assert(crewBlueprint.minCrew == 2);
+    assert(crewBlueprint.maxCrew == 5);
+    assert(crewBlueprint.crew.size() == 1);
+    assert(crewBlueprint.crew.front().race == "rock");
 
 
     content.setAdvancedEdition(false);
