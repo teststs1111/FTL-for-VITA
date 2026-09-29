@@ -655,6 +655,15 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - GitHub status/workflow lookup for this exact commit currently reports no status records or workflow runs. Build verification therefore remains pending.
 
 
+## Enemy crew override correction — 2026-09-29
+
+- Fixed proportional enemy-crew overrides so they no longer force a minimum of one crew member.
+- A generated crew count of zero now remains zero; this prevents event override proportions from exceeding the generated crew count.
+- Added a regression test covering a zero-count proportional override.
+- Code commit: e666fcbade564864d8e35f5ebd2814652f41d853.
+- Test commit: 448dbd3153891bfa2bf8e19d7e3eb65d6005a8fc.
+
+
 ## Enemy generation correction — 2026-09-29
 
 - Rechecked the restored enemy-system budget table against the documented progression values.
