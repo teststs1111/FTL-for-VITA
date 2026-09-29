@@ -2206,6 +2206,7 @@ public:
         // Waiting advances the same map tick as a jump: random Rebel takeovers and
         // the Flagship timer/movement progress, and can trigger an immediate Flagship fight.
         if (sector_ >= 7 && input_.pressed(Button::Square)) {
+            const int waitingBeacon = currentBeacon_;
             advanceRebelFleetAfterJump();
             if (sceneMode_ == SceneMode::GameOver) return;
             if (currentBeacon_ >= 0 && currentBeacon_ == flagshipNode_) {
@@ -2216,8 +2217,22 @@ public:
                     !flagship.blueprint.id.empty()) {
                     flagshipPhase_ = nextPhase;
                     enterCombatFromBeacon(flagshipId);
+                    // Waiting at a Last Stand beacon completes the player's
+                    // FTL charge before the encounter begins.
+                    jumpCharging_ = false;
+                    jumpReady_ = true;
+                    jumpCharge_ = jumpChargeTime_;
                     return;
                 }
+            }
+            // A normal wait consumes a map turn and counts as a beacon visit
+            // unless the Flagship was already jumping toward this beacon.
+            if (waitingBeacon >= 0 && waitingBeacon != flagshipNode_) {
+                const bool flagshipIncoming =
+                    flagshipRouteIndex_ + 1 < static_cast<int>(flagshipRoute_.size()) &&
+                    flagshipRoute_[static_cast<std::size_t>(flagshipRouteIndex_ + 1)] == waitingBeacon;
+                if (!flagshipIncoming)
+                    ++visitedBeacons_;
             }
             return;
         }
@@ -2907,7 +2922,25 @@ public:
         // FTL retreat: the player must charge the FTL drive before leaving
         // combat. Fuel is consumed when the retreat jump is completed.
         if (combat_.outcome == CombatOutcome::Ongoing && !powerCommand && !cloakCommand && input_.pressed(Button::Circle)) {
-            if (!jumpCharging_) {
+            if (jumpReady_) {
+                if (fuel_ > 0) {
+                    --fuel_;
+                    advanceRebelFleetAfterJump();
+                    runtime_ = combat_.player;
+                    combatMode_ = false;
+                    rebelFleetEncounter_ = false;
+                    jumpReady_ = false;
+                    jumpCharging_ = false;
+                    jumpCharge_ = 0.0f;
+                    visitedBeacons_++;
+                    combatFeedback_.clear();
+                    combatFeedbackTimer_ = 0.0f;
+                    sceneMode_ = SceneMode::SectorMap;
+                    return;
+                }
+                combatFeedback_ = "燃料がない";
+                combatFeedbackTimer_ = 1.4f;
+            } else if (!jumpCharging_) {
                 if (fuel_ > 0) {
                     jumpCharging_ = true;
                     jumpCharge_ = 0.0f;
@@ -2920,6 +2953,7 @@ public:
             } else {
                 jumpCharging_ = false;
                 jumpCharge_ = 0.0f;
+                jumpReady_ = false;
                 combatFeedback_ = "FTLジャンプを中止";
                 combatFeedbackTimer_ = 1.4f;
             }
@@ -2927,7 +2961,7 @@ public:
 
         if (jumpCharging_ && combat_.outcome == CombatOutcome::Ongoing) {
             constexpr float jumpChargeTime = 10.0f;
-            jumpCharge_ = std::min(jumpChargeTime, jumpCharge_ + 1.0f / 60.0f);
+            jumpCharge_ = std::min(jumpChargeTime, jumpCharge_ + dt);
             if (jumpCharge_ >= jumpChargeTime) {
                 --fuel_;
                 advanceRebelFleetAfterJump();
@@ -2935,6 +2969,7 @@ public:
                 combatMode_ = false;
                 rebelFleetEncounter_ = false;
                 jumpCharging_ = false;
+                jumpReady_ = false;
                 jumpCharge_ = 0.0f;
                 visitedBeacons_++;
                 combatFeedback_.clear();
@@ -3552,7 +3587,9 @@ private:
     std::string saveFeedback_;
     float combatFeedbackTimer_{0.0f};
     float jumpCharge_{0.0f};
+    static constexpr float jumpChargeTime_{10.0f};
     bool jumpCharging_{false};
+    bool jumpReady_{false};
     SceneMode sceneMode_{SceneMode::SectorMap};
     std::vector<std::string> eventOrder_;
     std::string activeEventId_;
