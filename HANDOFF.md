@@ -713,3 +713,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - CombatRuntime now starts that timer immediately for REBEL_FLEET_FUEL and exposes a distinct EnemyEscaped outcome when it expires.
 - main_game now returns to the sector map without a fuel reward when the fleet ship escapes.
 - Host #1126 and Vita #818 both succeeded for commit 35bf1577da996ed5e6aff60eb0655ea94bdfce0b.
+
+
+## Last Stand wait / FTL charge fidelity — 2026-09-30
+- Last Stand waiting now completes the player's FTL charge when the wait causes a Flagship encounter, matching the documented behavior that a fight triggered by waiting starts with full FTL charge. citeturn2search1
+- Normal Last Stand waits now advance the beacon-visit counter, except when the Flagship is already jumping toward that beacon, matching the documented scoring/map-tick behavior. citeturn2search7
+- Combat jump charging now advances from the actual frame delta instead of assuming 60 FPS.
+- Commit: 1b2bb37db94dc2309cc23c4b830d40802dd92cc5.
+- Host #1129 and Vita #821 both succeeded.
