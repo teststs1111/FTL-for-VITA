@@ -581,3 +581,13 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Each generated slot now samples from the canonical list independently, subject to the remaining system-power budget and declared `count`.
 - This restores the intended duplicate-capable loadout model without changing the canonical `ftl.dat` data or introducing a separate DLC mechanism.
 - Exact vanilla RNG ordering and sector-based power generation remain separate unresolved fidelity items; they are not being guessed in this correction.
+
+
+## Enemy system-generation data foundation — 2026-09-29
+- Directly verified against the current implementation that enemy autoBlueprint system generation lacked explicit preservation of the canonical system `min`, `max`, and optional-installation fields.
+- Added `minPower`, `maxPower`, and `optional` to `SystemSlotBlueprint`; parser now preserves `min`, `max`, `start=false`, and `optional=true` from the canonical blueprint schema.
+- Added a regression fixture covering an optional Shields system with min 2 / max 8.
+- This is deliberately a data-model foundation only. No guessed sector/difficulty power roll has been committed yet.
+- Reverse-engineering reference confirms enemy generation is a multi-stage process: system maxima are rolled by sector/difficulty, optional systems are installed probabilistically, then offensive/defensive/general budgets upgrade systems, followed by weapon/drone generation. The documented budget/weapon restrictions will be implemented only where they can be tied cleanly to the existing runtime/data model. citeturn1reddit10turn0search0
+- Latest implementation commit: `78cbe92223c341745299cd39a3af72e6497de713`.
+- Host run `36520731918` and Vita run `36520731913` are currently queued for that commit; do not mark this change green until both complete successfully.
