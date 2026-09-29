@@ -606,7 +606,7 @@ public:
         std::ofstream out(savePath(), std::ios::trunc);
         if (!out) return false;
 
-        out << "FTL_VITA_SAVE 11\n";
+        out << "FTL_VITA_SAVE 12\n";
         out << "ship " << std::quoted(runtime_.content.blueprint.id) << "\n";
         out << "seed " << seed_ << "\n";
         out << "sector " << sector_ << "\n";
@@ -635,6 +635,8 @@ public:
         out << "beacon_events " << beaconEventAssignments_.size() << "\n";
         for (const auto& entry : beaconEventAssignments_)
             out << entry.first << ' ' << std::quoted(entry.second) << "\n";
+        out << "repair_used " << usedRepairBeacons_.size() << "\n";
+        for (const int beacon : usedRepairBeacons_) out << beacon << "\n";
         out << "visited " << visitedBeacons_ << "\n";
         out << "resources " << fuel_ << ' ' << scrap_ << ' ' << droneParts_ << ' ' << runtime_.missiles << "\n";
         out << "hull " << runtime_.hull << "\n";
@@ -689,7 +691,8 @@ public:
         const bool saveV9 = header == "FTL_VITA_SAVE 9";
         const bool saveV10 = header == "FTL_VITA_SAVE 10";
         const bool saveV11 = header == "FTL_VITA_SAVE 11";
-        const bool currentSave = saveV4 || saveV5 || saveV6 || saveV7 || saveV8 || saveV9 || saveV10 || saveV11;
+        const bool saveV12 = header == "FTL_VITA_SAVE 12";
+        const bool currentSave = saveV4 || saveV5 || saveV6 || saveV7 || saveV8 || saveV9 || saveV10 || saveV11 || saveV12;
         if (!legacySave && !saveV3 && !currentSave) return false;
 
         std::string key, shipId;
@@ -745,9 +748,10 @@ public:
         }
         currentSectorType_.clear();
         usedUniqueSectorTypes_.clear();
+        usedRepairBeacons_.clear();
         mapRevealed_ = false;
         secretSectorPending_ = false;
-        if (saveV5 || saveV6 || saveV7 || saveV8 || saveV9 || saveV10) {
+        if (saveV5 || saveV6 || saveV7 || saveV8 || saveV9 || saveV10 || saveV11 || saveV12) {
             in >> key >> std::quoted(currentSectorType_);
             if (key != "current_sector") return false;
             in >> key >> count;
@@ -764,7 +768,7 @@ public:
             in >> key >> flag;
             if (key != "secret_pending") return false;
             secretSectorPending_ = flag != 0;
-            if (saveV6 || saveV7 || saveV8 || saveV9 || saveV10 || saveV11) {
+            if (saveV6 || saveV7 || saveV8 || saveV9 || saveV10 || saveV11 || saveV12) {
                 in >> key >> count;
                 if (key != "fleet_covered") return false;
                 std::vector<int> covered;
@@ -780,6 +784,7 @@ public:
         }
         sectorEventUsage_.clear();
         beaconEventAssignments_.clear();
+        usedRepairBeacons_.clear();
         if (currentSave) {
             in >> key >> count;
             if (key != "event_usage") return false;
@@ -789,7 +794,7 @@ public:
                 in >> std::quoted(eventName) >> usage;
                 if (!eventName.empty()) sectorEventUsage_[eventName] = std::max(0, usage);
             }
-            if (saveV11) {
+            if (saveV11 || saveV12) {
                 in >> key >> count;
                 if (key != "beacon_events") return false;
                 for (std::size_t i = 0; i < count; ++i) {
@@ -798,6 +803,17 @@ public:
                     in >> beacon >> std::quoted(eventName);
                     if (beacon >= 0 && !eventName.empty())
                         beaconEventAssignments_[beacon] = eventName;
+                }
+                if (saveV12) {
+                    in >> key >> count;
+                    if (key != "repair_used") return false;
+                    usedRepairBeacons_.clear();
+                    usedRepairBeacons_.reserve(count);
+                    for (std::size_t i = 0; i < count; ++i) {
+                        int beacon = -1;
+                        in >> beacon;
+                        if (beacon >= 0) usedRepairBeacons_.push_back(beacon);
+                    }
                 }
             }
         }
@@ -1960,6 +1976,17 @@ public:
         return start;
     }
 
+    bool repairBeaconUsed(int beacon) const {
+        return beacon >= 0 &&
+            std::find(usedRepairBeacons_.begin(), usedRepairBeacons_.end(), beacon) !=
+                usedRepairBeacons_.end();
+    }
+
+    void markRepairBeaconUsed(int beacon) {
+        if (sector_ < 7 || beacon < 0 || repairBeaconUsed(beacon)) return;
+        usedRepairBeacons_.push_back(beacon);
+    }
+
     void updateEvent() {
         const auto* event = eventDatabase_.find(activeEventId_);
         if (!event) {
@@ -1986,17 +2013,24 @@ public:
                 return;
             }
             if (event->repair) {
-                if (sector_ >= 7) {
-                    // The Last Stand uses BOSS_REPAIR_STATION: 15 hull repair,
-                    // +22-44 scrap, +5 fuel, +4 missiles and +5 drone parts.
-                    runtime_.hull = std::min(runtime_.content.blueprint.maxHealth, runtime_.hull + 15);
-                    scrap_ = std::max(0, scrap_ + applyScrapAugments(rollEventRange(22, 44, 0xB051u)));
-                    fuel_ = std::min(30, fuel_ + 5);
-                    runtime_.missiles = std::min(50, runtime_.missiles + 4);
-                    combat_.player.missiles = runtime_.missiles;
-                    droneParts_ = std::min(50, droneParts_ + 5);
+                const bool oneUse = sector_ >= 7;
+                if (!oneUse || !repairBeaconUsed(currentBeacon_)) {
+                    if (oneUse) markRepairBeaconUsed(currentBeacon_);
+                    if (sector_ >= 7) {
+                        // The Last Stand uses BOSS_REPAIR_STATION: 15 hull repair,
+                        // +22-44 scrap, +5 fuel, +4 missiles and +5 drone parts.
+                        runtime_.hull = std::min(runtime_.content.blueprint.maxHealth, runtime_.hull + 15);
+                        scrap_ = std::max(0, scrap_ + applyScrapAugments(rollEventRange(22, 44, 0xB051u)));
+                        fuel_ = std::min(30, fuel_ + 5);
+                        runtime_.missiles = std::min(50, runtime_.missiles + 4);
+                        combat_.player.missiles = runtime_.missiles;
+                        droneParts_ = std::min(50, droneParts_ + 5);
+                    } else {
+                        runtime_.hull = std::min(runtime_.content.blueprint.maxHealth, runtime_.hull + 2);
+                    }
                 } else {
-                    runtime_.hull = std::min(runtime_.content.blueprint.maxHealth, runtime_.hull + 2);
+                    combatFeedback_ = "この修理ビーコンは使用済み";
+                    combatFeedbackTimer_ = 1.8f;
                 }
             }
             ++visitedBeacons_;
@@ -2060,6 +2094,15 @@ public:
             return;
         }
         if (choice.repair || event->repair) {
+            if (choice.repair && sector_ >= 7 && repairBeaconUsed(currentBeacon_)) {
+                combatFeedback_ = "この修理ビーコンは使用済み";
+                combatFeedbackTimer_ = 1.8f;
+                sceneMode_ = SceneMode::SectorMap;
+                ++visitedBeacons_;
+                return;
+            }
+            if (choice.repair && sector_ >= 7)
+                markRepairBeaconUsed(currentBeacon_);
             runtime_.hull = std::min(runtime_.content.blueprint.maxHealth, runtime_.hull + 2);
             sceneMode_ = SceneMode::SectorMap;
             ++visitedBeacons_;
@@ -2347,6 +2390,7 @@ public:
                     ++sector_;
                     sectorEventUsage_.clear();
                     beaconEventAssignments_.clear();
+                    usedRepairBeacons_.clear();
                     fleetRow_ = -1;
                     fleetPursuitDelay_ = 0;
                     fleetPursuitProgress_ = 0.0f;
@@ -3727,6 +3771,7 @@ private:
     std::unordered_map<std::string, std::string> questTargets_;
     std::unordered_map<std::string, int> sectorEventUsage_;
     std::unordered_map<int, std::string> beaconEventAssignments_;
+    std::vector<int> usedRepairBeacons_;
     std::string currentSectorType_;
     std::vector<std::string> usedUniqueSectorTypes_;
     std::vector<StoreOffer> storeOffers_;
