@@ -70,6 +70,20 @@ int main() {
     const auto* fleetDelay = events.find("FUEL_FLEET_DELAY");
     assert(fleetDelay != nullptr);
     assert(fleetDelay->special.modifyPursuit == -1);
+    assert(fleetDelay->choices.size() == 1);
+    assert(fleetDelay->choices.front().hidden);
+    assert(fleetDelay->choices.front().load == "NO_FUEL");
+    const char* noFuelPools[] = {"FUEL_FLEET_DELAY", "FUEL_NOTHING", "FUEL_TRADER",
+        "FUEL_EXPLORE", "FUEL_APPROACH", "FUEL_OFF_ENGI_DUBIOUS",
+        "FUEL_OFF_ROCK_WRECK", "NO_FUEL_REFUGEE_FRIENDLY"};
+    for (unsigned seed = 0; seed < 128; ++seed) {
+        const auto* resolved = events.resolve("NO_FUEL", seed);
+        assert(resolved != nullptr);
+        bool known = false;
+        for (const char* id : noFuelPools)
+            if (resolved->id == id) { known = true; break; }
+        assert(known);
+    }
     const auto* fleetAdvance = events.find("FUEL_FLEET_DISTRESS");
     assert(fleetAdvance != nullptr);
     assert(fleetAdvance->special.modifyPursuit == 1);
