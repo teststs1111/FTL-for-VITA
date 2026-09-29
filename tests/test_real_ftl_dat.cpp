@@ -9,7 +9,8 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
-#include <set>\n#include <map>
+#include <set>
+#include <map>
 
 int main() {
     const char* env = std::getenv("FTL_DAT_PATH");
