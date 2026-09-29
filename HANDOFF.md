@@ -727,3 +727,10 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Corrected CombatRuntime so the canonical REBEL_FLEET_FUEL encounter used by the current arrival path starts at 90 seconds instead of 80.
 - Commit: 2fb7026dd2efa8358789e11a457b638057dc645c.
 - Host #1131 and Vita #823 both succeeded.
+
+
+## No-fuel WAIT encounter fidelity — 2026-09-30
+- Normal sectors now allow WAIT when fuel is 0, matching the vanilla navigation behavior.
+- If the current beacon is already fleet-controlled, WAIT enters the canonical no-fuel Rebel encounter with the separate 80-second escape timer; jumping in after consuming the last fuel remains the 90-second path.
+- Commit: 2cec0368182cdac154a0c1a9d0fd1a56c7d8a614.
+- This change keeps the canonical REBEL_FLEET_FUEL data path and does not introduce a separate DLC mechanism.
