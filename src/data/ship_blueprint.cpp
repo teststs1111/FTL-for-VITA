@@ -101,6 +101,8 @@ void collectCrew(const bxml::Node& node, std::vector<CrewBlueprint>& crew) {
     for (const auto& c : node.children) collectCrew(c, crew);
 }
 
+}
+
 bool parseShipBlueprint(const bxml::Node& node, ShipBlueprint& out) {
     if (node.name != "shipBlueprint" && node.name != "ship") return false;
 
@@ -162,8 +164,6 @@ bool parseShipBlueprint(const bxml::Node& node, ShipBlueprint& out) {
         out.droneSlots = integer(*droneSlots, "amount", integer(*droneSlots, "value", 0));
     else out.droneSlots = integer(node, "droneSlots", 0);
     return true;
-}
-
 }
 
 bool parseLayoutBlueprint(const std::string& text, LayoutBlueprint& out) {
