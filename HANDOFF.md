@@ -536,3 +536,10 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Added a real-`ftl.dat` regression check for `AUTO_BASIC` and its `WEAPONS_AUTO` loadout.
 - This is the first step toward the full vanilla enemy-generation model. Current loadout generation now matches the documented no-repeat random selection behavior, while the larger remaining gap is the sector/difficulty-based system generation that determines each enemy's rolled system levels before weapon/drone loadout generation.
 - Relevant commits: `5c0b52e`, `a270319`, `b605e95`, `d36d30a`, `5d21910`.
+
+
+## Fixed weapon/drone list count semantics — 2026-09-29
+- Canonical FTL ship blueprints support an explicit `count` attribute on `weaponList` and `droneList`. This count limits how many fixed child entries are actually loaded; entries beyond the count are not part of the ship's initial equipment. This behavior is documented by Subset Games modding examples and is now represented directly in `ShipBlueprint`.
+- Added `weaponListCount` and `droneListCount` fields and made the parser stop at the declared count. A regression test covers a two-entry weapon list with `count="1"` and verifies only the first entry is loaded.
+- Commits: `caa527b54312ab97466a941b4e4f4238639defa6`, `9214246c6bc976a6bba5e04576cd3d7bb937d465`, `75c3f3ffa009adabb1c89cf6bfbeeca0100b0c4d`.
+- Next focus remains vanilla enemy loadout generation and the remaining canonical `ftl.dat` data consumers; no separate DLC archive mechanism is being introduced.
