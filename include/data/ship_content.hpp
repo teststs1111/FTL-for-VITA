@@ -27,7 +27,9 @@ public:
     // difficulty: 0=Easy, 1=Normal, 2=Hard.
     bool loadEnemyShip(const std::string& shipId, LoadedShip& out, int sector,
                        int difficulty = 1, unsigned randomSeed = 0,
-                       const std::string& blueprintPath = "data/blueprints.xml");
+                       const std::string& blueprintPath = "data/blueprints.xml",
+                       const std::string& sectorType = {},
+                       const std::vector<CrewOverrideEntry>* crewOverride = nullptr);
     void setAdvancedEdition(bool enabled) { advancedEdition_ = enabled; }
 
     const LoadedShip* playerShip() const { return loaded_ ? &ship_ : nullptr; }
