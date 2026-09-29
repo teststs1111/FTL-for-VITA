@@ -689,3 +689,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Commit 8710e22e59eb9a043a4b95d949ff0c660e60098e fixed the ship blueprint parser linkage scope: helper functions remain in the anonymous namespace while parseShipBlueprint/parseLayoutBlueprint are exported in namespace wormhole.
 - Host #1118 and Vita #810 both completed successfully, including Host tests and Vita VPK packaging.
 - The preceding 3cf009c3 build failure was a linker error for parseShipBlueprint; this checkpoint records the concrete correction and verified green state.
+
+
+## User workflow/reporting rule — 2026-09-30
+- Development order: if an error appears, fix it first and verify it; only after the error is resolved, proceed to the next feature/implementation task.
+- Do not leave known build/test errors accumulating while adding unrelated functionality.
+- Continue this cycle autonomously without waiting for the user's reaction between steps.
+- Chat reports should be kept to the minimum necessary, using short bullet points only; avoid boilerplate progress/checking statements.
+- When a change introduces an error, prioritize correction and re-verification before continuing feature work.
