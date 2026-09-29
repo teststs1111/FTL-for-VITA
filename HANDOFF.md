@@ -750,3 +750,9 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - FUEL_* hostile events now start the 80-second escape timer; the Rebel/Auto warning variants use the special 40-second timer.
 - Ordinary hostile encounters reached after spending the last fuel retain the separate 90-second timer.
 - This is based on the documented vanilla distinction between ordinary out-of-fuel encounters, post-last-fuel hostile encounters, and fleet-warning ships.
+
+
+## Continuation checkpoint — deterministic test stabilization — 2026-09-29
+- Commit 7fb878033ec392792ce00c4d1fd3d1e82f4cf6f2 stabilizes the Defense Drone Mark II interception regression by retrying the documented 90% interception path instead of depending on one random draw.
+- Host #1144 and Vita #836 both succeeded.
+- No gameplay probability was changed; only the regression test was made non-flaky.
