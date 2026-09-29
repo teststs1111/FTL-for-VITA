@@ -310,9 +310,11 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
                     const bool shieldBreaker = weapon->type == "LASER" ||
                         (weapon->type == "MISSILE" && weapon->shieldPiercing <= 3);
                     const bool hullDamage = weapon->damage > 0;
-                    if ((needsShieldBreaker && needsHullDamage && !shieldBreaker && !hullDamage) ||
-                        (needsShieldBreaker && !needsHullDamage && !shieldBreaker) ||
-                        (!needsShieldBreaker && needsHullDamage && !hullDamage)) continue;
+                    // While either required capability is still missing, the
+                    // generated weapon must satisfy at least one remaining flag.
+                    // A single weapon can satisfy both and therefore clear both.
+                    if ((needsShieldBreaker || needsHullDamage) &&
+                        !shieldBreaker && !hullDamage) continue;
                     candidates.push_back(id);
                 }
                 if (candidates.empty()) break;
