@@ -734,3 +734,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - If the current beacon is already fleet-controlled, WAIT enters the canonical no-fuel Rebel encounter with the separate 80-second escape timer; jumping in after consuming the last fuel remains the 90-second path.
 - Commit: 2cec0368182cdac154a0c1a9d0fd1a56c7d8a614.
 - This change keeps the canonical REBEL_FLEET_FUEL data path and does not introduce a separate DLC mechanism.
+
+
+## Continuation checkpoint — 2026-09-29
+- Commit 53ad039085545cde65825f7a45b533df5336be70 adds real-data regression coverage for the canonical out-of-fuel event chain.
+- The test confirms FUEL_FLEET_DELAY has one hidden continuation choice loading NO_FUEL, and that NO_FUEL resolves only to the canonical normal out-of-fuel event IDs.
+- Host workflow #1137 and Vita workflow #829 both completed successfully for this commit.
+- The hidden-only event UI already renders a Continue prompt, so FUEL_FLEET_DELAY can proceed through its internal NO_FUEL continuation without exposing the hidden choice as a normal player choice.
+- Research confirms Rebel/Auto warning ships escaping doubles Rebel Fleet pursuit for the current jump/turn; FUEL_ON_REBEL_WARNING is the canonical out-of-fuel distress example. Current runtime handles this through the warning-event escape path.
+- Next fidelity work: tighten Rebel Fleet pursuit modifiers and event-driven escape behavior, then continue Sector 8 and deeper event semantics. Do not replace the archive-driven approach with synthetic DLC handling.
