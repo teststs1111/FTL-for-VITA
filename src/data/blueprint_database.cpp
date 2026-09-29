@@ -36,7 +36,16 @@ std::size_t BlueprintDatabase::loadShipBlueprints(const std::vector<std::string>
             if (node.name == "blueprintList") {
                 const auto it = node.attributes.find("name");
                 if (it != node.attributes.end() && !it->second.empty()) {
-                    auto& list = blueprintLists_[it->second];
+                    // AE's dlcBlueprintsOverwrite.xml uses OVERRIDE_<list>
+                    // names to replace the corresponding base autoBlueprint
+                    // list when Advanced Edition is enabled. Keep the
+                    // runtime lookup name canonical: SHIPS_REBEL, not
+                    // OVERRIDE_SHIPS_REBEL.
+                    std::string listId = it->second;
+                    constexpr const char* overridePrefix = "OVERRIDE_";
+                    if (listId.rfind(overridePrefix, 0) == 0)
+                        listId.erase(0, std::char_traits<char>::length(overridePrefix));
+                    auto& list = blueprintLists_[listId];
                     list.clear();
                     for (const auto& entry : node.children) {
                         if (entry.name == "name" && !entry.text.empty())
