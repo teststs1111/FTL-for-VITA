@@ -23,6 +23,11 @@ public:
                   unsigned randomSeed = 0);
     bool loadPlayerShip(const std::string& blueprintPath = "data/blueprints.xml",
                         const std::string& shipId = "PLAYER_SHIP_HARD");
+    // Generates an enemy ship using the canonical FTL sector/difficulty rules.
+    // difficulty: 0=Easy, 1=Normal, 2=Hard.
+    bool loadEnemyShip(const std::string& shipId, LoadedShip& out, int sector,
+                       int difficulty = 1, unsigned randomSeed = 0,
+                       const std::string& blueprintPath = "data/blueprints.xml");
     void setAdvancedEdition(bool enabled) { advancedEdition_ = enabled; }
 
     const LoadedShip* playerShip() const { return loaded_ ? &ship_ : nullptr; }
