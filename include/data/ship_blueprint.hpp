@@ -73,6 +73,8 @@ struct ShipBlueprint {
     std::string name;
     std::string layout;
     std::string image;
+    int minSector{1};
+    int maxSector{8};
     int maxHealth{0};
     int startingReactorPower{0};
     int weaponSlots{0};
