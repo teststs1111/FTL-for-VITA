@@ -697,3 +697,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Continue this cycle autonomously without waiting for the user's reaction between steps.
 - Chat reports should be kept to the minimum necessary, using short bullet points only; avoid boilerplate progress/checking statements.
 - When a change introduces an error, prioritize correction and re-verification before continuing feature work.
+
+
+## Rebel Fleet no-fuel encounter checkpoint — 2026-09-30
+- Direct inspection of the supplied Library ftl.dat confirmed that the canonical no-fuel fleet encounter is the distinct `NO_FUEL_FLEET` event using `REBEL_FLEET_FUEL`, while ordinary fleet capture uses `LONG_FLEET`.
+- `REBEL_FLEET_FUEL` has the canonical 2–4 fuel destroyed reward and an enemy escape definition; the current implementation now selects this ship when a captured beacon is entered with 0 fuel and applies the 2–4 fuel reward range.
+- Captured nebula / exit environment rules were cross-checked against the archive: `FLEET_EASY_NEBULA` uses storm; normal captured nebula uses the same storm branch; exit and Easy exit exceptions remain non-ASB as represented by the environment selector.
+- The exact enemy escape-timer behavior for `REBEL_FLEET_FUEL` is not yet modeled in CombatRuntime; do not claim this sub-behavior complete.
+- Commit `e9e0681c67187a083ac861b5d181b511e3c16dd1` implements the no-fuel ship selection/reward path; commit `d1987b96a34e9d9b177bf0499bd32fec7f9830a1` adds real-data regression coverage.
+- Host #1122 and Vita #814 both succeeded for `d1987b96a34e9d9b177bf0499bd32fec7f9830a1`.
