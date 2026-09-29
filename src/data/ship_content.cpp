@@ -1,7 +1,141 @@
 #include "data/ship_content.hpp"
 #include <algorithm>
 #include <cstdint>
-#include <functional>\n#include <set>\n#include <string>
+#include <functional>
+#include <string>
+
+
+namespace {
+
+unsigned enemyNextRandom(unsigned& rng) {
+    rng ^= rng << 13;
+    rng ^= rng >> 17;
+    rng ^= rng << 5;
+    return rng;
+}
+
+int enemyEffectiveSector(int sector, int difficulty) {
+    const int s = std::clamp(sector, 1, 8);
+    return std::clamp(s - (difficulty == 0 ? 1 : 0), 1, 8);
+}
+
+int enemyOptionalChance(int effectiveSector, int difficulty) {
+    int chance = 20 + (effectiveSector - 1) * 10;
+    if (difficulty == 0) chance -= 10;
+    if (difficulty == 2) chance += 10;
+    return std::clamp(chance, 10, 100);
+}
+
+struct EnemyBudget { int offensive; int defensive; int general; };
+
+EnemyBudget enemyBudget(int sector, int difficulty) {
+    static constexpr int table[8][3][3] = {
+        {{1,1,1},{1,2,2},{1,1,2}},
+        {{1,2,2},{2,3,3},{1,1,2}},
+        {{2,3,3},{3,4,4},{1,1,2}},
+        {{3,4,4},{4,5,5},{1,2,3}},
+        {{4,5,5},{5,6,6},{2,2,3}},
+        {{5,6,6},{6,7,7},{2,2,3}},
+        {{6,7,7},{7,8,8},{2,3,4}},
+        {{7,8,8},{8,9,9},{3,3,4}}
+    };
+    const int s = std::clamp(sector, 1, 8) - 1;
+    const int d = std::clamp(difficulty, 0, 2);
+    return {table[s][0][d], table[s][1][d], table[s][2][d]};
+}
+
+bool enemyOffensive(const std::string& type) {
+    return type == "weapons" || type == "drones" || type == "teleporter";
+}
+
+bool enemyDefensive(const std::string& type) {
+    return type == "shields" || type == "engines";
+}
+
+void generateEnemySystems(ShipBlueprint& ship, int sector, int difficulty, unsigned& rng) {
+    const int effectiveSector = enemyEffectiveSector(sector, difficulty);
+    const int optionalChance = enemyOptionalChance(effectiveSector, difficulty);
+    EnemyBudget budget = enemyBudget(effectiveSector, difficulty);
+
+    // Keep the rolled maximum separate from the blueprint's canonical hard cap.
+    // Runtime maxPower remains the actual installed-system capacity.
+    std::vector<int> rolledMax(ship.systems.size(), 0);
+    for (std::size_t i = 0; i < ship.systems.size(); ++i) {
+        auto& system = ship.systems[i];
+        const int minimum = std::max(0, system.minPower);
+        const int maximum = std::max(minimum, system.maxPower);
+        const int span = maximum - minimum;
+        const int progress = (span * (effectiveSector - 1)) / 7;
+        const int bonusMax = difficulty == 0
+            ? (effectiveSector <= 1 ? 0 : 1)
+            : (effectiveSector <= 2 ? 1 : 2);
+        const int bonus = static_cast<int>(enemyNextRandom(rng) %
+            static_cast<unsigned>(bonusMax + 1));
+        rolledMax[i] = std::min(maximum, minimum + progress + bonus);
+
+        bool installed = system.availableByDefault;
+        if (system.optional)
+            installed = static_cast<int>(enemyNextRandom(rng) % 100u) < optionalChance;
+
+        if (!installed) {
+            system.startingPower = 0;
+            system.level = 0;
+            system.availableByDefault = false;
+            continue;
+        }
+
+        int initial = system.startingPower;
+        if (system.optional && initial <= 0)
+            initial = std::max(1, system.minPower);
+        initial = std::clamp(initial, 0, rolledMax[i]);
+        system.startingPower = initial;
+        system.level = initial;
+        system.availableByDefault = true;
+
+        if (system.optional) {
+            if (enemyOffensive(system.system)) --budget.offensive;
+            else if (difficulty == 2) --budget.general;
+            else budget.general -= 2;
+        }
+    }
+
+    std::vector<int> installed;
+    for (std::size_t i = 0; i < ship.systems.size(); ++i)
+        if (ship.systems[i].availableByDefault) installed.push_back(static_cast<int>(i));
+
+    auto spendClass = [&](int amount, int classId) {
+        int remaining = amount;
+        while (remaining > 0) {
+            std::vector<int> candidates;
+            for (int index : installed) {
+                const auto& system = ship.systems[index];
+                const bool matches = classId == 0 ? enemyOffensive(system.system)
+                    : classId == 1 ? enemyDefensive(system.system) : true;
+                if (matches && system.level < rolledMax[index])
+                    candidates.push_back(index);
+            }
+            if (candidates.empty()) break;
+            const int index = candidates[enemyNextRandom(rng) % candidates.size()];
+            ++ship.systems[index].level;
+            ++ship.systems[index].startingPower;
+            --remaining;
+        }
+        return remaining;
+    };
+
+    const int offensiveLeft = spendClass(std::max(0, budget.offensive), 0);
+    const int defensiveLeft = spendClass(std::max(0, budget.defensive), 1);
+    budget.general += offensiveLeft + defensiveLeft;
+    spendClass(std::max(0, budget.general), 2);
+
+    int reactor = 0;
+    for (const auto& system : ship.systems)
+        if (system.availableByDefault)
+            reactor += std::max(0, system.startingPower);
+    ship.startingReactorPower = reactor;
+}
+
+} // namespace
 
 namespace wormhole {
 
@@ -189,11 +323,9 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
             const int slots = out.blueprint.droneListCount >= 0
                 ? out.blueprint.droneListCount
                 : (out.blueprint.droneSlots > 0 ? out.blueprint.droneSlots : 2);
-            std::set<std::string> used;
             for (int slot = 0; slot < slots && remaining > 0; ++slot) {
                 std::vector<std::string> candidates;
                 for (const auto& id : *list) {
-                    if (used.count(id)) continue;
                     const auto* drone = database_.findDrone(id);
                     if (!drone || drone->power <= 0 || drone->power > remaining) continue;
                     if (totalPower >= 4 && drone->power >= totalPower) continue;
@@ -201,7 +333,6 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
                 }
                 if (candidates.empty()) break;
                 const auto& selected = candidates[enemyNextRandom(rng) % candidates.size()];
-                used.insert(selected);
                 out.blueprint.initialDrones.push_back(selected);
                 remaining -= database_.findDrone(selected)->power;
             }
