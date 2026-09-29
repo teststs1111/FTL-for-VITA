@@ -317,7 +317,7 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
                 {"mantis",1},{"human",2},{"engi",3},{"rock",4}
             };
             static constexpr RaceWeight rock[] = {
-                {"rock",1},{"human",2},{"engi",2},{"zoltan",3},{"slug",3}
+                {"rock",1},{"human",2},{"zoltan",3}
             };
             static constexpr RaceWeight abandoned[] = {
                 {"lanius",2},{"human",2},{"engi",3},{"mantis",3},{"rock",3},{"zoltan",4},{"slug",4}
