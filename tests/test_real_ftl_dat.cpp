@@ -171,6 +171,8 @@ int main() {
     assert(content.loadShip("AUTO_BASIC", autoBasic, "data/blueprints.xml", 12345u));
     assert(content.blueprints().findBlueprintList("SHIPS_REBEL") != nullptr);
     assert(content.blueprints().findBlueprintList("OVERRIDE_SHIPS_REBEL") == nullptr);
+    assert(autoBasic.blueprint.minSector == 1);
+    assert(autoBasic.blueprint.maxSector == 8);
     assert(autoBasic.blueprint.weaponLoadList == "WEAPONS_AUTO");
     assert(!autoBasic.initialWeaponBlueprints.empty());
     int autoWeaponPower = 0;
