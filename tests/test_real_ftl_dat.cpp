@@ -88,6 +88,22 @@ int main() {
     assert(fleetAdvance != nullptr);
     assert(fleetAdvance->special.modifyPursuit == 1);
 
+    const auto* warning = events.find("FUEL_ON_REBEL_WARNING");
+    assert(warning != nullptr);
+    assert(warning->hostile);
+    assert(warning->hostileShipId == "REBEL_AUTO_WARNING");
+
+    const auto* mercenary = events.find("MERCENARY");
+    assert(mercenary != nullptr);
+    bool hasTwoTurnDelay = false;
+    for (const auto& choice : mercenary->choices) {
+        if (choice.special.modifyPursuit == -2) {
+            hasTwoTurnDelay = true;
+            break;
+        }
+    }
+    assert(hasTwoTurnDelay);
+
     wormhole::SectorDatabase sectors(assets);
     sectors.setAdvancedEdition(true);
     assert(sectors.load());
