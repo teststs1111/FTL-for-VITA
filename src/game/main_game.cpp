@@ -2779,6 +2779,8 @@ public:
                 }
             } else if (combat_.outcome == CombatOutcome::EnemyEscaped) {
                 runtime_ = combat_.player;
+                if (shouldDoubleFleetPursuitOnEscape())
+                    ++fleetPursuitDelay_;
                 if (rebelFleetEncounter_) {
                     rebelFleetEncounter_ = false;
                     rebelFleetFuelEncounter_ = false;
@@ -2853,6 +2855,23 @@ public:
                 }
             }
         }
+    }
+
+    bool shouldDoubleFleetPursuitOnEscape() const {
+        // The canonical warning events use a Rebel/Auto ship whose FTL drive
+        // is already charging when combat begins. If that ship escapes, the
+        // original game applies +1 modifyPursuit for the next jump.
+        std::string eventId = activeEventId_;
+        std::string shipId = combat_.enemy.content.blueprint.id;
+        std::transform(eventId.begin(), eventId.end(), eventId.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        std::transform(shipId.begin(), shipId.end(), shipId.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        const bool warningEvent = eventId.find("warning") != std::string::npos;
+        const bool rebelOrAutoShip =
+            shipId.find("rebel") != std::string::npos ||
+            shipId.find("auto") != std::string::npos;
+        return warningEvent && rebelOrAutoShip;
     }
 
     void updateCombat(float dt) {
