@@ -118,6 +118,14 @@ Research checkpoint 2026-09-28: external references report that the Rebel Fleet 
 - No change was made yet from this checkpoint because the current difficulty state and the exact vanilla zero-fuel/exit environment transition are not represented cleanly enough in the existing runtime. Avoid a partial fix that would replace one approximation with another.
 - The exact Rebel Fleet frontier mapping remains provisional; do not couple this environment correction to an unproven Offset/Fudge -> beacon-position formula.
 
+## Enemy generation fidelity — 2026-09-29
+- Commit 4df7ee45e02cdd0299a8e01811f67a94d64baac2 — Align enemy system budget flow with vanilla rules.
+- Optional non-offensive systems now cost 2 general-budget points on Easy/Normal and 1 on Hard; offensive optional systems still cost 1 offensive point.
+- After category-specific upgrades, unused offensive and defensive budget now flows into the general budget instead of being discarded.
+- Negative optional-system budget costs are preserved into the general-budget stage.
+- This is a formula-level correction based on the reverse-engineering notes already recorded for enemy generation; exact vanilla RNG sequence is still not established.
+- Crew race proportions/overrides and exact crew room placement remain incomplete.
+
 ## Event fidelity
 Implemented: real XML ingestion, event load references, weighted eventLists, AE resources/overwrites, common choices/requirements, stores, distress, hostile, repair, resource/crew effects, and original text IDs through data/text-ja.xml.
 
