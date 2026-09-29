@@ -549,3 +549,10 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - This follows the documented FTL modding behavior that `count` controls the number drafted from a load list; the canonical `ftl.dat` data remains the source of truth and no separate DLC archive mechanism is introduced.
 - Commits: `8ed2742a201e2b2dba76aef84e979dd91d10faa3`, `0adaa8345e7f5c8c530ce0b39addaebf65920a80`.
 - Next focus: verify the remaining enemy loadout-selection details against canonical data before implementing any sector/difficulty scaling logic.
+
+## Build stabilization and enemy loadout verification — 2026-09-29
+- Commit `57f9fb9d67078b97dcd1045d84211bee81efd689` had Host test failure only; compilation itself succeeded. The failing assertion was the probabilistic Defense Drone regression, which assumed a single 90% interception roll would succeed.
+- Commit `14058decc8c5ecb0d269d5b308a6e2c9c93e66f5` changed only that regression test: it retries the same interception path until the successful 90% branch is observed, without changing runtime probability behavior.
+- Host run `36518783932` and Vita run `36518783893` both completed successfully on `14058de`.
+- Important fidelity correction: the current enemy loadout generator's "no-repeat" selection behavior is an implementation assumption, not yet a sufficiently authoritative vanilla-engine finding. The canonical sources confirm that enemy ships randomly select from their referenced autoBlueprint lists and that duplicate list entries provide weighting, but the exact repeat/duplicate handling and RNG stream still need direct verification before treating the current algorithm as final.
+- Do not implement generic sector/difficulty weapon-power budgeting yet. The canonical enemy ship blueprints already define their own starting/max system powers; the remaining task is to reproduce the game's actual loadout-selection/RNG semantics around those values.
