@@ -54,6 +54,7 @@ public:
     bool loadFlagshipPhase(ShipContent& content, const LoadedShip& enemyShip,
                            const std::vector<RuntimeCrew>& previousCrew);
     void update(float dt);
+    void setEnemyEscapeTimer(float seconds);
     bool setTargetRoom(int roomId);
     CombatResult fireSelectedWeapon();
     CombatResult fireWeapon(int weaponIndex);

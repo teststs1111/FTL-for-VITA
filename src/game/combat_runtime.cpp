@@ -27,7 +27,7 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     lastImpactResult_ = {};
     hasImpactResult_ = false;
     enemyFireDelay_ = 0.0f;
-    // REBEL_FLEET_FUEL is the after-jump no-fuel encounter here; vanilla\n    // gives this case the longer 90-second escape timer. The 80-second\n    // variant is used by the separate no-fuel WAIT event path.\n    enemyEscapeTimer_ = (enemyShip.blueprint.id == "REBEL_FLEET_FUEL") ? 90.0f : 0.0f;
+    // REBEL_FLEET_FUEL defaults to the 90-second post-jump/last-fuel timer.\n    // MainGame overrides this to 80 seconds for the separate no-fuel WAIT path.\n    enemyEscapeTimer_ = (enemyShip.blueprint.id == "REBEL_FLEET_FUEL") ? 90.0f : 0.0f;
     boardingTimer_ = 8.0f;
     boardingFightTimer_ = 0.0f;
     boarders.clear();
@@ -63,6 +63,9 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     return true;
 }
 
+void CombatRuntime::setEnemyEscapeTimer(float seconds) {
+    enemyEscapeTimer_ = std::max(0.0f, seconds);
+}
 
 bool CombatRuntime::loadFlagshipPhase(ShipContent& contentSource, const LoadedShip& enemyShip,
                                       const std::vector<RuntimeCrew>& previousCrew) {

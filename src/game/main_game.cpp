@@ -1226,7 +1226,7 @@ public:
         combat_.setTargetRoom(combatTargetRoom_);
     }
 
-    void enterRebelFleetEncounter() {
+    void enterRebelFleetEncounter(bool fromWait = false) {
         // A beacon already occupied by the Rebel fleet is still reachable.
         // Enter a Rebel encounter instead of silently removing the route.
         // The supplied archive uses REBEL_SKINNY_ELITE for the
@@ -1279,6 +1279,8 @@ public:
             : "反乱軍艦隊と遭遇";
         combatFeedbackTimer_ = 1.5f;
         enterCombatFromBeacon(rebelShipId);
+        if (noFuelFleetEncounter)
+            combat_.setEnemyEscapeTimer(fromWait ? 80.0f : 90.0f);
     }
 
     void selectCurrentSectorDefinition() {
@@ -2205,7 +2207,7 @@ public:
         // The Last Stand permits waiting at the current beacon without spending fuel.
         // Waiting advances the same map tick as a jump: random Rebel takeovers and
         // the Flagship timer/movement progress, and can trigger an immediate Flagship fight.
-        if (sector_ >= 7 && input_.pressed(Button::Square)) {
+        if ((sector_ >= 7 || fuel_ <= 0) && input_.pressed(Button::Square)) {
             const int waitingBeacon = currentBeacon_;
             advanceRebelFleetAfterJump();
             if (sceneMode_ == SceneMode::GameOver) return;
@@ -2224,6 +2226,18 @@ public:
                     jumpCharge_ = jumpChargeTime_;
                     return;
                 }
+            }
+            // Outside The Last Stand, WAIT is available when fuel is exhausted.
+            // If the fleet has already captured the current beacon, this is the
+            // distinct 80-second no-fuel WAIT encounter rather than the 90-second
+            // post-jump/last-fuel encounter.
+            if (sector_ < 7 && fuel_ <= 0) {
+                if (const auto* waitingNode = sectorGraph_.node(currentBeacon_);
+                    waitingNode && waitingNode->fleetCovered) {
+                    enterRebelFleetEncounter(true);
+                    return;
+                }
+                return;
             }
             // A normal wait consumes a map turn and counts as a beacon visit
             // unless the Flagship was already jumping toward this beacon.
