@@ -706,3 +706,10 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - The exact enemy escape-timer behavior for `REBEL_FLEET_FUEL` is not yet modeled in CombatRuntime; do not claim this sub-behavior complete.
 - Commit `e9e0681c67187a083ac861b5d181b511e3c16dd1` implements the no-fuel ship selection/reward path; commit `d1987b96a34e9d9b177bf0499bd32fec7f9830a1` adds real-data regression coverage.
 - Host #1122 and Vita #814 both succeeded for `d1987b96a34e9d9b177bf0499bd32fec7f9830a1`.
+
+
+## Rebel Fleet escape timer — 2026-09-30
+- Direct ftl.dat inspection confirms REBEL_FLEET_FUEL uses an 80-second escape timer; the wiki documentation independently describes the no-fuel Rebel fight as an 80-second countdown. citeturn1search0
+- CombatRuntime now starts that timer immediately for REBEL_FLEET_FUEL and exposes a distinct EnemyEscaped outcome when it expires.
+- main_game now returns to the sector map without a fuel reward when the fleet ship escapes.
+- Host #1126 and Vita #818 both succeeded for commit 35bf1577da996ed5e6aff60eb0655ea94bdfce0b.
