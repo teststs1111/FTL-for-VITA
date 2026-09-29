@@ -99,7 +99,6 @@ void collectCrew(const bxml::Node& node, std::vector<CrewBlueprint>& crew) {
         crew.push_back(std::move(member));
     }
     for (const auto& c : node.children) collectCrew(c, crew);
-}
 
 bool parseShipBlueprint(const bxml::Node& node, ShipBlueprint& out) {
     if (node.name != "shipBlueprint" && node.name != "ship") return false;
