@@ -635,3 +635,13 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Regression coverage was added for parsing `amount=2, max=5, class=rock`.
 - Latest implementation commit: `32375a5e8864b0f3760470e74d5516f79cd7a241`.
 - GitHub status/workflow lookup for this exact commit currently reports no status records or workflow runs, so build verification is pending; do not mark green.
+
+
+### Enemy-generation implementation restoration — 2026-09-29
+
+- Reinspection found an important repository-state discrepancy: the previous handoff entry described `loadEnemyShip()` as implemented, but the current `src/game/ship_content.cpp` actually contained only the declaration's call path and no method definition. The enemy-generation helper implementation was therefore not present in the current tree.
+- Restored the enemy generation implementation in the actual runtime source file `src/game/ship_content.cpp`: sector/difficulty system generation, reactor reconstruction, crew-count generation, weapon generation constraints/flags, and unique drone selection.
+- Corrected the crew progression mapping while restoring it: Easy sector 1 maps to progression sector 0; Normal/Hard sector 1 maps to progression sector 1.
+- The implementation is still formula-level/reverse-engineered rather than byte-for-byte vanilla: exact RNG sequence, crew race overrides, crew room assignment, and some budget edge cases remain to be verified.
+- Latest restoration commit: `5578d577dc6d93e475b96026cb2aa1a4a3a5bc58`.
+- GitHub status/workflow lookup for this exact commit currently reports no status records or workflow runs. Build verification therefore remains pending.
