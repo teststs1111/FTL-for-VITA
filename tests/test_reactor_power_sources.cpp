@@ -621,7 +621,13 @@ int main() {
         dd1.powered = true;
         dd1.active = true;
         defense.drones.push_back(dd1);
-        assert(defense.interceptWeaponWithDefenseDrone(0));
+        // Defense Drone interception is a 90% roll. Retry the same projectile
+        // until the success path is observed so this regression does not depend on
+        // a single random draw. The runtime probability remains unchanged.
+        bool intercepted = false;
+        for (int attempt = 0; attempt < 256 && !intercepted; ++attempt)
+            intercepted = defense.interceptWeaponWithDefenseDrone(0);
+        assert(intercepted);
         assert(!defense.drones[0].active);
 
         // The real volley path must perform the same interception per projectile.
