@@ -1161,8 +1161,13 @@ public:
         }
         if (!resolvedEnemyId.empty()) {
             const unsigned loadoutSeed = static_cast<unsigned>(rollEventRange(0, 0x7fffffff, 0xAB710002u));
-        if (!content_.loadEnemyShip(resolvedEnemyId, enemyShip, sector_ + 1, static_cast<int>(difficulty_), loadoutSeed,
-                                            "data/blueprints.xml", currentSectorType_, crewOverride) || enemyShip.blueprint.id.empty()) {
+            const auto* effectiveOverride =
+                (crewOverride && !crewOverride->empty())
+                    ? crewOverride : eventDatabase_.findCrewOverride(resolvedEnemyId);
+            if (!content_.loadEnemyShip(resolvedEnemyId, enemyShip, sector_ + 1,
+                                        static_cast<int>(difficulty_), loadoutSeed,
+                                        "data/blueprints.xml", currentSectorType_,
+                                        effectiveOverride) || enemyShip.blueprint.id.empty()) {
                 combatFeedback_ = "敵艦の読み込みに失敗";
                 combatFeedbackTimer_ = 2.0f;
                 return;
