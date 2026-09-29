@@ -624,3 +624,14 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - The test include corruption from the previous edit was separately fixed in fa8577ac505fc43323b5c79c0a595897b5dc8d89.
 - GitHub workflow lookup for these commits currently returns no run records, so build success remains **unverified**; do not treat this as CI-green.
 - Exact vanilla RNG sequence is still provisional; this pass improves generation constraints without claiming byte-for-byte RNG equivalence.
+
+
+### Enemy crew-count generation — 2026-09-29
+
+- Canonical FTL ship blueprints use `<crewCount amount="N" max="M" class="race"/>` for enemy crew ranges; `max` is optional and defaults to `amount`.
+- `CrewBlueprint` now preserves per-entry minimum/maximum counts instead of expanding a `crewCount` into fixed members. `ShipBlueprint` aggregates these into `minCrew` / `maxCrew`.
+- `ShipContent::loadEnemyShip()` now generates the enemy crew count from the documented sector progression: minimum-to-maximum interpolation across progression sectors 1..9, rounded down, with Easy delayed by one sector. When no event crew override is present, the first blueprint crew race is used as the default race.
+- This is a verified formula-level implementation from the reverse-engineering reference, but crew-override proportions, race distribution, room placement, and exact RNG/name/room assignment are still incomplete.
+- Regression coverage was added for parsing `amount=2, max=5, class=rock`.
+- Latest implementation commit: `32375a5e8864b0f3760470e74d5516f79cd7a241`.
+- GitHub status/workflow lookup for this exact commit currently reports no status records or workflow runs, so build verification is pending; do not mark green.
