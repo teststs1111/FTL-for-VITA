@@ -6,6 +6,7 @@
 #include <string>
 
 
+namespace wormhole {
 namespace {
 
 unsigned enemyNextRandom(unsigned& rng) {
@@ -137,8 +138,6 @@ void generateEnemySystems(ShipBlueprint& ship, int sector, int difficulty, unsig
 }
 
 } // namespace
-
-namespace wormhole {
 
 bool ShipContent::open(const std::string& archivePath) {
     loaded_ = false;
