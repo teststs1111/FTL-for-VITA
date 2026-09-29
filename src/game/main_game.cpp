@@ -2687,6 +2687,17 @@ public:
                     visitedBeacons_++;
                     sceneMode_ = SceneMode::SectorMap;
                 }
+            } else if (combat_.outcome == CombatOutcome::EnemyEscaped) {
+                runtime_ = combat_.player;
+                if (rebelFleetEncounter_) {
+                    rebelFleetEncounter_ = false;
+                    rebelFleetFuelEncounter_ = false;
+                }
+                combatFeedback_ = "反乱軍艦が逃走した";
+                combatFeedbackTimer_ = 2.0f;
+                combatMode_ = false;
+                visitedBeacons_++;
+                sceneMode_ = SceneMode::SectorMap;
             } else if (combat_.outcome == CombatOutcome::PlayerDestroyed) {
                 combatMode_ = false;
                 sceneMode_ = SceneMode::GameOver;
