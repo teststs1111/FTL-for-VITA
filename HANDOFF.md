@@ -721,3 +721,9 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Combat jump charging now advances from the actual frame delta instead of assuming 60 FPS.
 - Commit: 1b2bb37db94dc2309cc23c4b830d40802dd92cc5.
 - Host #1129 and Vita #821 both succeeded.
+
+## Rebel Fleet no-fuel arrival timer correction — 2026-09-30
+- The canonical no-fuel fleet fight reached by jumping to a beacon with the last fuel uses a 90-second enemy escape timer; the 80-second timer applies to the separate no-fuel WAIT path. This distinction is documented in the FTL environmental/enemy escape behavior. citeturn2search0turn2search4
+- Corrected CombatRuntime so the canonical REBEL_FLEET_FUEL encounter used by the current arrival path starts at 90 seconds instead of 80.
+- Commit: 2fb7026dd2efa8358789e11a457b638057dc645c.
+- Host #1131 and Vita #823 both succeeded.
