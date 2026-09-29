@@ -145,6 +145,12 @@ int main() {
     assert(content.blueprints().findBlueprintList("WEAPONS_MISSILES") != nullptr);
     wormhole::LoadedShip autoBasic;
     assert(content.loadShip("AUTO_BASIC", autoBasic, "data/blueprints.xml", 12345u));
+    // AE overwrite lists replace the base list under its canonical name;
+    // OVERRIDE_* is an input-file convention, not a runtime list ID.
+    content.setAdvancedEdition(true);
+    assert(content.loadShip("AUTO_BASIC", autoBasic, "data/blueprints.xml", 12345u));
+    assert(content.blueprints().findBlueprintList("SHIPS_REBEL") != nullptr);
+    assert(content.blueprints().findBlueprintList("OVERRIDE_SHIPS_REBEL") == nullptr);
     assert(autoBasic.blueprint.weaponLoadList == "WEAPONS_AUTO");
     assert(!autoBasic.initialWeaponBlueprints.empty());
     int autoWeaponPower = 0;
