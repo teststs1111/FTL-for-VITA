@@ -534,7 +534,7 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - `ShipContent::loadShip()` now resolves enemy weapon/drone load lists into concrete blueprints, selecting entries that fit the available system power and preserving duplicate entries as valid random choices.
 - Enemy loadout generation accepts an encounter seed; combat now derives that seed from the existing encounter RNG rather than using a separate RNG source.
 - Added a real-`ftl.dat` regression check for `AUTO_BASIC` and its `WEAPONS_AUTO` loadout.
-- This is the first step toward the full vanilla enemy-generation model. Current loadout generation now matches the documented no-repeat random selection behavior, while the larger remaining gap is the sector/difficulty-based system generation that determines each enemy's rolled system levels before weapon/drone loadout generation.
+- This is the first step toward the full vanilla enemy-generation model. Current loadout generation samples each slot independently from the remaining-power-compatible canonical pool; duplicate blueprint selections are allowed. The larger remaining gap is the sector/difficulty-based system generation that determines each enemy's rolled system levels before weapon/drone loadout generation.
 - Relevant commits: `5c0b52e`, `a270319`, `b605e95`, `d36d30a`, `5d21910`.
 
 
@@ -572,3 +572,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Commits: `0b24e22e`, `2591be61`, `70df5f28`.
 - This is deliberately a data-model step only. The actual vanilla sector/difficulty system-power generation is not being guessed yet; public reverse-engineering discussion indicates those power allowances are generated internally, with system `power/max` and reactor caps participating in that process. citeturn0search0turn0search4
 - Next: model the sector-aware enemy system-power roll from verified behavior, then feed that rolled power into weapon/drone generation instead of always using the blueprint's starting `power` values.
+
+
+## Enemy auto-loadout duplicate-selection implementation correction — 2026-09-29
+
+- The main branch was rechecked against the actual implementation: the earlier no-repeat filter was still present despite the previous HANDOFF note claiming it had been removed.
+- Commit `c140786ae56d8a5070f59b08ad22b79e44167212` removes that filter for both generated enemy weapons and drones.
+- Each generated slot now samples from the canonical list independently, subject to the remaining system-power budget and declared `count`.
+- This restores the intended duplicate-capable loadout model without changing the canonical `ftl.dat` data or introducing a separate DLC mechanism.
+- Exact vanilla RNG ordering and sector-based power generation remain separate unresolved fidelity items; they are not being guessed in this correction.
