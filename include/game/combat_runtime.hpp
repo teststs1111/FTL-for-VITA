@@ -7,7 +7,7 @@
 
 namespace wormhole {
 
-enum class CombatOutcome { Ongoing, PlayerDestroyed, EnemyDestroyed };
+enum class CombatOutcome { Ongoing, PlayerDestroyed, EnemyDestroyed, EnemyEscaped };
 enum class CombatEnvironment { None, Asteroid, Sun, PlasmaStorm, PDSPlayer, PDSEnemy };
 
 // Vanilla Rebel Fleet environment selection. Difficulty is explicit so the
@@ -100,6 +100,7 @@ private:
     CombatResult lastImpactResult_{};
     bool hasImpactResult_{false};
     float enemyFireDelay_{0.0f};
+    float enemyEscapeTimer_{0.0f};
     std::uint32_t randomState_{0x6D2B79F5u};
     float boardingTimer_{0.0f};
     float boardingFightTimer_{0.0f};
