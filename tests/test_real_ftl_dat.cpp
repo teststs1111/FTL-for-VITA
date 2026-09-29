@@ -8,7 +8,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <string>
-#include <vector>
+#include <vector>\n#include <set>
 
 int main() {
     const char* env = std::getenv("FTL_DAT_PATH");
@@ -187,6 +187,21 @@ int main() {
     assert(content.blueprints().findBlueprintList("WEAPONS_MISSILES") != nullptr);
     wormhole::LoadedShip autoBasic;
     assert(content.loadShip("AUTO_BASIC", autoBasic, "data/blueprints.xml", 12345u));
+    wormhole::LoadedShip generatedEnemy;
+    assert(content.loadEnemyShip("AUTO_BASIC", generatedEnemy, 5, 1, 12345u));
+    int generatedReactor = 0;
+    std::set<std::string> generatedWeapons;
+    std::set<std::string> generatedDrones;
+    for (const auto& system : generatedEnemy.blueprint.systems) {
+        assert(system.startingPower >= 0);
+        assert(system.startingPower <= system.maxPower);
+        if (system.availableByDefault) generatedReactor += system.startingPower;
+    }
+    for (const auto& weapon : generatedEnemy.blueprint.initialWeapons)
+        assert(generatedWeapons.insert(weapon).second);
+    for (const auto& drone : generatedEnemy.blueprint.initialDrones)
+        assert(generatedDrones.insert(drone).second);
+    assert(generatedEnemy.blueprint.startingReactorPower == generatedReactor);
     // AE overwrite lists replace the base list under its canonical name;
     // OVERRIDE_* is an input-file convention, not a runtime list ID.
     content.setAdvancedEdition(true);
