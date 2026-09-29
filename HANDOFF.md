@@ -543,3 +543,9 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Added `weaponListCount` and `droneListCount` fields and made the parser stop at the declared count. A regression test covers a two-entry weapon list with `count="1"` and verifies only the first entry is loaded.
 - Commits: `caa527b54312ab97466a941b4e4f4238639defa6`, `9214246c6bc976a6bba5e04576cd3d7bb937d465`, `75c3f3ffa009adabb1c89cf6bfbeeca0100b0c4d`.
 - Next focus remains vanilla enemy loadout generation and the remaining canonical `ftl.dat` data consumers; no separate DLC archive mechanism is being introduced.
+## Enemy load-list count semantics — 2026-09-29
+- Enemy `weaponList load="..."` / `droneList load="..."` can specify an explicit `count`; when present, that count limits how many entries are drafted from the referenced autoBlueprint list.
+- The runtime now uses `weaponListCount` / `droneListCount` for generated enemy loadouts, falling back to the ship's weapon/drone slot count when the attribute is omitted.
+- This follows the documented FTL modding behavior that `count` controls the number drafted from a load list; the canonical `ftl.dat` data remains the source of truth and no separate DLC archive mechanism is introduced.
+- Commits: `8ed2742a201e2b2dba76aef84e979dd91d10faa3`, `0adaa8345e7f5c8c530ce0b39addaebf65920a80`.
+- Next focus: verify the remaining enemy loadout-selection details against canonical data before implementing any sector/difficulty scaling logic.
