@@ -372,6 +372,10 @@ void EventDatabase::collectEvents(const bxml::Node& node) {
                 else if (child.name == "deadCrew")
                     deadCrewOutcomes_[nameIt->second] = parseShipOutcome(child);
             }
+            std::vector<CrewOverrideEntry> entries;
+            parseCrewOverride(node, entries);
+            if (!entries.empty())
+                crewOverrides_[nameIt->second] = std::move(entries);
         }
     }
     if (node.name == "event") {
