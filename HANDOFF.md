@@ -604,3 +604,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Flagship loading remains on its dedicated path and was not routed through normal enemy generation.
 - Commits for this step: 3a0537af72cc0e4bf0f206a7ced48f6b309932c1, a29aaac2f36ae214437e728df7b272b04d93443a, 0240bb503b4eae713ccabd9fac0289c87bfab225, 3278e2bb3e8238213ad3413bda9c527884cfb1fc, 4d964a8fcacdb3bdaefc6a808abd0e31280687a2.
 - Latest commit currently has no reported combined status in the connected GitHub status response; treat build verification as pending rather than green.
+
+
+## Enemy generation correction pass — 2026-09-29
+
+- Rechecked the enemy-generation implementation after integration and corrected several implementation issues before treating it as usable: restored the generation helper in the correct namespace, fixed malformed include formatting, separated rolled system maximums from canonical hard caps, and aligned weapon/drone duplicate handling with the reverse-engineered rules currently being used.
+- Enemy weapons may repeat; enemy drones are filtered to unique blueprints. Weapon generation now applies the documented power restrictions: weapon power must fit remaining weapon-system power, non-1-power weapons must be below total system power, each selection must consume more than 25% of the remaining power, and when the weapon system is at least level 3 the first generated weapon must be at least 2 power when such a candidate exists.
+- The generated system budget no longer upgrades past the rolled per-system maximum merely because the canonical blueprint max is higher.
+- Latest commits: 88d30e73f2fb11f3b955db6feac62f9d8bb61530, d0ab18b2f6dac0aa2613e91c19d61af7fbc29061, add417523663081d06bb70af404480e7b5776956.
+- Connected GitHub workflow lookup currently returns no workflow runs for the latest commit, so build status remains unverified; do not mark green yet.
