@@ -104,6 +104,8 @@ bool parseShipBlueprint(const bxml::Node& node, ShipBlueprint& out) {
     if (out.name.empty()) out.name = attribute(node, "name");
     out.layout = attribute(node, "layout");
     out.image = attribute(node, "img");
+    out.minSector = integer(node, "minSector", 1);
+    out.maxSector = integer(node, "maxSector", 8);
 
     if (const auto* layout = child(node, "layout")) {
         if (out.layout.empty()) out.layout = attribute(*layout, "name");
