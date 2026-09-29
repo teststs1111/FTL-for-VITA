@@ -63,7 +63,9 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
     if (!out.blueprint.weaponLoadList.empty() && out.blueprint.initialWeapons.empty()) {
         if (const auto* list = database_.findBlueprintList(out.blueprint.weaponLoadList)) {
             int remaining = systemPower("weapons");
-            const int slots = out.blueprint.weaponListCount >= 0\n                ? out.blueprint.weaponListCount\n                : (out.blueprint.weaponSlots > 0 ? out.blueprint.weaponSlots : 4);
+            const int slots = out.blueprint.weaponListCount >= 0
+                ? out.blueprint.weaponListCount
+                : (out.blueprint.weaponSlots > 0 ? out.blueprint.weaponSlots : 4);
             // Vanilla chooses each random weapon from the list without
             // repeating an already selected blueprint. Duplicate entries in
             // autoBlueprints.xml remain intentional weights.
@@ -93,7 +95,9 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
     if (!out.blueprint.droneLoadList.empty() && out.blueprint.initialDrones.empty()) {
         if (const auto* list = database_.findBlueprintList(out.blueprint.droneLoadList)) {
             int remaining = systemPower("drones");
-            const int slots = out.blueprint.droneListCount >= 0\n                ? out.blueprint.droneListCount\n                : (out.blueprint.droneSlots > 0 ? out.blueprint.droneSlots : 2);
+            const int slots = out.blueprint.droneListCount >= 0
+                ? out.blueprint.droneListCount
+                : (out.blueprint.droneSlots > 0 ? out.blueprint.droneSlots : 2);
             // Drone loadouts follow the same no-repeat selection rule.
             std::vector<std::string> selectedDrones;
             for (int slot = 0; slot < slots && remaining > 0; ++slot) {
