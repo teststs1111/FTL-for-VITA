@@ -352,7 +352,7 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
             int roll = static_cast<int>(enemyRandom(state) % static_cast<std::uint32_t>(totalWeight));
             for (std::size_t i = 0; i < size; ++i) {
                 roll -= std::max(1, 6 - table[i].rarity);
-                if (roll < 0) return table[i].race;
+                if (roll < 0) return std::string(table[i].race);
             }
             return table[size - 1].race;
         };
