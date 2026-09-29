@@ -36,6 +36,25 @@ static const bxml::Node* crewChild(const bxml::Node& node, const std::string& na
     return nullptr;
 }
 
+static void parseCrewOverride(const bxml::Node& ship, std::vector<CrewOverrideEntry>& out) {
+    const auto* crew = crewChild(ship, "crew");
+    if (!crew) return;
+    for (const auto& member : crew->children) {
+        if (member.name != "crewMember") continue;
+        std::string race;
+        if (auto it = member.attributes.find("type"); it != member.attributes.end()) race = it->second;
+        else if (auto it = member.attributes.find("class"); it != member.attributes.end()) race = it->second;
+        if (race.empty()) continue;
+        double prop = 0.0;
+        if (auto it = member.attributes.find("prop"); it != member.attributes.end()) {
+            try { prop = std::stod(it->second); } catch (...) { prop = 0.0; }
+        } else if (auto it = member.attributes.find("amount"); it != member.attributes.end()) {
+            try { prop = -static_cast<double>(std::stoi(it->second)); } catch (...) { prop = 0.0; }
+        }
+        out.push_back({race, prop});
+    }
+}
+
 static std::string crewNodeText(const bxml::Node& node) {
     if (!node.text.empty()) return node.text;
     for (const auto& c : node.children) if (c.name == "text" && !c.text.empty()) return c.text;
@@ -176,6 +195,7 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
             event.hostileShipId = autoBlueprint->second;
         else if (name != ship->attributes.end())
             event.hostileShipId = name->second;
+        parseCrewOverride(*ship, event.crewOverride);
     }
     if (const auto* quest = child(node, "quest")) {
         const auto target = quest->attributes.find("event");
@@ -250,6 +270,7 @@ void EventDatabase::addEvent(const bxml::Node& node, const std::string& id) {
                     choice.hostileShipId = autoBlueprint->second;
                 else if (name != ship->attributes.end())
                     choice.hostileShipId = name->second;
+                parseCrewOverride(*ship, choice.crewOverride);
             }
             if (const auto* quest = child(*e, "quest")) {
                 const auto target = quest->attributes.find("event");
