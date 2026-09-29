@@ -1236,11 +1236,16 @@ public:
             "REBEL_SKINNY_ELITE", "REBEL_SKINNY_ELITE_DLC",
             "REBEL_FIGHTER", "REBEL_SCOUT", "REBEL_ELITE"
         };
+        const bool noFuelFleetEncounter = fuel_ <= 0;
         std::string rebelShipId;
-        for (const char* preferredId : preferred) {
-            if (content_.blueprints().findShip(preferredId)) {
-                rebelShipId = preferredId;
-                break;
+        if (noFuelFleetEncounter && content_.blueprints().findShip("REBEL_FLEET_FUEL")) {
+            rebelShipId = "REBEL_FLEET_FUEL";
+        } else {
+            for (const char* preferredId : preferred) {
+                if (content_.blueprints().findShip(preferredId)) {
+                    rebelShipId = preferredId;
+                    break;
+                }
             }
         }
         if (rebelShipId.empty()) {
@@ -1268,7 +1273,10 @@ public:
         pendingEnvironment_ = selectRebelFleetEnvironment(
             nebulaBeacon, exitBeacon, easyMode);
         rebelFleetEncounter_ = true;
-        combatFeedback_ = "反乱軍艦隊と遭遇";
+        rebelFleetFuelEncounter_ = noFuelFleetEncounter;
+        combatFeedback_ = noFuelFleetEncounter
+            ? "燃料切れで反乱軍艦隊に捕捉された"
+            : "反乱軍艦隊と遭遇";
         combatFeedbackTimer_ = 1.5f;
         enterCombatFromBeacon(rebelShipId);
     }
@@ -2640,12 +2648,16 @@ public:
                 const bool defeatedByCrew = combat_.enemyDefeatedByCrewDamage();
                 if (rebelFleetEncounter_) {
                     // Rebel-controlled beacons replace their normal event and
-                    // encounter rewards. The supplied FTL data uses the Elite
-                    // Fighter encounter and the vanilla reward is one fuel.
-                    fuel_ = std::min(99, fuel_ + 1);
-                    combatFeedback_ = "反乱軍エリート艦撃破：燃料+1";
+                    // The canonical data uses a distinct no-fuel fleet ship
+                    // with a 2-4 fuel reward; ordinary captured-beacon fights
+                    // award one fuel.
+                    const int fuelReward = rebelFleetFuelEncounter_
+                        ? 2 + static_cast<int>(seed_ % 3u) : 1;
+                    fuel_ = std::min(99, fuel_ + fuelReward);
+                    combatFeedback_ = "反乱軍艦隊撃破：燃料+" + std::to_string(fuelReward);
                     combatFeedbackTimer_ = 1.8f;
                     rebelFleetEncounter_ = false;
+                    rebelFleetFuelEncounter_ = false;
                 } else if (const auto* outcome = eventDatabase_.findShipOutcome(
                         combat_.enemy.content.blueprint.id, defeatedByCrew)) {
                     applyShipOutcome(*outcome);
@@ -3564,6 +3576,7 @@ private:
     bool mapRevealed_{false};
     bool secretSectorPending_{false};
     bool rebelFleetEncounter_{false};
+    bool rebelFleetFuelEncounter_{false};
     int flagshipNode_{-1};
     int flagshipBaseNode_{-1};
     int flagshipRouteIndex_{0};
