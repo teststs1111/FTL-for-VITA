@@ -683,3 +683,9 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Relevant commits: 4ba96ef1, 8bdc9448, 20e32989, 866bca09, a851450b, 8fd0f3c, f354a4d2, 708c33ca, 1baee44c, 06d2a855.
 - Remaining caveat: the exact executable RNG sequence for race selection is not established; the current implementation follows the documented rarity-based model rather than claiming byte-for-byte RNG equivalence.
 - GitHub Actions currently has no associated run records for these new commits, so this change is not yet CI-verified.
+
+
+## Build stabilization checkpoint — 2026-09-30
+- Commit 8710e22e59eb9a043a4b95d949ff0c660e60098e fixed the ship blueprint parser linkage scope: helper functions remain in the anonymous namespace while parseShipBlueprint/parseLayoutBlueprint are exported in namespace wormhole.
+- Host #1118 and Vita #810 both completed successfully, including Host tests and Vita VPK packaging.
+- The preceding 3cf009c3 build failure was a linker error for parseShipBlueprint; this checkpoint records the concrete correction and verified green state.
