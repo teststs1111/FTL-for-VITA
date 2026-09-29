@@ -653,3 +653,16 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - The implementation is still formula-level/reverse-engineered rather than byte-for-byte vanilla: exact RNG sequence, crew race overrides, crew room assignment, and some budget edge cases remain to be verified.
 - Latest restoration commit: `5578d577dc6d93e475b96026cb2aa1a4a3a5bc58`.
 - GitHub status/workflow lookup for this exact commit currently reports no status records or workflow runs. Build verification therefore remains pending.
+
+
+## Enemy crew fidelity — 2026-09-29
+
+- Directly inspected the Library ftl.dat and parsed its PKG table.
+- Confirmed real enemy blueprint data contains class="random" for pirate crews, including REBEL_FAT_P.
+- Confirmed real event ship definitions contain fixed and proportional crew overrides.
+- Implemented CrewOverrideEntry and event/ship-level override parsing.
+- Enemy generation now uses event/ship overrides when present, defaults to the first blueprint race otherwise, and resolves pirate random into a sector-dependent crew race instead of exposing random as a runtime race.
+- The actual sector type is now passed into enemy generation.
+- Relevant commits: 4ba96ef1, 8bdc9448, 20e32989, 866bca09, a851450b, 8fd0f3c, f354a4d2, 708c33ca, 1baee44c, 06d2a855.
+- Remaining caveat: the exact executable RNG sequence for race selection is not established; the current implementation follows the documented rarity-based model rather than claiming byte-for-byte RNG equivalence.
+- GitHub Actions currently has no associated run records for these new commits, so this change is not yet CI-verified.
