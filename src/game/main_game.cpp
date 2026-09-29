@@ -2650,7 +2650,7 @@ public:
                 combatFeedbackTimer_ = 1.4f;
             }
             combatFeedbackTimer_ = std::max(0.0f, combatFeedbackTimer_ - dt);
-            updateCombat();
+            updateCombat(dt);
             if (combat_.outcome == CombatOutcome::EnemyDestroyed) {
                 // Persist all combat-side changes, not just hull damage:
                 // systems, crew, weapons, missiles, shields, fires and breaches
@@ -2780,7 +2780,7 @@ public:
         }
     }
 
-    void updateCombat() {
+    void updateCombat(float dt) {
         if (!combat_.enemy.valid || combat_.enemy.content.layout.rooms.empty()) {
             combatMode_ = false;
             return;
