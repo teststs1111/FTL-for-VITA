@@ -1,4 +1,5 @@
 #include "data/asset_store.hpp"
+#include "data/bxml.hpp"
 #include "data/event_database.hpp"
 #include "data/ftl_dat.hpp"
 #include "data/sector_database.hpp"
@@ -129,6 +130,25 @@ int main() {
 
     wormhole::ShipContent content;
     assert(content.open(env));
+    // FTL's fixed weapon/drone lists honor the explicit count attribute;
+    // entries beyond count are not loaded.
+    wormhole::bxml::Node countedShip;
+    countedShip.name = "shipBlueprint";
+    countedShip.attributes["name"] = "COUNTED_TEST";
+    countedShip.attributes["layout"] = "dummy";
+    wormhole::bxml::Node countedWeapons;
+    countedWeapons.name = "weaponList";
+    countedWeapons.attributes["count"] = "1";
+    wormhole::bxml::Node weaponA; weaponA.name = "weapon"; weaponA.attributes["name"] = "LASER_BURST_1";
+    wormhole::bxml::Node weaponB; weaponB.name = "weapon"; weaponB.attributes["name"] = "LASER_BURST_2";
+    countedWeapons.children = {weaponA, weaponB};
+    countedShip.children.push_back(countedWeapons);
+    wormhole::ShipBlueprint countedBlueprint;
+    assert(wormhole::parseShipBlueprint(countedShip, countedBlueprint));
+    assert(countedBlueprint.weaponListCount == 1);
+    assert(countedBlueprint.initialWeapons.size() == 1);
+    assert(countedBlueprint.initialWeapons.front() == "LASER_BURST_1");
+
     content.setAdvancedEdition(false);
     assert(content.loadPlayerShip());
     assert(content.playerShip()->blueprint.id == "PLAYER_SHIP_HARD");
