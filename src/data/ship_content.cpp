@@ -66,22 +66,18 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
             const int slots = out.blueprint.weaponListCount >= 0
                 ? out.blueprint.weaponListCount
                 : (out.blueprint.weaponSlots > 0 ? out.blueprint.weaponSlots : 4);
-            // Vanilla chooses each random weapon from the list without
-            // repeating an already selected blueprint. Duplicate entries in
-            // autoBlueprints.xml remain intentional weights.
-            std::vector<std::string> selectedWeapons;
+            // Each generated slot samples the canonical pool independently.
+            // Duplicate blueprint selections are valid; duplicate entries in
+            // autoBlueprints.xml remain intentional additional weight.
             for (int slot = 0; slot < slots && remaining > 0; ++slot) {
                 std::vector<std::string> candidates;
                 for (const auto& id : *list) {
-                    if (std::find(selectedWeapons.begin(), selectedWeapons.end(), id) != selectedWeapons.end())
-                        continue;
                     if (const auto* weapon = database_.findWeapon(id);
                         weapon && weapon->power > 0 && weapon->power <= remaining)
                         candidates.push_back(id);
                 }
                 if (candidates.empty()) break;
                 const auto& selected = candidates[nextRandom() % candidates.size()];
-                selectedWeapons.push_back(selected);
                 out.blueprint.initialWeapons.push_back(selected);
                 remaining -= database_.findWeapon(selected)->power;
             }
@@ -98,20 +94,17 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
             const int slots = out.blueprint.droneListCount >= 0
                 ? out.blueprint.droneListCount
                 : (out.blueprint.droneSlots > 0 ? out.blueprint.droneSlots : 2);
-            // Drone loadouts follow the same no-repeat selection rule.
-            std::vector<std::string> selectedDrones;
+            // Drone slots also sample independently; repeated blueprint
+            // selections are not filtered here.
             for (int slot = 0; slot < slots && remaining > 0; ++slot) {
                 std::vector<std::string> candidates;
                 for (const auto& id : *list) {
-                    if (std::find(selectedDrones.begin(), selectedDrones.end(), id) != selectedDrones.end())
-                        continue;
                     if (const auto* drone = database_.findDrone(id);
                         drone && drone->power > 0 && drone->power <= remaining)
                         candidates.push_back(id);
                 }
                 if (candidates.empty()) break;
                 const auto& selected = candidates[nextRandom() % candidates.size()];
-                selectedDrones.push_back(selected);
                 out.blueprint.initialDrones.push_back(selected);
                 remaining -= database_.findDrone(selected)->power;
             }
