@@ -223,6 +223,17 @@ int main() {
         if (crew.race == "engi") ++engiCount;
     }
     assert(mantisCount == 3 && engiCount == 1);
+
+    // A zero generated crew count must not be inflated by a proportional
+    // override entry.
+    const std::vector<wormhole::CrewOverrideEntry> zeroOverride = {
+        {"mantis", 0.20}
+    };
+    wormhole::LoadedShip zeroCrewEnemy;
+    assert(content.loadEnemyShip("MANTIS_FIGHTER", zeroCrewEnemy, 1, 0, 97531u,
+                                 "data/blueprints.xml", "MANTIS_SECTOR", &zeroOverride));
+    assert(zeroCrewEnemy.blueprint.crew.empty());
+
     int generatedReactor = 0;
     std::set<std::string> generatedDrones;
     for (const auto& system : generatedEnemy.blueprint.systems) {
