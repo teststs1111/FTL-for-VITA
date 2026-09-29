@@ -363,7 +363,10 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
             if (overrideEntry.race.empty()) continue;
             int amount = 0;
             if (overrideEntry.proportion > 0.0) {
-                amount = std::max(1, static_cast<int>(overrideEntry.proportion * count));
+                // Proportional overrides must never create crew beyond the
+                // generated count. In particular, a zero-count ship must
+                // remain empty rather than gaining one crew member.
+                amount = std::max(0, static_cast<int>(overrideEntry.proportion * count));
             } else {
                 amount = std::max(0, static_cast<int>(-overrideEntry.proportion));
             }
