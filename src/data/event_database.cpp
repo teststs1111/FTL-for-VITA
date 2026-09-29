@@ -415,6 +415,11 @@ const EventShipOutcome* EventDatabase::findShipOutcome(const std::string& shipId
     return it == outcomes.end() ? nullptr : &it->second;
 }
 
+const std::vector<CrewOverrideEntry>* EventDatabase::findCrewOverride(const std::string& shipId) const {
+    const auto it = crewOverrides_.find(shipId);
+    return it == crewOverrides_.end() ? nullptr : &it->second;
+}
+
 const EventDefinition* EventDatabase::resolve(const std::string& id, std::uint32_t seed) const {
     if (const auto* direct = find(id)) return direct;
     const auto it = eventPools_.find(id);
@@ -438,6 +443,7 @@ bool EventDatabase::load() {
     eventPools_.clear();
     destroyedOutcomes_.clear();
     deadCrewOutcomes_.clear();
+    crewOverrides_.clear();
 
     replacingPools_ = false;
     replacingEvents_ = false;
