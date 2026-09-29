@@ -22,6 +22,7 @@ struct LayoutBlueprint {
 
 struct SystemSlotBlueprint { std::string system; int room{-1}; int level{0}; int startingPower{0}; int minPower{0}; int maxPower{0}; bool availableByDefault{true}; bool optional{false}; };
 struct CrewBlueprint { std::string race; std::string name; int room{-1}; int minCount{1}; int maxCount{1}; };
+struct CrewOverrideEntry { std::string race; double proportion{0.0}; };
 
 struct WeaponBlueprint {
     std::string name;
