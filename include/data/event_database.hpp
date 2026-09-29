@@ -148,6 +148,7 @@ public:
     const EventDefinition* find(const std::string& id) const;
     const EventDefinition* resolve(const std::string& id, std::uint32_t seed) const;
     const EventShipOutcome* findShipOutcome(const std::string& shipId, bool deadCrew) const;
+    const std::vector<CrewOverrideEntry>* findCrewOverride(const std::string& shipId) const;
     enum class BeaconType { Empty, Hostile, Store, Distress, Quest, Exit };
     BeaconType classify(const std::string& id) const;
     const EventDefinition* firstUsable() const;
@@ -170,6 +171,7 @@ private:
     std::unordered_map<std::string, EventPool> eventPools_;
     std::unordered_map<std::string, EventShipOutcome> destroyedOutcomes_;
     std::unordered_map<std::string, EventShipOutcome> deadCrewOutcomes_;
+    std::unordered_map<std::string, std::vector<CrewOverrideEntry>> crewOverrides_;
     std::vector<std::string> order_;
     bool advancedEdition_{true};
     bool replacingPools_{false};
