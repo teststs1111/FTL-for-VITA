@@ -200,6 +200,11 @@ int main() {
     assert(content.blueprints().findBlueprintList("WEAPONS_MISSILES") != nullptr);
     wormhole::LoadedShip autoBasic;
     assert(content.loadShip("AUTO_BASIC", autoBasic, "data/blueprints.xml", 12345u));
+    wormhole::LoadedShip fleetFuel;
+    assert(content.loadShip("REBEL_FLEET_FUEL", fleetFuel));
+    assert(fleetFuel.blueprint.id == "REBEL_FLEET_FUEL");
+    assert(fleetFuel.blueprint.maxHealth > 0);
+
     wormhole::LoadedShip generatedEnemy;
     assert(content.loadEnemyShip("AUTO_BASIC", generatedEnemy, 5, 1, 12345u));
 
