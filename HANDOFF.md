@@ -591,3 +591,16 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Reverse-engineering reference confirms enemy generation is a multi-stage process: system maxima are rolled by sector/difficulty, optional systems are installed probabilistically, then offensive/defensive/general budgets upgrade systems, followed by weapon/drone generation. The documented budget/weapon restrictions will be implemented only where they can be tied cleanly to the existing runtime/data model. citeturn1reddit10turn0search0
 - Latest implementation commit: `78cbe92223c341745299cd39a3af72e6497de713`.
 - Host run `36520731918` and Vita run `36520731913` are currently queued for that commit; do not mark this change green until both complete successfully.
+
+
+## Enemy sector/difficulty generation integration — 2026-09-29
+
+- Implemented a dedicated ShipContent::loadEnemyShip() path so normal enemy encounters no longer use the player's/static loadShip() path for final enemy system/loadout generation.
+- Enemy system generation now uses the documented reverse-engineered sequence: effective sector (Easy delay), rolled system maxima from blueprint min/max, optional-system installation chance, offensive/defensive/general budgets, then enemy weapon/drone generation.
+- Difficulty is passed from MainGame into enemy generation; sector is passed as the 1-based gameplay sector.
+- The generated reactor budget is rebuilt from the installed system power before loadout generation.
+- Enemy weapons/drones are regenerated after system generation, with load-list count and remaining-power restrictions applied. The current no-repeat behavior is intentionally treated as provisional until the exact vanilla duplicate/RNG behavior is verified; do not call it byte-for-byte equivalent.
+- Added real-archive regression coverage for generated system bounds, reactor sum, and generated loadout uniqueness.
+- Flagship loading remains on its dedicated path and was not routed through normal enemy generation.
+- Commits for this step: 3a0537af72cc0e4bf0f206a7ced48f6b309932c1, a29aaac2f36ae214437e728df7b272b04d93443a, 0240bb503b4eae713ccabd9fac0289c87bfab225, 3278e2bb3e8238213ad3413bda9c527884cfb1fc, 4d964a8fcacdb3bdaefc6a808abd0e31280687a2.
+- Latest commit currently has no reported combined status in the connected GitHub status response; treat build verification as pending rather than green.
