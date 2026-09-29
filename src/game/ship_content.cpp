@@ -334,16 +334,16 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
             };
 
             const RaceWeight* table = civilian;
-            std::size_t size = std::size(civilian);
-            if (type.find("ENGI") != std::string::npos) { table = engi; size = std::size(engi); }
-            else if (type.find("ZOLTAN") != std::string::npos) { table = zoltan; size = std::size(zoltan); }
-            else if (type.find("MANTIS") != std::string::npos) { table = mantis; size = std::size(mantis); }
-            else if (type.find("ROCK") != std::string::npos) { table = rock; size = std::size(rock); }
-            else if (type.find("ABANDONED") != std::string::npos || type.find("LANIUS") != std::string::npos) { table = abandoned; size = std::size(abandoned); }
-            else if (type.find("SLUG") != std::string::npos) { table = slugNebula; size = std::size(slugNebula); }
-            else if (type.find("NEBULA") != std::string::npos || type.find("DEEP_SPACE") != std::string::npos) { table = uncharted; size = std::size(uncharted); }
-            else if (type.find("CRYSTAL") != std::string::npos) { table = crystal; size = std::size(crystal); }
-            else if (type.find("FINAL") != std::string::npos) { table = lastStand; size = std::size(lastStand); }
+            std::size_t size = sizeof(civilian) / sizeof(civilian[0]);
+            if (type.find("ENGI") != std::string::npos) { table = engi; size = sizeof(engi) / sizeof(engi[0]); }
+            else if (type.find("ZOLTAN") != std::string::npos) { table = zoltan; size = sizeof(zoltan) / sizeof(zoltan[0]); }
+            else if (type.find("MANTIS") != std::string::npos) { table = mantis; size = sizeof(mantis) / sizeof(mantis[0]); }
+            else if (type.find("ROCK") != std::string::npos) { table = rock; size = sizeof(rock) / sizeof(rock[0]); }
+            else if (type.find("ABANDONED") != std::string::npos || type.find("LANIUS") != std::string::npos) { table = abandoned; size = sizeof(abandoned) / sizeof(abandoned[0]); }
+            else if (type.find("SLUG") != std::string::npos) { table = slugNebula; size = sizeof(slugNebula) / sizeof(slugNebula[0]); }
+            else if (type.find("NEBULA") != std::string::npos || type.find("DEEP_SPACE") != std::string::npos) { table = uncharted; size = sizeof(uncharted) / sizeof(uncharted[0]); }
+            else if (type.find("CRYSTAL") != std::string::npos) { table = crystal; size = sizeof(crystal) / sizeof(crystal[0]); }
+            else if (type.find("FINAL") != std::string::npos) { table = lastStand; size = sizeof(lastStand) / sizeof(lastStand[0]); }
 
             int totalWeight = 0;
             for (std::size_t i = 0; i < size; ++i)
