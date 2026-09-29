@@ -8,7 +8,8 @@
 #include <cassert>
 #include <cstdlib>
 #include <string>
-#include <vector>\n#include <set>
+#include <vector>
+#include <set>
 
 int main() {
     const char* env = std::getenv("FTL_DAT_PATH");
