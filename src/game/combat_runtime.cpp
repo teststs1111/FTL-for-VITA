@@ -27,6 +27,7 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     lastImpactResult_ = {};
     hasImpactResult_ = false;
     enemyFireDelay_ = 0.0f;
+    enemyEscapeTimer_ = (enemyShip.blueprint.id == "REBEL_FLEET_FUEL") ? 80.0f : 0.0f;
     boardingTimer_ = 8.0f;
     boardingFightTimer_ = 0.0f;
     boarders.clear();
@@ -324,6 +325,15 @@ void CombatRuntime::update(float dt) {
     enemy.updateShields(dt);
     player.updateEnvironment(dt);
     enemy.updateEnvironment(dt);
+    // REBEL_FLEET_FUEL starts its FTL escape countdown immediately.
+    // The canonical ship definition uses an 80-second escape timer.
+    if (enemyEscapeTimer_ > 0.0f) {
+        enemyEscapeTimer_ = std::max(0.0f, enemyEscapeTimer_ - dt);
+        if (enemyEscapeTimer_ <= 0.0f) {
+            outcome = CombatOutcome::EnemyEscaped;
+            return;
+        }
+    }
 
     // Rebel Flagship phase 2 periodically triggers the original-style
     // "drone power surge". Model the surge as several simultaneous drone
