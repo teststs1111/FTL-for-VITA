@@ -613,3 +613,14 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - The generated system budget no longer upgrades past the rolled per-system maximum merely because the canonical blueprint max is higher.
 - Latest commits: 88d30e73f2fb11f3b955db6feac62f9d8bb61530, d0ab18b2f6dac0aa2613e91c19d61af7fbc29061, add417523663081d06bb70af404480e7b5776956.
 - Connected GitHub workflow lookup currently returns no workflow runs for the latest commit, so build status remains unverified; do not mark green yet.
+
+
+### Enemy weapon/drone generation flags — 2026-09-29
+- Implemented the two documented enemy loadout flags in ShipContent::loadEnemyShip(): a shield-breaking weapon condition and a hull-damage condition.
+- The documented soft fallback for drone generation is applied: while either flag remains, combat drones are preferred; if no candidate satisfies that condition, generation retries using the hard power/uniqueness constraints.
+- Drone blueprint duplication remains prohibited.
+- Source reference: Mathchamp reverse-engineering notes document the weapon flags, drone soft conditions, and generation constraints. citeturn1view0
+- Commit: 2e0a36a7a5961c8c1d48e66884e79f1f73665040.
+- The test include corruption from the previous edit was separately fixed in fa8577ac505fc43323b5c79c0a595897b5dc8d89.
+- GitHub workflow lookup for these commits currently returns no run records, so build success remains **unverified**; do not treat this as CI-green.
+- Exact vanilla RNG sequence is still provisional; this pass improves generation constraints without claiming byte-for-byte RNG equivalence.
