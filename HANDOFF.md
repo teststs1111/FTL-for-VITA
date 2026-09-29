@@ -743,3 +743,10 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - The hidden-only event UI already renders a Continue prompt, so FUEL_FLEET_DELAY can proceed through its internal NO_FUEL continuation without exposing the hidden choice as a normal player choice.
 - Research confirms Rebel/Auto warning ships escaping doubles Rebel Fleet pursuit for the current jump/turn; FUEL_ON_REBEL_WARNING is the canonical out-of-fuel distress example. Current runtime handles this through the warning-event escape path.
 - Next fidelity work: tighten Rebel Fleet pursuit modifiers and event-driven escape behavior, then continue Sector 8 and deeper event semantics. Do not replace the archive-driven approach with synthetic DLC handling.
+
+
+## Continuation checkpoint — no-fuel escape timers — 2026-09-29
+- Commit 51166e9e90e5b15d97ba735601f1a1fc341cc1c8 fixes the combat countdown for canonical out-of-fuel hostile events.
+- FUEL_* hostile events now start the 80-second escape timer; the Rebel/Auto warning variants use the special 40-second timer.
+- Ordinary hostile encounters reached after spending the last fuel retain the separate 90-second timer.
+- This is based on the documented vanilla distinction between ordinary out-of-fuel encounters, post-last-fuel hostile encounters, and fleet-warning ships.
