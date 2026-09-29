@@ -1,6 +1,7 @@
 #pragma once
 #include "data/bxml.hpp"
 #include "data/asset_store.hpp"
+#include "data/ship_blueprint.hpp"
 #include <string>
 #include <cstdint>
 #include <vector>
@@ -94,6 +95,7 @@ struct EventChoice {
     std::vector<EventDamageEffect> effects;
     std::vector<EventCrewMemberEffect> crewMembers;
     std::vector<EventCrewRemovalEffect> crewRemovals;
+    std::vector<CrewOverrideEntry> crewOverride;
     std::vector<EventBoarderEffect> boarders;
     bool hasAutoReward{false};
     EventAutoReward autoReward;
@@ -126,6 +128,7 @@ struct EventDefinition {
     std::vector<EventDamageEffect> effects;
     std::vector<EventCrewMemberEffect> crewMembers;
     std::vector<EventCrewRemovalEffect> crewRemovals;
+    std::vector<CrewOverrideEntry> crewOverride;
     std::vector<EventBoarderEffect> boarders;
     bool hasAutoReward{false};
     EventAutoReward autoReward;
