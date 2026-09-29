@@ -655,6 +655,14 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - GitHub status/workflow lookup for this exact commit currently reports no status records or workflow runs. Build verification therefore remains pending.
 
 
+## Enemy generation correction — 2026-09-29
+
+- Rechecked the restored enemy-system budget table against the documented progression values.
+- Found and corrected a concrete bug: Easy difficulty sector 1 maps to progression 0, but the progression-0 budget row had been initialized to zero. It now uses the sector-1 Easy budget of offensive 1 / defensive 1 / general 1.
+- Commit: da4a18910688e8c4e2f94599802b88f79989aa8d.
+- GitHub status for this commit currently has no reported checks, so build verification remains pending.
+
+
 ## Enemy crew fidelity — 2026-09-29
 
 - Directly inspected the Library ftl.dat and parsed its PKG table.
