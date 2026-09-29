@@ -1987,10 +1987,23 @@ public:
             return;
         }
 
+        bool internalChoice = false;
         if (activeEventChoice_ < 0 ||
             activeEventChoice_ >= static_cast<int>(event->choices.size()) ||
-            !eventChoiceAvailable(event->choices[static_cast<std::size_t>(activeEventChoice_)]))
-            return;
+            !eventChoiceAvailable(event->choices[static_cast<std::size_t>(activeEventChoice_)])) {
+            // Vanilla uses hidden choices for internal continuations such as
+            // FUEL_FLEET_DELAY -> NO_FUEL. They are not selectable, but the
+            // event still needs a Continue action to execute that transition.
+            for (std::size_t i = 0; i < event->choices.size(); ++i) {
+                const auto& candidate = event->choices[i];
+                if (candidate.hidden && !eventChoiceAvailable(candidate)) {
+                    activeEventChoice_ = static_cast<int>(i);
+                    internalChoice = true;
+                    break;
+                }
+            }
+            if (!internalChoice) return;
+        }
 
         const auto& choice = event->choices[static_cast<std::size_t>(activeEventChoice_)];
         if (!choice.questTargetId.empty()) {
@@ -2101,8 +2114,12 @@ public:
                 text_.draw(graphics_, (selected ? "> " : "  ") + label, 110.f, y, 15.f,
                     selected ? (available ? Color{0.98f,0.86f,0.45f,1.f} : Color{0.52f,0.55f,0.60f,1.f}) : normal);
             }
-            text_.draw(graphics_, "十字キー: 選択   ×: 決定   ○: 戻る", 105.f, 455.f, 14.f,
-                {0.64f,0.72f,0.82f,1.f});
+            if (visible == 0)
+                text_.draw(graphics_, "×: 続行", 105.f, 455.f, 14.f,
+                    {0.64f,0.72f,0.82f,1.f});
+            else
+                text_.draw(graphics_, "十字キー: 選択   ×: 決定   ○: 戻る", 105.f, 455.f, 14.f,
+                    {0.64f,0.72f,0.82f,1.f});
         }
     }
 
