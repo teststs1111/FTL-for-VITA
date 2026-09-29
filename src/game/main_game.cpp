@@ -88,7 +88,7 @@ public:
                     if (entry.first != player->blueprint.id) { enemyId = entry.first; break; }
                 }
             }
-            if (enemyId.empty() || !content_.loadShip(enemyId, enemy)) {
+            if (enemyId.empty() || !content_.loadEnemyShip(enemyId, enemy, sector_ + 1, static_cast<int>(difficulty_), seed_ + static_cast<unsigned>(std::max(0, currentBeacon_)) + static_cast<unsigned>(visitedBeacons_) * 131u)) {
                 startupError_ = "Enemy ship blueprint could not be loaded";
                 return;
             }
@@ -136,7 +136,7 @@ public:
         std::string enemyId;
         if (player) for (const auto& entry : content_.blueprints().ships())
             if (entry.first != player->blueprint.id) { enemyId = entry.first; break; }
-        if (enemyId.empty() || !content_.loadShip(enemyId, enemy)) return false;
+        if (enemyId.empty() || !content_.loadEnemyShip(enemyId, enemy, sector_ + 1, static_cast<int>(difficulty_), seed_ + static_cast<unsigned>(std::max(0, currentBeacon_)) + static_cast<unsigned>(visitedBeacons_) * 131u)) return false;
         if (!combat_.load(content_, enemy)) return false;
         buildShipSelection();
         discoverRoomTextures(); discoverWeaponAndDroneTextures(); discoverCrewTextures(); discoverShipTexture();
