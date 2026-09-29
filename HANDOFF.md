@@ -564,3 +564,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - The canonical list entries themselves remain preserved, including duplicate entries as weighting. The runtime still constrains each selection to the remaining system power and declared load count.
 - The exact vanilla RNG stream and any deeper retry/selection details remain unresolved; do not claim byte-for-byte RNG equivalence yet.
 - This correction supersedes the earlier HANDOFF wording that described no-repeat selection as the current vanilla behavior.
+
+
+## Enemy sector-bound data foundation — 2026-09-29
+- Canonical enemy `shipBlueprint` definitions carry `minSector` / `maxSector`; these bounds are part of the enemy-generation data and should not be discarded. Public modding references also show these fields on the same blueprints that define system caps. citeturn1search0turn1search1
+- Added `ShipBlueprint::minSector` / `maxSector` and parser support. Real-`ftl.dat` regression coverage verifies `AUTO_BASIC` exposes the canonical 1–8 range.
+- Commits: `0b24e22e`, `2591be61`, `70df5f28`.
+- This is deliberately a data-model step only. The actual vanilla sector/difficulty system-power generation is not being guessed yet; public reverse-engineering discussion indicates those power allowances are generated internally, with system `power/max` and reactor caps participating in that process. citeturn0search0turn0search4
+- Next: model the sector-aware enemy system-power roll from verified behavior, then feed that rolled power into weapon/drone generation instead of always using the blueprint's starting `power` values.
