@@ -1456,6 +1456,28 @@ public:
         return sector.events[index].name;
     }
 
+    bool beginNoFuelWaitEvent() {
+        if (eventDatabase_.size() == 0) return false;
+
+        // Vanilla uses two weighted pools for out-of-fuel WAIT: NO_FUEL when
+        // the distress beacon is off and NO_FUEL_DISTRESS when it is on.
+        // Resolve through EventDatabase so the canonical archive event lists,
+        // including duplicate entries used as weights, stay authoritative.
+        const char* pool = distressBeaconActive_ ? "NO_FUEL_DISTRESS" : "NO_FUEL";
+        const auto* event = eventDatabase_.resolve(
+            pool, seed_ + static_cast<unsigned>(visitedBeacons_) * 53u +
+            static_cast<unsigned>(currentBeacon_ + 1) * 97u);
+        if (!event) return false;
+
+        activeEventId_ = event->id;
+        completeQuestForEvent(activeEventId_);
+        applyEventImmediateEffects(*event);
+        registerQuest(*event);
+        activeEventChoice_ = 0;
+        sceneMode_ = SceneMode::Event;
+        return true;
+    }
+
     bool beginBeaconEvent(int beacon) {
         if (eventDatabase_.size() == 0) return false;
         // Prefer the original sectorDescription event pools; fall back to the
@@ -2204,6 +2226,12 @@ public:
             if (input_.pressed(Button::Right) || input_.pressed(Button::Down)) pos = std::min(static_cast<int>(choices.size()) - 1, pos + 1);
             selectedBeacon_ = choices[static_cast<std::size_t>(pos)];
         }
+        if (sector_ < 7 && input_.pressed(Button::Triangle)) {
+            distressBeaconActive_ = !distressBeaconActive_;
+            combatFeedback_ = distressBeaconActive_ ? "救難信号 ON" : "救難信号 OFF";
+            combatFeedbackTimer_ = 1.2f;
+        }
+
         // The Last Stand permits waiting at the current beacon without spending fuel.
         // Waiting advances the same map tick as a jump: random Rebel takeovers and
         // the Flagship timer/movement progress, and can trigger an immediate Flagship fight.
@@ -2227,16 +2255,17 @@ public:
                     return;
                 }
             }
-            // Outside The Last Stand, WAIT is available when fuel is exhausted.
-            // If the fleet has already captured the current beacon, this is the
-            // distinct 80-second no-fuel WAIT encounter rather than the 90-second
-            // post-jump/last-fuel encounter.
+            // Outside The Last Stand, a fuel-starved WAIT resolves the
+            // canonical NO_FUEL / NO_FUEL_DISTRESS event pool unless the Rebel
+            // fleet already controls the beacon. The fleet-controlled case is
+            // the distinct 80-second REBEL_FLEET_FUEL encounter.
             if (sector_ < 7 && fuel_ <= 0) {
                 if (const auto* waitingNode = sectorGraph_.node(currentBeacon_);
                     waitingNode && waitingNode->fleetCovered) {
                     enterRebelFleetEncounter(true);
                     return;
                 }
+                if (beginNoFuelWaitEvent()) return;
                 return;
             }
             // A normal wait consumes a map turn and counts as a beacon visit
@@ -2254,6 +2283,7 @@ public:
         if (input_.pressed(Button::Cross) && !choices.empty()) {
             if (fuel_ <= 0) return;
             fuel_--;
+            distressBeaconActive_ = false;
             currentBeacon_ = selectedBeacon_;
             advanceRebelFleetAfterJump();
             if (sceneMode_ == SceneMode::GameOver) return;
@@ -2509,6 +2539,9 @@ public:
                 graphics_.drawLine(from->x, from->y, to->x, to->y,
                     {0.92f, 0.30f, 0.30f, 1.f});
         }
+        text_.draw(graphics_, std::string("救難信号: ") + (distressBeaconActive_ ? "ON" : "OFF") +
+            "   △: 切替", 400.f, 100.f, 13.f,
+            distressBeaconActive_ ? Color{0.55f,0.90f,0.70f,1.f} : Color{0.55f,0.62f,0.70f,1.f});
         const auto choices=sectorGraph_.selectable(currentBeacon_, fleetRow_);
         const bool scanners = hasAugment("LONG_RANGED_SCANNERS");
         auto scannerLabel = [&](int nodeIndex) {
@@ -2575,7 +2608,7 @@ public:
         text_.draw(graphics_,
             sector_ >= 7
                 ? "十字キー: 接続ビーコン選択   ×: ジャンプ   □: WAIT   ○: 戻る"
-                : "十字キー: 接続ビーコン選択   ×: ジャンプ   ○: 戻る",
+                : "十字キー: 接続ビーコン選択   ×: ジャンプ   △: 救難信号   ○: 戻る",
             48.f,500.f,14.f,{0.68f,0.76f,0.86f,1.f});
     }
 
@@ -3638,6 +3671,7 @@ private:
     bool mapRevealed_{false};
     bool secretSectorPending_{false};
     bool rebelFleetEncounter_{false};
+    bool distressBeaconActive_{false};
     bool rebelFleetFuelEncounter_{false};
     int flagshipNode_{-1};
     int flagshipBaseNode_{-1};
