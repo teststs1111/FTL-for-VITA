@@ -9,7 +9,7 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
-#include <set>
+#include <set>\n#include <map>
 
 int main() {
     const char* env = std::getenv("FTL_DAT_PATH");
@@ -83,6 +83,20 @@ int main() {
         for (const char* id : noFuelPools)
             if (resolved->id == id) { known = true; break; }
         assert(known);
+    }
+    // The canonical NO_FUEL list intentionally repeats FUEL_NOTHING four times,
+    // giving it 4/11 of the base-game weight while every other entry occupies
+    // one slot. Keep duplicate weighting intact rather than flattening IDs.
+    std::map<std::string, int> noFuelCounts;
+    for (unsigned seed = 0; seed < 1100; ++seed) {
+        const auto* resolved = events.resolve("NO_FUEL", seed);
+        assert(resolved != nullptr);
+        ++noFuelCounts[resolved->id];
+    }
+    assert(noFuelCounts["FUEL_NOTHING"] == 400);
+    for (const char* id : noFuelPools) {
+        if (std::string(id) == "FUEL_NOTHING") continue;
+        assert(noFuelCounts[id] == 100);
     }
     const auto* fleetAdvance = events.find("FUEL_FLEET_DISTRESS");
     assert(fleetAdvance != nullptr);
