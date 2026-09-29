@@ -148,6 +148,28 @@ int main() {
     assert(countedBlueprint.weaponListCount == 1);
     assert(countedBlueprint.initialWeapons.size() == 1);
     assert(countedBlueprint.initialWeapons.front() == "LASER_BURST_1");
+    
+    // Enemy system generation data must preserve min/max bounds and optional
+    // installation state from the canonical ship blueprint schema.
+    wormhole::bxml::Node systemList;
+    systemList.name = "systemList";
+    wormhole::bxml::Node optionalShields;
+    optionalShields.name = "shields";
+    optionalShields.attributes["room"] = "2";
+    optionalShields.attributes["power"] = "2";
+    optionalShields.attributes["min"] = "2";
+    optionalShields.attributes["max"] = "8";
+    optionalShields.attributes["start"] = "false";
+    systemList.children.push_back(optionalShields);
+    countedShip.children.push_back(systemList);
+    wormhole::ShipBlueprint systemBlueprint;
+    assert(wormhole::parseShipBlueprint(countedShip, systemBlueprint));
+    assert(systemBlueprint.systems.size() == 1);
+    assert(systemBlueprint.systems.front().minPower == 2);
+    assert(systemBlueprint.systems.front().maxPower == 8);
+    assert(systemBlueprint.systems.front().optional);
+    assert(!systemBlueprint.systems.front().availableByDefault);
+
 
     content.setAdvancedEdition(false);
     assert(content.loadPlayerShip());
