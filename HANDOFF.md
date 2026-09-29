@@ -756,3 +756,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Commit 7fb878033ec392792ce00c4d1fd3d1e82f4cf6f2 stabilizes the Defense Drone Mark II interception regression by retrying the documented 90% interception path instead of depending on one random draw.
 - Host #1144 and Vita #836 both succeeded.
 - No gameplay probability was changed; only the regression test was made non-flaky.
+
+
+## Last Stand repair beacon one-use fidelity — 2026-09-30
+- Implemented the canonical Sector 8 rule that each repair beacon can be used only once.
+- Repair usage is tracked by beacon index, cleared when entering a new sector, and persisted in save data.
+- Save format advanced from v11 to v12; v11 loading was also corrected to consume its existing `current_sector` field before `event_usage` / `beacon_events`.
+- Normal-sector repair behavior remains unchanged; the one-use restriction applies only to The Last Stand.
+- Commit: `ea7eb2246b71561e8f5564637dbb5274407d88a5`.
+- Host #1148 and Vita #840 both succeeded, including Host tests and Vita VPK packaging.
