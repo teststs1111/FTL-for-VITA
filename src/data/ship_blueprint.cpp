@@ -46,6 +46,11 @@ void collectSystems(const bxml::Node& node, std::vector<SystemSlotBlueprint>& sy
         if (system.system.empty()) system.system = attribute(node, "name");
         system.room = integer(node, "room", -1);
         system.level = integer(node, "level", integer(node, "power"));
+        system.startingPower = integer(node, "power", system.level);
+        system.minPower = integer(node, "min", system.startingPower);
+        system.maxPower = integer(node, "max", system.startingPower);
+        system.optional = attribute(node, "start") == "false" || attribute(node, "optional") == "true";
+        system.availableByDefault = !system.optional;
         systems.push_back(std::move(system));
     } else if (node.name == "systemList") {
         // Tachyon's FTL blueprints use the element name itself for the
@@ -61,8 +66,10 @@ void collectSystems(const bxml::Node& node, std::vector<SystemSlotBlueprint>& sy
             system.room = integer(c, "room", -1);
             system.startingPower = integer(c, "power", integer(c, "level"));
             system.level = system.startingPower;
+            system.minPower = integer(c, "min", system.startingPower);
             system.maxPower = integer(c, "max", system.startingPower);
-            system.availableByDefault = attribute(c, "start") != "false";
+            system.optional = attribute(c, "start") == "false" || attribute(c, "optional") == "true";
+            system.availableByDefault = !system.optional;
             systems.push_back(std::move(system));
         }
         return;
