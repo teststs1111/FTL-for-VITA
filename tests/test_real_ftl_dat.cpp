@@ -214,7 +214,7 @@ int main() {
         {"mantis", 0.80}, {"engi", 0.20}
     };
     wormhole::LoadedShip overriddenEnemy;
-    assert(content.loadEnemyShip("MANTIS_FIGHT", overriddenEnemy, 5, 1, 13579u,
+    assert(content.loadEnemyShip("MANTIS_FIGHTER", overriddenEnemy, 5, 1, 13579u,
                                  "data/blueprints.xml", "MANTIS_SECTOR", &override));
     int mantisCount = 0;
     int engiCount = 0;
