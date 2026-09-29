@@ -213,8 +213,15 @@ void generateEnemySystems(ShipBlueprint& ship, int sector, int difficulty, std::
         system.availableByDefault = initial > 0;
 
         if (system.optional) {
-            if (enemyOffensive(system.system)) --budget.offensive;
-            else --budget.general;
+            if (enemyOffensive(system.system)) {
+                --budget.offensive;
+            } else if (difficulty == 2) {
+                --budget.general;
+            } else {
+                // Optional non-offensive systems consume two general-budget
+                // points on Easy/Normal and one on Hard.
+                budget.general -= 2;
+            }
         }
     }
 
@@ -238,11 +245,10 @@ void generateEnemySystems(ShipBlueprint& ship, int sector, int difficulty, std::
     spend(budget.offensive, enemyOffensive);
     spend(budget.defensive, enemyDefensive);
 
-    int general = budget.general;
-    for (const auto& s : ship.systems) {
-        if (s.availableByDefault && enemyOffensive(s.system) && s.level < s.maxPower)
-            general += 0;
-    }
+    // Any offensive/defensive budget left after its category has no eligible
+    // upgrade becomes general budget. Negative optional-system costs are also
+    // carried through here, matching the documented budget flow.
+    int general = budget.general + budget.offensive + budget.defensive;
     spend(general, [](const std::string&) { return true; });
 
     int reactor = 0;
