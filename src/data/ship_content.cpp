@@ -162,11 +162,9 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
             const int slots = out.blueprint.weaponListCount >= 0
                 ? out.blueprint.weaponListCount
                 : (out.blueprint.weaponSlots > 0 ? out.blueprint.weaponSlots : 4);
-            std::set<std::string> used;
-            for (int slot = 0; slot < slots && remaining > 0; ++slot) {
+                for (int slot = 0; slot < slots && remaining > 0; ++slot) {
                 std::vector<std::string> candidates;
                 for (const auto& id : *list) {
-                    if (used.count(id)) continue;
                     const auto* weapon = database_.findWeapon(id);
                     if (!weapon || weapon->power <= 0 || weapon->power > remaining) continue;
                     if (weapon->power != 1 && weapon->power >= systemPower("weapons")) continue;
@@ -175,7 +173,6 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
                 }
                 if (candidates.empty()) break;
                 const auto& selected = candidates[enemyNextRandom(rng) % candidates.size()];
-                used.insert(selected);
                 out.blueprint.initialWeapons.push_back(selected);
                 remaining -= database_.findWeapon(selected)->power;
             }
