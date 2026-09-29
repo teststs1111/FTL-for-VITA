@@ -78,6 +78,8 @@ struct ShipBlueprint {
     int weaponSlots{0};
     int droneSlots{0};
     int startingMissiles{0};
+    int weaponListCount{-1};
+    int droneListCount{-1};
     std::vector<std::string> initialWeapons;
     std::vector<std::string> initialDrones;
     // Enemy ship blueprints use load=\"WEAPONS_*\" / \"DRONES_*\"; these
