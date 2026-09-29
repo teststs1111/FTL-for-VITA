@@ -202,6 +202,27 @@ int main() {
     assert(content.loadShip("AUTO_BASIC", autoBasic, "data/blueprints.xml", 12345u));
     wormhole::LoadedShip generatedEnemy;
     assert(content.loadEnemyShip("AUTO_BASIC", generatedEnemy, 5, 1, 12345u));
+
+    wormhole::LoadedShip pirateEnemy;
+    assert(content.loadEnemyShip("REBEL_FAT_P", pirateEnemy, 5, 1, 24680u,
+                                 "data/blueprints.xml", "PIRATE_SECTOR"));
+    assert(!pirateEnemy.blueprint.crew.empty());
+    for (const auto& crew : pirateEnemy.blueprint.crew)
+        assert(crew.race != "random" && !crew.race.empty());
+
+    const std::vector<wormhole::CrewOverrideEntry> override = {
+        {"mantis", 0.80}, {"engi", 0.20}
+    };
+    wormhole::LoadedShip overriddenEnemy;
+    assert(content.loadEnemyShip("MANTIS_FIGHT", overriddenEnemy, 5, 1, 13579u,
+                                 "data/blueprints.xml", "MANTIS_SECTOR", &override));
+    int mantisCount = 0;
+    int engiCount = 0;
+    for (const auto& crew : overriddenEnemy.blueprint.crew) {
+        if (crew.race == "mantis") ++mantisCount;
+        if (crew.race == "engi") ++engiCount;
+    }
+    assert(mantisCount == 3 && engiCount == 1);
     int generatedReactor = 0;
     std::set<std::string> generatedDrones;
     for (const auto& system : generatedEnemy.blueprint.systems) {
