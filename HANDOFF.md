@@ -847,3 +847,7 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 ## 2026-09-30 Ion shield regression coverage
 - Added a regression test confirming an ion shot blocked by one ordinary shield layer leaves that layer intact while applying one ion damage to the Shields system.
 - Keep the ion shield behavior and shield-piercing behavior under separate tests.
+
+## 2026-09-30 Ion test setup correction
+- The new ion/shield regression test initially failed because it inherited the weapon's previous shield-piercing value, so the shot legitimately bypassed the one-layer shield.
+- Test setup now explicitly sets shield piercing to zero; no runtime behavior change was required.
