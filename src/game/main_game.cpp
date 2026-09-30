@@ -3560,6 +3560,9 @@ public:
         if (combat_.superShieldRemaining() > 0)
             text_.draw(graphics_, "Phase 3: Zoltan超シールド",
                 390.f, 102.f, 11.f, {0.55f, 0.88f, 1.f, 1.f});
+        if (combat_.flagshipSurgeWarning())
+            text_.draw(graphics_, "POWER SURGE WARNING",
+                390.f, 118.f, 13.f, {1.f, 0.45f, 0.25f, 1.f});
         text_.draw(graphics_, "船体 " + std::to_string(std::max(0, combat_.player.hull)) +
             "/" + std::to_string(std::max(0, combat_.player.maxHull)),
             leftX, 86.f, 11.f, {0.72f, 0.92f, 0.78f, 1.f});
