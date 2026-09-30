@@ -1306,7 +1306,7 @@ public:
             }
         }
         if (sector_ >= 7 && flagshipPhase_ > 0)
-            combat_.configureFlagshipPhase(flagshipPhase_);
+            combat_.configureFlagshipPhase(flagshipPhase_, static_cast<int>(difficulty_));
         combat_.setPlayerWeaponCooldownMultiplier(weaponCooldownMultiplier());
         combat_.setPlayerShieldRechargeMultiplier(hasAugment("SHIELD_CHARGE_BOOSTER") ? 0.85f : 1.0f);
         combat_.setStealthWeapons(hasAugment("STEALTH_WEAPONS"));
