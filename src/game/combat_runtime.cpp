@@ -813,8 +813,34 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
             continue;
         }
 
-        // Missile/bomb weapons bypass shields in FTL. Laser/beam/ion-style
-        // weapons must first overcome the target's shield layers.
+        // Ion weapons are a special shield interaction: when blocked by
+        // ordinary shields, their full ion damage is applied to the Shields
+        // system rather than being treated as a normal projectile that simply
+        // removes one layer. This lets repeated ion hits progressively disable
+        // shields, matching the canonical weapon behavior.
+        if (!shieldBypass && !beamLike &&
+            weapon.ionDamage > 0 && target.shieldLayers > shieldPiercing) {
+            int shieldRoom = -1;
+            for (const auto& system : target.systems) {
+                if (system.type == "shields" && system.maxPower > 0) {
+                    shieldRoom = system.room;
+                    break;
+                }
+            }
+            if (shieldRoom >= 0) {
+                const bool reverseIonNegated = (&target == &player &&
+                    (nextRandom() % 100u) < 20u);
+                if (!reverseIonNegated)
+                    result.ionDamage += target.ionizeSystemInRoom(
+                        shieldRoom, weapon.ionDamage);
+            }
+            target.shieldCharge = 0.0f;
+            ++result.shieldsAbsorbed;
+            continue;
+        }
+
+        // Missile/bomb weapons bypass shields. Other non-ion projectiles
+        // consume one ordinary shield layer before dealing room damage.
         if (!shieldBypass && target.shieldLayers > shieldPiercing) {
             --target.shieldLayers;
             target.shieldCharge = 0.0f;
