@@ -2341,9 +2341,14 @@ public:
         }
         if (result.moved) {
             flagshipNode_ = flagshipRoute_[static_cast<std::size_t>(flagshipRouteIndex_)];
-            // A beacon left by the Flagship becomes Rebel-controlled.
+            // The Federation Base can never be taken over by the Rebels.
+            // When the Flagship leaves the Base, it returns to Federation control.
             auto covered = sectorGraph_.fleetCoveredIndices();
-            if (std::find(covered.begin(), covered.end(), flagshipNode_) == covered.end())
+            covered.erase(
+                std::remove(covered.begin(), covered.end(), flagshipBaseNode_),
+                covered.end());
+            if (flagshipNode_ != flagshipBaseNode_ &&
+                std::find(covered.begin(), covered.end(), flagshipNode_) == covered.end())
                 covered.push_back(flagshipNode_);
             sectorGraph_.setFleetCoveredIndices(covered);
         }
