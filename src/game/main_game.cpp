@@ -2314,8 +2314,8 @@ public:
         // the Flagship timer/movement progress, and can trigger an immediate Flagship fight.
         if ((sector_ >= 7 || fuel_ <= 0) && input_.pressed(Button::Square)) {
             const int waitingBeacon = currentBeacon_;
-            advanceRebelFleetAfterJump();
-            if (sceneMode_ == SceneMode::GameOver) return;
+            // If the Flagship is already at the player's beacon, the player
+            // intercepts it before the next map tick moves the Flagship.
             if (currentBeacon_ >= 0 && currentBeacon_ == flagshipNode_) {
                 const int nextPhase = flagshipPhase_ + 1;
                 const std::string flagshipId = "BOSS_" + std::to_string(nextPhase);
@@ -2332,6 +2332,8 @@ public:
                     return;
                 }
             }
+            advanceRebelFleetAfterJump();
+            if (sceneMode_ == SceneMode::GameOver) return;
             // Outside The Last Stand, a fuel-starved WAIT resolves the
             // canonical NO_FUEL / NO_FUEL_DISTRESS event pool unless the Rebel
             // fleet already controls the beacon. The fleet-controlled case is
@@ -2362,8 +2364,8 @@ public:
             fuel_--;
             distressBeaconActive_ = false;
             currentBeacon_ = selectedBeacon_;
-            advanceRebelFleetAfterJump();
-            if (sceneMode_ == SceneMode::GameOver) return;
+            // A jump into the Flagship's current beacon is an interception.
+            // Resolve that encounter before advancing the next map tick.
             if (const auto* n = sectorGraph_.node(currentBeacon_)) {
                 // In The Last Stand there is no normal exit beacon. The player
                 // wins by intercepting the moving Flagship; the Federation Base
@@ -2420,6 +2422,8 @@ public:
                     return;
                 }
             }
+            advanceRebelFleetAfterJump();
+            if (sceneMode_ == SceneMode::GameOver) return;
             if (beginBeaconEvent(currentBeacon_)) return;
             enterCombatFromBeacon();
             return;
