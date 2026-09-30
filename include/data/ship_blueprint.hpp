@@ -59,6 +59,7 @@ struct DroneBlueprint {
     std::string defenceTarget;
     int dodge{0};
     std::string weaponBlueprint;
+    std::string weaponType;
     float weaponCooldown{5.0f};
     int weaponShots{1};
     int weaponDamage{0};
