@@ -843,3 +843,7 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 ## 2026-09-30 Fire/breach rollback
 - Reverted the attempted fire/breach roll-order change after the repository regression test confirmed canonical behavior expects both effects to be independently rollable on the same hit.
 - Keep fire and breach chances as independent secondary-effect rolls.
+
+## 2026-09-30 Ion shield regression coverage
+- Added a regression test confirming an ion shot blocked by one ordinary shield layer leaves that layer intact while applying one ion damage to the Shields system.
+- Keep the ion shield behavior and shield-piercing behavior under separate tests.
