@@ -108,6 +108,7 @@ private:
     int flagshipPhase_{0};
     float droneSurgeTimer_{0.0f};
     int superShield_{0};
+    int flagshipSurgeCount_{0};
     float playerWeaponCooldownMultiplier_{1.0f};
     float playerShieldRechargeMultiplier_{1.0f};
     bool stealthWeapons_{false};
