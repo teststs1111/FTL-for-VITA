@@ -692,6 +692,10 @@ static void testShipRuntime() {
         weapon.charge = 0.0f;
     }
     combat.enemy.shieldLayers = 1;
+    for (auto& system : combat.enemy.systems) {
+        if (system.type == "engines" || system.type == "pilot")
+            system.powered = false;
+    }
     combat.player.weapons[0].damage = 0;
     combat.player.weapons[0].systemDamage = 0;
     combat.player.weapons[0].ionDamage = 1;
