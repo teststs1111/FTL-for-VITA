@@ -256,20 +256,22 @@ int main() {
     assert(content.loadShip("BOSS_2", flagshipPhase2));
     bool foundCombatBeam = false;
     bool foundCombatLaser = false;
-    for (const auto& drone : flagshipPhase2.blueprint.initialDrones) {
-        if (drone.name == "COMBAT_BEAM") {
+    for (const auto& droneId : flagshipPhase2.blueprint.initialDrones) {
+        const auto* drone = content.blueprints().findDrone(droneId);
+        assert(drone != nullptr);
+        if (droneId == "COMBAT_BEAM") {
             foundCombatBeam = true;
-            assert(drone.weaponBlueprint == "DRONE_BEAM");
-            assert(drone.weaponType == "BEAM");
-            assert(drone.weaponDamage == 1);
-            assert(drone.weaponShots == 1);
+            assert(drone->weaponBlueprint == "DRONE_BEAM");
+            assert(drone->weaponType == "BEAM");
+            assert(drone->weaponDamage == 1);
+            assert(drone->weaponShots == 1);
         }
-        if (drone.name == "COMBAT_1") {
+        if (droneId == "COMBAT_1") {
             foundCombatLaser = true;
-            assert(drone.weaponBlueprint == "DRONE_LASER");
-            assert(drone.weaponType == "LASER");
-            assert(drone.weaponDamage == 1);
-            assert(drone.weaponShots == 1);
+            assert(drone->weaponBlueprint == "DRONE_LASER");
+            assert(drone->weaponType == "LASER");
+            assert(drone->weaponDamage == 1);
+            assert(drone->weaponShots == 1);
         }
     }
     assert(foundCombatBeam && foundCombatLaser);
