@@ -928,6 +928,13 @@ static void testShipRuntime() {
     combat.player.weapons[0].shots = 1;
     combat.player.updateWeapons(2.5f);
     assert(combat.player.weapons[0].ready);
+    RuntimeSystem piercingShield;
+    piercingShield.type = "shields";
+    piercingShield.room = 1;
+    piercingShield.power = 2;
+    piercingShield.maxPower = 2;
+    piercingShield.powered = true;
+    combat.enemy.systems.push_back(piercingShield);
     combat.enemy.shieldLayers = 2;
     for (auto& system : combat.enemy.systems) {
         if (system.type == "engines" || system.type == "pilot")
