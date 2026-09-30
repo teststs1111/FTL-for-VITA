@@ -452,8 +452,16 @@ void ShipRuntime::updateDrones(float dt) {
             continue;
         }
         const bool combatDrone = drone.type == DroneBlueprint::Type::Combat;
-        const float cooldownSeconds = combatDrone ? drone.weaponCooldown
-                                                  : static_cast<float>(std::max(0, drone.cooldown)) / 1000.0f;
+        // Combat-drone cooldown is defined by the drone blueprint in milliseconds
+        // (for example COMBAT_1/COMBAT_BEAM use 1000). The linked weapon
+        // blueprint does not carry the drone's launch interval, so using
+        // weaponCooldown here would incorrectly turn a 1-second drone into a
+        // multi-second weapon cycle.
+        const float cooldownSeconds = combatDrone
+            ? (drone.cooldown > 0
+                ? static_cast<float>(drone.cooldown) / 1000.0f
+                : drone.weaponCooldown)
+            : static_cast<float>(std::max(0, drone.cooldown)) / 1000.0f;
         if (cooldownSeconds <= 0.0f) {
             drone.active = true;
             continue;
