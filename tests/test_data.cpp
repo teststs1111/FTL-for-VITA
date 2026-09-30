@@ -710,7 +710,14 @@ static void testShipRuntime() {
             break;
         }
     }
-    assert(bypassShieldSystem >= 0);
+    // The synthetic ENEMY_SHIP fixture is not required to carry a Shields
+    // system; normalize one slot here so this regression isolates missile
+    // shield bypass instead of depending on the fixture loadout.
+    if (bypassShieldSystem < 0) {
+        assert(!combat.enemy.systems.empty());
+        bypassShieldSystem = 0;
+        combat.enemy.systems[bypassShieldSystem].type = "shields";
+    }
     combat.enemy.systems[bypassShieldSystem].power = 2;
     combat.enemy.systems[bypassShieldSystem].maxPower = 2;
     combat.enemy.systems[bypassShieldSystem].powered = true;
