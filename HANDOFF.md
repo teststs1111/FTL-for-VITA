@@ -851,3 +851,7 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 ## 2026-09-30 Ion test setup correction
 - The new ion/shield regression test initially failed because it inherited the weapon's previous shield-piercing value, so the shot legitimately bypassed the one-layer shield.
 - Test setup now explicitly sets shield piercing to zero; no runtime behavior change was required.
+
+## 2026-09-30 Missile/bomb ammunition regression
+- Added a deterministic combat regression proving missile/bomb ammunition is consumed once per volley, not once per projectile.
+- The test also verifies a volley cannot fire when the remaining ammunition is below the weapon's configured `missilesUsed` cost.
