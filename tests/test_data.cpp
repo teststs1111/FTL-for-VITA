@@ -707,14 +707,17 @@ static void testShipRuntime() {
     combat.player.updateWeapons(2.5f);
     assert(combat.player.weapons[0].ready);
     combat.setRandomSeed(1);
-    int shieldSystemIndex = -1;
-    for (int i = 0; i < static_cast<int>(combat.enemy.systems.size()); ++i) {
-        if (combat.enemy.systems[i].type == "shields") {
-            shieldSystemIndex = i;
-            break;
-        }
-    }
-    assert(shieldSystemIndex >= 0);
+    // The combat regression only needs a valid Shields system; normalize the
+    // synthetic enemy's first system so the test does not depend on the random
+    // ENEMY_SHIP loadout containing shields.
+    assert(!combat.enemy.systems.empty());
+    const int shieldSystemIndex = 0;
+    combat.enemy.systems[shieldSystemIndex].type = "shields";
+    combat.enemy.systems[shieldSystemIndex].maxPower = 2;
+    combat.enemy.systems[shieldSystemIndex].power = 2;
+    combat.enemy.systems[shieldSystemIndex].damage = 0;
+    combat.enemy.systems[shieldSystemIndex].ionDamage = 0;
+    combat.enemy.systems[shieldSystemIndex].powered = true;
     const int shieldIonPowerBefore = combat.enemy.systems[shieldSystemIndex].power;
     assert(combat.fireSelectedWeapon().fired);
     combat.update(0.25f);
