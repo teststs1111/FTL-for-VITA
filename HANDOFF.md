@@ -808,3 +808,10 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 
 - 2026-09-30: Flagship Power Surge normal-fire correction. Commit `ad078636587cb4343dc07d1b3904bbfd07efeddf` keeps normal Flagship weapon/drone firing active while temporary Power Surge shots are in flight, and preserves canonical `COMBAT_BEAM`/other combat-drone weapon types from `ftl.dat` during normal drone attacks. Host #1202 and Vita #894 both succeeded.
 - 2026-09-30: Added a `test_real_ftl_dat.cpp` regression check for BOSS_2's canonical COMBAT_1/COMBAT_BEAM definitions. Commit `484129180ea02c699442a3b45e22fab6f6b60d26`.
+
+
+### 2026-09-30 Flagship drone weapon fidelity follow-up
+- Fixed the Host-only regression test compile failure by resolving BOSS_2 initial drone IDs through BlueprintDatabase::findDrone().
+- Preserved canonical drone weapon secondary effects from ftl.dat: hull bust, fire, breach, stun chance/duration now flow from WeaponBlueprint -> DroneBlueprint -> RuntimeDrone -> RuntimeWeapon.
+- Beam drone attacks now also apply canonical fire/breach/stun effects instead of skipping all secondary effects.
+- Host #1205 / Vita #897 succeeded after the test correction; subsequent source changes continue through the normal build workflow.
