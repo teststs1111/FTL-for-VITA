@@ -805,3 +805,6 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Commits: bf520a2cf27b9fa7b02a29f17cf57a7f0e99442a and 328f7c39f446f9f5edde6bc00b08d406ac8fd38a.
 - Follow-up interception handling: 3637f701aa8cefefe268a95f2716cb6736756baf.
 - Host #1200 and Vita #892 both succeeded for the follow-up correction.
+
+- 2026-09-30: Flagship Power Surge normal-fire correction. Commit `ad078636587cb4343dc07d1b3904bbfd07efeddf` keeps normal Flagship weapon/drone firing active while temporary Power Surge shots are in flight, and preserves canonical `COMBAT_BEAM`/other combat-drone weapon types from `ftl.dat` during normal drone attacks. Host #1202 and Vita #894 both succeeded.
+- 2026-09-30: Added a `test_real_ftl_dat.cpp` regression check for BOSS_2's canonical COMBAT_1/COMBAT_BEAM definitions. Commit `484129180ea02c699442a3b45e22fab6f6b60d26`.
