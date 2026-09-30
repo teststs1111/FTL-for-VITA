@@ -539,7 +539,9 @@ void CombatRuntime::update(float dt) {
         enemyTargetRoom < static_cast<int>(player.content.layout.rooms.size()) &&
         enemyFireDelay_ <= 0.0f &&
         std::none_of(shots_.begin(), shots_.end(), [](const CombatShot& shot) {
-            return !shot.fromPlayer;
+            // Flagship Power Surge projectiles are temporary attacks and do not
+            // suppress the Flagship's normal weapon/drone fire.
+            return !shot.fromPlayer && !shot.flagshipSurge;
         })) {
         for (int i = 0; i < static_cast<int>(enemy.weapons.size()); ++i) {
             if (!enemy.weapons[i].ready) continue;
@@ -610,7 +612,9 @@ void CombatRuntime::update(float dt) {
                 continue;
             RuntimeWeapon weapon;
             weapon.name = drone.name + "_DRONE_WEAPON";
-            weapon.type = "LASER";
+            // COMBAT_BEAM and other combat drones retain their canonical
+            // weapon type from ftl.dat; do not coerce every drone to a laser.
+            weapon.type = drone.weaponType.empty() ? "LASER" : drone.weaponType;
             weapon.power = 0;
             weapon.speed = drone.weaponSpeed;
             weapon.shots = drone.weaponShots;
