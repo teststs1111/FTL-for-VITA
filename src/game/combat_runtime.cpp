@@ -395,6 +395,11 @@ void CombatRuntime::update(float dt) {
                     surge.ionDamage = source->weaponIonDamage;
                     surge.shieldPiercing = source->weaponShieldPiercing;
                     surge.personnelDamage = source->weaponPersonnelDamage;
+                    surge.hullBust = source->weaponHullBust;
+                    surge.fireChance = source->weaponFireChance;
+                    surge.breachChance = source->weaponBreachChance;
+                    surge.stunChance = source->weaponStunChance;
+                    surge.stunDuration = source->weaponStunDuration;
                     surge.cooldown = source->weaponCooldown;
                     for (int i = 0; i < count; ++i) {
                         const int room = player.content.layout.rooms[
@@ -622,12 +627,16 @@ void CombatRuntime::update(float dt) {
             weapon.ionDamage = drone.weaponIonDamage;
             weapon.shieldPiercing = drone.weaponShieldPiercing;
             weapon.personnelDamage = drone.weaponPersonnelDamage;
+            weapon.hullBust = drone.weaponHullBust;
+            weapon.fireChance = drone.weaponFireChance;
+            weapon.breachChance = drone.weaponBreachChance;
+            weapon.stunChance = drone.weaponStunChance;
+            weapon.stunDuration = drone.weaponStunDuration;
             weapon.cooldown = drone.weaponCooldown;
             drone.active = false;
             drone.weaponCharge = 0.0f;
             if (fromPlayer) playerDeployedCombatDrone_ = true;
             enqueueWeapon(fromPlayer, -1, weapon, targetRoom);
-            break;
         }
     };
     launchCombatDrone(player, targetRoom, true);
