@@ -349,7 +349,7 @@ void CombatRuntime::update(float dt) {
     player.updateEnvironment(dt);
     enemy.updateEnvironment(dt);
     // REBEL_FLEET_FUEL starts its FTL escape countdown immediately.
-    // The canonical ship definition uses an 80-second escape timer.
+    // The canonical ship definition uses a 90-second timer for the post-last-fuel arrival path; the separate WAIT path is 80 seconds.
     if (enemyEscapeTimer_ > 0.0f) {
         enemyEscapeTimer_ = std::max(0.0f, enemyEscapeTimer_ - dt);
         if (enemyEscapeTimer_ <= 0.0f) {
