@@ -815,3 +815,10 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Preserved canonical drone weapon secondary effects from ftl.dat: hull bust, fire, breach, stun chance/duration now flow from WeaponBlueprint -> DroneBlueprint -> RuntimeDrone -> RuntimeWeapon.
 - Beam drone attacks now also apply canonical fire/breach/stun effects instead of skipping all secondary effects.
 - Host #1205 / Vita #897 succeeded after the test correction; subsequent source changes continue through the normal build workflow.
+
+
+## 2026-09-30 Combat drone cooldown correction
+- Rechecked the canonical BOSS_2 combat-drone data path and found a timing mismatch in runtime: COMBAT_1/COMBAT_BEAM define their launch cooldown on the drone blueprint in milliseconds (1000), while the linked DRONE_LASER/DRONE_BEAM weapon data does not define the drone's launch interval.
+- Corrected ShipRuntime so combat-drone charging uses the drone's canonical cooldown (cooldown / 1000.0) and only falls back to the linked weapon cooldown when a combat drone has no drone cooldown.
+- This prevents the loaded combat drones from firing on an incorrect multi-second cycle and keeps the timing data-driven from ftl.dat.
+- Commit: 62a8879708e4759a8e70b877876a1ca0c6cbafa4.
