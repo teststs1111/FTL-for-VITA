@@ -65,7 +65,7 @@ public:
     bool selectWeapon(int weaponIndex);
     bool setEnemyTargetRoom(int roomId);
     void setRandomSeed(std::uint32_t seed);
-    void configureFlagshipPhase(int phase);
+    void configureFlagshipPhase(int phase, int difficulty = 1);
     void setPlayerWeaponCooldownMultiplier(float multiplier) { playerWeaponCooldownMultiplier_ = multiplier; }
     void setPlayerShieldRechargeMultiplier(float multiplier) { playerShieldRechargeMultiplier_ = multiplier; }
     void setStealthWeapons(bool enabled) { stealthWeapons_ = enabled; }
@@ -110,6 +110,8 @@ private:
     float flagshipSurgeInterval_{0.0f};
     int superShield_{0};
     int flagshipSurgeCount_{0};
+    int flagshipSurgeCombatDrones_{0};
+    int flagshipSurgeBeamDrones_{0};
     float playerWeaponCooldownMultiplier_{1.0f};
     float playerShieldRechargeMultiplier_{1.0f};
     bool stealthWeapons_{false};
