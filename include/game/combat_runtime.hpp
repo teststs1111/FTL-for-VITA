@@ -37,6 +37,9 @@ struct CombatShot {
     int targetRoom{-1};
     float elapsed{0.0f};
     float duration{0.25f};
+    bool flagshipSurge{false};
+    int flagshipSurgeShotsRemaining{0};
+    std::uint32_t flagshipSurgeSerial{0};
 };
 
 class CombatRuntime {
@@ -116,6 +119,7 @@ private:
     int flagshipSurgeBeamDrones_{0};
     bool flagshipSurgeWarning_{false};
     int flagshipSurgePendingShots_{0};
+    std::uint32_t flagshipSurgeShotSerial_{0};
     float playerWeaponCooldownMultiplier_{1.0f};
     float playerShieldRechargeMultiplier_{1.0f};
     bool stealthWeapons_{false};
