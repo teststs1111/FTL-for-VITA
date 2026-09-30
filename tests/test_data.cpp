@@ -696,6 +696,8 @@ static void testShipRuntime() {
         if (system.type == "engines" || system.type == "pilot")
             system.powered = false;
     }
+    combat.player.weapons[0].type = "ION";
+    combat.player.weapons[0].speed = 10;
     combat.player.weapons[0].damage = 0;
     combat.player.weapons[0].systemDamage = 0;
     combat.player.weapons[0].ionDamage = 1;
@@ -705,7 +707,15 @@ static void testShipRuntime() {
     combat.player.updateWeapons(2.5f);
     assert(combat.player.weapons[0].ready);
     combat.setRandomSeed(1);
-    const int shieldIonPowerBefore = combat.enemy.systems[0].power;
+    int shieldSystemIndex = -1;
+    for (int i = 0; i < static_cast<int>(combat.enemy.systems.size()); ++i) {
+        if (combat.enemy.systems[i].type == "shields") {
+            shieldSystemIndex = i;
+            break;
+        }
+    }
+    assert(shieldSystemIndex >= 0);
+    const int shieldIonPowerBefore = combat.enemy.systems[shieldSystemIndex].power;
     assert(combat.fireSelectedWeapon().fired);
     combat.update(0.25f);
     wormhole::CombatResult shieldIonImpact;
@@ -713,8 +723,8 @@ static void testShipRuntime() {
     assert(shieldIonImpact.shieldsAbsorbed == 1);
     assert(shieldIonImpact.ionDamage == 1);
     assert(combat.enemy.shieldLayers == 1);
-    assert(combat.enemy.systems[0].ionDamage == 1);
-    assert(combat.enemy.systems[0].power == shieldIonPowerBefore - 1);
+    assert(combat.enemy.systems[shieldSystemIndex].ionDamage == 1);
+    assert(combat.enemy.systems[shieldSystemIndex].power == shieldIonPowerBefore - 1);
 
     // Weapon secondary effects: a guaranteed hit should start fire/breach and stun the room.
     assert(combat.load(content, enemyForCombat));
