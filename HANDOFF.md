@@ -861,3 +861,6 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 
 ## 2026-09-30 Missile bypass regression timing fix
 - The new missile shield-bypass regression initially asserted before the third projectile's flight time had elapsed; stabilized it by advancing combat past the full volley duration.
+
+## 2026-09-30 Missile bypass shield-system test setup fix
+- The regression now normalizes the target Shields system power before advancing combat, matching ShipRuntime shield state initialization and preventing the test fixture from losing its manually assigned shield layers.
