@@ -36,6 +36,8 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     playerWeaponCooldownMultiplier_ = 1.0f;
     superShield_ = 0;
     flagshipSurgeWarning_ = false;
+    flagshipSurgePendingShots_ = 0;
+    flagshipSurgeShotSerial_ = 0;
 
     const LoadedShip* playerShip = contentSource.playerShip();
     if (!playerShip) return false;
@@ -204,6 +206,7 @@ void CombatRuntime::configureFlagshipPhase(int phase, int difficulty) {
     flagshipSurgeBeamDrones_ = 0;
     flagshipSurgeWarning_ = false;
     flagshipSurgePendingShots_ = 0;
+    flagshipSurgeShotSerial_ = 0;
     if (flagshipPhase_ == 2) {
         const int d = std::clamp(difficulty, 0, 2);
         const int total = d == 0 ? 4 : (d == 1 ? 6 : 7);
@@ -297,8 +300,7 @@ void CombatRuntime::updateEnvironmentHazard(float dt) {
         return;
     }
 
-    if (environment_ == CombatEnvironment::Sun) {
-        ShipRuntime* ships[2] = {&player, &enemy};
+    if (environment_ == CombatEnvironment::Sun) {        ShipRuntime* ships[2] = {&player, &enemy};
         for (ShipRuntime* ship : ships) {
             const int fires = ship->shieldLayers > 0
                 ? 1 + static_cast<int>(nextRandom() % 2u)
@@ -395,13 +397,21 @@ void CombatRuntime::update(float dt) {
                     surge.shieldPiercing = source->weaponShieldPiercing;
                     surge.personnelDamage = source->weaponPersonnelDamage;
                     surge.cooldown = source->weaponCooldown;
-                    for (int i = 0; i < count * 2; ++i) {
+                    for (int i = 0; i < count; ++i) {
                         const int room = player.content.layout.rooms[
                             static_cast<std::size_t>(nextRandom() % static_cast<std::uint32_t>(roomCount))].id;
-                        // Each temporary surge drone gets exactly two attacks.
-                        // Keep the shots together for this surge so they can
-                        // be tracked independently from the normal enemy AI.
-                        enqueueWeapon(false, -1, surge, room);
+                        CombatShot shot;
+                        shot.fromPlayer = false;
+                        shot.weaponIndex = -1;
+                        shot.weapon = surge;
+                        shot.weapon.shots = 1;
+                        shot.targetRoom = room;
+                        shot.flagshipSurge = true;
+                        shot.flagshipSurgeShotsRemaining = 2;
+                        shot.flagshipSurgeSerial = ++flagshipSurgeShotSerial_;
+                        const float speed = static_cast<float>(std::max(1, surge.speed));
+                        shot.duration = std::clamp(2.5f / speed, 0.12f, 0.75f);
+                        shots_.push_back(std::move(shot));
                         ++flagshipSurgePendingShots_;
                     }
                 };
@@ -597,8 +607,7 @@ void CombatRuntime::update(float dt) {
             weapon.power = 0;
             weapon.speed = drone.weaponSpeed;
             weapon.shots = drone.weaponShots;
-            weapon.damage = drone.weaponDamage;
-            weapon.systemDamage = drone.weaponSystemDamage;
+            weapon.damage = drone.weaponDamage;            weapon.systemDamage = drone.weaponSystemDamage;
             weapon.ionDamage = drone.weaponIonDamage;
             weapon.shieldPiercing = drone.weaponShieldPiercing;
             weapon.personnelDamage = drone.weaponPersonnelDamage;
@@ -638,9 +647,37 @@ void CombatRuntime::update(float dt) {
         impactResults_.push_back(result);
         lastImpactResult_ = impactResults_.back();
         hasImpactResult_ = true;
+        const bool isFlagshipSurgeShot = it->flagshipSurge;
+        const int remainingSurgeShots = it->flagshipSurgeShotsRemaining;
+        const RuntimeWeapon surgeWeapon = it->weapon;
+        const std::uint32_t surgeSerial = it->flagshipSurgeSerial;
         it = shots_.erase(it);
-        if (!hitEnemy && flagshipPhase_ == 2 && flagshipSurgePendingShots_ > 0)
+        if (!hitEnemy && isFlagshipSurgeShot && flagshipSurgePendingShots_ > 0)
             --flagshipSurgePendingShots_;
+
+        // Temporary Phase 2 surge drones perform their two attacks in
+        // sequence. The second attack is created only after the first one
+        // resolves, avoiding an incorrect simultaneous full-volley model.
+        if (!hitEnemy && isFlagshipSurgeShot && remainingSurgeShots > 1 &&
+            outcome == CombatOutcome::Ongoing) {
+            const int roomCount = static_cast<int>(player.content.layout.rooms.size());
+            if (roomCount > 0) {
+                CombatShot followUp;
+                followUp.fromPlayer = false;
+                followUp.weaponIndex = -1;
+                followUp.weapon = surgeWeapon;
+                followUp.weapon.shots = 1;
+                followUp.targetRoom = player.content.layout.rooms[
+                    static_cast<std::size_t>(nextRandom() % static_cast<std::uint32_t>(roomCount))].id;
+                followUp.flagshipSurge = true;
+                followUp.flagshipSurgeShotsRemaining = remainingSurgeShots - 1;
+                followUp.flagshipSurgeSerial = surgeSerial;
+                const float speed = static_cast<float>(std::max(1, surgeWeapon.speed));
+                followUp.duration = std::clamp(2.5f / speed, 0.12f, 0.75f);
+                shots_.push_back(std::move(followUp));
+                ++flagshipSurgePendingShots_;
+            }
+        }
 
         if (targetDestroyed) {
             outcome = hitEnemy ? CombatOutcome::EnemyDestroyed
