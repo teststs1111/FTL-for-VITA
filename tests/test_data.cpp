@@ -708,9 +708,8 @@ static void testShipRuntime() {
     assert(combat.fireWeapon(0).fired);
     assert(combat.player.missiles == 4);
     assert(combat.pendingShotCount() == 3);
-    combat.update(0.25f);
-    combat.update(0.03f);
-    combat.update(0.03f);
+    combat.update(0.35f);
+    assert(combat.pendingShotCount() == 0);
     assert(combat.enemy.shieldLayers == 2);
     assert(combat.enemy.hull == bypassHull - 3);
     int bypassImpacts = 0;
