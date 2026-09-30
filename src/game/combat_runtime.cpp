@@ -396,6 +396,7 @@ void CombatRuntime::update(float dt) {
                 enqueueSurgeDrone(combatDrone, flagshipSurgeCombatDrones_);
                 enqueueSurgeDrone(beamDrone, flagshipSurgeBeamDrones_);
             } else {
+                const int surgeCount = 7;
                 // Phase 3 replaces the drone swarm with a seven-shot laser
                 // barrage. Its projectile is based on the loaded Heavy Laser
                 // style values but remains independent of normal weapon power.
