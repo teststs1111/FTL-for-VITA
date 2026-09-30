@@ -2615,6 +2615,7 @@ public:
                 const auto& beacon = sectorGraph_.nodes()[i];
                 if (static_cast<int>(i) == currentBeacon_ ||
                     static_cast<int>(i) == flagshipBaseNode_ ||
+                    static_cast<int>(i) == flagshipNode_ ||
                     beacon.fleetCovered)
                     continue;
                 candidates.push_back(static_cast<int>(i));
