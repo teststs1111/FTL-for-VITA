@@ -881,16 +881,12 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
         // FTL weapons can apply secondary effects after a successful impact.
         // Keep these effects tied to the same projectile resolution so shields,
         // evasion and damage all use one deterministic hit outcome.
-        // Fire is rolled first; only if it fails is the breach roll made.
-        // A single FTL hit cannot create both effects.
-        bool fireStarted = false;
         if (weapon.fireChance > 0 && target.roomOxygen[room] > 0 &&
             (nextRandom() % 100u) < static_cast<std::uint32_t>(weapon.fireChance)) {
-            fireStarted = target.setRoomFire(room, true);
-            if (fireStarted)
+            if (target.setRoomFire(room, true))
                 ++result.firesStarted;
         }
-        if (!fireStarted && weapon.breachChance > 0 &&
+        if (weapon.breachChance > 0 &&
             (nextRandom() % 100u) < static_cast<std::uint32_t>(weapon.breachChance)) {
             if (target.setRoomBreach(room, true))
                 ++result.breachesStarted;
