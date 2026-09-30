@@ -696,6 +696,7 @@ static void testShipRuntime() {
     combat.player.weapons[0].systemDamage = 0;
     combat.player.weapons[0].ionDamage = 1;
     combat.player.weapons[0].missilesUsed = 0;
+    combat.player.weapons[0].shieldPiercing = 0;
     combat.player.updateWeapons(2.5f);
     assert(combat.player.weapons[0].ready);
     combat.setRandomSeed(1);
