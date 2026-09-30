@@ -129,6 +129,11 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
                     resolved.weaponIonDamage = weapon->ionDamage;
                     resolved.weaponShieldPiercing = weapon->shieldPiercing;
                     resolved.weaponPersonnelDamage = weapon->personnelDamage;
+                    resolved.weaponHullBust = weapon->hullBust;
+                    resolved.weaponFireChance = weapon->fireChance;
+                    resolved.weaponBreachChance = weapon->breachChance;
+                    resolved.weaponStunChance = weapon->stunChance;
+                    resolved.weaponStunDuration = weapon->stunDuration;
                 }
             }
             out.initialDroneBlueprints.push_back(std::move(resolved));
