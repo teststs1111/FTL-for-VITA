@@ -352,23 +352,62 @@ void CombatRuntime::update(float dt) {
             const int roomCount = static_cast<int>(player.content.layout.rooms.size());
             ++flagshipSurgeCount_;
             // Vanilla rolls one fixed interval per phase: 21-26 seconds.
-            // Phase 2 spawns seven combat drones; Phase 3 replaces them with
-            // a seven-shot laser barrage and restores the super shield every
-            // fourth surge.
+            // Phase 2 uses the actual combat/beam drone weapon definitions
+            // loaded from the Flagship blueprint. The surge is independent of
+            // the normal drone-system power budget, so disabling Drone Control
+            // does not disable these extra attacks.
             const int surgeCount = 7;
-            for (int i = 0; i < surgeCount; ++i) {
-                RuntimeWeapon surge;
-                surge.name = "FLAGSHIP_DRONE_SURGE";
-                surge.type = "LASER";
-                surge.power = 0;
-                surge.speed = 10;
-                surge.shots = 1;
-                surge.damage = flagshipPhase_ == 3 ? 2 : 1;
-                surge.systemDamage = flagshipPhase_ == 3 ? 1 : 1;
-                surge.cooldown = 1.0f;
-                const int room = player.content.layout.rooms[
-                    static_cast<std::size_t>(nextRandom() % static_cast<std::uint32_t>(roomCount))].id;
-                enqueueWeapon(false, -1, surge, room);
+            if (flagshipPhase_ == 2) {
+                const RuntimeDrone* combatDrone = nullptr;
+                const RuntimeDrone* beamDrone = nullptr;
+                for (const auto& drone : enemy.drones) {
+                    if (!combatDrone && drone.type == DroneBlueprint::Type::Combat)
+                        combatDrone = &drone;
+                    if (!beamDrone && drone.type == DroneBlueprint::Type::Battle)
+                        beamDrone = &drone;
+                }
+                for (int i = 0; i < surgeCount; ++i) {
+                    const RuntimeDrone* source = (i % 2 == 0) ? combatDrone : beamDrone;
+                    if (!source) source = combatDrone ? combatDrone : beamDrone;
+                    if (!source) continue;
+
+                    RuntimeWeapon surge;
+                    surge.name = source->name + "_FLAGSHIP_SURGE";
+                    surge.type = "LASER";
+                    surge.power = 0;
+                    surge.speed = source->weaponSpeed;
+                    surge.shots = std::max(1, source->weaponShots);
+                    surge.damage = source->weaponDamage;
+                    surge.systemDamage = source->weaponSystemDamage;
+                    surge.ionDamage = source->weaponIonDamage;
+                    surge.shieldPiercing = source->weaponShieldPiercing;
+                    surge.personnelDamage = source->weaponPersonnelDamage;
+                    surge.cooldown = source->weaponCooldown;
+                    const int room = player.content.layout.rooms[
+                        static_cast<std::size_t>(nextRandom() % static_cast<std::uint32_t>(roomCount))].id;
+                    enqueueWeapon(false, -1, surge, room);
+                }
+            } else {
+                // Phase 3 replaces the drone swarm with a seven-shot laser
+                // barrage. Its projectile is based on the loaded Heavy Laser
+                // style values but remains independent of normal weapon power.
+                for (int i = 0; i < surgeCount; ++i) {
+                    RuntimeWeapon surge;
+                    surge.name = "FLAGSHIP_LASER_SURGE";
+                    surge.type = "LASER";
+                    surge.power = 0;
+                    surge.speed = 10;
+                    surge.shots = 1;
+                    surge.damage = 1;
+                    surge.systemDamage = 1;
+                    surge.fireChance = 30;
+                    surge.breachChance = 21;
+                    surge.stunChance = 20;
+                    surge.cooldown = 1.0f;
+                    const int room = player.content.layout.rooms[
+                        static_cast<std::size_t>(nextRandom() % static_cast<std::uint32_t>(roomCount))].id;
+                    enqueueWeapon(false, -1, surge, room);
+                }
             }
             if (flagshipPhase_ == 3 && flagshipSurgeCount_ % 4 == 0)
                 superShield_ = 10;
