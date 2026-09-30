@@ -203,7 +203,8 @@ void ShipRuntime::updateShields(float dt, float rechargeMultiplier) {
         return;
     }
 
-    shieldCharge += dt;
+    const float effectiveDt = dt * std::max(0.0f, rechargeMultiplier);
+    shieldCharge += effectiveDt;
     constexpr float rechargeSeconds = 2.0f;
     while (shieldCharge >= rechargeSeconds && shieldLayers < maxShieldLayers) {
         shieldCharge -= rechargeSeconds;
@@ -285,7 +286,8 @@ int ShipRuntime::resolveWeaponVolley(int weaponIndex, const std::vector<int>& pr
         return value;
     };
     const std::string kind = lower(type);
-    const bool missileLike = kind.find("missile") != std::string::npos ||
+    const bool missileLike = weapon.missilesUsed > 0 ||
+                             kind.find("missile") != std::string::npos ||
                              kind.find("bomb") != std::string::npos;
     const bool ionLike = kind.find("ion") != std::string::npos;
     const bool beamLike = kind.find("beam") != std::string::npos;
@@ -337,11 +339,9 @@ int ShipRuntime::resolveWeaponVolley(int weaponIndex, const std::vector<int>& pr
             continue;
         }
 
-        if (!beamLike && !bypassShields && shieldLayers > 0) {
-            // Lasers, flak and crystal-style projectiles remove one shield
-            // layer per projectile. A crystal piercing value describes its
-            // special ability, but the vanilla multi-layer behavior still
-            // consumes the encountered shield layer before room damage.
+        if (!beamLike && !bypassShields && shieldLayers > weapon.shieldPiercing) {
+            // Crystal/piercing projectiles pass through the configured number
+            // of shield layers. Any remaining layer still absorbs the shot.
             --shieldLayers;
             shieldCharge = 0.0f;
             ++resolved;
@@ -386,7 +386,8 @@ int ShipRuntime::resolveWeaponVolley(int weaponIndex, const std::vector<int>& pr
             damageCrewInRoom(targetRoom, weapon.personnelDamage);
         if (weapon.ionDamage > 0)
             ionizeSystemInRoom(targetRoom, weapon.ionDamage);
-        if (weapon.stunDuration > 0)
+        if (weapon.stunChance > 0 && weapon.stunDuration > 0 &&
+            (roll(rng) < std::clamp(weapon.stunChance, 0, 100)))
             stunSystemsInRoom(targetRoom, static_cast<float>(weapon.stunDuration));
 
         ++resolved;
