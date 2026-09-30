@@ -855,3 +855,6 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 ## 2026-09-30 Missile/bomb ammunition regression
 - Added a deterministic combat regression proving missile/bomb ammunition is consumed once per volley, not once per projectile.
 - The test also verifies a volley cannot fire when the remaining ammunition is below the weapon's configured `missilesUsed` cost.
+
+## 2026-09-30 Missile shield bypass regression
+- Added deterministic coverage proving missile projectiles bypass ordinary shield layers while each projectile still applies its hull damage.
