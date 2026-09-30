@@ -764,8 +764,18 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
         // Missile/bomb weapons bypass shields, and therefore do not use the
         // normal projectile evasion check here. Other projectiles can be
         // avoided based on the target's powered engines and manned piloting.
+        const std::string weaponKind = [&]() {
+            std::string value = weapon.type;
+            std::transform(value.begin(), value.end(), value.begin(),
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            return value;
+        }();
+        const bool beamLike = weaponKind.find("beam") != std::string::npos;
+        // Missile/bomb weapons bypass shields. Beams cannot be evaded and do
+        // not consume ordinary shield layers; their damage is reduced by the
+        // layers they cross.
         const bool shieldBypass = weapon.missilesUsed > 0;
-        if (!shieldBypass) {
+        if (!shieldBypass && !beamLike) {
             int dodgeChance = 0;
             for (const auto& system : target.systems) {
                 if (system.type == "engines" && system.powered)
@@ -813,6 +823,8 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
         }
 
         int hullDamage = std::max(0, weapon.damage);
+        if (beamLike)
+            hullDamage = std::max(0, hullDamage - target.shieldLayers);
         // Hull-buster beams deal their bonus damage when striking a room
         // without a system installed.
         if (weapon.hullBust > 0) {
