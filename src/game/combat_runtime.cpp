@@ -851,9 +851,11 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
         int hullDamage = std::max(0, weapon.damage);
         if (beamLike)
             hullDamage = std::max(0, hullDamage - target.shieldLayers);
-        // Hull-buster beams deal their bonus damage when striking a room
-        // without a system installed.
-        if (weapon.hullBust > 0) {
+
+        // Hull-buster weapons add their bonus only after the projectile/beam
+        // has actually overcome ordinary shields. A fully shield-blocked beam
+        // must not gain bonus damage merely because its target room is empty.
+        if (hullDamage > 0 && weapon.hullBust > 0) {
             const bool hasSystem = std::any_of(target.systems.begin(), target.systems.end(),
                 [room](const RuntimeSystem& system) {
                     return system.room == room;
