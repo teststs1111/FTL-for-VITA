@@ -864,3 +864,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 
 ## 2026-09-30 Missile bypass shield-system test setup fix
 - The regression now normalizes the target Shields system power before advancing combat, matching ShipRuntime shield state initialization and preventing the test fixture from losing its manually assigned shield layers.
+
+
+## 2026-09-30 Missile/bomb data-path regression
+- Audited the current missile/bomb combat path after the ammunition and shield-bypass regressions.
+- Runtime behavior remains data-driven: canonical weapon definitions carry `missilesUsed`, that value is copied into `RuntimeWeapon`, ammunition is consumed once per volley, and `missilesUsed > 0` weapons bypass ordinary shield layers while still being checked against the Phase 3 super shield.
+- Added a real-archive regression over the canonical `WEAPONS_MISSILES` list to verify missile/bomb entries with ammunition costs retain those costs when copied into runtime weapons.
+- Test commits: `197e37dabfd0b70cd47d25819c96e37a96a66b06`, corrected by `7e3b0298927eec0555cb13bb83d42e961cc57c98`.
+- No synthetic DLC path was introduced; continue from the canonical ftl.dat data path.
+- Next fidelity audit remains crystal/heavy-pierce interactions and Zoltan/reverse-ion edge cases.
