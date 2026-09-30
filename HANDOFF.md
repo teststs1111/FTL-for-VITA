@@ -858,3 +858,6 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 
 ## 2026-09-30 Missile shield bypass regression
 - Added deterministic coverage proving missile projectiles bypass ordinary shield layers while each projectile still applies its hull damage.
+
+## 2026-09-30 Missile bypass regression timing fix
+- The new missile shield-bypass regression initially asserted before the third projectile's flight time had elapsed; stabilized it by advancing combat past the full volley duration.
