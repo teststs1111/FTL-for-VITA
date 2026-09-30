@@ -822,3 +822,10 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Corrected ShipRuntime so combat-drone charging uses the drone's canonical cooldown (cooldown / 1000.0) and only falls back to the linked weapon cooldown when a combat drone has no drone cooldown.
 - This prevents the loaded combat drones from firing on an incorrect multi-second cycle and keeps the timing data-driven from ftl.dat.
 - Commit: 62a8879708e4759a8e70b877876a1ca0c6cbafa4.
+
+
+## 2026-09-30 Beam combat correction
+- Corrected CombatRuntime projectile handling so beam weapons loaded from the canonical weapon type are not subjected to normal engine/piloting evasion and do not consume ordinary shield layers.
+- Beam damage is reduced by the target's current ordinary shield layers instead.
+- Host #1219 and Vita #911 both succeeded for commit 820a74bc05702e7c01afd170637b35e151a86abb.
+- Continue auditing shield-piercing, ion, missile/bomb and secondary-effect semantics before treating projectile combat as complete.
