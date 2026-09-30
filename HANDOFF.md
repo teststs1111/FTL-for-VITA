@@ -834,3 +834,7 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Corrected runtime ion weapon resolution so an ion projectile blocked by ordinary shields applies its ion damage to the Shields system instead of merely consuming one shield layer.
 - Preserved missile/bomb shield bypass and normal projectile shield-layer behavior.
 - Continue auditing ion stacking, crystal/heavy-pierce shield piercing, and Zoltan/reverse-ion edge cases before treating weapon resolution as complete.
+
+## 2026-09-30 Hull-buster shield correction
+- Prevented hull-buster bonus damage from applying when a beam's base damage is fully absorbed by ordinary shields.
+- The bonus now applies only after the beam has non-zero effective damage, preserving the intended empty-room bonus without letting it pierce a full shield block.
