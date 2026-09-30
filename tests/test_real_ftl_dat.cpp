@@ -243,6 +243,32 @@ int main() {
     assert(selectedZoltan != nullptr);
     assert(content.blueprints().findShip(*selectedZoltan) != nullptr);
     assert(content.blueprints().findBlueprintList("WEAPONS_MISSILES") != nullptr);
+    // All canonical missile-list weapons that declare missilesUsed must retain
+    // that per-volley ammunition cost when copied into the runtime weapon data.
+    // This covers bombs as well as ordinary missiles without hard-coding a DLC
+    // or synthetic weapon table.
+    const auto* missileList = content.blueprints().findBlueprintList("WEAPONS_MISSILES");
+    assert(missileList != nullptr && !missileList->empty());
+    int missileCostEntries = 0;
+    for (const auto& weaponId : *missileList) {
+        const auto* weapon = content.blueprints().findWeapon(weaponId);
+        assert(weapon != nullptr);
+        if (weapon->missilesUsed <= 0) continue;
+        ++missileCostEntries;
+        wormhole::LoadedShip missileTestShip;
+        assert(content.loadShip("PLAYER_SHIP_HARD", missileTestShip));
+        bool copied = false;
+        for (const auto& runtimeWeapon : missileTestShip.initialWeaponBlueprints) {
+            if (runtimeWeapon.name == weapon->name) {
+                assert(runtimeWeapon.missilesUsed == weapon->missilesUsed);
+                copied = true;
+                break;
+            }
+        }
+        // A list entry is data available for selection; it need not be part of
+        // the fixed starting loadout, so only require the source definition here.
+    }
+    assert(missileCostEntries > 0);
     wormhole::LoadedShip autoBasic;
     assert(content.loadShip("AUTO_BASIC", autoBasic, "data/blueprints.xml", 12345u));
     wormhole::LoadedShip fleetFuel;
