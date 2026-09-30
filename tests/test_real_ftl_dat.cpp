@@ -250,6 +250,30 @@ int main() {
     assert(fleetFuel.blueprint.id == "REBEL_FLEET_FUEL");
     assert(fleetFuel.blueprint.maxHealth > 0);
 
+    // Rebel Flagship combat drones must retain their canonical weapon
+    // definitions from ftl.dat. In particular BOSS_2 includes COMBAT_BEAM.
+    wormhole::LoadedShip flagshipPhase2;
+    assert(content.loadShip("BOSS_2", flagshipPhase2));
+    bool foundCombatBeam = false;
+    bool foundCombatLaser = false;
+    for (const auto& drone : flagshipPhase2.blueprint.initialDrones) {
+        if (drone.name == "COMBAT_BEAM") {
+            foundCombatBeam = true;
+            assert(drone.weaponBlueprint == "DRONE_BEAM");
+            assert(drone.weaponType == "BEAM");
+            assert(drone.weaponDamage == 1);
+            assert(drone.weaponShots == 1);
+        }
+        if (drone.name == "COMBAT_1") {
+            foundCombatLaser = true;
+            assert(drone.weaponBlueprint == "DRONE_LASER");
+            assert(drone.weaponType == "LASER");
+            assert(drone.weaponDamage == 1);
+            assert(drone.weaponShots == 1);
+        }
+    }
+    assert(foundCombatBeam && foundCombatLaser);
+
     wormhole::LoadedShip generatedEnemy;
     assert(content.loadEnemyShip("AUTO_BASIC", generatedEnemy, 5, 1, 12345u));
 
