@@ -795,3 +795,13 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Removed the incorrect safeguard that forced every Phase 2 surge composition to contain at least one Combat and one Beam drone. All-Combat or all-Beam rolls are now preserved.
 - Difficulty counts remain Easy 4 / Normal 6 / Hard 7, and the phase-local interval remains a single 20–30 second roll.
 - Source commit: `3f77ad97dbd07f130b7f77026f655fb09cb1f548`.
+
+
+## 2026-09-30 Flagship Power Surge temporal attack correction
+- Phase 2 temporary surge drones no longer enqueue both attacks as one simultaneous volley.
+- Each temporary surge drone now creates its first attack, and its second attack is scheduled only after the first projectile resolves.
+- The temporary drone keeps a two-attack counter, so cloaking or a Defense Drone interception still consumes an attack and the drone disappears after its second attempt.
+- This better matches the observed original behavior where surge drones deploy, attack twice, then disappear; the surge itself remains independent of the normal Drone Control system.
+- Commits: bf520a2cf27b9fa7b02a29f17cf57a7f0e99442a and 328f7c39f446f9f5edde6bc00b08d406ac8fd38a.
+- Follow-up interception handling: 3637f701aa8cefefe268a95f2716cb6736756baf.
+- Host #1200 and Vita #892 both succeeded for the follow-up correction.
