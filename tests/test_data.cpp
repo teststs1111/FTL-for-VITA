@@ -684,6 +684,44 @@ static void testShipRuntime() {
     assert(!combat.fireWeapon(0).fired);
     assert(combat.player.missiles == 1);
 
+    // Missile projectiles bypass ordinary shield layers while still applying each shot.
+    assert(combat.load(content, enemyForCombat));
+    assert(combat.setTargetRoom(0));
+    assert(combat.player.setSystemPowered(2, true));
+    RuntimeWeapon bypassWeapon;
+    bypassWeapon.name = "ShieldBypassMissile";
+    bypassWeapon.type = "MISSILES";
+    bypassWeapon.power = 1;
+    bypassWeapon.shots = 3;
+    bypassWeapon.damage = 1;
+    bypassWeapon.missilesUsed = 1;
+    bypassWeapon.speed = 10;
+    bypassWeapon.cooldown = 1.0f;
+    bypassWeapon.charge = 1.0f;
+    bypassWeapon.ready = true;
+    bypassWeapon.allocatedPower = 1;
+    combat.player.weapons[0] = bypassWeapon;
+    combat.player.weaponIonDisabled = std::vector<bool>{false};
+    combat.player.missiles = 5;
+    combat.enemy.shieldLayers = 2;
+    const int bypassHull = combat.enemy.hull;
+    assert(combat.fireWeapon(0).fired);
+    assert(combat.player.missiles == 4);
+    assert(combat.pendingShotCount() == 3);
+    combat.update(0.25f);
+    combat.update(0.03f);
+    combat.update(0.03f);
+    assert(combat.enemy.shieldLayers == 2);
+    assert(combat.enemy.hull == bypassHull - 3);
+    int bypassImpacts = 0;
+    wormhole::CombatResult bypassImpact;
+    while (combat.consumeImpactResult(bypassImpact)) {
+        assert(bypassImpact.shieldsAbsorbed == 0);
+        assert(bypassImpact.hullDamage == 1);
+        ++bypassImpacts;
+    }
+    assert(bypassImpacts == 3);
+
     // Ion damage temporarily removes system power without increasing permanent damage.
     assert(combat.load(content, enemyForCombat));
     assert(combat.setTargetRoom(0));
