@@ -330,8 +330,9 @@ int ShipRuntime::resolveWeaponVolley(int weaponIndex, const std::vector<int>& pr
                     break;
                 }
             }
-            if (shieldLayers > 0 && shieldIndex >= 0) {
+            if (shieldLayers > weapon.shieldPiercing && shieldIndex >= 0) {
                 ionizeSystemInRoom(systems[shieldIndex].room, std::max(1, weapon.ionDamage));
+                shieldCharge = 0.0f;
             } else if (weapon.ionDamage > 0) {
                 ionizeSystemInRoom(targetRoom, weapon.ionDamage);
             }
