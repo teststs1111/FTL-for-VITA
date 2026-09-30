@@ -881,3 +881,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Added a regression covering the 2-layer case and the subsequent hit after the remaining layer is removed.
 - Test commit: `c4226d8a6b6f03e6d159b0beda317ace7557fea0`.
 - Continue next with Reverse Ion and shield-specific interactions, then crystal weapon data coverage from the canonical archive.
+
+
+## 2026-09-30 Host runtime correction
+- Host-side ShipRuntime had two fidelity gaps separate from the newer CombatRuntime path.
+- Shield recharge now actually applies the supplied rechargeMultiplier.
+- Projectile shield resolution now honors shieldPiercing, and missile/bomb bypass recognizes the canonical missilesUsed field in addition to type names.
+- Stun effects in the host volley path now honor stunChance instead of applying every configured stun unconditionally.
+- Commit: 426c05d6967b63681de4e310e00954515b6bd262.
+- Continue auditing the remaining host-side ShipRuntime combat path against CombatRuntime so the two paths do not diverge.
