@@ -193,7 +193,7 @@ void CombatRuntime::setRandomSeed(std::uint32_t seed) {
 
 void CombatRuntime::configureFlagshipPhase(int phase) {
     flagshipPhase_ = std::clamp(phase, 0, 3);
-    droneSurgeTimer_ = flagshipPhase_ == 2 ? 10.0f : 0.0f;
+    droneSurgeTimer_ = (flagshipPhase_ == 2 || flagshipPhase_ == 3)\n        ? 21.0f + static_cast<float>(nextRandom() % 6u)\n        : 0.0f;
     superShield_ = flagshipPhase_ == 3 ? 10 : 0;
     flagshipSurgeCount_ = 0;
 }
@@ -356,7 +356,7 @@ void CombatRuntime::update(float dt) {
             for (int i = 0; i < surgeCount; ++i) {
                 RuntimeWeapon surge;
                 surge.name = "FLAGSHIP_DRONE_SURGE";
-                surge.type = flagshipPhase_ == 3 ? "LASER" : "LASER";
+                surge.type = "LASER";
                 surge.power = 0;
                 surge.speed = 10;
                 surge.shots = 1;
