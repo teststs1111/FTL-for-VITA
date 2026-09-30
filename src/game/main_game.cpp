@@ -606,7 +606,7 @@ public:
         std::ofstream out(savePath(), std::ios::trunc);
         if (!out) return false;
 
-        out << "FTL_VITA_SAVE 12\n";
+        out << "FTL_VITA_SAVE 13\n";
         out << "ship " << std::quoted(runtime_.content.blueprint.id) << "\n";
         out << "seed " << seed_ << "\n";
         out << "sector " << sector_ << "\n";
@@ -637,6 +637,9 @@ public:
             out << entry.first << ' ' << std::quoted(entry.second) << "\n";
         out << "repair_used " << usedRepairBeacons_.size() << "\n";
         for (const int beacon : usedRepairBeacons_) out << beacon << "\n";
+        out << "flagship_crew " << flagshipCrew_.size() << "\n";
+        for (const auto& crew : flagshipCrew_)
+            out << std::quoted(crew.race) << ' ' << std::quoted(crew.name) << ' ' << crew.room << ' ' << crew.health << ' ' << crew.maxHealth << ' ' << (crew.alive ? 1 : 0) << "\n";
         out << "visited " << visitedBeacons_ << "\n";
         out << "resources " << fuel_ << ' ' << scrap_ << ' ' << droneParts_ << ' ' << runtime_.missiles << "\n";
         out << "hull " << runtime_.hull << "\n";
@@ -692,7 +695,8 @@ public:
         const bool saveV10 = header == "FTL_VITA_SAVE 10";
         const bool saveV11 = header == "FTL_VITA_SAVE 11";
         const bool saveV12 = header == "FTL_VITA_SAVE 12";
-        const bool currentSave = saveV4 || saveV5 || saveV6 || saveV7 || saveV8 || saveV9 || saveV10 || saveV11 || saveV12;
+        const bool saveV13 = header == "FTL_VITA_SAVE 13";
+        const bool currentSave = saveV4 || saveV5 || saveV6 || saveV7 || saveV8 || saveV9 || saveV10 || saveV11 || saveV12 || saveV13;
         if (!legacySave && !saveV3 && !currentSave) return false;
 
         std::string key, shipId;
@@ -733,7 +737,7 @@ public:
         flagshipBaseTurns_ = 0;
         flagshipWaitTurns_ = 0;
         flagshipRoute_.clear();
-        if (saveV10 || saveV11) {
+        if (saveV10 || saveV11 || saveV13) {
             in >> key >> flagshipNode_ >> flagshipBaseNode_ >> flagshipRouteIndex_
                 >> flagshipJumpCounter_ >> flagshipBaseTurns_ >> flagshipWaitTurns_;
             if (key != "flagship_state") return false;
@@ -751,7 +755,7 @@ public:
         usedRepairBeacons_.clear();
         mapRevealed_ = false;
         secretSectorPending_ = false;
-        if (saveV5 || saveV6 || saveV7 || saveV8 || saveV9 || saveV10 || saveV11 || saveV12) {
+        if (saveV5 || saveV6 || saveV7 || saveV8 || saveV9 || saveV10 || saveV11 || saveV12 || saveV13) {
             in >> key >> std::quoted(currentSectorType_);
             if (key != "current_sector") return false;
             in >> key >> count;
@@ -768,7 +772,7 @@ public:
             in >> key >> flag;
             if (key != "secret_pending") return false;
             secretSectorPending_ = flag != 0;
-            if (saveV6 || saveV7 || saveV8 || saveV9 || saveV10 || saveV11 || saveV12) {
+            if (saveV6 || saveV7 || saveV8 || saveV9 || saveV10 || saveV11 || saveV12 || saveV13) {
                 in >> key >> count;
                 if (key != "fleet_covered") return false;
                 std::vector<int> covered;
@@ -794,7 +798,7 @@ public:
                 in >> std::quoted(eventName) >> usage;
                 if (!eventName.empty()) sectorEventUsage_[eventName] = std::max(0, usage);
             }
-            if (saveV11 || saveV12) {
+            if (saveV11 || saveV12 || saveV13) {
                 in >> key >> count;
                 if (key != "beacon_events") return false;
                 for (std::size_t i = 0; i < count; ++i) {
@@ -804,7 +808,7 @@ public:
                     if (beacon >= 0 && !eventName.empty())
                         beaconEventAssignments_[beacon] = eventName;
                 }
-                if (saveV12) {
+                if (saveV12 || saveV13) {
                     in >> key >> count;
                     if (key != "repair_used") return false;
                     usedRepairBeacons_.clear();
@@ -813,6 +817,18 @@ public:
                         int beacon = -1;
                         in >> beacon;
                         if (beacon >= 0) usedRepairBeacons_.push_back(beacon);
+                    }
+                }
+                if (saveV13) {
+                    in >> key >> count;
+                    if (key != "flagship_crew") return false;
+                    flagshipCrew_.clear();
+                    flagshipCrew_.reserve(count);
+                    for (std::size_t i = 0; i < count; ++i) {
+                        RuntimeCrew crew; int alive = 0;
+                        in >> std::quoted(crew.race) >> std::quoted(crew.name) >> crew.room >> crew.health >> crew.maxHealth >> alive;
+                        crew.alive = alive != 0 && crew.health > 0;
+                        flagshipCrew_.push_back(std::move(crew));
                     }
                 }
             }
@@ -1202,6 +1218,21 @@ public:
             combatFeedbackTimer_ = 2.0f;
             return;
         }
+        if (sector_ >= 7 && flagshipPhase_ > 1 && !flagshipCrew_.empty()) {
+            auto& crew = combat_.enemy.crew;
+            for (auto& member : crew) member.alive = false;
+            for (const auto& saved : flagshipCrew_) {
+                auto it = std::find_if(crew.begin(), crew.end(), [&](const RuntimeCrew& member) {
+                    return member.name == saved.name || member.race == saved.race;
+                });
+                if (it == crew.end()) continue;
+                it->health = std::clamp(saved.health, 0, std::max(1, saved.maxHealth));
+                it->maxHealth = std::max(1, saved.maxHealth);
+                it->alive = saved.alive && it->health > 0;
+                it->room = saved.room;
+            }
+        }
+
 
         // Out-of-fuel hostile events use the canonical 80-second escape
         // countdown. Rebel/Auto warning events are the special 40-second
@@ -2191,6 +2222,7 @@ public:
         flagshipJumpCounter_ = 0;
         flagshipBaseTurns_ = 0;
         flagshipWaitTurns_ = 0;
+        flagshipCrew_.clear();
 
         if (sector_ < 7 || sectorGraph_.nodes().empty()) return;
 
@@ -2823,6 +2855,9 @@ public:
                 }
 
                 if (sector_ >= 7 && flagshipPhase_ > 0 && flagshipPhase_ < 3) {
+                    flagshipCrew_.clear();
+                    for (const auto& crew : combat_.enemy.crew)
+                        if (crew.alive && crew.health > 0) flagshipCrew_.push_back(crew);
                     // Vanilla Last Stand does not chain the next phase directly.
                     // The Flagship retreats to a nearby beacon; the next phase
                     // begins only when the player catches it again.
@@ -3793,6 +3828,7 @@ private:
     int flagshipBaseTurns_{0};
     int flagshipWaitTurns_{0};
     std::vector<int> flagshipRoute_;
+    std::vector<RuntimeCrew> flagshipCrew_;
 };
 
 } // namespace
