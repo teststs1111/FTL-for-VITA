@@ -191,14 +191,26 @@ void CombatRuntime::setRandomSeed(std::uint32_t seed) {
     randomState_ = seed == 0 ? 0x6D2B79F5u : seed;
 }
 
-void CombatRuntime::configureFlagshipPhase(int phase) {
+void CombatRuntime::configureFlagshipPhase(int phase, int difficulty) {
     flagshipPhase_ = std::clamp(phase, 0, 3);
     flagshipSurgeInterval_ = (flagshipPhase_ == 2 || flagshipPhase_ == 3)
-        ? 21.0f + static_cast<float>(nextRandom() % 6u)
+        ? 20.0f + static_cast<float>(nextRandom() % 11u)
         : 0.0f;
     droneSurgeTimer_ = flagshipSurgeInterval_;
-    superShield_ = flagshipPhase_ == 3 ? 10 : 0;
+    superShield_ = flagshipPhase_ == 3 ? 12 : 0;
     flagshipSurgeCount_ = 0;
+    flagshipSurgeCombatDrones_ = 0;
+    flagshipSurgeBeamDrones_ = 0;
+    if (flagshipPhase_ == 2) {
+        const int d = std::clamp(difficulty, 0, 2);
+        const int total = d == 0 ? 4 : (d == 1 ? 6 : 7);
+        for (int i = 0; i < total; ++i) {
+            if ((nextRandom() & 1u) != 0u) ++flagshipSurgeBeamDrones_;
+            else ++flagshipSurgeCombatDrones_;
+        }
+        if (flagshipSurgeCombatDrones_ == 0) { --flagshipSurgeBeamDrones_; ++flagshipSurgeCombatDrones_; }
+        if (flagshipSurgeBeamDrones_ == 0) { --flagshipSurgeCombatDrones_; ++flagshipSurgeBeamDrones_; }
+    }
 }
 
 void CombatRuntime::applyPlasmaStormPowerCap() {
@@ -343,37 +355,29 @@ void CombatRuntime::update(float dt) {
     }
 
     // Rebel Flagship phase 2 periodically triggers the original-style
-    // "drone power surge". Model the surge as several simultaneous drone
-    // projectiles so it remains independent of the enemy ship's normal
-    // reactor allocation and cannot be disabled by ordinary system damage.
+    // "drone power surge". The extra drones are independent of the enemy
+    // Drone Control system and each performs two attacks before disappearing.
     if (flagshipPhase_ == 2 || flagshipPhase_ == 3) {
         droneSurgeTimer_ -= dt;
         if (droneSurgeTimer_ <= 0.0f && !player.content.layout.rooms.empty()) {
             const int roomCount = static_cast<int>(player.content.layout.rooms.size());
             ++flagshipSurgeCount_;
-            // Vanilla rolls one fixed interval per phase: 21-26 seconds.
-            // Phase 2 uses the actual combat/beam drone weapon definitions
-            // loaded from the Flagship blueprint. The surge is independent of
-            // the normal drone-system power budget, so disabling Drone Control
-            // does not disable these extra attacks.
-            const int surgeCount = 7;
+            // The interval is rolled once when the phase starts and remains
+            // fixed for that phase. Phase 2 uses the loaded COMBAT_1 and
+            // COMBAT_BEAM definitions. Each extra drone attacks twice.
             if (flagshipPhase_ == 2) {
                 const RuntimeDrone* combatDrone = nullptr;
                 const RuntimeDrone* beamDrone = nullptr;
                 for (const auto& drone : enemy.drones) {
-                    if (!combatDrone && drone.type == DroneBlueprint::Type::Combat)
-                        combatDrone = &drone;
-                    if (!beamDrone && drone.type == DroneBlueprint::Type::Battle)
-                        beamDrone = &drone;
+                    if (drone.type != DroneBlueprint::Type::Combat) continue;
+                    if (!beamDrone && drone.weaponType == "BEAM") beamDrone = &drone;
+                    if (!combatDrone && drone.weaponType != "BEAM") combatDrone = &drone;
                 }
-                for (int i = 0; i < surgeCount; ++i) {
-                    const RuntimeDrone* source = (i % 2 == 0) ? combatDrone : beamDrone;
-                    if (!source) source = combatDrone ? combatDrone : beamDrone;
-                    if (!source) continue;
-
+                auto enqueueSurgeDrone = [&](const RuntimeDrone* source, int count) {
+                    if (!source) return;
                     RuntimeWeapon surge;
                     surge.name = source->name + "_FLAGSHIP_SURGE";
-                    surge.type = "LASER";
+                    surge.type = source->weaponType.empty() ? "LASER" : source->weaponType;
                     surge.power = 0;
                     surge.speed = source->weaponSpeed;
                     surge.shots = std::max(1, source->weaponShots);
@@ -383,10 +387,14 @@ void CombatRuntime::update(float dt) {
                     surge.shieldPiercing = source->weaponShieldPiercing;
                     surge.personnelDamage = source->weaponPersonnelDamage;
                     surge.cooldown = source->weaponCooldown;
-                    const int room = player.content.layout.rooms[
-                        static_cast<std::size_t>(nextRandom() % static_cast<std::uint32_t>(roomCount))].id;
-                    enqueueWeapon(false, -1, surge, room);
-                }
+                    for (int i = 0; i < count * 2; ++i) {
+                        const int room = player.content.layout.rooms[
+                            static_cast<std::size_t>(nextRandom() % static_cast<std::uint32_t>(roomCount))].id;
+                        enqueueWeapon(false, -1, surge, room);
+                    }
+                };
+                enqueueSurgeDrone(combatDrone, flagshipSurgeCombatDrones_);
+                enqueueSurgeDrone(beamDrone, flagshipSurgeBeamDrones_);
             } else {
                 // Phase 3 replaces the drone swarm with a seven-shot laser
                 // barrage. Its projectile is based on the loaded Heavy Laser
@@ -396,7 +404,7 @@ void CombatRuntime::update(float dt) {
                     surge.name = "FLAGSHIP_LASER_SURGE";
                     surge.type = "LASER";
                     surge.power = 0;
-                    surge.speed = 10;
+                    surge.speed = 60;
                     surge.shots = 1;
                     surge.damage = 1;
                     surge.systemDamage = 1;
