@@ -85,6 +85,7 @@ public:
     bool cloaked() const { return cloakTimer_ > 0.0f; }
     float cloakRemaining() const { return std::max(0.0f, cloakTimer_); }
     int superShieldRemaining() const { return superShield_; }
+    bool flagshipSurgeWarning() const { return flagshipSurgeWarning_; }
     bool playerDeployedCombatDrone() const { return playerDeployedCombatDrone_; }
     bool enemyDefeatedByCrewDamage() const { return enemyDefeatedByCrew_; }
 
@@ -112,6 +113,7 @@ private:
     int flagshipSurgeCount_{0};
     int flagshipSurgeCombatDrones_{0};
     int flagshipSurgeBeamDrones_{0};
+    bool flagshipSurgeWarning_{false};
     float playerWeaponCooldownMultiplier_{1.0f};
     float playerShieldRechargeMultiplier_{1.0f};
     bool stealthWeapons_{false};
