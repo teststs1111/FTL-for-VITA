@@ -107,6 +107,7 @@ private:
     float boardingFightTimer_{0.0f};
     int flagshipPhase_{0};
     float droneSurgeTimer_{0.0f};
+    float flagshipSurgeInterval_{0.0f};
     int superShield_{0};
     int flagshipSurgeCount_{0};
     float playerWeaponCooldownMultiplier_{1.0f};
