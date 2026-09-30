@@ -208,8 +208,8 @@ void CombatRuntime::configureFlagshipPhase(int phase, int difficulty) {
             if ((nextRandom() & 1u) != 0u) ++flagshipSurgeBeamDrones_;
             else ++flagshipSurgeCombatDrones_;
         }
-        if (flagshipSurgeCombatDrones_ == 0) { --flagshipSurgeBeamDrones_; ++flagshipSurgeCombatDrones_; }
-        if (flagshipSurgeBeamDrones_ == 0) { --flagshipSurgeCombatDrones_; ++flagshipSurgeBeamDrones_; }
+        // The split is allowed to be all-Combat or all-Beam; the rolled
+        // composition remains fixed for the entire phase.
     }
 }
 
