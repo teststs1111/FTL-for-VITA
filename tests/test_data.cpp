@@ -856,6 +856,7 @@ static void testShipRuntime() {
         weapon.ready = false;
         weapon.charge = 0.0f;
     }
+    combat.player.weapons[0].missilesUsed = 0;
     combat.player.weapons[0].shieldPiercing = 0;
     combat.player.updateWeapons(2.5f);
     combat.enemy.shieldLayers = 1;
