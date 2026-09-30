@@ -476,6 +476,22 @@ static void testShipRuntime() {
     assert(runtime.missiles == 6);
     assert(!runtime.weapons[0].ready);
     assert(!runtime.fireWeapon(0));
+
+    // Host weapon resolution must carry canonical secondary projectile effects.
+    runtime.shieldLayers = 0;
+    runtime.weapons[0].missilesUsed = 0;
+    runtime.weapons[0].damage = 0;
+    runtime.weapons[0].systemDamage = 0;
+    runtime.weapons[0].fireChance = 100;
+    runtime.weapons[0].breachChance = 100;
+    runtime.weapons[0].stunChance = 100;
+    runtime.weapons[0].stunDuration = 3;
+    runtime.weapons[0].ready = true;
+    assert(runtime.fireWeapon(0));
+    assert(runtime.resolveWeaponVolley(0, 0, 0) == 1);
+    assert(runtime.roomFire[0]);
+    assert(runtime.roomBreach[0]);
+    assert(runtime.systems[0].stunTimer == 3.0f);
     runtime.updateWeapons(2.5f);
     assert(runtime.weapons[0].ready);
     assert(runtime.roomOxygen.size() == 3 && runtime.roomOxygen[0] == 100);
