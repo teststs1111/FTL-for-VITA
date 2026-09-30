@@ -193,9 +193,10 @@ void CombatRuntime::setRandomSeed(std::uint32_t seed) {
 
 void CombatRuntime::configureFlagshipPhase(int phase) {
     flagshipPhase_ = std::clamp(phase, 0, 3);
-    droneSurgeTimer_ = (flagshipPhase_ == 2 || flagshipPhase_ == 3)
+    flagshipSurgeInterval_ = (flagshipPhase_ == 2 || flagshipPhase_ == 3)
         ? 21.0f + static_cast<float>(nextRandom() % 6u)
         : 0.0f;
+    droneSurgeTimer_ = flagshipSurgeInterval_;
     superShield_ = flagshipPhase_ == 3 ? 10 : 0;
     flagshipSurgeCount_ = 0;
 }
@@ -371,7 +372,7 @@ void CombatRuntime::update(float dt) {
             }
             if (flagshipPhase_ == 3 && flagshipSurgeCount_ % 4 == 0)
                 superShield_ = 10;
-            droneSurgeTimer_ = 21.0f + static_cast<float>(nextRandom() % 6u);
+            droneSurgeTimer_ = flagshipSurgeInterval_;
         }
     }
 
