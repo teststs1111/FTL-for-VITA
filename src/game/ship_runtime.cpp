@@ -378,8 +378,19 @@ int ShipRuntime::resolveWeaponVolley(int weaponIndex, const std::vector<int>& pr
         // Shield-bypassing missiles/bombs and unblocked projectiles apply both
         // hull and system effects to the targeted room. A weapon's damage and
         // systemDamage are separate effects in the blueprint data.
-        if (weapon.damage > 0)
-            damageRoom(targetRoom, weapon.damage);
+        int hullDamage = std::max(0, weapon.damage);
+        // Hull-buster weapons gain their bonus against rooms without a system,
+        // matching the combat runtime's canonical room-resolution rule.
+        if (hullDamage > 0 && weapon.hullBust > 0) {
+            const bool hasSystem = std::any_of(systems.begin(), systems.end(),
+                [targetRoom](const RuntimeSystem& system) {
+                    return system.room == targetRoom;
+                });
+            if (!hasSystem)
+                hullDamage += weapon.hullBust;
+        }
+        if (hullDamage > 0)
+            damageRoom(targetRoom, hullDamage);
         if (weapon.systemDamage > 0)
             damageSystemInRoom(targetRoom, weapon.systemDamage);
         if (weapon.personnelDamage > 0)
