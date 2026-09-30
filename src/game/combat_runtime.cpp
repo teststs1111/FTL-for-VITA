@@ -195,6 +195,7 @@ void CombatRuntime::configureFlagshipPhase(int phase) {
     flagshipPhase_ = std::clamp(phase, 0, 3);
     droneSurgeTimer_ = flagshipPhase_ == 2 ? 10.0f : 0.0f;
     superShield_ = flagshipPhase_ == 3 ? 10 : 0;
+    flagshipSurgeCount_ = 0;
 }
 
 void CombatRuntime::applyPlasmaStormPowerCap() {
@@ -342,26 +343,33 @@ void CombatRuntime::update(float dt) {
     // "drone power surge". Model the surge as several simultaneous drone
     // projectiles so it remains independent of the enemy ship's normal
     // reactor allocation and cannot be disabled by ordinary system damage.
-    if (flagshipPhase_ == 2) {
+    if (flagshipPhase_ == 2 || flagshipPhase_ == 3) {
         droneSurgeTimer_ -= dt;
         if (droneSurgeTimer_ <= 0.0f && !player.content.layout.rooms.empty()) {
             const int roomCount = static_cast<int>(player.content.layout.rooms.size());
-            const int surgeCount = 3 + static_cast<int>(nextRandom() % 2u);
+            ++flagshipSurgeCount_;
+            // Vanilla rolls one fixed interval per phase: 21-26 seconds.
+            // Phase 2 spawns seven combat drones; Phase 3 replaces them with
+            // a seven-shot laser barrage and restores the super shield every
+            // fourth surge.
+            const int surgeCount = 7;
             for (int i = 0; i < surgeCount; ++i) {
                 RuntimeWeapon surge;
                 surge.name = "FLAGSHIP_DRONE_SURGE";
-                surge.type = "LASER";
+                surge.type = flagshipPhase_ == 3 ? "LASER" : "LASER";
                 surge.power = 0;
                 surge.speed = 10;
                 surge.shots = 1;
-                surge.damage = 1;
-                surge.systemDamage = 1;
+                surge.damage = flagshipPhase_ == 3 ? 2 : 1;
+                surge.systemDamage = flagshipPhase_ == 3 ? 1 : 1;
                 surge.cooldown = 1.0f;
                 const int room = player.content.layout.rooms[
                     static_cast<std::size_t>(nextRandom() % static_cast<std::uint32_t>(roomCount))].id;
                 enqueueWeapon(false, -1, surge, room);
             }
-            droneSurgeTimer_ = 20.0f;
+            if (flagshipPhase_ == 3 && flagshipSurgeCount_ % 4 == 0)
+                superShield_ = 10;
+            droneSurgeTimer_ = 21.0f + static_cast<float>(nextRandom() % 6u);
         }
     }
 
