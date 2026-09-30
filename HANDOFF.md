@@ -775,3 +775,10 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Host/Vita builds succeeded for both commits.
 - Current Power Surge implementation keeps one fixed 21–26 second interval per phase; Phase 2/3 surge behavior remains the next fidelity target.
 - Continue using the archive-driven ftl.dat approach; do not introduce a synthetic DLC mechanism.
+
+
+### 2026-09-30 Flagship Power Surge audit
+- Phase 2 surge now derives its projectile type/stats from the loaded Flagship COMBAT drone definitions, distinguishing the normal combat drone from COMBAT_BEAM.
+- Phase 2 surge drone count is difficulty-dependent (Easy 4 / Normal 6 / Hard 7) and each surge drone performs two attacks.
+- Phase 3 super shield is consistently restored to 12 hits.
+- Host and Vita builds passed after the compile-fix and shield consistency fix.
