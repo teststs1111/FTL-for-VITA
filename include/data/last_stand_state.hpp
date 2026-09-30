@@ -22,6 +22,7 @@ void retreatLastStandAfterPhase(
     int& routeIndex,
     int& jumpCounter,
     int& baseTurns,
-    int& waitTurns);
+    int& waitTurns,
+    bool atBase);
 
 } // namespace wormhole
