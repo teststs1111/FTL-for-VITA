@@ -3571,7 +3571,7 @@ public:
             graphics_.fillRect(rightX + i * 14.f, 125.f, 10.f, 6.f, {0.25f, 0.65f, 0.95f, 1.f});
         if (combat_.superShieldRemaining() > 0) {
             const int superShield = combat_.superShieldRemaining();
-            text_.draw(graphics_, "超シールド " + std::to_string(superShield) + " / 10",
+            text_.draw(graphics_, "超シールド " + std::to_string(superShield) + " / 12",
                 rightX, 116.f, 10.f, {0.62f, 0.90f, 1.f, 1.f});
             for (int i = 0; i < superShield; ++i)
                 graphics_.fillRect(rightX + i * 13.f, 132.f, 10.f, 5.f,
