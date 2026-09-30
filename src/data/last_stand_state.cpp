@@ -4,6 +4,7 @@ namespace wormhole {
 
 LastStandAdvanceResult advanceLastStandState(
     int routeSize,
+    int routeSize,
     int& routeIndex,
     int& jumpCounter,
     int& baseTurns,
