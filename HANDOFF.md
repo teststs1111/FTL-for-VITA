@@ -873,3 +873,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Test commits: `197e37dabfd0b70cd47d25819c96e37a96a66b06`, corrected by `7e3b0298927eec0555cb13bb83d42e961cc57c98`.
 - No synthetic DLC path was introduced; continue from the canonical ftl.dat data path.
 - Next fidelity audit remains crystal/heavy-pierce interactions and Zoltan/reverse-ion edge cases.
+
+
+## 2026-09-30 Crystal shield-piercing audit
+- Audited `shieldPiercing` resolution in `CombatRuntime::resolveWeapon`.
+- Current behavior correctly treats piercing as the number of ordinary shield layers a projectile can ignore: with 1 piercing and 2 shield layers, one remaining layer blocks the shot; with 1 layer, the shot reaches the target.
+- Added a regression covering the 2-layer case and the subsequent hit after the remaining layer is removed.
+- Test commit: `c4226d8a6b6f03e6d159b0beda317ace7557fea0`.
+- Continue next with Reverse Ion and shield-specific interactions, then crystal weapon data coverage from the canonical archive.
