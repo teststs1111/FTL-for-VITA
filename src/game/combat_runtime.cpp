@@ -419,7 +419,7 @@ void CombatRuntime::update(float dt) {
                 }
             }
             if (flagshipPhase_ == 3 && flagshipSurgeCount_ % 4 == 0)
-                superShield_ = 10;
+                superShield_ = 12;
             droneSurgeTimer_ = flagshipSurgeInterval_;
         }
     }
