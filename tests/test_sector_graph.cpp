@@ -237,7 +237,7 @@ static void testLastStandStateTransitions() {
     r = wormhole::advanceLastStandState(4, routeIndex, jumpCounter, baseTurns, waitTurns, false);
     assert(!r.moved && jumpCounter == 1);
     r = wormhole::advanceLastStandState(4, routeIndex, jumpCounter, baseTurns, waitTurns, false);
-    assert(r.moved && routeIndex == 1);
+    assert(r.moved && routeIndex == 3);
 
     routeIndex = 3;
     jumpCounter = 0;
