@@ -19,6 +19,7 @@ LastStandAdvanceResult advanceLastStandState(
 
 // Model the one-turn retreat/wait after a non-final Flagship phase is defeated.
 void retreatLastStandAfterPhase(
+    int routeSize,
     int& routeIndex,
     int& jumpCounter,
     int& baseTurns,
