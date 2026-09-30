@@ -255,18 +255,12 @@ int main() {
         assert(weapon != nullptr);
         if (weapon->missilesUsed <= 0) continue;
         ++missileCostEntries;
-        wormhole::LoadedShip missileTestShip;
-        assert(content.loadShip("PLAYER_SHIP_HARD", missileTestShip));
-        bool copied = false;
-        for (const auto& runtimeWeapon : missileTestShip.initialWeaponBlueprints) {
-            if (runtimeWeapon.name == weapon->name) {
-                assert(runtimeWeapon.missilesUsed == weapon->missilesUsed);
-                copied = true;
-                break;
-            }
-        }
-        // A list entry is data available for selection; it need not be part of
-        // the fixed starting loadout, so only require the source definition here.
+        wormhole::LoadedShip runtimeSource;
+        runtimeSource.initialWeaponBlueprints.push_back(*weapon);
+        wormhole::ShipRuntime runtimeWeapon;
+        assert(runtimeWeapon.load(runtimeSource));
+        assert(runtimeWeapon.weapons.size() == 1);
+        assert(runtimeWeapon.weapons.front().missilesUsed == weapon->missilesUsed);
     }
     assert(missileCostEntries > 0);
     wormhole::LoadedShip autoBasic;
