@@ -80,6 +80,11 @@ bool ShipRuntime::load(const LoadedShip& loaded) {
         drone.weaponIonDamage = std::max(0, blueprint.weaponIonDamage);
         drone.weaponShieldPiercing = std::max(0, blueprint.weaponShieldPiercing);
         drone.weaponPersonnelDamage = std::max(0, blueprint.weaponPersonnelDamage);
+        drone.weaponHullBust = std::max(0, blueprint.weaponHullBust);
+        drone.weaponFireChance = std::clamp(blueprint.weaponFireChance, 0, 100);
+        drone.weaponBreachChance = std::clamp(blueprint.weaponBreachChance, 0, 100);
+        drone.weaponStunChance = std::clamp(blueprint.weaponStunChance, 0, 100);
+        drone.weaponStunDuration = std::max(0, blueprint.weaponStunDuration);
         drone.weaponSpeed = std::max(0, blueprint.speed);
         drone.weaponCharge = 0.0f;
         drone.charge = 0;
