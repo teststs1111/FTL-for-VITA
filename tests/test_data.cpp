@@ -909,6 +909,36 @@ static void testShipRuntime() {
     combat.update(0.03f);
     assert(combat.enemy.hull == piercedHull - 2);
 
+    // One point of shield piercing ignores one layer, but a second ordinary
+    // layer still blocks the projectile. The next projectile must consume the
+    // remaining layer before the following hit reaches the hull.
+    assert(combat.load(content, enemyForCombat));
+    assert(combat.setTargetRoom(0));
+    assert(combat.player.setSystemPowered(2, true));
+    combat.player.weapons[0].shieldPiercing = 1;
+    combat.player.weapons[0].shots = 1;
+    combat.player.updateWeapons(2.5f);
+    assert(combat.player.weapons[0].ready);
+    combat.enemy.shieldLayers = 2;
+    const int twoLayerPierceHull = combat.enemy.hull;
+    assert(combat.fireSelectedWeapon().fired);
+    combat.update(0.25f);
+    wormhole::CombatResult twoLayerPierceFirst;
+    assert(combat.consumeImpactResult(twoLayerPierceFirst));
+    assert(twoLayerPierceFirst.shieldsAbsorbed == 1);
+    assert(twoLayerPierceFirst.hullDamage == 0);
+    assert(combat.enemy.shieldLayers == 1);
+    assert(combat.enemy.hull == twoLayerPierceHull);
+
+    combat.player.weapons[0].ready = true;
+    assert(combat.fireSelectedWeapon().fired);
+    combat.update(0.25f);
+    wormhole::CombatResult twoLayerPierceSecond;
+    assert(combat.consumeImpactResult(twoLayerPierceSecond));
+    assert(twoLayerPierceSecond.shieldsAbsorbed == 0);
+    assert(twoLayerPierceSecond.hullDamage == 1);
+    assert(combat.enemy.hull == twoLayerPierceHull - 1);
+
     assert(combat.load(content, enemyForCombat));
     assert(combat.enemyTargetRoom == 0);
     assert(combat.enemy.setSystemPowered(1, true));
