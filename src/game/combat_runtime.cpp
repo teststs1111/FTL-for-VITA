@@ -203,6 +203,7 @@ void CombatRuntime::configureFlagshipPhase(int phase, int difficulty) {
     flagshipSurgeCombatDrones_ = 0;
     flagshipSurgeBeamDrones_ = 0;
     flagshipSurgeWarning_ = false;
+    flagshipSurgePendingShots_ = 0;
     if (flagshipPhase_ == 2) {
         const int d = std::clamp(difficulty, 0, 2);
         const int total = d == 0 ? 4 : (d == 1 ? 6 : 7);
@@ -366,6 +367,7 @@ void CombatRuntime::update(float dt) {
             flagshipSurgeWarning_ = true;
         if (droneSurgeTimer_ <= 0.0f && !player.content.layout.rooms.empty()) {
             flagshipSurgeWarning_ = false;
+            flagshipSurgePendingShots_ = 0;
             const int roomCount = static_cast<int>(player.content.layout.rooms.size());
             ++flagshipSurgeCount_;
             // The interval is rolled once when the phase starts and remains
@@ -396,7 +398,11 @@ void CombatRuntime::update(float dt) {
                     for (int i = 0; i < count * 2; ++i) {
                         const int room = player.content.layout.rooms[
                             static_cast<std::size_t>(nextRandom() % static_cast<std::uint32_t>(roomCount))].id;
+                        // Each temporary surge drone gets exactly two attacks.
+                        // Keep the shots together for this surge so they can
+                        // be tracked independently from the normal enemy AI.
                         enqueueWeapon(false, -1, surge, room);
+                        ++flagshipSurgePendingShots_;
                     }
                 };
                 enqueueSurgeDrone(combatDrone, flagshipSurgeCombatDrones_);
@@ -633,6 +639,8 @@ void CombatRuntime::update(float dt) {
         lastImpactResult_ = impactResults_.back();
         hasImpactResult_ = true;
         it = shots_.erase(it);
+        if (!hitEnemy && flagshipPhase_ == 2 && flagshipSurgePendingShots_ > 0)
+            --flagshipSurgePendingShots_;
 
         if (targetDestroyed) {
             outcome = hitEnemy ? CombatOutcome::EnemyDestroyed
