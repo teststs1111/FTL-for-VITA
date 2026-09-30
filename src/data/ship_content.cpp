@@ -121,6 +121,7 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
             DroneBlueprint resolved = *drone;
             if (!resolved.weaponBlueprint.empty()) {
                 if (const auto* weapon = database_.findWeapon(resolved.weaponBlueprint)) {
+                    resolved.weaponType = weapon->type;
                     resolved.weaponCooldown = weapon->cooldown;
                     resolved.weaponShots = weapon->shots;
                     resolved.weaponDamage = weapon->damage;
