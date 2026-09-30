@@ -928,6 +928,9 @@ static void testShipRuntime() {
     assert(combat.player.weapons[0].ready);
     combat.enemy.shieldLayers = 2;
     const int twoLayerPierceHull = combat.enemy.hull;
+    // Keep the regression deterministic: this case is about shield piercing,
+    // not the enemy's independently rolled evasion.
+    combat.setRandomSeed(1);
     assert(combat.fireSelectedWeapon().fired);
     combat.update(0.25f);
     wormhole::CombatResult twoLayerPierceFirst;
