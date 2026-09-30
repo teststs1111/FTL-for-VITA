@@ -765,3 +765,13 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Normal-sector repair behavior remains unchanged; the one-use restriction applies only to The Last Stand.
 - Commit: `ea7eb2246b71561e8f5564637dbb5274407d88a5`.
 - Host #1148 and Vita #840 both succeeded, including Host tests and Vita VPK packaging.
+
+
+## Last Stand Flagship blueprint / fleet-target fidelity — 2026-09-30
+- Flagship phases now load the fixed BOSS_1 / BOSS_2 / BOSS_3 ship blueprints directly from the archive instead of passing them through normal enemy progression/scaling.
+- Phase 2/3 persistent crew casualties continue to be restored across their separate phase blueprints; hull, systems, weapons and drones start from the phase blueprint state.
+- Last Stand Rebel Fleet random takeover candidates now explicitly exclude the Flagship's current beacon.
+- Commits: d607a729738db113590b20b89d71e13942e12fe2, 7bbe7171ada432dc87b81631184244ff964ad3e.
+- Host/Vita builds succeeded for both commits.
+- Current Power Surge implementation keeps one fixed 21–26 second interval per phase; Phase 2/3 surge behavior remains the next fidelity target.
+- Continue using the archive-driven ftl.dat approach; do not introduce a synthetic DLC mechanism.
