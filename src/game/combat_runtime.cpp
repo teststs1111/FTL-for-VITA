@@ -297,8 +297,7 @@ void CombatRuntime::updateEnvironmentHazard(float dt) {
             }
         }
         schedule(4.0f, 8.0f);
-        return;
-    }
+        return;    }
 
     if (environment_ == CombatEnvironment::Sun) {        ShipRuntime* ships[2] = {&player, &enemy};
         for (ShipRuntime* ship : ships) {
@@ -590,15 +589,23 @@ void CombatRuntime::update(float dt) {
             defenseInterceptedThisUpdate = true;
             break;
         }
-        if (intercepted)
-            it = shots_.erase(it);
-        else
+        if (intercepted) {
+            if (it->flagshipSurge) {
+                // An intercepted temporary surge attack still consumes one of
+                // that drone's two attacks; let normal resolution advance it
+                // immediately so the second attack can be scheduled.
+                it->elapsed = it->duration;
+                ++it;
+            } else {
+                it = shots_.erase(it);
+            }
+        } else {
             ++it;
+        }
     }
 
     // Charged combat drones launch their configured weapon at the selected room.
-    auto launchCombatDrone = [&](ShipRuntime& owner, int targetRoom, bool fromPlayer) {
-        for (auto& drone : owner.drones) {
+    auto launchCombatDrone = [&](ShipRuntime& owner, int targetRoom, bool fromPlayer) {        for (auto& drone : owner.drones) {
             if (drone.type != DroneBlueprint::Type::Combat || !drone.powered || !drone.active)
                 continue;
             RuntimeWeapon weapon;
