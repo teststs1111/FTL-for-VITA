@@ -703,6 +703,17 @@ static void testShipRuntime() {
     combat.player.weapons[0] = bypassWeapon;
     combat.player.weaponIonDisabled = std::vector<bool>{false};
     combat.player.missiles = 5;
+    int bypassShieldSystem = -1;
+    for (std::size_t i = 0; i < combat.enemy.systems.size(); ++i) {
+        if (combat.enemy.systems[i].type == "shields") {
+            bypassShieldSystem = static_cast<int>(i);
+            break;
+        }
+    }
+    assert(bypassShieldSystem >= 0);
+    combat.enemy.systems[bypassShieldSystem].power = 2;
+    combat.enemy.systems[bypassShieldSystem].maxPower = 2;
+    combat.enemy.systems[bypassShieldSystem].powered = true;
     combat.enemy.shieldLayers = 2;
     const int bypassHull = combat.enemy.hull;
     assert(combat.fireWeapon(0).fired);
