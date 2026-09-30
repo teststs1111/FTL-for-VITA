@@ -265,6 +265,9 @@ int main() {
             assert(drone->weaponType == "BEAM");
             assert(drone->weaponDamage == 1);
             assert(drone->weaponShots == 1);
+            assert(drone->weaponFireChance == 1);
+            assert(drone->weaponBreachChance == 0);
+            assert(drone->weaponStunChance == 0);
         }
         if (droneId == "COMBAT_1") {
             foundCombatLaser = true;
