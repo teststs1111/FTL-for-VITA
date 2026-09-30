@@ -829,3 +829,8 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Beam damage is reduced by the target's current ordinary shield layers instead.
 - Host #1219 and Vita #911 both succeeded for commit 820a74bc05702e7c01afd170637b35e151a86abb.
 - Continue auditing shield-piercing, ion, missile/bomb and secondary-effect semantics before treating projectile combat as complete.
+
+## 2026-09-30 Ion shield interaction correction
+- Corrected runtime ion weapon resolution so an ion projectile blocked by ordinary shields applies its ion damage to the Shields system instead of merely consuming one shield layer.
+- Preserved missile/bomb shield bypass and normal projectile shield-layer behavior.
+- Continue auditing ion stacking, crystal/heavy-pierce shield piercing, and Zoltan/reverse-ion edge cases before treating weapon resolution as complete.
