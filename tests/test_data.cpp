@@ -652,6 +652,38 @@ static void testShipRuntime() {
     combat.player.updateWeapons(0.1f);
     assert(combat.player.weapons[0].ready);
 
+    // Missile/bomb ammunition is charged once per volley, not once per projectile.
+    assert(combat.load(content, enemyForCombat));
+    assert(combat.setTargetRoom(0));
+    assert(combat.player.setSystemPowered(2, true));
+    RuntimeWeapon ammoWeapon;
+    ammoWeapon.name = "AmmoRegressionMissile";
+    ammoWeapon.type = "MISSILES";
+    ammoWeapon.power = 1;
+    ammoWeapon.shots = 3;
+    ammoWeapon.damage = 1;
+    ammoWeapon.missilesUsed = 2;
+    ammoWeapon.speed = 10;
+    ammoWeapon.cooldown = 1.0f;
+    ammoWeapon.charge = 1.0f;
+    ammoWeapon.ready = true;
+    ammoWeapon.allocatedPower = 1;
+    combat.player.weapons[0] = ammoWeapon;
+    combat.player.weaponIonDisabled = std::vector<bool>{false};
+    combat.player.missiles = 5;
+    const auto ammoBefore = combat.player.missiles;
+    const auto ammoVolley = combat.fireWeapon(0);
+    assert(ammoVolley.fired);
+    assert(combat.player.missiles == ammoBefore - ammoWeapon.missilesUsed);
+    assert(combat.pendingShotCount() == 3);
+    combat.player.weapons[0].ready = true;
+    const auto ammoSecondVolley = combat.fireWeapon(0);
+    assert(ammoSecondVolley.fired);
+    assert(combat.player.missiles == ammoBefore - (ammoWeapon.missilesUsed * 2));
+    combat.player.weapons[0].ready = true;
+    assert(!combat.fireWeapon(0).fired);
+    assert(combat.player.missiles == 1);
+
     // Ion damage temporarily removes system power without increasing permanent damage.
     assert(combat.load(content, enemyForCombat));
     assert(combat.setTargetRoom(0));
