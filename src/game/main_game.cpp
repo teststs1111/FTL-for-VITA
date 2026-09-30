@@ -1221,15 +1221,36 @@ public:
         if (sector_ >= 7 && flagshipPhase_ > 1 && !flagshipCrew_.empty()) {
             auto& crew = combat_.enemy.crew;
             for (auto& member : crew) member.alive = false;
+
+            // Match each persisted crew member at most once. Prefer the exact
+            // name+races pair, then fall back to race for archives whose crew
+            // names are omitted. This avoids restoring one saved Mantis onto
+            // multiple Mantis slots.
+            std::vector<bool> matched(crew.size(), false);
             for (const auto& saved : flagshipCrew_) {
-                auto it = std::find_if(crew.begin(), crew.end(), [&](const RuntimeCrew& member) {
-                    return member.name == saved.name || member.race == saved.race;
-                });
+                auto findMatch = [&](bool exactName) {
+                    return std::find_if(crew.begin(), crew.end(), [&](const RuntimeCrew& member) {
+                        const std::size_t index = static_cast<std::size_t>(&member - crew.data());
+                        if (matched[index]) return false;
+                        if (member.race != saved.race) return false;
+                        return !exactName || (!saved.name.empty() && member.name == saved.name);
+                    });
+                };
+                auto it = findMatch(true);
+                if (it == crew.end()) it = findMatch(false);
                 if (it == crew.end()) continue;
+                const std::size_t index = static_cast<std::size_t>(&*it - crew.data());
+                matched[index] = true;
                 it->health = std::clamp(saved.health, 0, std::max(1, saved.maxHealth));
                 it->maxHealth = std::max(1, saved.maxHealth);
                 it->alive = saved.alive && it->health > 0;
                 it->room = saved.room;
+                it->pilotSkill = saved.pilotSkill;
+                it->enginesSkill = saved.enginesSkill;
+                it->shieldsSkill = saved.shieldsSkill;
+                it->weaponsSkill = saved.weaponsSkill;
+                it->repairSkill = saved.repairSkill;
+                it->combatSkill = saved.combatSkill;
             }
         }
 
@@ -2879,6 +2900,17 @@ public:
                 }
             } else if (combat_.outcome == CombatOutcome::EnemyEscaped) {
                 runtime_ = combat_.player;
+                // In Last Stand, retreating from Phase 2/3 does not reset the
+                // Flagship's surviving crew. Keep the current casualties so the
+                // next interception resumes the same phase state. Phase 1 is
+                // intentionally excluded: vanilla replaces its crew after a
+                // retreat before the stage is completed.
+                if (sector_ >= 7 && flagshipPhase_ > 1) {
+                    flagshipCrew_.clear();
+                    for (const auto& crew : combat_.enemy.crew)
+                        if (crew.alive && crew.health > 0)
+                            flagshipCrew_.push_back(crew);
+                }
                 if (shouldDoubleFleetPursuitOnEscape())
                     ++fleetPursuitDelay_;
                 if (rebelFleetEncounter_) {
