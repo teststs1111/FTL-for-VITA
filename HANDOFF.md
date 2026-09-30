@@ -838,3 +838,7 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 ## 2026-09-30 Hull-buster shield correction
 - Prevented hull-buster bonus damage from applying when a beam's base damage is fully absorbed by ordinary shields.
 - The bonus now applies only after the beam has non-zero effective damage, preserving the intended empty-room bonus without letting it pierce a full shield block.
+
+## 2026-09-30 Fire/breach effect correction
+- Corrected projectile secondary-effect resolution so fire chance is rolled first and breach chance is only rolled when fire fails; one hit can no longer produce both effects.
+- This matches the canonical FTL weapon behavior and applies to missiles, bombs, lasers, and other projectile weapons using the shared resolver.
