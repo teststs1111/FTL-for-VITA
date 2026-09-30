@@ -922,6 +922,7 @@ static void testShipRuntime() {
     assert(combat.load(content, enemyForCombat));
     assert(combat.setTargetRoom(0));
     assert(combat.player.setSystemPowered(2, true));
+    combat.player.weapons[0].missilesUsed = 0;
     combat.player.weapons[0].shieldPiercing = 1;
     combat.player.weapons[0].shots = 1;
     combat.player.updateWeapons(2.5f);
