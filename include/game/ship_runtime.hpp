@@ -64,6 +64,11 @@ struct RuntimeDrone {
     int weaponIonDamage{0};
     int weaponShieldPiercing{0};
     int weaponPersonnelDamage{0};
+    int weaponHullBust{0};
+    int weaponFireChance{0};
+    int weaponBreachChance{0};
+    int weaponStunChance{0};
+    int weaponStunDuration{0};
     int weaponSpeed{0};
     float weaponCharge{0.0f};
     bool powered{false};
