@@ -929,6 +929,10 @@ static void testShipRuntime() {
     combat.player.updateWeapons(2.5f);
     assert(combat.player.weapons[0].ready);
     combat.enemy.shieldLayers = 2;
+    for (auto& system : combat.enemy.systems) {
+        if (system.type == "engines" || system.type == "pilot")
+            system.powered = false;
+    }
     const int twoLayerPierceHull = combat.enemy.hull;
     // Keep the regression deterministic: this case is about shield piercing,
     // not the enemy's independently rolled evasion.
