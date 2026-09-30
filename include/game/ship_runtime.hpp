@@ -56,6 +56,7 @@ struct RuntimeDrone {
     int charge{0};
     int dodge{0};
     std::string defenceTarget;
+    std::string weaponType;
     float weaponCooldown{5.0f};
     int weaponShots{1};
     int weaponDamage{0};
