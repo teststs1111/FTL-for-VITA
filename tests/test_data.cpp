@@ -487,6 +487,7 @@ static void testShipRuntime() {
     runtime.weapons[0].stunChance = 100;
     runtime.weapons[0].stunDuration = 3;
     runtime.weapons[0].ready = true;
+    runtime.updateWeapons(0.01f);
     assert(runtime.fireWeapon(0));
     assert(runtime.resolveWeaponVolley(0, 0, 0) == 1);
     assert(runtime.roomFire[0]);
