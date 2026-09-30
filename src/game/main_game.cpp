@@ -2885,7 +2885,7 @@ public:
                     ++flagshipPhase_;
                     combatFeedback_ = "反乱軍旗艦が離脱：次は Phase " + std::to_string(flagshipPhase_);
                     combatFeedbackTimer_ = 2.0f;
-                    retreatLastStandAfterPhase(flagshipRouteIndex_, flagshipJumpCounter_, flagshipBaseTurns_, flagshipWaitTurns_);
+                    retreatLastStandAfterPhase(flagshipRouteIndex_, flagshipJumpCounter_, flagshipBaseTurns_, flagshipWaitTurns_, flagshipNode_ == flagshipBaseNode_);
                     flagshipNode_ = flagshipRoute_[static_cast<std::size_t>(flagshipRouteIndex_)];
                     combatMode_ = false;
                     sceneMode_ = SceneMode::SectorMap;
