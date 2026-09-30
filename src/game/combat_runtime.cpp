@@ -35,6 +35,7 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     droneSurgeTimer_ = 0.0f;
     playerWeaponCooldownMultiplier_ = 1.0f;
     superShield_ = 0;
+    flagshipSurgeWarning_ = false;
 
     const LoadedShip* playerShip = contentSource.playerShip();
     if (!playerShip) return false;
@@ -201,6 +202,7 @@ void CombatRuntime::configureFlagshipPhase(int phase, int difficulty) {
     flagshipSurgeCount_ = 0;
     flagshipSurgeCombatDrones_ = 0;
     flagshipSurgeBeamDrones_ = 0;
+    flagshipSurgeWarning_ = false;
     if (flagshipPhase_ == 2) {
         const int d = std::clamp(difficulty, 0, 2);
         const int total = d == 0 ? 4 : (d == 1 ? 6 : 7);
@@ -358,8 +360,12 @@ void CombatRuntime::update(float dt) {
     // "drone power surge". The extra drones are independent of the enemy
     // Drone Control system and each performs two attacks before disappearing.
     if (flagshipPhase_ == 2 || flagshipPhase_ == 3) {
+        const float previousSurgeTimer = droneSurgeTimer_;
         droneSurgeTimer_ -= dt;
+        if (droneSurgeTimer_ > 0.0f && droneSurgeTimer_ <= 5.0f && previousSurgeTimer > 5.0f)
+            flagshipSurgeWarning_ = true;
         if (droneSurgeTimer_ <= 0.0f && !player.content.layout.rooms.empty()) {
+            flagshipSurgeWarning_ = false;
             const int roomCount = static_cast<int>(player.content.layout.rooms.size());
             ++flagshipSurgeCount_;
             // The interval is rolled once when the phase starts and remains
