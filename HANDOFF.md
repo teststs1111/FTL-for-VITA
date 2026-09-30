@@ -782,3 +782,9 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Phase 2 surge drone count is difficulty-dependent (Easy 4 / Normal 6 / Hard 7) and each surge drone performs two attacks.
 - Phase 3 super shield is consistently restored to 12 hits.
 - Host and Vita builds passed after the compile-fix and shield consistency fix.
+
+
+### 2026-09-30 Continuation — Flagship UI consistency
+- Corrected the Sector 8 combat HUD so the Phase 3 Zoltan super shield displays its implemented 12-hit maximum instead of the stale 10-hit label.
+- Latest source commit: `760a49215b8eb56a39f7887c978db056b377998f`.
+- Current Power Surge timing/count rules remain an implementation audit item; do not describe them as byte-for-byte canonical until directly verified. The current code uses a 20–30 second interval and Phase 2 difficulty counts of 4/6/7.
