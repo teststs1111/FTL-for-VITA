@@ -787,7 +787,7 @@ public:
         std::ofstream out(savePath(), std::ios::trunc);
         if (!out) return false;
 
-        out << "FTL_VITA_SAVE 14\n";
+        out << "FTL_VITA_SAVE 15\n";
         out << "ship " << std::quoted(runtime_.content.blueprint.id) << "\n";
         out << "seed " << seed_ << "\n";
         out << "sector " << sector_ << "\n";
@@ -826,6 +826,16 @@ public:
         out << "visited " << visitedBeacons_ << "\n";
         out << "resources " << fuel_ << ' ' << scrap_ << ' ' << droneParts_ << ' ' << runtime_.missiles << "\n";
         out << "hull " << runtime_.hull << "\n";
+        out << "shields " << runtime_.shieldLayers << ' ' << runtime_.maxShieldLayers << ' ' << runtime_.shieldCharge << "\n";
+        out << "reactor_state " << runtime_.reactorPowerCap << ' ' << runtime_.backupBatteryActivePower << ' ' << runtime_.backupBatteryTimer << ' ' << runtime_.backupBatteryCooldownTimer << "\n";
+        out << "room_state " << runtime_.roomDamage.size() << "\n";
+        for (std::size_t i = 0; i < runtime_.roomDamage.size(); ++i) {
+            const int oxygen = i < runtime_.roomOxygen.size() ? runtime_.roomOxygen[i] : 0;
+            const int fire = i < runtime_.roomFire.size() && runtime_.roomFire[i] ? 1 : 0;
+            const int breach = i < runtime_.roomBreach.size() && runtime_.roomBreach[i] ? 1 : 0;
+            const float fireTimer = i < runtime_.roomFireDamageTimer.size() ? runtime_.roomFireDamageTimer[i] : 0.0f;
+            out << runtime_.roomDamage[i] << ' ' << oxygen << ' ' << fire << ' ' << breach << ' ' << fireTimer << "\n";
+        }
         out << "augments " << augmentIds_.size() << "\n";
         for (const auto& augment : augmentIds_) out << std::quoted(augment) << "\n";
 
@@ -849,6 +859,9 @@ public:
             out << std::quoted(d.name) << ' ' << static_cast<int>(d.type) << ' '
                 << (d.powered ? 1 : 0) << ' ' << (d.active ? 1 : 0) << "\n";
 
+        out << "weapon_state " << runtime_.weaponIonDisabled.size();
+        for (bool disabled : runtime_.weaponIonDisabled) out << ' ' << (disabled ? 1 : 0);
+        out << "\n";
         out << "doors " << runtime_.doorOpen.size();
         for (bool open : runtime_.doorOpen) out << ' ' << (open ? 1 : 0);
         out << "\n";
@@ -858,10 +871,13 @@ public:
             out << std::quoted(quest) << ' '
                 << std::quoted(it == questTargets_.end() ? std::string{} : it->second) << "\n";
         }
-        return static_cast<bool>(out);
+        const bool ok = static_cast<bool>(out);
+        RuntimeDiagnostics::checkpoint("save_complete", std::string("ok=") + (ok ? "1" : "0") + ",sector=" + std::to_string(sector_) + ",fuel=" + std::to_string(fuel_) + ",scrap=" + std::to_string(scrap_));
+        return ok;
     }
 
     bool loadGame() {
+        RuntimeDiagnostics::checkpoint("load_begin", savePath());
         std::ifstream in(savePath());
         if (!in) return false;
 
@@ -880,7 +896,8 @@ public:
         const bool saveV12 = header == "FTL_VITA_SAVE 12";
         const bool saveV13 = header == "FTL_VITA_SAVE 13";
         const bool saveV14 = header == "FTL_VITA_SAVE 14";
-        const bool currentSave = saveV4 || saveV5 || saveV6 || saveV7 || saveV8 || saveV9 || saveV10 || saveV11 || saveV12 || saveV13 || saveV14;
+        const bool saveV15 = header == "FTL_VITA_SAVE 15";
+        const bool currentSave = saveV4 || saveV5 || saveV6 || saveV7 || saveV8 || saveV9 || saveV10 || saveV11 || saveV12 || saveV13 || saveV14 || saveV15;
         if (!legacySave && !saveV3 && !currentSave) return false;
 
         std::string key, shipId;
@@ -921,7 +938,7 @@ public:
         flagshipBaseTurns_ = 0;
         flagshipWaitTurns_ = 0;
         flagshipRoute_.clear();
-        if (saveV10 || saveV11 || saveV13 || saveV14) {
+        if (saveV10 || saveV11 || saveV13 || saveV14 || saveV15) {
             in >> key >> flagshipNode_ >> flagshipBaseNode_ >> flagshipRouteIndex_
                 >> flagshipJumpCounter_ >> flagshipBaseTurns_ >> flagshipWaitTurns_;
             if (key != "flagship_state") return false;
@@ -1003,7 +1020,7 @@ public:
                         if (beacon >= 0) usedRepairBeacons_.push_back(beacon);
                     }
                 }
-                if (saveV13 || saveV14) {
+                if (saveV13 || saveV14 || saveV15) {
                     in >> key >> count;
                     if (key != "flagship_crew") return false;
                     flagshipCrew_.clear();
@@ -1011,7 +1028,7 @@ public:
                     for (std::size_t i = 0; i < count; ++i) {
                         RuntimeCrew crew; int alive = 0;
                         in >> std::quoted(crew.race) >> std::quoted(crew.name) >> crew.room >> crew.health >> crew.maxHealth >> alive;
-                        if (saveV14)
+                        if (saveV14 || saveV15)
                             in >> crew.pilotSkill >> crew.enginesSkill >> crew.shieldsSkill >> crew.weaponsSkill >> crew.repairSkill >> crew.combatSkill;
                         crew.alive = alive != 0 && crew.health > 0;
                         flagshipCrew_.push_back(std::move(crew));
@@ -1022,6 +1039,31 @@ public:
         in >> key >> visitedBeacons_;
         in >> key >> fuel_ >> scrap_ >> droneParts_ >> runtime_.missiles;
         in >> key >> runtime_.hull;
+        if (saveV15) {
+            in >> key >> runtime_.shieldLayers >> runtime_.maxShieldLayers >> runtime_.shieldCharge;
+            if (key != "shields") return false;
+            in >> key >> runtime_.reactorPowerCap >> runtime_.backupBatteryActivePower >> runtime_.backupBatteryTimer >> runtime_.backupBatteryCooldownTimer;
+            if (key != "reactor_state") return false;
+            in >> key >> count;
+            if (key != "room_state") return false;
+            runtime_.roomDamage.assign(runtime_.content.layout.rooms.size(), 0);
+            runtime_.roomOxygen.assign(runtime_.content.layout.rooms.size(), 0);
+            runtime_.roomFire.assign(runtime_.content.layout.rooms.size(), false);
+            runtime_.roomBreach.assign(runtime_.content.layout.rooms.size(), false);
+            runtime_.roomFireDamageTimer.assign(runtime_.content.layout.rooms.size(), 0.0f);
+            for (std::size_t i = 0; i < count; ++i) {
+                int damage = 0, oxygen = 0, fire = 0, breach = 0;
+                float fireTimer = 0.0f;
+                in >> damage >> oxygen >> fire >> breach >> fireTimer;
+                if (i < runtime_.roomDamage.size()) {
+                    runtime_.roomDamage[i] = damage;
+                    runtime_.roomOxygen[i] = oxygen;
+                    runtime_.roomFire[i] = fire != 0;
+                    runtime_.roomBreach[i] = breach != 0;
+                    runtime_.roomFireDamageTimer[i] = std::max(0.0f, fireTimer);
+                }
+            }
+        }
 
         in >> key >> count;
         if (key != "augments") return false;
@@ -1115,6 +1157,17 @@ public:
             }
         }
 
+        if (saveV15) {
+            in >> key >> count;
+            if (key != "weapon_state") return false;
+            runtime_.weaponIonDisabled.assign(runtime_.weapons.size(), false);
+            for (std::size_t i = 0; i < count; ++i) {
+                int disabled = 0;
+                in >> disabled;
+                if (i < runtime_.weaponIonDisabled.size()) runtime_.weaponIonDisabled[i] = disabled != 0;
+            }
+        }
+
         in >> key >> count;
         runtime_.doorOpen.assign(runtime_.content.layout.doors.size(), false);
         for (std::size_t i = 0; i < count; ++i) {
@@ -1178,6 +1231,7 @@ public:
         jumpCharging_ = false;
         jumpCharge_ = 0.0f;
         sceneMode_ = SceneMode::SectorMap;
+        RuntimeDiagnostics::checkpoint("load_complete", "sector=" + std::to_string(sector_) + ",fuel=" + std::to_string(fuel_) + ",scrap=" + std::to_string(scrap_) + ",hull=" + std::to_string(runtime_.hull));
         discoverRoomTextures();
         discoverWeaponAndDroneTextures();
         discoverCrewTextures();
