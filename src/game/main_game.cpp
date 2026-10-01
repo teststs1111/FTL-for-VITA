@@ -11,6 +11,7 @@
 #include "render/texture_cache.hpp"
 #include "render/text_renderer.hpp"
 #include "platform/input.hpp"
+#include "platform/runtime_diagnostics.hpp"
 #include <algorithm>
 #include <functional>
 #include <cmath>
@@ -39,6 +40,7 @@ public:
         : graphics_(graphics), input_(input), localization_(localization), audio_(audio),
           archivePath_(archivePath ? archivePath : ""), difficulty_(difficulty) {
         // Initialize text first so archive failures can be diagnosed on-device.
+        RuntimeDiagnostics::checkpoint("ship_scene_text_init");
         if (!text_.init()) {
             startupError_ = "Text renderer initialization failed";
             return;
@@ -48,10 +50,12 @@ public:
             return;
         }
         const auto archivePaths = loadArchiveSet(archivePath);
+        RuntimeDiagnostics::checkpoint("archive_open_begin", archivePath_);
         if (archivePaths.empty() || !content_.openArchives(archivePaths)) {
             startupError_ = "FTL archive not found: " + std::string(archivePath);
             return;
         }
+        RuntimeDiagnostics::checkpoint("archive_opened");
         {
             aeEnabled_ = true;
             content_.setAdvancedEdition(aeEnabled_);
@@ -69,18 +73,22 @@ public:
             sectorGraph_.generate(sector_, seed_);
             configureBeaconNebulaState();
             assignSectorBeaconEvents();
+            RuntimeDiagnostics::checkpoint("sector_data_ready", "sector=" + std::to_string(sector_));
         sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
             if (sector_ >= 7)
                 initializeLastStandState();
             selectedBeacon_ = sectorGraph_.startNode();
+            RuntimeDiagnostics::checkpoint("player_ship_load_begin");
             if (!content_.loadPlayerShip()) {
                 startupError_ = "Player ship blueprint could not be loaded";
                 return;
             }
+            RuntimeDiagnostics::checkpoint("player_ship_loaded");
             if (!runtime_.load(content_)) {
                 startupError_ = "Ship runtime initialization failed";
                 return;
             }
+            RuntimeDiagnostics::checkpoint("player_runtime_loaded");
             LoadedShip enemy;
             const LoadedShip* player = content_.playerShip();
             std::string enemyId;
@@ -89,12 +97,14 @@ public:
                     if (entry.first != player->blueprint.id) { enemyId = entry.first; break; }
                 }
             }
+            RuntimeDiagnostics::checkpoint("enemy_ship_load_begin", "enemy_id=" + enemyId);
             if (enemyId.empty() || !content_.loadEnemyShip(enemyId, enemy, sector_ + 1, static_cast<int>(difficulty_),
                     seed_ + static_cast<unsigned>(std::max(0, currentBeacon_)) + static_cast<unsigned>(visitedBeacons_) * 131u,
                     "data/blueprints.xml", currentSectorType_)) {
                 startupError_ = "Enemy ship blueprint could not be loaded";
                 return;
             }
+            RuntimeDiagnostics::checkpoint("enemy_ship_loaded", "enemy=" + enemy.blueprint.id);
             if (!enemy.blueprint.id.empty()) {
                 if (!combat_.load(content_, enemy)) {
                     startupError_ = "Combat runtime initialization failed";
@@ -105,13 +115,16 @@ public:
                 startupError_ = "Enemy ship blueprint could not be loaded";
                 return;
             }
+            RuntimeDiagnostics::checkpoint("combat_runtime_loaded");
             discoverRoomTextures();
             discoverWeaponAndDroneTextures();
             discoverCrewTextures();
             discoverShipTexture();
             buildShipSelection();
             sceneMode_ = shipChoices_.empty() ? SceneMode::SectorMap : SceneMode::ShipSelect;
+        RuntimeDiagnostics::checkpoint("scene_assets_ready");
         playExploreMusic();
+        RuntimeDiagnostics::checkpoint("ship_scene_ready", "scene=" + std::to_string(static_cast<int>(sceneMode_)));
         }
     }
 
@@ -2930,6 +2943,14 @@ public:
     }
 
     void update(float dt) override {
+        if ((diagnosticFrameCounter_++ % 60u) == 0u) {
+            RuntimeDiagnostics::checkpoint("heartbeat",
+                "scene=" + std::to_string(static_cast<int>(sceneMode_)) +
+                " sector=" + std::to_string(sector_) +
+                " beacon=" + std::to_string(currentBeacon_) +
+                " fuel=" + std::to_string(fuel_) +
+                " combat=" + std::to_string(combatMode_ ? 1 : 0));
+        }
         if (!startupError_.empty()) return;
         if (combatMode_ != audioCombatMode_) {
             if (combatMode_) playCombatMusic();
@@ -4046,6 +4067,7 @@ private:
     int flagshipWaitTurns_{0};
     std::vector<int> flagshipRoute_;
     std::vector<RuntimeCrew> flagshipCrew_;
+    unsigned long long diagnosticFrameCounter_{0};
 };
 
 } // namespace
@@ -4055,9 +4077,11 @@ MainGame::~MainGame() { shutdown(); }
 
 void MainGame::init(Graphics& graphics, Input& input, const char* archivePath) {
     if (initialized_) return;
+    RuntimeDiagnostics::checkpoint("main_game_init_begin", archivePath ? archivePath : "<null>");
     audioInitialized_ = audio_.init();
     state_ = std::make_unique<ShipScene>(graphics, input, localization_, audio_, archivePath, difficulty_);
     initialized_ = true;
+    RuntimeDiagnostics::checkpoint("main_game_initialized");
 }
 
 void MainGame::update(float dt) {
@@ -4070,6 +4094,7 @@ void MainGame::render() {
 }
 
 void MainGame::shutdown() {
+    RuntimeDiagnostics::checkpoint("main_game_shutdown_begin");
     state_.reset();
     audio_.shutdown();
     audioInitialized_ = false;
