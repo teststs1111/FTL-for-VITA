@@ -10,7 +10,7 @@
 // segment. Keep enough real read-only payload in that segment to cross the
 // next 0x10000 boundary, leaving room for the metadata without overlap.
 __attribute__((used, section(".rodata")))
-static const unsigned char vitaElfMetadataPadding[0x1000] = {};
+static const unsigned char vitaElfMetadataPadding[0x4000] = {};
 #endif
 
 int main() {
