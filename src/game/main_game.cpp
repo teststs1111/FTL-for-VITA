@@ -1310,13 +1310,12 @@ public:
         sceneMode_ = SceneMode::SectorMap;
         RuntimeDiagnostics::checkpoint("load_complete", "sector=" + std::to_string(sector_) + ",fuel=" + std::to_string(fuel_) + ",scrap=" + std::to_string(scrap_) + ",hull=" + std::to_string(runtime_.hull));
         discoverRoomTextures();
-        discoverWeaponAndDroneTextures();
         discoverCrewTextures();
         discoverShipTexture();
         return true;
     }
 
-    void buildShipSelection() {
+    void buildShipSelection(); {
         shipChoices_.clear();
         for (const auto& entry : content_.blueprints().ships()) {
             if (entry.first.rfind("PLAYER_SHIP_", 0) != 0) continue;
@@ -1373,7 +1372,6 @@ public:
         storeOffers_.clear();
         storeOpen_ = false;
         discoverRoomTextures();
-        discoverWeaponAndDroneTextures();
         discoverCrewTextures();
         discoverShipTexture();
         RuntimeDiagnostics::checkpoint("first_playable_map_ready",
