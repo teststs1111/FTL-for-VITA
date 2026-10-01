@@ -4,12 +4,12 @@ namespace wormhole {
 bool TextureCache::load(Graphics& graphics,AssetStore& assets,const std::string& name) {
  if(textures_.find(name)!=textures_.end()) return true;
  const auto* bytes=assets.getBytes(name); if(!bytes) return false;
- RgbaImage image; if(!decodePng(*bytes,image)) return false;
+ RgbaImage image; if(!decodePng(*bytes,image)) { assets.releaseBytes(name); return false; }
  Texture texture=graphics.createTexture(image.pixels,image.width,image.height);
 #ifdef __vita__
  if(!texture.valid()) { assets.releaseBytes(name); return false; }
 #else
- if(image.width<=0||image.height<=0) return false;
+ if(image.width<=0||image.height<=0) { assets.releaseBytes(name); return false; }
 #endif
  textures_.emplace(name,texture); assets.releaseBytes(name); return true;
 }
