@@ -3235,13 +3235,28 @@ public:
                     combatMode_ = false;
                     sceneMode_ = SceneMode::SectorMap;
                     visitedBeacons_++;
+                    RuntimeDiagnostics::checkpoint("combat_scene_exit_to_map",
+                        "reason=flagship_retreat,sector=" + std::to_string(sector_) +
+                        ",beacon=" + std::to_string(currentBeacon_) +
+                        ",fuel=" + std::to_string(fuel_) +
+                        ",hull=" + std::to_string(runtime_.hull));
                 } else if (sector_ >= 7 && flagshipPhase_ >= 3) {
                     combatMode_ = false;
                     sceneMode_ = SceneMode::Victory;
+                    RuntimeDiagnostics::checkpoint("combat_scene_exit_to_victory",
+                        "sector=" + std::to_string(sector_) +
+                        ",beacon=" + std::to_string(currentBeacon_) +
+                        ",fuel=" + std::to_string(fuel_) +
+                        ",hull=" + std::to_string(runtime_.hull));
                 } else {
                     combatMode_ = false;
                     visitedBeacons_++;
                     sceneMode_ = SceneMode::SectorMap;
+                    RuntimeDiagnostics::checkpoint("combat_scene_exit_to_map",
+                        "reason=enemy_destroyed,sector=" + std::to_string(sector_) +
+                        ",beacon=" + std::to_string(currentBeacon_) +
+                        ",fuel=" + std::to_string(fuel_) +
+                        ",hull=" + std::to_string(runtime_.hull));
                 }
             } else if (combat_.outcome == CombatOutcome::EnemyEscaped) {
                 RuntimeDiagnostics::checkpoint("combat_outcome_enemy_escaped",
@@ -3249,6 +3264,11 @@ public:
                     ",sector=" + std::to_string(sector_) +
                     ",beacon=" + std::to_string(currentBeacon_));
                 runtime_ = combat_.player;
+                RuntimeDiagnostics::checkpoint("combat_state_persisted",
+                    "outcome=escaped,hull=" + std::to_string(runtime_.hull) +
+                    ",fuel=" + std::to_string(fuel_) +
+                    ",scrap=" + std::to_string(scrap_) +
+                    ",missiles=" + std::to_string(runtime_.missiles));
                 // In Last Stand, retreating from Phase 2/3 does not reset the
                 // Flagship's surviving crew. Keep the current casualties so the
                 // next interception resumes the same phase state. Phase 1 is
