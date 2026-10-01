@@ -928,3 +928,6 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 
 ## Real-device startup diagnostics
 - Startup dump now separates sector graph generation, beacon nebula state, beacon event assignment, fleet coverage, and Last Stand initialization checkpoints.
+
+
+- First playable path diagnostics now record map-ready, jump-start, beacon-event, fallback-combat, and combat-scene transitions.
