@@ -350,6 +350,22 @@ public:
             playSfx(sound, 0.55f);
     }
 
+    void playWeaponImpactSfx(const CombatResult& result) {
+        std::string kind = result.weaponType;
+        std::string name = result.weaponName;
+        std::transform(kind.begin(), kind.end(), kind.begin(), [](unsigned char c) {
+            return static_cast<char>(std::tolower(c));
+        });
+        std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c) {
+            return static_cast<char>(std::tolower(c));
+        });
+        if (kind.find("flak") != std::string::npos || name.find("flak") != std::string::npos)
+            playSfx("dlc/AESFX_FlakImpact1.ogg", 0.65f);
+        else if (kind.find("crystal") != std::string::npos || name.find("crystal") != std::string::npos)
+            playSfx(result.targetDestroyed ? "dlc/AESFX_Crystal_Explosion_Large.ogg"
+                                            : "dlc/AESFX_CrystalExplosionSmall.ogg", 0.7f);
+    }
+
     void playCombatMusic() {
         std::string type = currentSectorType_;
         std::transform(type.begin(), type.end(), type.begin(),
@@ -2952,6 +2968,7 @@ public:
             combat_.update(dt);
             CombatResult impact;
             while (combat_.consumeImpactResult(impact)) {
+                playWeaponImpactSfx(impact);
                 if (impact.evaded > 0) {
                     playSfx("explosions/bp_hit_shield_1.ogg", 0.55f);
                     combatFeedback_ = "攻撃を回避";
