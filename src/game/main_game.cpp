@@ -316,6 +316,40 @@ public:
             audio_.playAsset(*bytes, path, volume, false);
     }
 
+    void playWeaponFireSfx(const CombatResult& result) {
+        std::string kind = result.weaponType;
+        std::string name = result.weaponName;
+        std::transform(kind.begin(), kind.end(), kind.begin(), [](unsigned char c) {
+            return static_cast<char>(std::tolower(c));
+        });
+        std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c) {
+            return static_cast<char>(std::tolower(c));
+        });
+
+        std::string sound;
+        if (kind.find("flak") != std::string::npos || name.find("flak") != std::string::npos)
+            sound = "dlc/AESFX_FlakLaunch.ogg";
+        else if (kind.find("crystal") != std::string::npos || name.find("crystal") != std::string::npos)
+            sound = "dlc/AESFX_CrystalLaunch.ogg";
+        else if (kind.find("beam") != std::string::npos)
+            sound = "weapons/bp_beam_1.ogg";
+        else if (kind.find("missile") != std::string::npos)
+            sound = result.shotsFired >= 2 ? "weapons/bp_missile_large.ogg" : "weapons/bp_missile_small.ogg";
+        else if (kind.find("bomb") != std::string::npos)
+            sound = "weapons/bp_SFX_BombTeleport.ogg";
+        else if (kind.find("ion") != std::string::npos)
+            sound = "weapons/ions/bp_SFX_IonWeapon1.ogg";
+        else if (kind.find("laser") != std::string::npos)
+            sound = name.find("heavy") != std::string::npos
+                ? "weapons/bp_laser_heavy_1.ogg"
+                : "weapons/bp_laser_3.ogg";
+        else if (!kind.empty())
+            sound = "weapons/bp_laser_3.ogg";
+
+        if (!sound.empty())
+            playSfx(sound, 0.55f);
+    }
+
     void playCombatMusic() {
         std::string type = currentSectorType_;
         std::transform(type.begin(), type.end(), type.begin(),
@@ -3268,8 +3302,11 @@ public:
                 static_cast<int>(combat_.player.weapons.size());
 
         combat_.setTargetRoom(combatTargetRoom_);
-        if (input_.pressed(Button::Cross))
+        if (input_.pressed(Button::Cross)) {
             lastCombatResult_ = combat_.fireSelectedWeapon();
+            if (lastCombatResult_.fired)
+                playWeaponFireSfx(lastCombatResult_);
+        }
 
         // FTL retreat: the player must charge the FTL drive before leaving
         // combat. Fuel is consumed when the retreat jump is completed.
