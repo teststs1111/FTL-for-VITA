@@ -30,5 +30,6 @@ private:
     bool initialized_{false};
     Difficulty difficulty_{Difficulty::Normal};
     Audio audio_;
+    bool audioInitialized_{false};
 };
 }
