@@ -3930,12 +3930,14 @@ MainGame::~MainGame() { shutdown(); }
 
 void MainGame::init(Graphics& graphics, Input& input, const char* archivePath) {
     if (initialized_) return;
+    audio_.init();
     state_ = std::make_unique<ShipScene>(graphics, input, localization_, archivePath, difficulty_);
     initialized_ = true;
 }
 
 void MainGame::update(float dt) {
     if (state_) state_->update(dt);
+    audio_.update();
 }
 
 void MainGame::render() {
@@ -3944,6 +3946,7 @@ void MainGame::render() {
 
 void MainGame::shutdown() {
     state_.reset();
+    audio_.shutdown();
     initialized_ = false;
 }
 
