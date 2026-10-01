@@ -897,3 +897,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Stun effects in the host volley path now honor stunChance instead of applying every configured stun unconditionally.
 - Commit: 426c05d6967b63681de4e310e00954515b6bd262.
 - Continue auditing the remaining host-side ShipRuntime combat path against CombatRuntime so the two paths do not diverge.
+
+
+## 2026-10-01 Runtime crash diagnostics
+- Added game-side diagnostic dump: `ux0:data/wormhole/ftl_runtime_dump.txt` on Vita; host uses `ftl_runtime_dump.txt`.
+- Records startup stages, archive/data loading, sector/player/enemy/combat initialization, and a once-per-second heartbeat with scene/sector/beacon/fuel/combat state.
+- Normal shutdown writes `CLEAN_SHUTDOWN`; uncaught C++ `std::terminate()` records `FATAL_TERMINATE`.
+- Deliberately complements the Vita OS `.psp2dmp`: the OS dump supplies low-level crash/thread/register data, while this file supplies the game's last known logical state.
+- Does not include or copy `ftl.dat`.
+- Added `tests/test_runtime_diagnostics.cpp`.
