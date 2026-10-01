@@ -1245,6 +1245,11 @@ public:
         discoverWeaponAndDroneTextures();
         discoverCrewTextures();
         discoverShipTexture();
+        RuntimeDiagnostics::checkpoint("first_playable_map_ready",
+            "ship=" + id +
+            ",sector=" + std::to_string(sector_) +
+            ",nodes=" + std::to_string(sectorGraph_.nodes().size()) +
+            ",start=" + std::to_string(selectedBeacon_));
         sceneMode_ = SceneMode::SectorMap;
         return true;
     }
@@ -1507,6 +1512,10 @@ public:
         discoverWeaponAndDroneTextures();
         discoverCrewTextures();
         combatMode_ = true;
+        RuntimeDiagnostics::checkpoint("combat_scene_started",
+            "enemy=" + combat_.enemy.content.blueprint.id +
+            ",sector=" + std::to_string(sector_) +
+            ",beacon=" + std::to_string(currentBeacon_));
         jumpCharging_ = false;
         jumpCharge_ = 0.0f;
         sceneMode_ = SceneMode::Combat;
@@ -2635,6 +2644,10 @@ public:
             fuel_--;
             distressBeaconActive_ = false;
             currentBeacon_ = selectedBeacon_;
+            RuntimeDiagnostics::checkpoint("map_jump_begin",
+                "sector=" + std::to_string(sector_) +
+                ",beacon=" + std::to_string(currentBeacon_) +
+                ",fuel=" + std::to_string(fuel_));
             // A jump into the Flagship's current beacon is an interception.
             // Resolve that encounter before advancing the next map tick.
             if (const auto* n = sectorGraph_.node(currentBeacon_)) {
@@ -2695,7 +2708,14 @@ public:
             }
             advanceRebelFleetAfterJump();
             if (sceneMode_ == SceneMode::GameOver) return;
-            if (beginBeaconEvent(currentBeacon_)) return;
+            if (beginBeaconEvent(currentBeacon_)) {
+                RuntimeDiagnostics::checkpoint("beacon_event_started",
+                    "beacon=" + std::to_string(currentBeacon_) +
+                    ",event=" + activeEventId_);
+                return;
+            }
+            RuntimeDiagnostics::checkpoint("beacon_event_fallback_combat",
+                "beacon=" + std::to_string(currentBeacon_));
             enterCombatFromBeacon();
             return;
         }
