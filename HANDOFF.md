@@ -914,3 +914,8 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - vitaGL initialization return value is recorded for real-device diagnosis without changing the current graphics initialization behavior.
 - Input polling failures are recorded once rather than flooding the dump.
 - This is intended to identify whether a real-device failure occurs before or after the VPK reaches the game-data loading stage.
+
+
+## 2026-10-01 Startup diagnostics — data/asset granularity
+- Commit 3a4630eccb9209afca3e45095e9be5895efbdc07 adds finer startup checkpoints for localization, event/sector database loading, sector definition, room/weapon/drone/crew/ship texture discovery, ship-selection construction, and explore-music startup.
+- The Vita runtime dump can now distinguish failures in the archive-open stage from XML/database setup and later graphics asset discovery instead of grouping those steps under one broad initialization checkpoint.
