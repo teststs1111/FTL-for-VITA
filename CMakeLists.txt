@@ -29,6 +29,7 @@ add_library(wormhole_core
     src/render/texture.cpp
     src/platform/input.cpp
     src/platform/platform.cpp
+    src/platform/runtime_diagnostics.cpp
     src/data/ftl_dat.cpp
     src/data/bxml.cpp
     src/data/asset_store.cpp
