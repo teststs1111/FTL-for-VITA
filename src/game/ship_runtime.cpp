@@ -1204,8 +1204,8 @@ bool ShipRuntime::activateBackupBattery() {
 
     const RuntimeSystem* battery = nullptr;
     for (const auto& system : systems) {
-        if (system.type == "battery" && system.damage < system.maxPower &&
-            system.maxPower > 0) {
+        if (system.type == "battery" && system.powered &&
+            system.damage < system.maxPower && system.maxPower > 0) {
             battery = &system;
             break;
         }
