@@ -334,7 +334,7 @@ public:
         else if (kind.find("beam") != std::string::npos)
             sound = "weapons/bp_beam_1.ogg";
         else if (kind.find("missile") != std::string::npos)
-            sound = result.shotsFired >= 2 ? "weapons/bp_missile_large.ogg" : "weapons/bp_missile_small.ogg";
+            sound = result.shotsFired >= 2 ? "explosions/bp_missile_large.ogg" : "explosions/bp_missile_small.ogg";
         else if (kind.find("bomb") != std::string::npos)
             sound = "weapons/bp_SFX_BombTeleport.ogg";
         else if (kind.find("ion") != std::string::npos)
