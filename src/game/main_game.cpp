@@ -402,14 +402,18 @@ public:
         else if (type.find("milky") != std::string::npos) track = "MilkyWayEXPLORE";
         else if (type.find("cosmos") != std::string::npos) track = "CosmosEXPLORE";
         const std::string name = "audio/music/bp_MUS_" + track + ".ogg";
-        if (const auto* bytes = content_.assets().getBytes(name))
+        if (const auto* bytes = content_.assets().getBytes(name)) {
             audio_.playAsset(*bytes, name, 0.42f, true);
+            content_.assets().releaseBytes(name);
+        }
     }
 
     void playSfx(const std::string& name, float volume = 0.7f) {
         const std::string path = "audio/waves/" + name;
-        if (const auto* bytes = content_.assets().getBytes(path))
+        if (const auto* bytes = content_.assets().getBytes(path)) {
             audio_.playAsset(*bytes, path, volume, false);
+            content_.assets().releaseBytes(path);
+        }
     }
 
     void playWeaponFireSfx(const CombatResult& result) {
