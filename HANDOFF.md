@@ -944,3 +944,5 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - save/load の runtime diagnostics (save_complete, load_begin, load_complete) を追加。
 - 最新コミット: 9c6a87e
 - 最新CI: Host/Vitaとも実行中。成功判定はまだ確定していない。
+
+- Combat終了時の runtime 永続化と報酬適用を追跡する diagnostics (`combat_state_persisted`, `combat_reward_applied`, `combat_reward_fallback`) を追加。
