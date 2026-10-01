@@ -3122,6 +3122,10 @@ public:
             combatFeedbackTimer_ = std::max(0.0f, combatFeedbackTimer_ - dt);
             updateCombat(dt);
             if (combat_.outcome == CombatOutcome::EnemyDestroyed) {
+                RuntimeDiagnostics::checkpoint("combat_outcome_enemy_destroyed",
+                    "enemy=" + combat_.enemy.content.blueprint.id +
+                    ",sector=" + std::to_string(sector_) +
+                    ",beacon=" + std::to_string(currentBeacon_));
                 // Persist all combat-side changes, not just hull damage:
                 // systems, crew, weapons, missiles, shields, fires and breaches
                 // must survive the return to the ship scene.
@@ -3182,6 +3186,10 @@ public:
                     sceneMode_ = SceneMode::SectorMap;
                 }
             } else if (combat_.outcome == CombatOutcome::EnemyEscaped) {
+                RuntimeDiagnostics::checkpoint("combat_outcome_enemy_escaped",
+                    "enemy=" + combat_.enemy.content.blueprint.id +
+                    ",sector=" + std::to_string(sector_) +
+                    ",beacon=" + std::to_string(currentBeacon_));
                 runtime_ = combat_.player;
                 // In Last Stand, retreating from Phase 2/3 does not reset the
                 // Flagship's surviving crew. Keep the current casualties so the
@@ -3206,6 +3214,10 @@ public:
                 visitedBeacons_++;
                 sceneMode_ = SceneMode::SectorMap;
             } else if (combat_.outcome == CombatOutcome::PlayerDestroyed) {
+                RuntimeDiagnostics::checkpoint("combat_outcome_player_destroyed",
+                    "enemy=" + combat_.enemy.content.blueprint.id +
+                    ",sector=" + std::to_string(sector_) +
+                    ",beacon=" + std::to_string(currentBeacon_));
                 combatMode_ = false;
                 sceneMode_ = SceneMode::GameOver;
             }
