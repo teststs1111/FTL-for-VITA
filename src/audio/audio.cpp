@@ -21,7 +21,7 @@ Audio::~Audio(){shutdown();}
 bool Audio::init(){
  if(initialized_) return true;
 #ifdef __vita__
- port_=sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_MAIN,bufferFrames_,SCE_AUDIO_OUT_SAMPLE_RATE_48000,SCE_AUDIO_OUT_MODE_STEREO);
+ port_=sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_MAIN,bufferFrames_,48000,SCE_AUDIO_OUT_MODE_STEREO);
  if(port_<0){port_=-1;return false;}
  int volume=SCE_AUDIO_VOLUME_0DB;
  sceAudioOutSetVolume(port_,static_cast<SceAudioOutChannelFlag>(SCE_AUDIO_VOLUME_FLAG_L_CH|SCE_AUDIO_VOLUME_FLAG_R_CH),&volume);
