@@ -23,3 +23,4 @@
 - Do not repeatedly report that `ftl.dat` was checked or that CI is being checked.
 - When an error is found, fix it before moving on to the next feature.
 - Prioritize Vita startup/runtime blockers before adding broad new gameplay features.
+- Startup memory: `AssetStore` supports releasing transient binary blobs after texture upload/audio decode; avoid retaining duplicate compressed PNG/OGG data alongside GPU/PCM resources.
