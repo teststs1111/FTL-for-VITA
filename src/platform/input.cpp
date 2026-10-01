@@ -1,4 +1,5 @@
 #include "platform/input.hpp"
+#include "platform/runtime_diagnostics.hpp"
 
 #ifdef __vita__
 #include <psp2/ctrl.h>
@@ -14,7 +15,12 @@ void Input::beginFrame() { previous_ = state_; }
 void Input::poll() {
 #ifdef __vita__
     SceCtrlData pad{};
-    if (sceCtrlPeekBufferPositive(0, &pad, 1) <= 0) return;
+    const int result = sceCtrlPeekBufferPositive(0, &pad, 1);
+    if (result <= 0) {
+        static bool reported = false;
+        if (!reported) { RuntimeDiagnostics::checkpoint("input_poll_failed", "result=" + std::to_string(result)); reported = true; }
+        return;
+    }
     setButton(Button::Left, pad.buttons & SCE_CTRL_LEFT);
     setButton(Button::Right, pad.buttons & SCE_CTRL_RIGHT);
     setButton(Button::Up, pad.buttons & SCE_CTRL_UP);
