@@ -310,6 +310,12 @@ public:
             audio_.playAsset(*bytes, name, 0.42f, true);
     }
 
+    void playSfx(const std::string& name, float volume = 0.7f) {
+        const std::string path = "audio/waves/" + name;
+        if (const auto* bytes = content_.assets().getBytes(path))
+            audio_.playAsset(*bytes, path, volume, false);
+    }
+
     void playCombatMusic() {
         std::string type = currentSectorType_;
         std::transform(type.begin(), type.end(), type.begin(),
@@ -2913,24 +2919,33 @@ public:
             CombatResult impact;
             while (combat_.consumeImpactResult(impact)) {
                 if (impact.evaded > 0) {
+                    playSfx("explosions/bp_hit_shield_1.ogg", 0.55f);
                     combatFeedback_ = "攻撃を回避";
                 } else if (impact.firesStarted > 0) {
+                    playSfx("ship/bp_fire_1.ogg", 0.65f);
                     combatFeedback_ = "火災発生";
                 } else if (impact.breachesStarted > 0) {
+                    playSfx("explosions/bp_hit_hull_1.ogg", 0.65f);
                     combatFeedback_ = "船体に亀裂";
                 } else if (impact.systemsStunned > 0) {
+                    playSfx("weapons/ions/bp_SFX_IonHitShip1.ogg", 0.6f);
                     combatFeedback_ = "システムをスタン";
                 } else if (impact.shieldsAbsorbed > 0 && impact.hullDamage == 0) {
+                    playSfx("explosions/bp_hit_shield_1.ogg", 0.7f);
                     combatFeedback_ = "シールドが攻撃を吸収";
                 } else if (impact.targetDestroyed) {
+                    playSfx("explosions/bp_explosion_large_1.ogg", 0.8f);
                     combatFeedback_ = "敵艦撃沈";
                 } else if (impact.hullDamage > 0) {
+                    playSfx("explosions/bp_hit_hull_2.ogg", 0.7f);
                     combatFeedback_ = "船体ダメージ " + std::to_string(impact.hullDamage);
                 } else if (impact.ionDamage > 0) {
+                    playSfx("weapons/ions/bp_SFX_IonHitShip2.ogg", 0.65f);
                     combatFeedback_ = "イオンダメージ " + std::to_string(impact.ionDamage);
                 } else if (impact.systemDamage > 0) {
                     combatFeedback_ = "システムダメージ " + std::to_string(impact.systemDamage);
                 } else if (impact.personnelDamage > 0) {
+                    playSfx("ship/bp_sfx_punching_01.ogg", 0.55f);
                     combatFeedback_ = "クルーダメージ " + std::to_string(impact.personnelDamage);
                 } else if (impact.fired) {
                     combatFeedback_ = "攻撃命中";
