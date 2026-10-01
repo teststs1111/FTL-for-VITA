@@ -828,7 +828,7 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
                 }
             }
             if (shieldRoom >= 0) {
-                const bool reverseIonNegated = (&target == &player &&
+                const bool reverseIonNegated = (&target == &player && reverseIonField_ &&
                     (nextRandom() % 100u) < 20u);
                 if (!reverseIonNegated)
                     result.ionDamage += target.ionizeSystemInRoom(
@@ -870,7 +870,7 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
         if (weapon.systemDamage > 0)
             result.systemDamage += target.damageSystemInRoom(room, weapon.systemDamage);
         if (weapon.ionDamage > 0) {
-            const bool reverseIonNegated = (&target == &player &&
+            const bool reverseIonNegated = (&target == &player && reverseIonField_ &&
                 (nextRandom() % 100u) < 20u);
             if (!reverseIonNegated)
                 result.ionDamage += target.ionizeSystemInRoom(room, weapon.ionDamage);
