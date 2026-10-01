@@ -495,8 +495,11 @@ static void testShipRuntime() {
     assert(runtime.setRoomFire(0, true));
     runtime.updateEnvironment(5.0f);
     assert(runtime.roomOxygen[0] == 60 && runtime.roomFire[0]);
+    std::fprintf(stderr, "D1\n");
     assert(runtime.setDoorOpen(0, true));
+    std::fprintf(stderr, "D2\n");
     runtime.updateEnvironment(1.0f);
+    std::fprintf(stderr, "D3\n");
     assert(runtime.roomFire[1]);
     assert(runtime.systems.size() == 3 && runtime.crew.size() == 2);
     assert(runtime.systems[0].type == "engines" && runtime.systems[0].power == 2);
