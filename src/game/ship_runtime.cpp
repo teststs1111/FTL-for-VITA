@@ -320,7 +320,7 @@ int ShipRuntime::resolveWeaponVolley(int weaponIndex, const std::vector<int>& pr
             ++resolved;
             continue;
         }
-        if (ionLike) {
+        if (ionLike && weapon.ionDamage > 0) {
             // Ion shots that meet a normal shield apply their ion damage to the
             // shield system itself; otherwise they ionize the selected room.
             int shieldIndex = -1;
