@@ -34,9 +34,10 @@ std::vector<std::string> loadArchiveSet(const char* basePath) {
 
 class ShipScene final : public GameState {
 public:
-    ShipScene(Graphics& graphics, Input& input, Localization& localization, const char* archivePath,
+    ShipScene(Graphics& graphics, Input& input, Localization& localization, Audio& audio, const char* archivePath,
               Difficulty difficulty = Difficulty::Normal)
-        : graphics_(graphics), input_(input), localization_(localization), archivePath_(archivePath ? archivePath : ""), difficulty_(difficulty) {
+        : graphics_(graphics), input_(input), localization_(localization), audio_(audio),
+          archivePath_(archivePath ? archivePath : ""), difficulty_(difficulty) {
         // Initialize text first so archive failures can be diagnosed on-device.
         if (!text_.init()) {
             startupError_ = "Text renderer initialization failed";
@@ -110,6 +111,7 @@ public:
             discoverShipTexture();
             buildShipSelection();
             sceneMode_ = shipChoices_.empty() ? SceneMode::SectorMap : SceneMode::ShipSelect;
+        playExploreMusic();
         }
     }
 
@@ -282,6 +284,53 @@ public:
         }
         if (!best.empty() && textures_.load(graphics_, content_.assets(), best))
             shipTextureName_ = best;
+    }
+
+    void playExploreMusic() {
+        std::string type = currentSectorType_;
+        std::transform(type.begin(), type.end(), type.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        std::string track = "CivilEXPLORE";
+        if (type.find("engi") != std::string::npos) track = "EngiEXPLORE";
+        else if (type.find("mantis") != std::string::npos) track = "MantisEXPLORE";
+        else if (type.find("rock") != std::string::npos) track = "RockmenEXPLORE";
+        else if (type.find("slug") != std::string::npos) track = "SlugEXPLORE";
+        else if (type.find("zoltan") != std::string::npos) track = "ZoltanEXPLORE";
+        else if (type.find("nebula") != std::string::npos) track = "DeepspaceEXPLORE";
+        else if (type.find("lost") != std::string::npos) track = "LostShipEXPLORE";
+        else if (type.find("shrike") != std::string::npos) track = "ShrikeEXPLORE";
+        else if (sector_ >= 7) track = "LastStand";
+        else if (type.find("wasteland") != std::string::npos) track = "WastelandEXPLORE";
+        else if (type.find("colonial") != std::string::npos) track = "ColonialEXPLORE";
+        else if (type.find("void") != std::string::npos) track = "VoidEXPLORE";
+        else if (type.find("milky") != std::string::npos) track = "MilkyWayEXPLORE";
+        else if (type.find("cosmos") != std::string::npos) track = "CosmosEXPLORE";
+        const std::string name = "audio/music/bp_MUS_" + track + ".ogg";
+        if (const auto* bytes = content_.assets().getBytes(name))
+            audio_.playAsset(*bytes, name, 0.42f, true);
+    }
+
+    void playCombatMusic() {
+        std::string type = currentSectorType_;
+        std::transform(type.begin(), type.end(), type.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        std::string track = "CivilBATTLE";
+        if (type.find("engi") != std::string::npos) track = "EngiBATTLE";
+        else if (type.find("mantis") != std::string::npos) track = "MantisBATTLE";
+        else if (type.find("rock") != std::string::npos) track = "RockmenBATTLE";
+        else if (type.find("slug") != std::string::npos) track = "SlugBATTLE";
+        else if (type.find("zoltan") != std::string::npos) track = "ZoltanBATTLE";
+        else if (type.find("nebula") != std::string::npos) track = "DeepspaceBATTLE";
+        else if (type.find("lost") != std::string::npos) track = "LostShipBATTLE";
+        else if (type.find("shrike") != std::string::npos) track = "ShrikeBATTLE";
+        else if (type.find("wasteland") != std::string::npos) track = "WastelandBATTLE";
+        else if (type.find("colonial") != std::string::npos) track = "ColonialBATTLE";
+        else if (type.find("void") != std::string::npos) track = "VoidBATTLE";
+        else if (type.find("milky") != std::string::npos) track = "MilkyWayBATTLE";
+        else if (type.find("cosmos") != std::string::npos) track = "CosmosBATTLE";
+        const std::string name = "audio/music/bp_MUS_" + track + ".ogg";
+        if (const auto* bytes = content_.assets().getBytes(name))
+            audio_.playAsset(*bytes, name, 0.42f, true);
     }
 
     std::string localized(const std::string& key, const std::string& fallback) const {
@@ -2826,6 +2875,11 @@ public:
 
     void update(float dt) override {
         if (!startupError_.empty()) return;
+        if (combatMode_ != audioCombatMode_) {
+            if (combatMode_) playCombatMusic();
+            else playExploreMusic();
+            audioCombatMode_ = combatMode_;
+        }
 
         if (input_.pressed(Button::Start) && sceneMode_ != SceneMode::Pause) {
             sceneMode_ = SceneMode::Pause;
@@ -3848,6 +3902,7 @@ private:
     Graphics& graphics_;
     Input& input_;
     Localization& localization_;
+    Audio& audio_;
     ShipContent content_;
     EventDatabase eventDatabase_{content_.assets()};
     SectorDatabase sectorDatabase_{content_.assets()};
@@ -3856,6 +3911,7 @@ private:
     CombatRuntime combat_;
     CombatResult lastCombatResult_{};
     bool combatMode_{false};
+    bool audioCombatMode_{false};
     int combatTargetRoom_{0};
     int selectedRoom_{0};
     int selectedCrew_{0};
