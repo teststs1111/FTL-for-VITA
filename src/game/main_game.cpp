@@ -3183,7 +3183,9 @@ public:
                 // Persist all combat-side changes, not just hull damage:
                 // systems, crew, weapons, missiles, shields, fires and breaches
                 // must survive the return to the ship scene.
-                runtime_ = combat_.player;                if (combat_.playerDeployedCombatDrone() && hasAugment("DRONE_RECOVERY_ARM")) {
+                runtime_ = combat_.player;
+                RuntimeDiagnostics::checkpoint("combat_state_persisted", "hull=" + std::to_string(runtime_.hull) + ",fuel=" + std::to_string(fuel_) + ",scrap=" + std::to_string(scrap_) + ",missiles=" + std::to_string(runtime_.missiles));
+                if (combat_.playerDeployedCombatDrone() && hasAugment("DRONE_RECOVERY_ARM")) {
                     droneParts_ = std::min(99, droneParts_ + 1);
                     combatFeedback_ = "Drone Recovery Arm: ドローンパーツ回収";
                     combatFeedbackTimer_ = 1.5f;
@@ -3204,10 +3206,12 @@ public:
                 } else if (const auto* outcome = eventDatabase_.findShipOutcome(
                         combat_.enemy.content.blueprint.id, defeatedByCrew)) {
                     applyShipOutcome(*outcome);
+                    RuntimeDiagnostics::checkpoint("combat_reward_applied", "fuel=" + std::to_string(fuel_) + ",scrap=" + std::to_string(scrap_) + ",missiles=" + std::to_string(runtime_.missiles) + ",drones=" + std::to_string(droneParts_));
                 } else if (!defeatedByCrew) {
                     // Compatibility fallback for encounter ships without an
                     // explicit destroyed block in the supplied event data.
                     scrap_ += applyScrapAugments(20 + sector_ * 5);
+                    RuntimeDiagnostics::checkpoint("combat_reward_fallback", "scrap=" + std::to_string(scrap_));
                 }
 
                 if (sector_ >= 7 && flagshipPhase_ > 0 && flagshipPhase_ < 3) {
