@@ -3298,6 +3298,11 @@ public:
                     ",beacon=" + std::to_string(currentBeacon_));
                 combatMode_ = false;
                 sceneMode_ = SceneMode::GameOver;
+                RuntimeDiagnostics::checkpoint("combat_scene_exit_to_gameover",
+                    "sector=" + std::to_string(sector_) +
+                    ",beacon=" + std::to_string(currentBeacon_) +
+                    ",fuel=" + std::to_string(fuel_) +
+                    ",hull=" + std::to_string(runtime_.hull));
             }
             return;
         }
