@@ -23,6 +23,7 @@
 #include <array>
 #include <unordered_map>
 #include <random>
+#include <exception>
 
 namespace wormhole {
 
@@ -4116,7 +4117,17 @@ void MainGame::init(Graphics& graphics, Input& input, const char* archivePath) {
     if (initialized_) return;
     RuntimeDiagnostics::checkpoint("main_game_init_begin", archivePath ? archivePath : "<null>");
     audioInitialized_ = audio_.init();
-    state_ = std::make_unique<ShipScene>(graphics, input, localization_, audio_, archivePath, difficulty_);
+    try {
+        RuntimeDiagnostics::checkpoint("ship_scene_construct_begin");
+        state_ = std::make_unique<ShipScene>(graphics, input, localization_, audio_, archivePath, difficulty_);
+        RuntimeDiagnostics::checkpoint("ship_scene_construct_complete");
+    } catch (const std::exception& e) {
+        RuntimeDiagnostics::checkpoint("ship_scene_construct_exception", e.what());
+        throw;
+    } catch (...) {
+        RuntimeDiagnostics::checkpoint("ship_scene_construct_exception", "unknown exception");
+        throw;
+    }
     initialized_ = true;
     RuntimeDiagnostics::checkpoint("main_game_initialized");
 }
