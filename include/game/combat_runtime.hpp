@@ -72,6 +72,7 @@ public:
     void setPlayerWeaponCooldownMultiplier(float multiplier) { playerWeaponCooldownMultiplier_ = multiplier; }
     void setPlayerShieldRechargeMultiplier(float multiplier) { playerShieldRechargeMultiplier_ = multiplier; }
     void setStealthWeapons(bool enabled) { stealthWeapons_ = enabled; }
+    void setReverseIonField(bool enabled) { reverseIonField_ = enabled; }
     void setEnvironment(CombatEnvironment environment) {
         environment_ = environment;
         environmentTimer_ = 0.0f;
@@ -123,6 +124,7 @@ private:
     float playerWeaponCooldownMultiplier_{1.0f};
     float playerShieldRechargeMultiplier_{1.0f};
     bool stealthWeapons_{false};
+    bool reverseIonField_{false};
     float cloakTimer_{0.0f};
     bool playerDeployedCombatDrone_{false};
     bool enemyDefeatedByCrew_{false};
