@@ -3074,6 +3074,16 @@ public:
             }
         }
 
+        bool backupBatteryCommand = false;
+        if (input_.pressed(Button::Circle) && input_.down(Button::Triangle)) {
+            backupBatteryCommand = true;
+            if (combat_.player.activateBackupBattery())
+                combatFeedback_ = "バックアップバッテリー起動";
+            else
+                combatFeedback_ = "バックアップバッテリーを起動できない";
+            combatFeedbackTimer_ = 1.2f;
+        }
+
         bool cloakCommand = false;
         if (input_.pressed(Button::Circle) && input_.down(Button::Square)) {
             cloakCommand = true;
@@ -3092,7 +3102,7 @@ public:
         if (!playerRooms.empty()) {
             const int playerRoomCount = static_cast<int>(playerRooms.size());
             selectedRoom_ = std::clamp(selectedRoom_, 0, playerRoomCount - 1);
-            if (input_.pressed(Button::Triangle) && !combat_.player.crew.empty())
+            if (!backupBatteryCommand && input_.pressed(Button::Triangle) && !combat_.player.crew.empty())
                 selectedCrew_ = (selectedCrew_ + 1) % static_cast<int>(combat_.player.crew.size());
             if (!powerCommand && input_.pressed(Button::Up)) {
                 selectedRoom_ = (selectedRoom_ + playerRoomCount - 1) % playerRoomCount;
