@@ -1,4 +1,5 @@
 #include "audio/audio.hpp"
+#include "platform/runtime_diagnostics.hpp"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -20,14 +21,18 @@ bool tag(const std::vector<std::uint8_t>& b,std::size_t p,const char* t){return 
 Audio::~Audio(){shutdown();}
 bool Audio::init(){
  if(initialized_) return true;
+ RuntimeDiagnostics::checkpoint("audio_init_begin");
 #ifdef __vita__
  port_=sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_MAIN,bufferFrames_,48000,SCE_AUDIO_OUT_MODE_STEREO);
- if(port_<0){port_=-1;return false;}
+ if(port_<0){ RuntimeDiagnostics::checkpoint("audio_init_failed", "sceAudioOutOpenPort=" + std::to_string(port_)); port_=-1;return false;}
  int volume=SCE_AUDIO_VOLUME_0DB;
- sceAudioOutSetVolume(port_,static_cast<SceAudioOutChannelFlag>(SCE_AUDIO_VOLUME_FLAG_L_CH|SCE_AUDIO_VOLUME_FLAG_R_CH),&volume);
+ const int volumeResult = sceAudioOutSetVolume(port_,static_cast<SceAudioOutChannelFlag>(SCE_AUDIO_VOLUME_FLAG_L_CH|SCE_AUDIO_VOLUME_FLAG_R_CH),&volume);
  outputBuffer_.assign(std::size_t(bufferFrames_)*2,0);
+ RuntimeDiagnostics::checkpoint("audio_port_opened", "port=" + std::to_string(port_) + " volume_result=" + std::to_string(volumeResult));
 #endif
- initialized_=true; return true;
+ initialized_=true;
+ RuntimeDiagnostics::checkpoint("audio_ready");
+ return true;
 }
 void Audio::shutdown(){voices_.clear();
 #ifdef __vita__
