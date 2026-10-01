@@ -67,6 +67,7 @@ if(VITA)
         SceShaccCg_stub
         SceTouch_stub
         ScePvf_stub
+        SceAudio_stub
     )
     # vita-elf-create appends SCE module metadata to PT_LOAD segment 0.
     # Keep a full page-aligned gap before the next load segment so metadata can
