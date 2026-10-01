@@ -53,7 +53,7 @@ int main() {
     be32(out, raw.size());
 
     be32(out, 0);
-    be32(out, static_cast<std::uint32_t>(rawName.size() + 1));
+    be32(out, 0x01000000u | static_cast<std::uint32_t>(rawName.size() + 1));
     be32(out, compressedOffset);
     be32(out, compressed.size());
     be32(out, original.size());
