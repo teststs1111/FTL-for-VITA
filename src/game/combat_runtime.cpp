@@ -752,6 +752,8 @@ CombatResult CombatRuntime::resolveWeapon(ShipRuntime& attacker,
         return result;
 
     result.fired = true;
+    result.weaponType = weapon.type;
+    result.weaponName = weapon.name;
     result.shotsFired = weapon.shots;
 
     if (&target == &player && cloaked()) {
@@ -918,6 +920,8 @@ CombatResult CombatRuntime::fireWeapon(int weaponIndex) {
     if (cloaked() && !stealthWeapons_)
         cloakTimer_ = 0.0f;
     result.fired = true;
+    result.weaponType = firedWeapon.type;
+    result.weaponName = firedWeapon.name;
     result.shotsFired = std::max(1, firedWeapon.shots);
     enqueueWeapon(true, weaponIndex, firedWeapon, targetRoom);
     return result;
