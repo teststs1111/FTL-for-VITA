@@ -71,6 +71,8 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
  if(ov_open_callbacks(&memory,&vf,nullptr,0,callbacks)<0)return false;
  vorbis_info* info=ov_info(&vf,-1);
  if(!info||info->channels<1||info->rate<=0){ov_clear(&vf);return false;}
+ const int channels=info->channels;
+ const int sourceRate=info->rate;
  std::vector<std::int16_t> pcm;
  const ogg_int64_t total=ov_pcm_total(&vf,-1);
  if(total>0&&total<static_cast<ogg_int64_t>(std::numeric_limits<std::size_t>::max()/2))
@@ -84,18 +86,18 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
    const std::size_t samples=static_cast<std::size_t>(got)/2;
    const auto* src=reinterpret_cast<const std::int16_t*>(buffer.data());
    for(std::size_t i=0;i<samples;++i){
-      if(info->channels==1){pcm.push_back(src[i]);pcm.push_back(src[i]);}
-      else {pcm.push_back(src[i*info->channels]);pcm.push_back(src[i*info->channels+1]);}
+      if(channels==1){pcm.push_back(src[i]);pcm.push_back(src[i]);}
+      else {pcm.push_back(src[i*channels]);pcm.push_back(src[i*channels+1]);}
    }
  }
  ov_clear(&vf);
  if(pcm.empty())return false;
- if(info->rate!=sampleRate_){
+ if(sourceRate!=sampleRate_){
    const std::size_t inFrames=pcm.size()/2;
-   const std::size_t outFrames=std::max<std::size_t>(1,(std::uint64_t(inFrames)*sampleRate_)/static_cast<unsigned>(info->rate));
+   const std::size_t outFrames=std::max<std::size_t>(1,(std::uint64_t(inFrames)*sampleRate_)/static_cast<unsigned>(sourceRate));
    std::vector<std::int16_t> resampled(outFrames*2);
    for(std::size_t i=0;i<outFrames;++i){
-      const std::size_t src=std::min(inFrames-1,std::size_t((std::uint64_t(i)*info->rate)/sampleRate_));
+      const std::size_t src=std::min(inFrames-1,std::size_t((std::uint64_t(i)*sourceRate)/sampleRate_));
       resampled[i*2]=pcm[src*2]; resampled[i*2+1]=pcm[src*2+1];
    }
    pcm.swap(resampled);
