@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(PNG REQUIRED)
+find_package(ZLIB REQUIRED)
 
 if(VITA)
     include("$ENV{VITASDK}/share/vita.cmake" REQUIRED)
@@ -45,7 +46,7 @@ add_library(wormhole_core
     src/render/text_renderer.cpp
 )
 target_include_directories(wormhole_core PUBLIC include)
-target_link_libraries(wormhole_core PUBLIC PNG::PNG)
+target_link_libraries(wormhole_core PUBLIC PNG::PNG ZLIB::ZLIB)
 
 add_executable(vita_wormhole_prototype src/main.cpp)
 target_link_libraries(vita_wormhole_prototype PRIVATE wormhole_core)
