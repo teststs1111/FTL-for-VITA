@@ -103,19 +103,18 @@ static void testBxml() {
 }
 
 static std::vector<std::uint8_t> makeVanillaArchive(const std::string& name, const std::string& payload) {
-    const std::size_t count = 1;
     const std::size_t nameSize = name.size() + 1;
-    const std::size_t namesOffset = 16 + 20 * count;
+    const std::size_t namesOffset = 16 + 20;
     const std::size_t payloadOffset = namesOffset + nameSize;
     std::vector<std::uint8_t> data(payloadOffset + payload.size(), 0);
-    data[0]='P'; data[1]='K'; data[2]='G'; data[3]='\n';
+    data[0]='P'; data[1]='K'; data[2]='G'; data[3]='\\n';
     data[5]=16; data[7]=20; data[11]=1;
     data[12]=static_cast<std::uint8_t>(nameSize >> 24);
     data[13]=static_cast<std::uint8_t>(nameSize >> 16);
     data[14]=static_cast<std::uint8_t>(nameSize >> 8);
     data[15]=static_cast<std::uint8_t>(nameSize);
-    const std::size_t entry = 16;
-    const std::uint32_t offset = static_cast<std::uint32_t>(payloadOffset);
+    const std::size_t entry=16;
+    const std::uint32_t offset=static_cast<std::uint32_t>(payloadOffset);
     data[entry+8]=(offset >> 24)&0xff; data[entry+9]=(offset >> 16)&0xff;
     data[entry+10]=(offset >> 8)&0xff; data[entry+11]=offset&0xff;
     const std::uint32_t size=static_cast<std::uint32_t>(payload.size());
