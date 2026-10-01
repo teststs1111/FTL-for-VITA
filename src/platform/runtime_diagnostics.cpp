@@ -6,7 +6,7 @@
 #include <ctime>
 #include <fstream>
 #ifdef __vita__
-#include <psp2/io/fcntl.h>
+#include <psp2/io/stat.h>
 #endif
 #include <iomanip>
 #include <mutex>
