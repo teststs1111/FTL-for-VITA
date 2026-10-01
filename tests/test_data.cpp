@@ -108,7 +108,7 @@ static std::vector<std::uint8_t> makeVanillaArchive(const std::string& name, con
     const std::size_t namesOffset = 16 + 20 * count;
     const std::size_t payloadOffset = namesOffset + nameSize;
     std::vector<std::uint8_t> data(payloadOffset + payload.size(), 0);
-    data[0]='P'; data[1]='K'; data[2]='G'; data[3]='\\n';
+    data[0]='P'; data[1]='K'; data[2]='G'; data[3]='\n';
     data[5]=16; data[7]=20; data[11]=1;
     data[12]=static_cast<std::uint8_t>(nameSize >> 24);
     data[13]=static_cast<std::uint8_t>(nameSize >> 16);
