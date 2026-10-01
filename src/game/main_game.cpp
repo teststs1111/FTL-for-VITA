@@ -83,14 +83,36 @@ public:
 
             fleetPursuitDelay_ = 0;
             fleetPursuitProgress_ = 0.0f;
+            RuntimeDiagnostics::checkpoint("fleet_state_init_begin");
             applySectorStartFleetModifiers();
+            RuntimeDiagnostics::checkpoint("fleet_state_initialized",
+                "delay=" + std::to_string(fleetPursuitDelay_) +
+                ",position=" + std::to_string(fleetPursuitPosition_));
+            RuntimeDiagnostics::checkpoint("sector_graph_generate_begin",
+                "sector=" + std::to_string(sector_) + ",seed=" + std::to_string(seed_));
             sectorGraph_.generate(sector_, seed_);
+            RuntimeDiagnostics::checkpoint("sector_graph_generated",
+                "nodes=" + std::to_string(sectorGraph_.nodes().size()) +
+                ",start=" + std::to_string(sectorGraph_.startNode()));
+            RuntimeDiagnostics::checkpoint("beacon_nebula_state_begin");
             configureBeaconNebulaState();
+            RuntimeDiagnostics::checkpoint("beacon_nebula_state_ready");
+            RuntimeDiagnostics::checkpoint("beacon_event_assignment_begin");
             assignSectorBeaconEvents();
+            RuntimeDiagnostics::checkpoint("beacon_event_assignment_ready",
+                "assignments=" + std::to_string(beaconEventAssignments_.size()));
             RuntimeDiagnostics::checkpoint("sector_data_ready", "sector=" + std::to_string(sector_));
-        sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
-            if (sector_ >= 7)
+            RuntimeDiagnostics::checkpoint("fleet_coverage_begin");
+            sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
+            RuntimeDiagnostics::checkpoint("fleet_coverage_ready");
+            if (sector_ >= 7) {
+                RuntimeDiagnostics::checkpoint("last_stand_init_begin");
                 initializeLastStandState();
+                RuntimeDiagnostics::checkpoint("last_stand_init_ready",
+                    "flagship_node=" + std::to_string(flagshipNode_) +
+                    ",base_node=" + std::to_string(flagshipBaseNode_) +
+                    ",route_nodes=" + std::to_string(flagshipRoute_.size()));
+            }
             selectedBeacon_ = sectorGraph_.startNode();
             RuntimeDiagnostics::checkpoint("player_ship_load_begin");
             if (!content_.loadPlayerShip()) {
