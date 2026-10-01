@@ -26,6 +26,10 @@ const std::vector<std::uint8_t>* AssetStore::getBytes(const std::string& name) {
     return &it->second;
 }
 
+void AssetStore::releaseBytes(const std::string& name) {
+    byteCache_.erase(name);
+}
+
 std::vector<std::string> AssetStore::fileNames() const {
     auto names = archive_.fileNames();
     std::sort(names.begin(), names.end());
