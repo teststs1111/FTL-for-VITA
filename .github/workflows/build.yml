@@ -13,13 +13,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install host dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake g++ libpng-dev
+        run: sudo apt-get update && sudo apt-get install -y cmake g++ libpng-dev gdb
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON
       - name: Build
         run: cmake --build build --parallel
       - name: Test
-        run: ctest --test-dir build --output-on-failure
+        run: |
+          if ! ctest --test-dir build --output-on-failure; then
+            echo "=== test_data backtrace ==="
+            gdb -batch -ex run -ex bt --args ./build/test_data || true
+            exit 1
+          fi
 
   vita:
     name: PS Vita build
