@@ -5,6 +5,7 @@
 #include <psp2/ctrl.h>
 #endif
 
+#include <string>
 namespace wormhole {
 namespace {
 std::size_t index(Button b) { return static_cast<std::size_t>(b); }
