@@ -463,6 +463,7 @@ static void testShipRuntime() {
     assert(runtime.drones[1].active);
     assert(runtime.setDronePowered(0, false));
     assert(runtime.setDronePowered(1, false));
+    std::fprintf(stderr, "SR1A\n");
     assert(runtime.maxShieldLayers == 2 && runtime.shieldLayers == 2);
     assert(runtime.setSystemPowered(2, true));
     assert(!runtime.damageShields(1) == false);
@@ -484,11 +485,13 @@ static void testShipRuntime() {
     runtime.updateWeapons(0.0f);
     assert(runtime.fireWeapon(0));
     assert(runtime.missiles == 6);
+    std::fprintf(stderr, "SR1B\n");
     assert(!runtime.weapons[0].ready);
     assert(!runtime.fireWeapon(0));
 
     runtime.updateWeapons(2.5f);
     assert(runtime.weapons[0].ready);
+    std::fprintf(stderr, "SR1C\n");
     assert(runtime.roomOxygen.size() == 3 && runtime.roomOxygen[0] == 100);
     // Keep the crew member out of the burning room so this legacy fixture remains focused on oxygen/fire spread.
     runtime.crew[0].room = 2;
@@ -539,6 +542,7 @@ static void testShipRuntime() {
     assert(runtime.setSystemPowered(0, false));
     assert(runtime.usedReactorPower() == 2);
     assert(runtime.setSystemPowered(0, true));
+    std::fprintf(stderr, "SR1E\n");
 
     std::fprintf(stderr, "SR2\n");
     wormhole::CombatRuntime combat;
