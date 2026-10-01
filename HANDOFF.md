@@ -156,7 +156,7 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Combat/runtime: ~45%
 - Vita renderer/input: ~35%
 - Japanese text/font/UI: ~25%
-- Audio: Vita `sceAudioOut` output, WAV PCM decode, and real FTL OGG/Vorbis asset decoding are implemented; shared `ftl.dat` assets drive looping sector exploration/combat music. Combat now carries weapon identity into audio results, with weapon-specific firing sounds plus real AE Flak/Crystal impact sounds. UI, crew, system, environment, and event SFX remain.
+- Audio: Vita `sceAudioOut` output, WAV PCM decode, and real FTL OGG/Vorbis asset decoding are implemented; shared `ftl.dat` assets drive looping sector exploration/combat music. Combat now carries weapon identity into audio results, with weapon-specific firing sounds plus real AE Flak/Crystal impact sounds; archive sound-name mappings were corrected for missile/Flak/Crystal launch sounds. UI, crew, system, environment, and event SFX remain.
 - Save/load: partial
 - Mod support: pending
 - Overall project progress: ~50% toward the stated actual-game-faithful playable target.
