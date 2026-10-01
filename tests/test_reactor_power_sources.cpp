@@ -128,7 +128,7 @@ int main() {
     assert(ship.systems[0].batteryPower == 1);
     assert(ship.systems[0].zoltanPower == 2);
     assert(ship.reactorFundedPowerForSystem(ship.systems[0]) == 1);
-    ship.updateBackupBattery(30.0f);
+    ship.updateEnvironment(30.0f);
     assert(ship.backupBatteryPower() == 0);
     assert(ship.systems[0].power == 3);
     assert(ship.systems[0].batteryPower == 0);
