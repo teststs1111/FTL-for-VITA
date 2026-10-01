@@ -454,6 +454,7 @@ static void testShipRuntime() {
     assert(runtime.hull == 30 && runtime.reactor == 8);
     assert(runtime.missiles == 7);
     assert(runtime.weapons.size() == 1);
+    std::fprintf(stderr, "SR1\n");
     assert(runtime.drones.size() == 2);
     assert(runtime.setDronePowered(0, true));
     assert(runtime.setDronePowered(1, true));
@@ -539,11 +540,13 @@ static void testShipRuntime() {
     assert(runtime.usedReactorPower() == 2);
     assert(runtime.setSystemPowered(0, true));
 
+    std::fprintf(stderr, "SR2\n");
     wormhole::CombatRuntime combat;
     wormhole::LoadedShip enemyForCombat;
     assert(content.loadShip("ENEMY_SHIP", enemyForCombat));
     assert(combat.load(content, enemyForCombat));
     assert(combat.setTargetRoom(0));
+    std::fprintf(stderr, "SR3\n");
     assert(combat.player.drones.size() == 2);
     assert(combat.player.drones[0].weaponDamage == 1);
     assert(combat.player.drones[0].weaponSystemDamage == 1);
@@ -1007,6 +1010,7 @@ static void testShipRuntime() {
     combat.update(0.25f);
     assert(combat.outcome == wormhole::CombatOutcome::EnemyDestroyed);
 
+    std::fprintf(stderr, "SR4\n");
     // Direct room status regression: fire, breach and system stun are temporary/persistent states.
     assert(runtime.setRoomFire(0, false));
     assert(runtime.setRoomFire(0, true));
@@ -1035,6 +1039,7 @@ static void testShipRuntime() {
     runtime.updateEnvironment(2.0f);
     assert(runtime.roomOxygen[0] == 76);
 
+    std::fprintf(stderr, "SR5\n");
     runtime.reset();
     assert(!runtime.valid && runtime.systems.empty() && runtime.crew.empty());
     assert(runtime.shieldLayers == 0 && runtime.maxShieldLayers == 0);
