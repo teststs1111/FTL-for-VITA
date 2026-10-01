@@ -7,11 +7,11 @@ bool TextureCache::load(Graphics& graphics,AssetStore& assets,const std::string&
  RgbaImage image; if(!decodePng(*bytes,image)) return false;
  Texture texture=graphics.createTexture(image.pixels,image.width,image.height);
 #ifdef __vita__
- if(!texture.valid()) return false;
+ if(!texture.valid()) { assets.releaseBytes(name); return false; }
 #else
  if(image.width<=0||image.height<=0) return false;
 #endif
- textures_.emplace(name,texture); return true;
+ textures_.emplace(name,texture); assets.releaseBytes(name); return true;
 }
 const Texture* TextureCache::get(const std::string& name) const {
  auto it=textures_.find(name); return it==textures_.end()?nullptr:&it->second;
