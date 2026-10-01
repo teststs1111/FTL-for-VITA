@@ -1129,7 +1129,7 @@ public:
     }
 
     void syncCombatAugments() {
-        combat_.setReverseIonField(hasAugment("REVERSE_ION_FIELD"));
+        combat_.setReverseIonField(hasAugment("ION_FIELD"));
     }
 
     bool hasAugment(const std::string& id) const {
