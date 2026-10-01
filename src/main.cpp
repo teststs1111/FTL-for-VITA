@@ -31,7 +31,9 @@ int main() {
     wormhole::RuntimeDiagnostics::checkpoint("graphics_ready");
 
     wormhole::Input input;
+    wormhole::RuntimeDiagnostics::checkpoint("input_object_ready");
     wormhole::MainGame game;
+    wormhole::RuntimeDiagnostics::checkpoint("main_game_object_ready");
 #ifndef __vita__
     const char* archivePath = std::getenv("FTL_DAT_PATH");
     game.init(graphics, input, archivePath ? archivePath : "ftl.dat");
@@ -49,9 +51,12 @@ int main() {
 #endif
 
 #ifdef __vita__
+    bool firstFrame = true;
     for (;;) {
         input.beginFrame();
+        if (firstFrame) wormhole::RuntimeDiagnostics::checkpoint("first_frame_begin");
         input.poll();
+        if (firstFrame) wormhole::RuntimeDiagnostics::checkpoint("first_input_poll_complete");
         if (input.down(wormhole::Button::Start) && input.down(wormhole::Button::Select))
             break;
 
@@ -59,6 +64,10 @@ int main() {
                 game.update(1.0f / 60.0f);
         game.render();
         graphics.endFrame();
+        if (firstFrame) {
+            wormhole::RuntimeDiagnostics::checkpoint("first_frame_render_complete");
+            firstFrame = false;
+        }
     }
 #else
     graphics.beginFrame({0.f, 0.f, 0.f, 1.f});
