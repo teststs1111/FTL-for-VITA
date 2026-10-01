@@ -117,6 +117,9 @@ int main() {
     ship.systems.push_back(battery);
     assert(ship.usedReactorPower() == 2);
     assert(ship.availableReactorPower() == 8);
+    ship.systems[2].powered = false;
+    assert(!ship.activateBackupBattery());
+    ship.systems[2].powered = true;
     assert(ship.activateBackupBattery());
     assert(ship.backupBatteryPower() == 2);
     assert(ship.backupBatteryRemaining() > 29.9f);
