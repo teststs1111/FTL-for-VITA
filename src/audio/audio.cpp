@@ -1,9 +1,10 @@
 #include "audio/audio.hpp"
 #include <algorithm>
 #include <cmath>
-#include <limits>
+#include <limits>\n#include <array>\n#include <cstring>\n#include <cctype>\n#include <cstdio>
 #ifdef __vita__
 #include <psp2/audioout.h>
+#include <vorbis/vorbisfile.h>
 #endif
 namespace wormhole {
 namespace {
@@ -32,6 +33,93 @@ void Audio::shutdown(){voices_.clear();
 bool Audio::playPcm16Stereo(const std::vector<std::int16_t>& s,float v){
  if(!initialized_||s.empty()||(s.size()&1u)||voices_.size()>=16)return false;
  Voice x; x.samples=s; x.volume=std::clamp(v,0.f,1.f); voices_.push_back(std::move(x)); return true;
+}
+
+#ifdef __vita__
+namespace {
+struct OggMemory {
+ const std::uint8_t* data{nullptr};
+ std::size_t size{0};
+ std::size_t pos{0};
+};
+size_t oggRead(void* ptr,size_t size,size_t nmemb,void* datasource){
+ auto& m=*static_cast<OggMemory*>(datasource);
+ const std::size_t want=size*nmemb;
+ const std::size_t take=std::min(want,m.size-m.pos);
+ if(take) std::memcpy(ptr,m.data+m.pos,take);
+ m.pos+=take;
+ return size ? take/size : 0;
+}
+int oggSeek(void* datasource,ogg_int64_t offset,int whence){
+ auto& m=*static_cast<OggMemory*>(datasource);
+ std::int64_t base=whence==SEEK_SET?0:(whence==SEEK_CUR?static_cast<std::int64_t>(m.pos):static_cast<std::int64_t>(m.size));
+ const std::int64_t next=base+offset;
+ if(next<0||static_cast<std::uint64_t>(next)>m.size)return -1;
+ m.pos=static_cast<std::size_t>(next); return 0;
+}
+int oggClose(void*){return 0;}
+long oggTell(void* datasource){return static_cast<long>(static_cast<OggMemory*>(datasource)->pos);}
+}
+#endif
+
+bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
+ if(!initialized_||bytes.empty()||voices_.size()>=16)return false;
+#ifdef __vita__
+ OggMemory memory{bytes.data(),bytes.size(),0};
+ OggVorbis_File vf{};
+ ov_callbacks callbacks{oggRead,oggSeek,oggClose,oggTell};
+ if(ov_open_callbacks(&memory,&vf,nullptr,0,callbacks)<0)return false;
+ vorbis_info* info=ov_info(&vf,-1);
+ if(!info||info->channels<1||info->rate<=0){ov_clear(&vf);return false;}
+ std::vector<std::int16_t> pcm;
+ const ogg_int64_t total=ov_pcm_total(&vf,-1);
+ if(total>0&&total<static_cast<ogg_int64_t>(std::numeric_limits<std::size_t>::max()/2))
+     pcm.reserve(static_cast<std::size_t>(total)*2);
+ std::array<char,4096> buffer{};
+ int bitstream=0;
+ for(;;){
+   const long got=ov_read(&vf,buffer.data(),static_cast<int>(buffer.size()),0,2,1,&bitstream);
+   if(got==0)break;
+   if(got<0){ov_clear(&vf);return false;}
+   const std::size_t samples=static_cast<std::size_t>(got)/2;
+   const auto* src=reinterpret_cast<const std::int16_t*>(buffer.data());
+   for(std::size_t i=0;i<samples;++i){
+      if(info->channels==1){pcm.push_back(src[i]);pcm.push_back(src[i]);}
+      else {pcm.push_back(src[i*info->channels]);pcm.push_back(src[i*info->channels+1]);}
+   }
+ }
+ ov_clear(&vf);
+ if(pcm.empty())return false;
+ if(info->rate!=sampleRate_){
+   const std::size_t inFrames=pcm.size()/2;
+   const std::size_t outFrames=std::max<std::size_t>(1,(std::uint64_t(inFrames)*sampleRate_)/static_cast<unsigned>(info->rate));
+   std::vector<std::int16_t> resampled(outFrames*2);
+   for(std::size_t i=0;i<outFrames;++i){
+      const std::size_t src=std::min(inFrames-1,std::size_t((std::uint64_t(i)*info->rate)/sampleRate_));
+      resampled[i*2]=pcm[src*2]; resampled[i*2+1]=pcm[src*2+1];
+   }
+   pcm.swap(resampled);
+ }
+ if(loop)stopMusic();
+ Voice x; x.samples=std::move(pcm); x.volume=std::clamp(v,0.f,1.f); x.loop=loop; x.music=loop;
+ voices_.push_back(std::move(x)); return true;
+#else
+ (void)bytes;(void)v;(void)loop; return false;
+#endif
+}
+
+bool Audio::playAsset(const std::vector<std::uint8_t>& bytes,const std::string& name,float v,bool loop){
+ const auto dot=name.find_last_of('.');
+ if(dot==std::string::npos)return false;
+ std::string ext=name.substr(dot+1);
+ std::transform(ext.begin(),ext.end(),ext.begin(),[](unsigned char c){return static_cast<char>(std::tolower(c));});
+ if(ext=="wav")return playWav(bytes,v);
+ if(ext=="ogg")return playOgg(bytes,v,loop);
+ return false;
+}
+
+void Audio::stopMusic(){
+ voices_.erase(std::remove_if(voices_.begin(),voices_.end(),[](const Voice& v){return v.music;}),voices_.end());
 }
 bool Audio::playWav(const std::vector<std::uint8_t>& b,float v){
  if(!initialized_||b.size()<44||!tag(b,0,"RIFF")||!tag(b,8,"WAVE"))return false;
@@ -70,7 +158,11 @@ void Audio::update(){
    outputBuffer_[d]=std::int16_t(std::clamp(l,int(std::numeric_limits<std::int16_t>::min()),int(std::numeric_limits<std::int16_t>::max())));
    outputBuffer_[d+1]=std::int16_t(std::clamp(r,int(std::numeric_limits<std::int16_t>::min()),int(std::numeric_limits<std::int16_t>::max())));
   }
-  v.frame+=count;if(v.frame>=v.samples.size()/2)it=voices_.erase(it);else ++it;
+  v.frame+=count;
+  if(v.frame>=v.samples.size()/2){
+   if(v.loop) v.frame=0;
+   else it=voices_.erase(it);
+  } else ++it;
  }
  sceAudioOutOutput(port_,outputBuffer_.data());
 #endif
