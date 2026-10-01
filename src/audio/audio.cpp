@@ -1,7 +1,12 @@
 #include "audio/audio.hpp"
 #include <algorithm>
 #include <cmath>
-#include <limits>\n#include <array>\n#include <cstring>\n#include <cctype>\n#include <cstdio>
+#include <limits>
+#include <array>
+#include <cstring>
+#include <cctype>
+#include <cstdio>
+#include <string>
 #ifdef __vita__
 #include <psp2/audioout.h>
 #include <vorbis/vorbisfile.h>
@@ -19,7 +24,7 @@ bool Audio::init(){
  port_=sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_MAIN,bufferFrames_,SCE_AUDIO_OUT_SAMPLE_RATE_48000,SCE_AUDIO_OUT_MODE_STEREO);
  if(port_<0){port_=-1;return false;}
  int volume=SCE_AUDIO_VOLUME_0DB;
- sceAudioOutSetVolume(port_,SCE_AUDIO_VOLUME_FLAG_L_CH|SCE_AUDIO_VOLUME_FLAG_R_CH,&volume);
+ sceAudioOutSetVolume(port_,static_cast<SceAudioOutChannelFlag>(SCE_AUDIO_VOLUME_FLAG_L_CH|SCE_AUDIO_VOLUME_FLAG_R_CH),&volume);
  outputBuffer_.assign(std::size_t(bufferFrames_)*2,0);
 #endif
  initialized_=true; return true;
@@ -127,7 +132,7 @@ bool Audio::playWav(const std::vector<std::uint8_t>& b,float v){
  if(!initialized_||b.size()<44||!tag(b,0,"RIFF")||!tag(b,8,"WAVE"))return false;
  std::uint16_t ch=0,bits=0; std::uint32_t rate=0; std::size_t off=0,size=0,p=12;
  while(p+8<=b.size()){
-  const auto n=u32(b,p+4), q=p+8; if(q>b.size()||n>b.size()-q)return false;
+  const std::uint32_t n=u32(b,p+4); const std::size_t q=p+8; if(q>b.size()||n>b.size()-q)return false;
   if(tag(b,p,"fmt ")){if(n<16)return false; if(u16(b,q)!=1)return false; ch=u16(b,q+2);rate=u32(b,q+4);bits=u16(b,q+14);if((ch!=1&&ch!=2)||(bits!=8&&bits!=16)||!rate)return false;}
   else if(tag(b,p,"data")){off=q;size=n;break;}
   p=q+n+(n&1u);
