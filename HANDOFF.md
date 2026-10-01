@@ -933,3 +933,5 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - First playable path diagnostics now record map-ready, jump-start, beacon-event, fallback-combat, and combat-scene transitions.
 
 - Added event-choice/chain and combat-load runtime diagnostics (`event_choice_selected`, `event_chain_*`, `event_choice_*`, `combat_enemy_load_failed`, `combat_runtime_load_failed`) in commit `9c52d0d581f681ae0c95758ff9b46f4e901441ca`.
+
+- Added combat outcome diagnostics (`combat_outcome_enemy_destroyed`, `combat_outcome_enemy_escaped`, `combat_outcome_player_destroyed`) in commit `5a51c1e8454b4b61425a41eb8769a7571390e9fb`.
