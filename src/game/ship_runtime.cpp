@@ -361,24 +361,25 @@ int ShipRuntime::resolveWeaponVolley(int weaponIndex, const std::vector<int>& pr
                 if (!hasSystem)
                     effectiveDamage += weapon.hullBust;
             }
-            if (effectiveDamage > 0) {
+            if (effectiveDamage > 0)
                 damageRoom(targetRoom, effectiveDamage);
-                if (weapon.systemDamage > 0)
-                    damageSystemInRoom(targetRoom, std::min(weapon.systemDamage, effectiveDamage));
-                if (weapon.personnelDamage > 0)
-                    damageCrewInRoom(targetRoom, weapon.personnelDamage);
-                if (weapon.fireChance > 0 && roomOxygen[targetRoom] > 0 &&
-                    (roll(rng) < std::clamp(weapon.fireChance, 0, 100))) {
-                    setRoomFire(targetRoom, true);
-                }
-                if (weapon.breachChance > 0 &&
-                    (roll(rng) < std::clamp(weapon.breachChance, 0, 100))) {
-                    setRoomBreach(targetRoom, true);
-                }
-                if (weapon.stunChance > 0 && weapon.stunDuration > 0 &&
-                    (roll(rng) < std::clamp(weapon.stunChance, 0, 100))) {
-                    stunSystemsInRoom(targetRoom, static_cast<float>(weapon.stunDuration));
-                }
+            if (weapon.systemDamage > 0)
+                damageSystemInRoom(targetRoom, weapon.systemDamage);
+            if (weapon.ionDamage > 0)
+                ionizeSystemInRoom(targetRoom, weapon.ionDamage);
+            if (weapon.personnelDamage > 0)
+                damageCrewInRoom(targetRoom, weapon.personnelDamage);
+            if (weapon.fireChance > 0 && roomOxygen[targetRoom] > 0 &&
+                (roll(rng) < std::clamp(weapon.fireChance, 0, 100))) {
+                setRoomFire(targetRoom, true);
+            }
+            if (weapon.breachChance > 0 &&
+                (roll(rng) < std::clamp(weapon.breachChance, 0, 100))) {
+                setRoomBreach(targetRoom, true);
+            }
+            if (weapon.stunChance > 0 && weapon.stunDuration > 0 &&
+                (roll(rng) < std::clamp(weapon.stunChance, 0, 100))) {
+                stunSystemsInRoom(targetRoom, static_cast<float>(weapon.stunDuration));
             }
             ++resolved;
             continue;
