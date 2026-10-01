@@ -14,6 +14,9 @@ public:
     bool isOpen() const { return archive_.isOpen(); }
 
     const std::vector<std::uint8_t>* getBytes(const std::string& name);
+    // Release transient binary data after a consumer has uploaded/decoded it.
+    // Parsed XML/game data remains owned by its respective database.
+    void releaseBytes(const std::string& name);
     std::vector<std::string> fileNames() const;
     void clearCache();
 
