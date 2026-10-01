@@ -958,6 +958,10 @@ bool ShipRuntime::setRoomFire(int roomId, bool fire) {
 void ShipRuntime::updateEnvironment(float dt) {
     if (!valid || dt <= 0.f) return;
 
+    // Backup Battery is a real-time ship resource: its 30-second active window
+    // and 20-second cooldown must advance in the same update path as ion/fire.
+    updateBackupBattery(dt);
+
     // Ion damage temporarily removes system power for five seconds.
     for (auto& system : systems) {
         if (system.stunTimer > 0.0f)
