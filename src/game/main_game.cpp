@@ -133,6 +133,7 @@ public:
         if (!content_.loadPlayerShip()) return false;
         if (!runtime_.load(content_)) return false;
         combat_.player = runtime_;
+            syncCombatAugments();
         LoadedShip enemy;
         const LoadedShip* player = content_.playerShip();
         std::string enemyId;
@@ -1119,6 +1120,10 @@ public:
         text_.draw(graphics_, "↑↓: 選択   ×: この艦で開始   △: AE ON/OFF   □: セーブから再開", 75.f, 475.f, 15.f, {0.68f, 0.76f, 0.86f, 1.f});
         if (hasSaveGame())
             text_.draw(graphics_, "セーブデータあり", 700.f, 105.f, 14.f, {0.82f, 0.78f, 0.48f, 1.f});
+    }
+
+    void syncCombatAugments() {
+        combat_.setReverseIonField(hasAugment("REVERSE_ION_FIELD"));
     }
 
     bool hasAugment(const std::string& id) const {
