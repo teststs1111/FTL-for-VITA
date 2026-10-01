@@ -16,6 +16,8 @@ CombatEnvironment selectRebelFleetEnvironment(bool nebulaBeacon, bool exitBeacon
 
 struct CombatResult {
     bool fired{false};
+    std::string weaponType;
+    std::string weaponName;
     int shotsFired{0};
     int shieldsAbsorbed{0};
     int evaded{0};
