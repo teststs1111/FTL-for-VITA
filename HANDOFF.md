@@ -906,3 +906,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Deliberately complements the Vita OS `.psp2dmp`: the OS dump supplies low-level crash/thread/register data, while this file supplies the game's last known logical state.
 - Does not include or copy `ftl.dat`.
 - Added `tests/test_runtime_diagnostics.cpp`.
+
+
+### 2026-10-01 Startup diagnostics expansion
+- Extended the runtime dump so the earliest Vita startup stages are distinguishable: process start, graphics/vitaGL initialization return, input object creation, MainGame creation, audio port open, audio readiness, first frame start, first input poll, first frame render, then archive/XML/ship/combat initialization.
+- Vita audio failure now records the negative `sceAudioOutOpenPort` result instead of silently continuing.
+- vitaGL initialization return value is recorded for real-device diagnosis without changing the current graphics initialization behavior.
+- Input polling failures are recorded once rather than flooding the dump.
+- This is intended to identify whether a real-device failure occurs before or after the VPK reaches the game-data loading stage.
