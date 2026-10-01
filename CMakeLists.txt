@@ -74,7 +74,7 @@ if(VITA)
     # Keep a full page-aligned gap before the next load segment so metadata can
     # be inserted without overlapping segment 1 on newer VitaSDK/binutils.
     target_link_options(vita_wormhole_prototype PRIVATE
-        -Wl,-z,max-page-size=0x10000
+        -Wl,-z,max-page-size=0x20000
         -Wl,-z,common-page-size=0x1000
     )
     # vita-elf-create appends SCE module metadata to PT_LOAD segment 0.
