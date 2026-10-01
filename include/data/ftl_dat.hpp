@@ -17,7 +17,14 @@ public:
     std::vector<std::string> fileNames() const;
 
 private:
-    struct Entry { std::uint32_t offset{}; std::uint32_t length{}; std::uint32_t archiveIndex{}; };
+    struct Entry {
+        std::uint32_t offset{};
+        std::uint32_t length{};
+        std::uint32_t uncompressedLength{};
+        bool compressed{};
+        std::uint32_t archiveIndex{};
+    };
+
     bool open_{false};
     std::vector<std::string> paths_;
     std::unordered_map<std::string, Entry> files_;
