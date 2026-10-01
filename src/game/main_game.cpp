@@ -34,6 +34,29 @@ std::vector<std::string> loadArchiveSet(const char* basePath) {
     return paths;
 }
 
+class StartupErrorState final : public GameState {
+public:
+    StartupErrorState(Graphics& graphics, const std::string& message)
+        : graphics_(graphics), message_(message) {
+        textReady_ = text_.init();
+    }
+    ~StartupErrorState() override { text_.shutdown(graphics_); }
+    void update(float) override {}
+    void render() override {
+        if (!textReady_) return;
+        graphics_.fillRect(40.f, 40.f, 880.f, 464.f, {0.06f, 0.07f, 0.10f, 1.f});
+        text_.draw(graphics_, "FTL: Faster Than Light", 70.f, 95.f, 30.f, {0.85f, 0.90f, 1.f, 1.f});
+        text_.draw(graphics_, "起動中にエラーが発生しました", 70.f, 145.f, 22.f, {1.f, 0.75f, 0.35f, 1.f});
+        text_.draw(graphics_, message_, 70.f, 190.f, 15.f, {0.80f, 0.84f, 0.90f, 1.f});
+        text_.draw(graphics_, "ux0:data/wormhole/ftl.dat を確認してください", 70.f, 235.f, 15.f, {0.70f, 0.78f, 0.88f, 1.f});
+    }
+private:
+    Graphics& graphics_;
+    TextRenderer text_;
+    std::string message_;
+    bool textReady_{false};
+};
+
 class ShipScene final : public GameState {
 public:
     ShipScene(Graphics& graphics, Input& input, Localization& localization, Audio& audio, const char* archivePath,
@@ -4275,10 +4298,12 @@ void MainGame::init(Graphics& graphics, Input& input, const char* archivePath) {
         RuntimeDiagnostics::checkpoint("ship_scene_construct_complete");
     } catch (const std::exception& e) {
         RuntimeDiagnostics::checkpoint("ship_scene_construct_exception", e.what());
-        throw;
+        state_ = std::make_unique<StartupErrorState>(graphics,
+            std::string("Ship scene initialization failed: ") + e.what());
     } catch (...) {
         RuntimeDiagnostics::checkpoint("ship_scene_construct_exception", "unknown exception");
-        throw;
+        state_ = std::make_unique<StartupErrorState>(graphics,
+            "Ship scene initialization failed: unknown exception");
     }
     initialized_ = true;
     RuntimeDiagnostics::checkpoint("main_game_initialized");
