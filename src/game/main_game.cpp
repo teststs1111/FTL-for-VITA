@@ -181,12 +181,6 @@ public:
                 "player=" + std::to_string(roomTextureNames_.size()) +
                 ",enemy=" + std::to_string(enemyRoomTextureNames_.size()));
 
-            RuntimeDiagnostics::checkpoint("weapon_drone_texture_discovery_begin");
-            discoverWeaponAndDroneTextures();
-            RuntimeDiagnostics::checkpoint("weapon_drone_texture_discovery_complete",
-                "weapons=" + std::to_string(weaponTextureNames_.size()) +
-                ",drones=" + std::to_string(droneTextureNames_.size()));
-
             RuntimeDiagnostics::checkpoint("crew_texture_discovery_begin");
             discoverCrewTextures();
             RuntimeDiagnostics::checkpoint("crew_texture_discovery_complete",
@@ -244,7 +238,7 @@ public:
         if (!combat_.load(content_, enemy)) return false;
         syncCombatAugments();
         buildShipSelection();
-        discoverRoomTextures(); discoverWeaponAndDroneTextures(); discoverCrewTextures(); discoverShipTexture();
+        discoverRoomTextures(); discoverCrewTextures(); discoverShipTexture();
         return true;
     }
 
@@ -269,6 +263,62 @@ public:
 
         discover(content_.playerShip(), roomTextureNames_);
         discover(&combat_.enemy.content, enemyRoomTextureNames_);
+    }
+
+    bool ensureWeaponTexture(const std::string& key) {
+        if (weaponTextureNames_.find(key) != weaponTextureNames_.end()) return true;
+        for (const auto& weapon : content_.blueprints().weapons()) {
+            const auto& def = weapon.second;
+            if (weapon.first != key && def.name != key && def.projectile != key) continue;
+            const std::string& stem = def.projectile;
+            if (stem.empty()) continue;
+            std::vector<std::string> candidates = {
+                "img/weapons/" + stem + ".png",
+                "img/weapons/" + stem + "_base.png",
+                "img/weapon/" + stem + ".png",
+                "img/weapon/" + stem + "_base.png"
+            };
+            for (const auto& name : content_.assets().fileNames()) {
+                const std::string prefix = "img/weapons/" + stem + "_";
+                if (name.rfind(prefix, 0) == 0 && name.size() >= 4 &&
+                    name.compare(name.size() - 4, 4, ".png") == 0)
+                    candidates.push_back(name);
+            }
+            for (const auto& candidate : candidates) {
+                if (textures_.load(graphics_, content_.assets(), candidate)) {
+                    weaponTextureNames_[weapon.first] = candidate;
+                    if (!def.name.empty()) weaponTextureNames_[def.name] = candidate;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    bool ensureDroneTexture(const std::string& key) {
+        if (droneTextureNames_.find(key) != droneTextureNames_.end()) return true;
+        for (const auto& drone : content_.blueprints().drones()) {
+            const auto& def = drone.second;
+            if (drone.first != key && def.name != key) continue;
+            const std::string& stem = def.droneImage;
+            if (stem.empty()) continue;
+            const std::vector<std::string> candidates = {
+                "img/ship/drones/" + stem + ".png",
+                "img/ship/drones/" + stem + "_base.png",
+                "img/drones/" + stem + ".png",
+                "img/drones/" + stem + "_base.png",
+                "img/drone/" + stem + ".png",
+                "img/drone/" + stem + "_base.png"
+            };
+            for (const auto& candidate : candidates) {
+                if (textures_.load(graphics_, content_.assets(), candidate)) {
+                    droneTextureNames_[drone.first] = candidate;
+                    if (!def.name.empty()) droneTextureNames_[def.name] = candidate;
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     void discoverWeaponAndDroneTextures() {
@@ -3763,6 +3813,7 @@ public:
                 ? std::min(1.f, std::max(0.f, shot.elapsed / shot.duration)) : 1.f;
             const float x = start.first + (end.first - start.first) * t;
             const float y = start.second + (end.second - start.second) * t;
+            ensureWeaponTexture(shot.weapon.name);
             const auto weaponTextureIt = weaponTextureNames_.find(shot.weapon.name);
             const Texture* weaponTexture = weaponTextureIt == weaponTextureNames_.end()
                 ? nullptr : textures_.get(weaponTextureIt->second);
@@ -3816,6 +3867,7 @@ public:
                 const auto center = roomCenter(ship, originX, weaponRoom);
                 int weaponSlot = 0;
                 for (const auto& weapon : ship.weapons) {
+                    ensureWeaponTexture(weapon.name);
                     const auto it = weaponTextureNames_.find(weapon.name);
                     if (it == weaponTextureNames_.end()) continue;
                     const Texture* texture = textures_.get(it->second);
@@ -3833,6 +3885,7 @@ public:
 
             int droneSlot = 0;
             for (const auto& drone : ship.drones) {
+                ensureDroneTexture(drone.name);
                 const auto it = droneTextureNames_.find(drone.name);
                 if (it == droneTextureNames_.end()) continue;
                 const Texture* texture = textures_.get(it->second);
