@@ -113,6 +113,7 @@ private:
     std::uint32_t randomState_{0x6D2B79F5u};
     float boardingTimer_{0.0f};
     float boardingFightTimer_{0.0f};
+    int boardingWaveCount_{0};
     int flagshipPhase_{0};
     float droneSurgeTimer_{0.0f};
     float flagshipSurgeInterval_{0.0f};
