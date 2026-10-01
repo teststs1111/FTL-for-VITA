@@ -494,6 +494,7 @@ static void testShipRuntime() {
     std::fprintf(stderr, "SR1C\n");
     assert(runtime.roomOxygen.size() == 3 && runtime.roomOxygen[0] == 100);
     // Keep the crew member out of the burning room so this legacy fixture remains focused on oxygen/fire spread.
+    assert(runtime.crew.size() >= 1);
     runtime.crew[0].room = 2;
     assert(runtime.setRoomFire(0, true));
     runtime.updateEnvironment(5.0f);
