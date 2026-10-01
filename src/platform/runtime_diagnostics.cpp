@@ -5,6 +5,9 @@
 #include <cstdlib>
 #include <ctime>
 #include <fstream>
+#ifdef __vita__
+#include <psp2/io/fcntl.h>
+#endif
 #include <iomanip>
 #include <mutex>
 #include <sstream>
@@ -48,6 +51,13 @@ std::string timestamp() {
 
 void RuntimeDiagnostics::startSession(const std::string& executable, const std::string& archivePath) {
     std::lock_guard<std::mutex> lock(gMutex);
+#ifdef __vita__
+    // The diagnostic directory is not guaranteed to exist after a fresh VPK
+    // install. Create it before the first checkpoint so startup failures are
+    // still recorded on a clean system.
+    sceIoMkdir("ux0:data", 0777);
+    sceIoMkdir("ux0:data/wormhole", 0777);
+#endif
     gPath = hostPath();
 
     std::ofstream out(gPath, std::ios::app);
