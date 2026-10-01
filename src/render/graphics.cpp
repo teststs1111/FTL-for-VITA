@@ -1,4 +1,5 @@
 #include "render/graphics.hpp"
+#include "platform/runtime_diagnostics.hpp"
 #include <vector>
 #ifdef __vita__
 #include <vitaGL.h>
@@ -6,14 +7,18 @@
 #endif
 namespace wormhole {
 bool Graphics::init() {
+    RuntimeDiagnostics::checkpoint("graphics_init_begin");
 #ifdef __vita__
     vglUseTripleBuffering(GL_FALSE);
     vglWaitVblankStart(GL_TRUE);
     // vitaGL returns GL_TRUE only when it had to fall back from the requested resolution.
     // 960x544 is the native Vita framebuffer, so GL_FALSE here means normal success.
-    (void)vglInitExtended(0, 960, 544, 0x1800000, SCE_GXM_MULTISAMPLE_NONE);
+    const int vglResult = vglInitExtended(0, 960, 544, 0x1800000, SCE_GXM_MULTISAMPLE_NONE);
+    RuntimeDiagnostics::checkpoint("vgl_init_returned", "result=" + std::to_string(vglResult));
 #endif
-    initialized_ = true; return true;
+    initialized_ = true;
+    RuntimeDiagnostics::checkpoint("graphics_ready");
+    return true;
 }
 void Graphics::shutdown() { initialized_ = false; }
 void Graphics::beginFrame(const Color& clear) {
