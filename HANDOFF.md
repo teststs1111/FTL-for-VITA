@@ -946,3 +946,9 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - 最新CI: Host/Vitaとも実行中。成功判定はまだ確定していない。
 
 - Combat終了時の runtime 永続化と報酬適用を追跡する diagnostics (`combat_state_persisted`, `combat_reward_applied`, `combat_reward_fallback`) を追加。
+
+
+## 2026-10-01 Combat return-path diagnostics
+- Commit 68f327d adds explicit combat exit checkpoints for normal return to SectorMap, Last Stand Flagship retreat, Victory, and GameOver.
+- Enemy escape now also records the persisted player runtime state before returning to the map path.
+- This closes the diagnostic gap between combat outcome handling and the next scene, which is important for first real-device play verification.
