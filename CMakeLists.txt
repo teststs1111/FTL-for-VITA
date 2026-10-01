@@ -61,6 +61,7 @@ if(VITA)
         mathneon
         m
         SceAppMgr_stub
+        SceIofilemgr_stub
         SceCommonDialog_stub
         SceCtrl_stub
         SceDisplay_stub
