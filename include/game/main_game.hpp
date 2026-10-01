@@ -1,5 +1,6 @@
 #pragma once
 #include "i18n/localization.hpp"
+#include "audio/audio.hpp"
 #include <memory>
 
 namespace wormhole { class Input; }
@@ -28,5 +29,6 @@ private:
     Localization localization_;
     bool initialized_{false};
     Difficulty difficulty_{Difficulty::Normal};
+    Audio audio_;
 };
 }
