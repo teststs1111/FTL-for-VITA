@@ -913,18 +913,18 @@ public:
         in >> key >> currentBeacon_ >> selectedBeacon_;
         in >> key >> fleetRow_;
         fleetPursuitDelay_ = 0;
-        if (saveV7 || saveV8 || saveV9 || saveV10 || saveV11) {
+        if (saveV7 || saveV8 || saveV9 || saveV10 || saveV11 || saveV12 || saveV13 || saveV14 || saveV15) {
             in >> key >> fleetPursuitDelay_;
             if (key != "fleet_pursuit_delay") return false;
             fleetPursuitDelay_ = std::clamp(fleetPursuitDelay_, -32, 32);
             fleetPursuitProgress_ = 0.0f;
-            if (saveV8 || saveV9 || saveV10 || saveV11) {
+            if (saveV8 || saveV9 || saveV10 || saveV11 || saveV12 || saveV13 || saveV14 || saveV15) {
                 in >> key >> fleetPursuitProgress_;
                 if (key != "fleet_pursuit_progress") return false;
                 fleetPursuitProgress_ = std::clamp(fleetPursuitProgress_, 0.0f, 0.9999f);
             }
             fleetPursuitPosition_ = -959.0f;
-            if (saveV9 || saveV10 || saveV11) {
+            if (saveV9 || saveV10 || saveV11 || saveV12 || saveV13 || saveV14 || saveV15) {
                 in >> key >> fleetPursuitPosition_;
                 if (key != "fleet_pursuit_position") return false;
                 fleetPursuitPosition_ = std::clamp(fleetPursuitPosition_, -959.0f, 4096.0f);
