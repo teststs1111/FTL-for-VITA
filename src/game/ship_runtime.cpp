@@ -456,7 +456,12 @@ bool ShipRuntime::interceptWeaponWithDefenseDrone(int weaponIndex) {
         std::string name = drone.name;
         std::transform(name.begin(), name.end(), name.begin(),
             [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-        if (name.find("defense") == std::string::npos && name.find("defence") == std::string::npos)
+        // The parsed blueprint type is authoritative. Keep the name fallback for
+        // older/synthetic fixtures that predate typed drone blueprints.
+        const bool isDefenseDrone = drone.type == DroneBlueprint::Type::Defense ||
+                                    name.find("defense") != std::string::npos ||
+                                    name.find("defence") != std::string::npos;
+        if (!isDefenseDrone)
             continue;
 
         const bool markII = name.find("mark ii") != std::string::npos ||
