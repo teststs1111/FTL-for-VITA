@@ -99,6 +99,7 @@ public:
                     startupError_ = "Combat runtime initialization failed";
                     return;
                 }
+                syncCombatAugments();
             } else {
                 startupError_ = "Enemy ship blueprint could not be loaded";
                 return;
@@ -143,6 +144,7 @@ public:
                 seed_ + static_cast<unsigned>(std::max(0, currentBeacon_)) + static_cast<unsigned>(visitedBeacons_) * 131u,
                 "data/blueprints.xml", currentSectorType_)) return false;
         if (!combat_.load(content_, enemy)) return false;
+        syncCombatAugments();
         buildShipSelection();
         discoverRoomTextures(); discoverWeaponAndDroneTextures(); discoverCrewTextures(); discoverShipTexture();
         return true;
@@ -989,6 +991,8 @@ public:
         if (sector_ >= 7 && !saveV10 && !saveV11 && !saveV13 && !saveV14)
             initializeLastStandState();
         combat_.player = runtime_;
+
+        syncCombatAugments();
         currentBeacon_ = std::clamp(currentBeacon_, -1, static_cast<int>(sectorGraph_.nodes().size()) - 1);
         selectedBeacon_ = std::clamp(selectedBeacon_, 0, static_cast<int>(sectorGraph_.nodes().size()) - 1);
         combatMode_ = false;
@@ -1029,6 +1033,8 @@ public:
         if (!content_.loadPlayerShip("data/blueprints.xml", id)) return false;
         if (!runtime_.load(content_)) return false;
         combat_.player = runtime_;
+
+        syncCombatAugments();
         fuel_ = 16;
         scrap_ = 0;
         droneParts_ = 0;
@@ -1293,6 +1299,8 @@ public:
         // Combat owns a working copy while the player is in the combat scene.
         // The persistent ship remains the source of truth between encounters.
         combat_.player = runtime_;
+
+        syncCombatAugments();
         combat_.boarders = pendingBoarders_;
         pendingBoarders_.clear();
         combat_.setEnvironment(pendingEnvironment_);
@@ -1695,6 +1703,8 @@ public:
             }
         }
         combat_.player = runtime_;
+
+        syncCombatAugments();
     }
 
     void applyEventCrewEffects(const std::vector<EventCrewMemberEffect>& members,
@@ -1738,6 +1748,9 @@ public:
             runtime_.removeCrewByRace(effect.race, effect.clone);
 
         combat_.player = runtime_;
+
+
+        syncCombatAugments();
     }
 
     std::pair<int, int> eventScrapRange(const std::string& level) const {
@@ -1862,6 +1875,8 @@ public:
                 if (owned) continue;
                 runtime_.weapons.push_back(makeRuntimeWeapon(*blueprint));
                 combat_.player = runtime_;
+
+                syncCombatAugments();
                 return;
             }
             return;
@@ -1873,6 +1888,8 @@ public:
                 if (current.name == blueprint->name) { owned = true; break; }
             if (!owned) runtime_.weapons.push_back(makeRuntimeWeapon(*blueprint));
             combat_.player = runtime_;
+
+            syncCombatAugments();
         }
     }
 
