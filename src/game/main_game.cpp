@@ -1315,7 +1315,7 @@ public:
         return true;
     }
 
-    void buildShipSelection(); {
+    void buildShipSelection() {
         shipChoices_.clear();
         for (const auto& entry : content_.blueprints().ships()) {
             if (entry.first.rfind("PLAYER_SHIP_", 0) != 0) continue;
