@@ -79,6 +79,13 @@ The resolver now constructs the vanilla 15-entry equal-weight pool:
 
 All 15 were directly confirmed present in the supplied archive. The real-data test resolves NEBULA for 64 seeds and checks that every result belongs to this pool.
 
+## Real-device priority — 2026-10-01
+- Priority has shifted temporarily from fidelity expansion to the minimum feature set required for an actual Vita boot/play test.
+- Vita runtime archive path is fixed at `ux0:data/wormhole/ftl.dat`; the VPK does not contain the proprietary archive.
+- Audio uses Vita's `SceAudio_stub`; the missing linker dependency was corrected in commit 93ee61c81ba73ed7475e1bedf9839a5e5be218dc.
+- Host build/test was green before this linker correction; the new Vita workflow must be treated as unverified until its Build VPK job completes successfully.
+- After the first successful VPK, implementation priority is: boot -> archive/data load -> sector map -> beacon/event -> combat -> victory/game-over loop, then return to fidelity work.
+
 ## CI state
 After each code commit, check GitHub Actions directly for the newest main commit. Do not mark either commit green until both Host and Vita workflows for that exact commit succeed.
 
