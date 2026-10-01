@@ -24,3 +24,4 @@
 - When an error is found, fix it before moving on to the next feature.
 - Prioritize Vita startup/runtime blockers before adding broad new gameplay features.
 - Startup memory: `AssetStore` supports releasing transient binary blobs after texture upload/audio decode; avoid retaining duplicate compressed PNG/OGG data alongside GPU/PCM resources.
+- Vita startup memory: combat weapon/drone textures are now loaded lazily on first combat use instead of eagerly loading the full blueprint set during startup; texture/audio transient asset bytes are released after upload/decode.
