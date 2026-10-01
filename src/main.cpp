@@ -1,7 +1,9 @@
 #include "game/main_game.hpp"
 #include "platform/input.hpp"
 #include "render/graphics.hpp"
+#include "platform/runtime_diagnostics.hpp"
 #include <cstdlib>
+#include <exception>
 
 #ifdef __vita__
 // vita-elf-create appends SCE module metadata to the module's first LOAD
@@ -12,14 +14,28 @@ static const unsigned char vitaElfMetadataPadding[0x1000] = {};
 #endif
 
 int main() {
+    std::set_terminate(&wormhole::RuntimeDiagnostics::terminateHandler);
+#ifdef __vita__
+    wormhole::RuntimeDiagnostics::startSession("eboot.bin", "ux0:data/wormhole/ftl.dat");
+#else
+    const char* diagnosticArchive = std::getenv("FTL_DAT_PATH");
+    wormhole::RuntimeDiagnostics::startSession("vita_wormhole_prototype", diagnosticArchive ? diagnosticArchive : "ftl.dat");
+#endif
+    wormhole::RuntimeDiagnostics::checkpoint("process_start");
+
     wormhole::Graphics graphics;
-    if (!graphics.init()) return 1;
+    if (!graphics.init()) {
+        wormhole::RuntimeDiagnostics::checkpoint("graphics_init_failed");
+        return 1;
+    }
+    wormhole::RuntimeDiagnostics::checkpoint("graphics_ready");
 
     wormhole::Input input;
     wormhole::MainGame game;
 #ifndef __vita__
     const char* archivePath = std::getenv("FTL_DAT_PATH");
     game.init(graphics, input, archivePath ? archivePath : "ftl.dat");
+    wormhole::RuntimeDiagnostics::checkpoint("game_init_returned");
 #else
     // Reference the padding as a volatile read so the linker keeps the whole
     // .rodata section in the first LOAD segment.
@@ -29,6 +45,7 @@ int main() {
     // Keep the runtime archive path explicit on Vita. The VPK contains the
     // executable, while the user-provided FTL data archive lives outside it.
     game.init(graphics, input, "ux0:data/wormhole/ftl.dat");
+    wormhole::RuntimeDiagnostics::checkpoint("game_init_returned");
 #endif
 
 #ifdef __vita__
@@ -51,6 +68,9 @@ int main() {
 #endif
 
     game.shutdown();
+    wormhole::RuntimeDiagnostics::checkpoint("game_shutdown_complete");
     graphics.shutdown();
+    wormhole::RuntimeDiagnostics::checkpoint("graphics_shutdown_complete");
+    wormhole::RuntimeDiagnostics::markCleanShutdown();
     return 0;
 }
