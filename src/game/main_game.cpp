@@ -3987,7 +3987,7 @@ MainGame::~MainGame() { shutdown(); }
 void MainGame::init(Graphics& graphics, Input& input, const char* archivePath) {
     if (initialized_) return;
     audioInitialized_ = audio_.init();
-    state_ = std::make_unique<ShipScene>(graphics, input, localization_, archivePath, difficulty_);
+    state_ = std::make_unique<ShipScene>(graphics, input, localization_, audio_, archivePath, difficulty_);
     initialized_ = true;
 }
 
