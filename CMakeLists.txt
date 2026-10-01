@@ -50,7 +50,7 @@ add_executable(vita_wormhole_prototype src/main.cpp)
 target_link_libraries(vita_wormhole_prototype PRIVATE wormhole_core)
 
 if(VITA)
-    target_link_libraries(wormhole_core PUBLIC ScePvf_stub)
+    target_link_libraries(wormhole_core PUBLIC ScePvf_stub vorbisfile vorbis ogg)
     target_link_libraries(vita_wormhole_prototype PRIVATE
         vitaGL
         vitashark
