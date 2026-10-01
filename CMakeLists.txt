@@ -20,6 +20,7 @@ endif()
 
 add_library(wormhole_core
     src/game/game_state.cpp
+    src/audio/audio.cpp
     src/game/main_game.cpp
     src/game/ship_runtime.cpp
     src/game/combat_runtime.cpp
@@ -122,4 +123,7 @@ if(BUILD_TESTS AND NOT VITA)
     add_executable(test_flak_fake_projectiles tests/test_flak_fake_projectiles.cpp)
     target_link_libraries(test_flak_fake_projectiles PRIVATE wormhole_core)
     add_test(NAME flak_fake_projectiles COMMAND test_flak_fake_projectiles)
+    add_executable(test_audio tests/test_audio.cpp)
+    target_link_libraries(test_audio PRIVATE wormhole_core)
+    add_test(NAME audio COMMAND test_audio)
 endif()
