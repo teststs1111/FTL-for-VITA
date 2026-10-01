@@ -935,3 +935,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Added event-choice/chain and combat-load runtime diagnostics (`event_choice_selected`, `event_chain_*`, `event_choice_*`, `combat_enemy_load_failed`, `combat_runtime_load_failed`) in commit `9c52d0d581f681ae0c95758ff9b46f4e901441ca`.
 
 - Added combat outcome diagnostics (`combat_outcome_enemy_destroyed`, `combat_outcome_enemy_escaped`, `combat_outcome_player_destroyed`) in commit `5a51c1e8454b4b61425a41eb8769a7571390e9fb`.
+
+
+## 2026-10-01 save/runtime checkpoint
+- Combat後の実機検証を優先し、セーブ形式を v15 に更新。
+- v15 は hull/resources だけでなく、shield state、reactor/backup battery state、room damage/oxygen/fire/breach、weapon ion-disabled state を保存・復元する。
+- v7以降の fleet pursuit delay/progress/position の読み込み条件も修正し、現行セーブ形式で保存した値が読み込み時に取りこぼされないようにした。
+- save/load の runtime diagnostics (save_complete, load_begin, load_complete) を追加。
+- 最新コミット: 9c6a87e
+- 最新CI: Host/Vitaとも実行中。成功判定はまだ確定していない。
