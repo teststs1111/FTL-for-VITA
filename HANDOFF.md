@@ -924,3 +924,7 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 ## 2026-10-01 Startup exception diagnostics
 - Commit dbd6064a3b4eb4965dd1b377b6bb63b21ca6ebf0 records std::exception::what() (or an unknown-exception marker) around ShipScene construction before rethrowing.
 - This preserves the existing crash behavior while making C++ startup exceptions identifiable in ftl_runtime_dump.txt alongside the last completed startup stage.
+
+
+## Real-device startup diagnostics
+- Startup dump now separates sector graph generation, beacon nebula state, beacon event assignment, fleet coverage, and Last Stand initialization checkpoints.
