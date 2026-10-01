@@ -919,3 +919,8 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 ## 2026-10-01 Startup diagnostics — data/asset granularity
 - Commit 3a4630eccb9209afca3e45095e9be5895efbdc07 adds finer startup checkpoints for localization, event/sector database loading, sector definition, room/weapon/drone/crew/ship texture discovery, ship-selection construction, and explore-music startup.
 - The Vita runtime dump can now distinguish failures in the archive-open stage from XML/database setup and later graphics asset discovery instead of grouping those steps under one broad initialization checkpoint.
+
+
+## 2026-10-01 Startup exception diagnostics
+- Commit dbd6064a3b4eb4965dd1b377b6bb63b21ca6ebf0 records std::exception::what() (or an unknown-exception marker) around ShipScene construction before rethrowing.
+- This preserves the existing crash behavior while making C++ startup exceptions identifiable in ftl_runtime_dump.txt alongside the last completed startup stage.
