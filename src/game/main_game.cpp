@@ -1407,6 +1407,8 @@ public:
                                          "data/blueprints.xml", currentSectorType_,
                                          effectiveOverride);
             if (!loaded || enemyShip.blueprint.id.empty()) {
+                RuntimeDiagnostics::checkpoint("combat_enemy_load_failed",
+                    "requested=" + resolvedEnemyId);
                 combatFeedback_ = "敵艦の読み込みに失敗";
                 combatFeedbackTimer_ = 2.0f;
                 return;
@@ -1421,6 +1423,8 @@ public:
         }
 
         if (!combat_.load(content_, enemyShip)) {
+            RuntimeDiagnostics::checkpoint("combat_runtime_load_failed",
+                "enemy=" + enemyShip.blueprint.id);
             combatFeedback_ = "戦闘状態の初期化に失敗";
             combatFeedbackTimer_ = 2.0f;
             return;
@@ -2331,6 +2335,9 @@ public:
         }
 
         const auto& choice = event->choices[static_cast<std::size_t>(activeEventChoice_)];
+        RuntimeDiagnostics::checkpoint("event_choice_selected",
+            "event=" + activeEventId_ + ",choice=" + std::to_string(activeEventChoice_) +
+            ",load=" + choice.load + ",hostile=" + std::to_string(choice.hostile ? 1 : 0));
         if (!choice.questTargetId.empty()) {
             // Choice-level quest nodes in the real data also usually omit a
             // quest name. Keep the originating event as the stable quest key.
@@ -2385,10 +2392,14 @@ public:
         if (!choice.load.empty()) {
             const auto* next = eventDatabase_.resolve(choice.load, seed_ + static_cast<unsigned>(activeEventChoice_) * 71u + static_cast<unsigned>(visitedBeacons_));
             if (next && next->hostile) {
+                RuntimeDiagnostics::checkpoint("event_chain_hostile",
+                    "from=" + activeEventId_ + ",next=" + next->id);
                 enterCombatFromBeacon(next->hostileShipId, &next->crewOverride);
                 return;
             }
             if (next) {
+                RuntimeDiagnostics::checkpoint("event_chain_continue",
+                    "from=" + activeEventId_ + ",next=" + next->id);
                 activeEventId_ = next->id;
                 applyEventImmediateEffects(*next);
                 registerQuest(*next);
@@ -2397,9 +2408,13 @@ public:
             }
         }
         if (choice.hostile) {
+            RuntimeDiagnostics::checkpoint("event_choice_hostile",
+                "event=" + activeEventId_ + ",ship=" + choice.hostileShipId);
             enterCombatFromBeacon(choice.hostileShipId, &choice.crewOverride);
             return;
         }
+        RuntimeDiagnostics::checkpoint("event_choice_complete",
+            "event=" + activeEventId_ + ",next=sector_map");
         ++visitedBeacons_;
         sceneMode_ = SceneMode::SectorMap;
     }
