@@ -50,7 +50,7 @@ void Graphics::fillRect(float x,float y,float w,float h,const Color& c) {
     if (!initialized_) return;
 #ifdef __vita__
     glColor4f(c.r,c.g,c.b,c.a); glBegin(GL_QUADS);
-    glVertex2f(x,y); glVertex2f(x+w,y); glVertex2f(x,y+h); glVertex2f(x+w,y+h); glEnd();
+    glVertex2f(x,y); glVertex2f(x+w,y); glVertex2f(x+w,y+h); glVertex2f(x,y+h); glEnd();
 #else
     (void)x;(void)y;(void)w;(void)h;(void)c;
 #endif
