@@ -28,8 +28,9 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     hasImpactResult_ = false;
     enemyFireDelay_ = 0.0f;
     // REBEL_FLEET_FUEL defaults to the 90-second post-jump/last-fuel timer.\n    // MainGame overrides this to 80 seconds for the separate no-fuel WAIT path.\n    enemyEscapeTimer_ = (enemyShip.blueprint.id == "REBEL_FLEET_FUEL") ? 90.0f : 0.0f;
-    boardingTimer_ = 8.0f;
+    boardingTimer_ = 0.0f;
     boardingFightTimer_ = 0.0f;
+    boardingWaveCount_ = 0;
     boarders.clear();
     flagshipPhase_ = 0;
     droneSurgeTimer_ = 0.0f;
@@ -454,26 +455,44 @@ void CombatRuntime::update(float dt) {
     // enters the player's weapons room. This uses the same RuntimeCrew model
     // so health/death and room interactions remain deterministic.
     boardingTimer_ -= dt;
+    int teleporterLevel = 0;
     bool enemyCanBoard = false;
     for (const auto& system : enemy.systems) {
-        if (system.type == "teleporter" && system.power > 0 && system.powered && system.damage < system.maxPower) {
-            enemyCanBoard = true;
-            break;
-        }
+        if (system.type != "teleporter" || system.power <= 0 || !system.powered ||
+            system.damage >= system.maxPower)
+            continue;
+        enemyCanBoard = true;
+        teleporterLevel = std::max(teleporterLevel, system.level);
     }
-    if (boardingTimer_ <= 0.0f && boarders.empty() && enemyCanBoard && !enemy.crew.empty() && !player.content.layout.rooms.empty()) {
+
+    // Enemy Crew Teleporters normally make two boarding attempts. Their
+    // cooldown follows the actual teleporter level: 20/15/10 seconds.
+    // Flagship phase 3 is the exception and can continue sending crew while
+    // it has a viable boarding party.
+    const bool boardingWaveAllowed =
+        flagshipPhase_ == 3 || boardingWaveCount_ < 2;
+    if (boardingTimer_ <= 0.0f && boarders.empty() && enemyCanBoard &&
+        boardingWaveAllowed && !enemy.crew.empty() &&
+        !player.content.layout.rooms.empty()) {
+        int sent = 0;
         for (const auto& enemyCrew : enemy.crew) {
             if (!enemyCrew.alive) continue;
             RuntimeCrew boarder = enemyCrew;
             boarder.room = enemyTargetRoom;
-            if (boarder.room < 0 || boarder.room >= static_cast<int>(player.content.layout.rooms.size()))
+            if (boarder.room < 0 ||
+                boarder.room >= static_cast<int>(player.content.layout.rooms.size()))
                 boarder.room = player.content.layout.rooms.front().id;
             boarder.health = boarder.maxHealth;
             boarder.alive = true;
             boarders.push_back(std::move(boarder));
-            break;
+            if (++sent >= 2) break;
         }
-        boardingTimer_ = 20.0f;
+        if (sent > 0) {
+            ++boardingWaveCount_;
+            const float cooldown = teleporterLevel >= 3 ? 10.0f :
+                                   (teleporterLevel == 2 ? 15.0f : 20.0f);
+            boardingTimer_ = cooldown;
+        }
     }
 
     boardingFightTimer_ = std::max(0.0f, boardingFightTimer_ - dt);
