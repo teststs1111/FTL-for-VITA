@@ -466,8 +466,14 @@ bool ShipRuntime::interceptWeaponWithDefenseDrone(int weaponIndex) {
 
         const bool markII = name.find("mark ii") != std::string::npos ||
                             name.find("mk ii") != std::string::npos ||
+                            name.find("mk2") != std::string::npos ||
+                            name.find("mark_ii") != std::string::npos ||
                             name.find("defense ii") != std::string::npos ||
-                            name.find("defence ii") != std::string::npos;
+                            name.find("defence ii") != std::string::npos ||
+                            name.find("defense_2") != std::string::npos ||
+                            name.find("defence_2") != std::string::npos ||
+                            name.find("defense2") != std::string::npos ||
+                            name.find("defence2") != std::string::npos;
         if ((markII ? markIIEligible : markIEligible) && roll(rng) < 90) {
             // One defense-drone shot is consumed by one incoming projectile.
             drone.active = false;
