@@ -15,16 +15,16 @@ bool Graphics::init() {
     // the first glClear/draw call can turn an initialization error into a
     // native crash with no useful checkpoint after it.
     vglSetCircularPoolSize(3 * 1024);
-    vglUseTripleBuffering(GL_FALSE);
-    vglWaitVblankStart(GL_TRUE);
     const GLboolean vglResult =
         vglInitExtended(0, 960, 544, 0x1800000, SCE_GXM_MULTISAMPLE_NONE);
     RuntimeDiagnostics::checkpoint("vgl_init_returned",
         "result=" + std::to_string(static_cast<int>(vglResult)));
     if (vglResult != GL_FALSE) {
-        RuntimeDiagnostics::checkpoint("graphics_init_failed", "vitaGL resolution fallback/error");
+        RuntimeDiagnostics::checkpoint("graphics_init_failed", "vitaGL rejected 960x544");
         return false;
     }
+    vglUseTripleBuffering(GL_FALSE);
+    vglWaitVblankStart(GL_TRUE);
 #endif
     initialized_ = true;
     RuntimeDiagnostics::checkpoint("graphics_ready");
