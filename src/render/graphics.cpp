@@ -5,6 +5,7 @@
 #include <vitaGL.h>
 #include <psp2/gxm.h>
 #endif
+#include <string>
 namespace wormhole {
 bool Graphics::init() {
     RuntimeDiagnostics::checkpoint("graphics_init_begin");
