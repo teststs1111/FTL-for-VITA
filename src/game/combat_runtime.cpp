@@ -454,7 +454,14 @@ void CombatRuntime::update(float dt) {
     // enters the player's weapons room. This uses the same RuntimeCrew model
     // so health/death and room interactions remain deterministic.
     boardingTimer_ -= dt;
-    if (boardingTimer_ <= 0.0f && boarders.empty() && !enemy.crew.empty() && !player.content.layout.rooms.empty()) {
+    bool enemyCanBoard = false;
+    for (const auto& system : enemy.systems) {
+        if (system.type == "teleporter" && system.power > 0 && system.powered && system.damage < system.maxPower) {
+            enemyCanBoard = true;
+            break;
+        }
+    }
+    if (boardingTimer_ <= 0.0f && boarders.empty() && enemyCanBoard && !enemy.crew.empty() && !player.content.layout.rooms.empty()) {
         for (const auto& enemyCrew : enemy.crew) {
             if (!enemyCrew.alive) continue;
             RuntimeCrew boarder = enemyCrew;
