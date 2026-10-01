@@ -61,12 +61,25 @@ public:
             content_.setAdvancedEdition(aeEnabled_);
             eventDatabase_.setAdvancedEdition(aeEnabled_);
             sectorDatabase_.setAdvancedEdition(aeEnabled_);
+            RuntimeDiagnostics::checkpoint("localization_load_begin");
             if (const auto* bytes = content_.assets().getBytes("data/text-ja.xml"))
                 localization_.loadFtlTextXml(*bytes);
+            RuntimeDiagnostics::checkpoint("localization_load_complete");
+
+            RuntimeDiagnostics::checkpoint("event_database_load_begin");
             eventDatabase_.load();
             eventOrder_ = eventDatabase_.ids();
+            RuntimeDiagnostics::checkpoint("event_database_loaded",
+                "events=" + std::to_string(eventOrder_.size()));
+
+            RuntimeDiagnostics::checkpoint("sector_database_load_begin");
             sectorDatabase_.load();
+            RuntimeDiagnostics::checkpoint("sector_database_loaded");
+
+            RuntimeDiagnostics::checkpoint("sector_definition_begin");
             selectCurrentSectorDefinition();
+            RuntimeDiagnostics::checkpoint("sector_definition_loaded", "type=" + currentSectorType_);
+
             fleetPursuitDelay_ = 0;
             fleetPursuitProgress_ = 0.0f;
             applySectorStartFleetModifiers();
@@ -116,14 +129,38 @@ public:
                 return;
             }
             RuntimeDiagnostics::checkpoint("combat_runtime_loaded");
+            RuntimeDiagnostics::checkpoint("room_texture_discovery_begin");
             discoverRoomTextures();
+            RuntimeDiagnostics::checkpoint("room_texture_discovery_complete",
+                "player=" + std::to_string(roomTextureNames_.size()) +
+                ",enemy=" + std::to_string(enemyRoomTextureNames_.size()));
+
+            RuntimeDiagnostics::checkpoint("weapon_drone_texture_discovery_begin");
             discoverWeaponAndDroneTextures();
+            RuntimeDiagnostics::checkpoint("weapon_drone_texture_discovery_complete",
+                "weapons=" + std::to_string(weaponTextureNames_.size()) +
+                ",drones=" + std::to_string(droneTextureNames_.size()));
+
+            RuntimeDiagnostics::checkpoint("crew_texture_discovery_begin");
             discoverCrewTextures();
+            RuntimeDiagnostics::checkpoint("crew_texture_discovery_complete",
+                "crew=" + std::to_string(crewTextureNames_.size()));
+
+            RuntimeDiagnostics::checkpoint("ship_texture_discovery_begin");
             discoverShipTexture();
+            RuntimeDiagnostics::checkpoint("ship_texture_discovery_complete",
+                shipTextureName_.empty() ? "not_found" : shipTextureName_);
+
+            RuntimeDiagnostics::checkpoint("ship_selection_build_begin");
             buildShipSelection();
+            RuntimeDiagnostics::checkpoint("ship_selection_built",
+                "choices=" + std::to_string(shipChoices_.size()));
+
             sceneMode_ = shipChoices_.empty() ? SceneMode::SectorMap : SceneMode::ShipSelect;
-        RuntimeDiagnostics::checkpoint("scene_assets_ready");
-        playExploreMusic();
+            RuntimeDiagnostics::checkpoint("scene_assets_ready");
+            RuntimeDiagnostics::checkpoint("explore_music_begin");
+            playExploreMusic();
+            RuntimeDiagnostics::checkpoint("explore_music_ready");
         RuntimeDiagnostics::checkpoint("ship_scene_ready", "scene=" + std::to_string(static_cast<int>(sceneMode_)));
         }
     }
