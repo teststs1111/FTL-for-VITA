@@ -10,12 +10,21 @@ namespace wormhole {
 bool Graphics::init() {
     RuntimeDiagnostics::checkpoint("graphics_init_begin");
 #ifdef __vita__
+    // Keep the command pool explicit before creating the VitaGL context.
+    // A failed context must not be treated as a usable renderer: otherwise
+    // the first glClear/draw call can turn an initialization error into a
+    // native crash with no useful checkpoint after it.
+    vglSetCircularPoolSize(3 * 1024);
     vglUseTripleBuffering(GL_FALSE);
     vglWaitVblankStart(GL_TRUE);
-    // vitaGL returns GL_TRUE only when it had to fall back from the requested resolution.
-    // 960x544 is the native Vita framebuffer, so GL_FALSE here means normal success.
-    const int vglResult = vglInitExtended(0, 960, 544, 0x1800000, SCE_GXM_MULTISAMPLE_NONE);
-    RuntimeDiagnostics::checkpoint("vgl_init_returned", "result=" + std::to_string(vglResult));
+    const GLboolean vglResult =
+        vglInitExtended(0, 960, 544, 0x1800000, SCE_GXM_MULTISAMPLE_NONE);
+    RuntimeDiagnostics::checkpoint("vgl_init_returned",
+        "result=" + std::to_string(static_cast<int>(vglResult)));
+    if (vglResult != GL_FALSE) {
+        RuntimeDiagnostics::checkpoint("graphics_init_failed", "vitaGL resolution fallback/error");
+        return false;
+    }
 #endif
     initialized_ = true;
     RuntimeDiagnostics::checkpoint("graphics_ready");
@@ -41,7 +50,7 @@ void Graphics::fillRect(float x,float y,float w,float h,const Color& c) {
     if (!initialized_) return;
 #ifdef __vita__
     glColor4f(c.r,c.g,c.b,c.a); glBegin(GL_QUADS);
-    glVertex2f(x,y); glVertex2f(x+w,y); glVertex2f(x+w,y+h); glVertex2f(x,y+h); glEnd();
+    glVertex2f(x,y); glVertex2f(x+w,y); glVertex2f(x,y+h); glVertex2f(x+w,y+h); glEnd();
 #else
     (void)x;(void)y;(void)w;(void)h;(void)c;
 #endif
