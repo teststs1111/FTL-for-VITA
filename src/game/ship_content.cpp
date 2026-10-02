@@ -43,6 +43,7 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
 
     LayoutBlueprint layout;
     const std::string text(layoutBytes->begin(), layoutBytes->end());
+    assets_.releaseBytes("data/" + blueprint->layout + ".txt");
     if (!parseLayoutBlueprint(text, layout)) return false;
 
     out.blueprint = *blueprint;
