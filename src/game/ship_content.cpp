@@ -23,8 +23,21 @@ bool ShipContent::openArchives(const std::vector<std::string>& archivePaths) {
 bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
                              const std::string& blueprintPath,
                              unsigned randomSeed) {
-    database_.clear();
     out = {};
+
+    // Player and enemy creation use the same canonical blueprint sources.
+    // Keep the parsed database for the archive session instead of reparsing
+    // every XML file during startup. open()/openArchives() clears it when the
+    // archive is reopened or AE configuration is reloaded.
+    if (!database_.findShip(shipId)) {
+        std::vector<std::string> sources{blueprintPath, "data/autoBlueprints.xml"};
+        if (advancedEdition_) {
+            sources.push_back("data/dlcBlueprints.xml");
+            sources.push_back("data/dlcBlueprintsOverwrite.xml");
+            sources.push_back("data/dlcPirateBlueprints.xml");
+        }
+        if (database_.loadShipBlueprints(sources) == 0) return false;
+    }
 
     // autoBlueprints.xml is part of the canonical base ftl.dat and contains
     // the generated/enemy ship definitions used by normal gameplay.
@@ -247,8 +260,7 @@ void generateEnemySystems(ShipBlueprint& ship, int sector, int difficulty, std::
     spend(budget.offensive, enemyOffensive);
     spend(budget.defensive, enemyDefensive);
 
-    // Any offensive/defensive budget left after its category has no eligible
-    // upgrade becomes general budget. Negative optional-system costs are also
+    // Any offensive/defensive budget left after its category has no eligible    // upgrade becomes general budget. Negative optional-system costs are also
     // carried through here, matching the documented budget flow.
     int general = budget.general + budget.offensive + budget.defensive;
     spend(general, [](const std::string&) { return true; });
@@ -497,8 +509,7 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
                 resolved.weaponPersonnelDamage = weapon->personnelDamage;
             }
         }
-        out.initialDroneBlueprints.push_back(std::move(resolved));
-    }
+        out.initialDroneBlueprints.push_back(std::move(resolved));    }
     return true;
 }
 
