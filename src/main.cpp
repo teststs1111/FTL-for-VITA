@@ -60,14 +60,24 @@ int main() {
         if (input.down(wormhole::Button::Start) && input.down(wormhole::Button::Select))
             break;
 
+        if (firstFrame) wormhole::RuntimeDiagnostics::checkpoint("first_begin_frame_begin");
         graphics.beginFrame({0.035f, 0.045f, 0.065f, 1.f});
-                game.update(1.0f / 60.0f);
+        if (firstFrame) wormhole::RuntimeDiagnostics::checkpoint("first_begin_frame_complete");
+
+        if (firstFrame) wormhole::RuntimeDiagnostics::checkpoint("first_game_update_begin");
+        game.update(1.0f / 60.0f);
+        if (firstFrame) wormhole::RuntimeDiagnostics::checkpoint("first_game_update_complete");
+
+        if (firstFrame) wormhole::RuntimeDiagnostics::checkpoint("first_game_render_begin");
         game.render();
+        if (firstFrame) wormhole::RuntimeDiagnostics::checkpoint("first_game_render_complete");
+
+        if (firstFrame) wormhole::RuntimeDiagnostics::checkpoint("first_end_frame_begin");
         graphics.endFrame();
-        if (firstFrame) {
-            wormhole::RuntimeDiagnostics::checkpoint("first_frame_render_complete");
-            firstFrame = false;
-        }
+        if (firstFrame) wormhole::RuntimeDiagnostics::checkpoint("first_end_frame_complete");
+
+        wormhole::RuntimeDiagnostics::checkpoint("first_frame_render_complete");
+        firstFrame = false;
     }
 #else
     graphics.beginFrame({0.f, 0.f, 0.f, 1.f});
