@@ -952,3 +952,14 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Commit 68f327d adds explicit combat exit checkpoints for normal return to SectorMap, Last Stand Flagship retreat, Victory, and GameOver.
 - Enemy escape now also records the persisted player runtime state before returning to the map path.
 - This closes the diagnostic gap between combat outcome handling and the next scene, which is important for first real-device play verification.
+
+
+## 2026-10-02 実機クラッシュ調査・修正（最新）
+- 最新実機ログ ftl_runtime_dump(2).txt では、VitaGL初期化は result=0、ftl.dat の実行パスにも到達している。
+- ログ上の PVF 初期化エラーは 0x80460003（SCE_PVF_ERROR_ARG / invalid parameter）。scePvfNewLib() が lib=0 を返しており、実機側のフォント初期化が成立していないことを確認。
+- PVF 初期化の maxNumFonts を 2 から SDK 定義の SCE_PVF_MAX_OPEN（18）へ修正。
+- 初回艦選択描画について、背景・タイトル・日本語サブタイトル・艦一覧の各段階を個別に runtime dump へ記録する診断を追加。次回実機テストで native crash の正確な描画地点を確定する。
+- 修正コミット: e906e36, 85fec21
+- 現在の最終コード: 85fec21
+- 次の確認点: 修正版VPKで起動し、ship_select_render_begin → ship_select_background_drawn → ship_select_title_draw_begin → ship_select_title_drawn → ship_select_subtitle_draw_begin のどこまで到達するか確認する。
+- 重要: 今回の ftl_runtime_dump(2).txt は修正前VPKのログであり、最新コードの ship_select_* 診断はまだ実機ログには出ていない。
