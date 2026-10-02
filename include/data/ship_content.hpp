@@ -30,7 +30,12 @@ public:
                        const std::string& blueprintPath = "data/blueprints.xml",
                        const std::string& sectorType = {},
                        const std::vector<CrewOverrideEntry>* crewOverride = nullptr);
-    void setAdvancedEdition(bool enabled) { advancedEdition_ = enabled; }
+    void setAdvancedEdition(bool enabled) {
+        if (advancedEdition_ == enabled) return;
+        advancedEdition_ = enabled;
+        database_.clear();
+        loaded_ = false;
+    }
 
     const LoadedShip* playerShip() const { return loaded_ ? &ship_ : nullptr; }
     AssetStore& assets() { return assets_; }
