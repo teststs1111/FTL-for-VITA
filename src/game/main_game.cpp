@@ -150,33 +150,11 @@ public:
                 return;
             }
             RuntimeDiagnostics::checkpoint("player_runtime_loaded");
-            LoadedShip enemy;
-            const LoadedShip* player = content_.playerShip();
-            std::string enemyId;
-            if (player) {
-                for (const auto& entry : content_.blueprints().ships()) {
-                    if (entry.first != player->blueprint.id) { enemyId = entry.first; break; }
-                }
-            }
-            RuntimeDiagnostics::checkpoint("enemy_ship_load_begin", "enemy_id=" + enemyId);
-            if (enemyId.empty() || !content_.loadEnemyShip(enemyId, enemy, sector_ + 1, static_cast<int>(difficulty_),
-                    seed_ + static_cast<unsigned>(std::max(0, currentBeacon_)) + static_cast<unsigned>(visitedBeacons_) * 131u,
-                    "data/blueprints.xml", currentSectorType_)) {
-                startupError_ = "Enemy ship blueprint could not be loaded";
-                return;
-            }
-            RuntimeDiagnostics::checkpoint("enemy_ship_loaded", "enemy=" + enemy.blueprint.id);
-            if (!enemy.blueprint.id.empty()) {
-                if (!combat_.load(content_, enemy)) {
-                    startupError_ = "Combat runtime initialization failed";
-                    return;
-                }
-                syncCombatAugments();
-            } else {
-                startupError_ = "Enemy ship blueprint could not be loaded";
-                return;
-            }
-            RuntimeDiagnostics::checkpoint("combat_runtime_loaded");
+            // Do not construct a combat encounter during startup. Vanilla begins
+            // in ship/sector navigation; the enemy ship and combat runtime are
+            // created only when an actual beacon encounter starts. This also
+            // avoids an arbitrary enemy selection from the unordered blueprint
+            // database and keeps startup memory proportional to the initial scene.
             RuntimeDiagnostics::checkpoint("room_texture_discovery_begin");
             discoverRoomTextures();
             RuntimeDiagnostics::checkpoint("room_texture_discovery_complete",
