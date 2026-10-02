@@ -184,7 +184,7 @@ public:
             // Leave the first two frames free of OGG decoding. The first
             // rendered frame is the useful hardware-startup checkpoint; audio
             // can begin immediately afterward without changing gameplay.
-            exploreMusicPending_ = 2;
+            exploreMusicPending_ = 3;
             RuntimeDiagnostics::checkpoint("explore_music_deferred");
         RuntimeDiagnostics::checkpoint("ship_scene_ready", "scene=" + std::to_string(static_cast<int>(sceneMode_)));
         }
