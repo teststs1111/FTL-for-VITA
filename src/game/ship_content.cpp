@@ -363,18 +363,41 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
 
         out.blueprint.crew.clear();
         int generatedIndex = 0;
-        for (const auto& overrideEntry : generated) {
+
+        // Positive overrides describe proportions of the generated crew.
+        // Preserve the requested total by assigning floors first, then
+        // distributing the remaining members by largest fractional remainder.
+        // This avoids silently losing crew through per-entry truncation.
+        std::vector<int> amounts(generated.size(), 0);
+        std::vector<std::pair<double, std::size_t>> remainders;
+        int assigned = 0;
+        double positiveTotal = 0.0;
+        for (std::size_t i = 0; i < generated.size(); ++i) {
+            const auto& entry = generated[i];
+            if (entry.race.empty() || entry.proportion <= 0.0) continue;
+            positiveTotal += entry.proportion;
+            const double exact = entry.proportion * static_cast<double>(count);
+            amounts[i] = std::max(0, static_cast<int>(exact));
+            assigned += amounts[i];
+            remainders.emplace_back(exact - static_cast<double>(amounts[i]), i);
+        }
+        if (positiveTotal > 0.0 && assigned < count) {
+            std::sort(remainders.begin(), remainders.end(),
+                [](const auto& a, const auto& b) {
+                    if (a.first != b.first) return a.first > b.first;
+                    return a.second < b.second;
+                });
+            for (std::size_t i = 0; i < remainders.size() && assigned < count; ++i)
+                ++amounts[remainders[i].second], ++assigned;
+        }
+
+        for (std::size_t i = 0; i < generated.size(); ++i) {
+            const auto& overrideEntry = generated[i];
             if (overrideEntry.race.empty()) continue;
-            int amount = 0;
-            if (overrideEntry.proportion > 0.0) {
-                // Proportional overrides must never create crew beyond the
-                // generated count. In particular, a zero-count ship must
-                // remain empty rather than gaining one crew member.
-                amount = std::max(0, static_cast<int>(overrideEntry.proportion * count));
-            } else {
+            int amount = amounts[i];
+            if (overrideEntry.proportion < 0.0)
                 amount = std::max(0, static_cast<int>(-overrideEntry.proportion));
-            }
-            for (int i = 0; i < amount; ++i) {
+            for (int memberIndex = 0; memberIndex < amount; ++memberIndex) {
                 std::string race = overrideEntry.race;
                 if (race == "random")
                     race = randomRace(rng);
