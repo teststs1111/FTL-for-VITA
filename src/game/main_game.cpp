@@ -4021,15 +4021,22 @@ public:
 
     void render() override {
         if (!startupError_.empty()) {
+            RuntimeDiagnostics::checkpoint("startup_error_render_begin");
+            RuntimeDiagnostics::checkpoint("startup_error_background_begin");
             graphics_.fillRect(40.f, 40.f, 880.f, 464.f, {0.06f, 0.07f, 0.10f, 1.f});
+            RuntimeDiagnostics::checkpoint("startup_error_background_complete");
+            RuntimeDiagnostics::checkpoint("startup_error_title_begin");
             text_.draw(graphics_, "FTL: Faster Than Light", 70.f, 95.f, 30.f,
                 {0.85f, 0.90f, 1.f, 1.f});
+            RuntimeDiagnostics::checkpoint("startup_error_title_complete");
+            RuntimeDiagnostics::checkpoint("startup_error_message_begin");
             text_.draw(graphics_, "起動データを読み込めませんでした", 70.f, 145.f, 22.f,
                 {1.f, 0.75f, 0.35f, 1.f});
             text_.draw(graphics_, startupError_, 70.f, 190.f, 15.f,
                 {0.80f, 0.84f, 0.90f, 1.f});
             text_.draw(graphics_, "ux0:data/wormhole/ftl.dat を確認してください", 70.f, 235.f, 15.f,
                 {0.70f, 0.78f, 0.88f, 1.f});
+            RuntimeDiagnostics::checkpoint("startup_error_message_complete");
             return;
         }
         if (sceneMode_ == SceneMode::ShipSelect) {
