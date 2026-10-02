@@ -970,3 +970,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - 今回のログにはこれらが一切出ておらず、pvf_newlib_complete の直後でログ形式も旧版のまま。したがって、この2回の実機テストは現行 c920b4b8 のVPKを実行したものではないと判断する。
 - Vita build run 36996048101 は c920b4b8 をheadにして成功し、VPK artifact FTL-for-VITA-vpk (artifact 11220914751) が生成済み。
 - 次の実機テストはこの artifact のVPKを使用する。そこで pvf_open_* と ship_select_* の有無を確認し、現行バイナリでのクラッシュ地点を確定する。
+
+## 2026-10-02 実機クラッシュ経路の訂正
+- c920b4b8 のVPKを実機で使用していることを前提に再解析。
+- PVF初期化が失敗した場合、ShipSceneコンストラクタは startupError_ を設定して早期returnするため、sceneMode_ は ShipSelect にならない。
+- その状態の first_game_render は renderShipSelect() ではなく startupError_ 画面を描画する。したがって ship_select_* が出ないこと自体はVPK不一致の証拠ではない。
+- first_game_render_begin 後にログが止まるため、まず startup_error_render_begin → background_begin → background_complete の境界を追加。
+- 修正コミット: 6c98f7a4d0e307088e94ed608ce788af61415a74
+- 次回ログでエラー画面の最初の描画操作（fillRectを含む）まで到達するか確認し、VitaGL描画側のnative crashかPVF後処理かを切り分ける。
