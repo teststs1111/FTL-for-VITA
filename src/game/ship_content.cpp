@@ -39,15 +39,6 @@ bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
         if (database_.loadShipBlueprints(sources) == 0) return false;
     }
 
-    // autoBlueprints.xml is part of the canonical base ftl.dat and contains
-    // the generated/enemy ship definitions used by normal gameplay.
-    std::vector<std::string> sources{blueprintPath, "data/autoBlueprints.xml"};
-    if (advancedEdition_) {
-        sources.push_back("data/dlcBlueprints.xml");
-        sources.push_back("data/dlcBlueprintsOverwrite.xml");
-        sources.push_back("data/dlcPirateBlueprints.xml");
-    }
-    if (database_.loadShipBlueprints(sources) == 0) return false;
     const ShipBlueprint* blueprint = database_.findShip(shipId);
     if (!blueprint || blueprint->layout.empty()) return false;
 
