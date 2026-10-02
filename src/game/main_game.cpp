@@ -537,8 +537,10 @@ public:
         else if (type.find("milky") != std::string::npos) track = "MilkyWayBATTLE";
         else if (type.find("cosmos") != std::string::npos) track = "CosmosBATTLE";
         const std::string name = "audio/music/bp_MUS_" + track + ".ogg";
-        if (const auto* bytes = content_.assets().getBytes(name))
+        if (const auto* bytes = content_.assets().getBytes(name)) {
             audio_.playAsset(*bytes, name, 0.42f, true);
+            content_.assets().releaseBytes(name);
+        }
     }
 
     std::string localized(const std::string& key, const std::string& fallback) const {
