@@ -963,3 +963,10 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - 現在の最終コード: 85fec21
 - 次の確認点: 修正版VPKで起動し、ship_select_render_begin → ship_select_background_drawn → ship_select_title_draw_begin → ship_select_title_drawn → ship_select_subtitle_draw_begin のどこまで到達するか確認する。
 - 重要: 今回の ftl_runtime_dump(2).txt は修正前VPKのログであり、最新コードの ship_select_* 診断はまだ実機ログには出ていない。
+
+## 2026-10-02 実機ログ(3) 追跡結果
+- 23:45/23:46 の実機ログでも停止地点は first_game_render_begin の直後。
+- ただし、現行 c920b4b8 以降の TextRenderer には pvf_open_japanese_begin / pvf_open_latin_begin が追加済みで、MainGame の艦選択描画には ship_select_render_begin 以下の段階診断も追加済み。
+- 今回のログにはこれらが一切出ておらず、pvf_newlib_complete の直後でログ形式も旧版のまま。したがって、この2回の実機テストは現行 c920b4b8 のVPKを実行したものではないと判断する。
+- Vita build run 36996048101 は c920b4b8 をheadにして成功し、VPK artifact FTL-for-VITA-vpk (artifact 11220914751) が生成済み。
+- 次の実機テストはこの artifact のVPKを使用する。そこで pvf_open_* と ship_select_* の有無を確認し、現行バイナリでのクラッシュ地点を確定する。
