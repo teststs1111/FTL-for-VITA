@@ -34,6 +34,8 @@ public:
         if (advancedEdition_ == enabled) return;
         advancedEdition_ = enabled;
         database_.clear();
+        databaseLoaded_ = false;
+        databaseBlueprintPath_.clear();
         loaded_ = false;
     }
 
@@ -49,6 +51,8 @@ private:
     LoadedShip ship_;
     bool loaded_{false};
     bool advancedEdition_{true};
+    bool databaseLoaded_{false};
+    std::string databaseBlueprintPath_;
 };
 
 }
