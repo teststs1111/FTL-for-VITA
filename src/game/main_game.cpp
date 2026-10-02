@@ -188,13 +188,26 @@ public:
         combatMode_ = false;
         syncCombatAugments();
         buildShipSelection();
-        discoverRoomTextures(); discoverCrewTextures(); discoverShipTexture();
+        shipViewTexturesReady_ = false;
         return true;
     }
 
     ~ShipScene() override {
         textures_.clear(graphics_);
         text_.shutdown(graphics_);
+    }
+
+    void ensureShipViewTextures() {
+        if (shipViewTexturesReady_) return;
+        RuntimeDiagnostics::checkpoint("ship_view_textures_begin");
+        discoverRoomTextures();
+        discoverCrewTextures();
+        discoverShipTexture();
+        shipViewTexturesReady_ = true;
+        RuntimeDiagnostics::checkpoint("ship_view_textures_ready",
+            "rooms=" + std::to_string(roomTextureNames_.size()) +
+            ",crew=" + std::to_string(crewTextureNames_.size()) +
+            ",ship=" + (shipTextureName_.empty() ? std::string("none") : shipTextureName_));
     }
 
     void discoverRoomTextures() {
@@ -1272,9 +1285,7 @@ public:
         questTargets_.clear();
         storeOffers_.clear();
         storeOpen_ = false;
-        discoverRoomTextures();
-        discoverCrewTextures();
-        discoverShipTexture();
+        shipViewTexturesReady_ = false;
         RuntimeDiagnostics::checkpoint("first_playable_map_ready",
             "ship=" + id +
             ",sector=" + std::to_string(sector_) +
@@ -4046,10 +4057,12 @@ public:
             return;
         }
         if (combatMode_) {
+            ensureShipViewTextures();
             renderCombat();
             return;
         }
 
+        ensureShipViewTextures();
         const LoadedShip* ship = content_.playerShip();
         if (!ship) {
             graphics_.fillRect(60.f, 70.f, 840.f, 400.f, {0.10f, 0.11f, 0.15f, 1.f});
@@ -4195,6 +4208,7 @@ private:
     std::unordered_map<std::string, std::string> droneTextureNames_;
     std::unordered_map<std::string, std::string> crewTextureNames_;
     std::string shipTextureName_;
+    bool shipViewTexturesReady_{false};
     std::string startupError_;
     std::string combatFeedback_;
     std::string saveFeedback_;
