@@ -1646,7 +1646,10 @@ public:
         if (hasAugment("WEAPON_PRE_IGNITER"))
             for (auto& weapon : combat_.player.weapons) weapon.ready = true;
         discoverRoomTextures();
-        discoverWeaponAndDroneTextures();
+        // Weapon/drone artwork is resolved lazily on first use. Do not scan
+        // and upload the entire canonical weapon set when combat starts.
+        weaponTextureNames_.clear();
+        droneTextureNames_.clear();
         discoverCrewTextures();
         combatMode_ = true;
         RuntimeDiagnostics::checkpoint("combat_scene_started",
