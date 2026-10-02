@@ -86,8 +86,10 @@ public:
             eventDatabase_.setAdvancedEdition(aeEnabled_);
             sectorDatabase_.setAdvancedEdition(aeEnabled_);
             RuntimeDiagnostics::checkpoint("localization_load_begin");
-            if (const auto* bytes = content_.assets().getBytes("data/text-ja.xml"))
+            if (const auto* bytes = content_.assets().getBytes("data/text-ja.xml")) {
                 localization_.loadFtlTextXml(*bytes);
+                content_.assets().releaseBytes("data/text-ja.xml");
+            }
             RuntimeDiagnostics::checkpoint("localization_load_complete");
 
             RuntimeDiagnostics::checkpoint("event_database_load_begin");
