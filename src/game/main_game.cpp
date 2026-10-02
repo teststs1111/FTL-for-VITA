@@ -1327,8 +1327,11 @@ public:
     }
 
     void renderShipSelect() {
+        RuntimeDiagnostics::checkpoint("ship_select_render_begin");
         graphics_.fillRect(35.f, 30.f, 890.f, 485.f, {0.045f, 0.06f, 0.09f, 1.f});
+        RuntimeDiagnostics::checkpoint("ship_select_background_drawn");
         text_.draw(graphics_, "FTL: Faster Than Light", 70.f, 70.f, 28.f, {0.90f, 0.94f, 1.f, 1.f});
+        RuntimeDiagnostics::checkpoint("ship_select_title_drawn");
         text_.draw(graphics_, "艦を選択", 70.f, 105.f, 22.f, {0.72f, 0.84f, 1.f, 1.f});
         const int first = std::max(0, std::min(shipSelection_ - 4, static_cast<int>(shipChoices_.size()) - 8));
         const int last = std::min(static_cast<int>(shipChoices_.size()), first + 8);
@@ -1350,8 +1353,8 @@ public:
         text_.draw(graphics_, "↑↓: 選択   ×: この艦で開始   △: AE ON/OFF   □: セーブから再開", 75.f, 475.f, 15.f, {0.68f, 0.76f, 0.86f, 1.f});
         if (hasSaveGame())
             text_.draw(graphics_, "セーブデータあり", 700.f, 105.f, 14.f, {0.82f, 0.78f, 0.48f, 1.f});
+        RuntimeDiagnostics::checkpoint("ship_select_render_complete");
     }
-
     void syncCombatAugments() {
         combat_.setReverseIonField(hasAugment("ION_FIELD"));
     }
