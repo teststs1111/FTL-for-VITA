@@ -39,7 +39,7 @@ bool TextRenderer::init() {
 #ifdef __vita__
     RuntimeDiagnostics::checkpoint("pvf_init_begin");
     ScePvfInitRec init{};
-    init.maxNumFonts = 2;
+    init.maxNumFonts = SCE_PVF_MAX_OPEN;
     impl_->lib = scePvfNewLib(&init, &impl_->error);
     RuntimeDiagnostics::checkpoint("pvf_newlib_complete",
         "lib=" + std::to_string(reinterpret_cast<std::uintptr_t>(impl_->lib)) +
