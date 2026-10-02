@@ -53,12 +53,12 @@ void Graphics::fillRect(float x,float y,float w,float h,const Color& c) {
     glColor4f(c.r,c.g,c.b,c.a);
     RuntimeDiagnostics::checkpoint("fill_rect_color_complete");
     RuntimeDiagnostics::checkpoint("fill_rect_begin_begin");
-    glBegin(GL_QUADS);
+    glBegin(GL_TRIANGLE_STRIP);
     RuntimeDiagnostics::checkpoint("fill_rect_begin_complete");
     glVertex2f(x,y);
     glVertex2f(x+w,y);
-    glVertex2f(x+w,y+h);
     glVertex2f(x,y+h);
+    glVertex2f(x+w,y+h);
     RuntimeDiagnostics::checkpoint("fill_rect_vertices_complete");
     glEnd();
     RuntimeDiagnostics::checkpoint("fill_rect_end_complete");
@@ -102,9 +102,9 @@ void Graphics::drawTexture(const Texture& texture,float x,float y,float w,float 
     if (!initialized_ || !texture.valid()) return;
 #ifdef __vita__
     glEnable(GL_TEXTURE_2D); glBindTexture(GL_TEXTURE_2D,static_cast<GLuint>(texture.handle()));
-    glColor4f(c.r,c.g,c.b,c.a); glBegin(GL_QUADS);
+    glColor4f(c.r,c.g,c.b,c.a); glBegin(GL_TRIANGLE_STRIP);
     glTexCoord2f(0,0); glVertex2f(x,y); glTexCoord2f(1,0); glVertex2f(x+w,y);
-    glTexCoord2f(1,1); glVertex2f(x+w,y+h); glTexCoord2f(0,1); glVertex2f(x,y+h);
+    glTexCoord2f(0,1); glVertex2f(x,y+h); glTexCoord2f(1,1); glVertex2f(x+w,y+h);
     glEnd(); glBindTexture(GL_TEXTURE_2D,0); glDisable(GL_TEXTURE_2D);
 #else
     (void)texture;(void)x;(void)y;(void)w;(void)h;(void)c;
@@ -115,9 +115,9 @@ void Graphics::drawTextureRegion(const Texture& texture,float x,float y,float w,
     if (!initialized_ || !texture.valid()) return;
 #ifdef __vita__
     glEnable(GL_TEXTURE_2D); glBindTexture(GL_TEXTURE_2D,static_cast<GLuint>(texture.handle()));
-    glColor4f(c.r,c.g,c.b,c.a); glBegin(GL_QUADS);
+    glColor4f(c.r,c.g,c.b,c.a); glBegin(GL_TRIANGLE_STRIP);
     glTexCoord2f(u0,v0); glVertex2f(x,y); glTexCoord2f(u1,v0); glVertex2f(x+w,y);
-    glTexCoord2f(u1,v1); glVertex2f(x+w,y+h); glTexCoord2f(u0,v1); glVertex2f(x,y+h);
+    glTexCoord2f(u0,v1); glVertex2f(x,y+h); glTexCoord2f(u1,v1); glVertex2f(x+w,y+h);
     glEnd(); glBindTexture(GL_TEXTURE_2D,0); glDisable(GL_TEXTURE_2D);
 #else
     (void)texture;(void)x;(void)y;(void)w;(void)h;(void)u0;(void)v0;(void)u1;(void)v1;(void)c;
