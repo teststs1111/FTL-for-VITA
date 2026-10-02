@@ -10,12 +10,16 @@ namespace wormhole {
 
 bool ShipContent::open(const std::string& archivePath) {
     loaded_ = false;
+    databaseLoaded_ = false;
+    databaseBlueprintPath_.clear();
     database_.clear();
     return assets_.openArchive(archivePath);
 }
 
 bool ShipContent::openArchives(const std::vector<std::string>& archivePaths) {
     loaded_ = false;
+    databaseLoaded_ = false;
+    databaseBlueprintPath_.clear();
     database_.clear();
     return assets_.openArchives(archivePaths);
 }
@@ -23,18 +27,30 @@ bool ShipContent::openArchives(const std::vector<std::string>& archivePaths) {
 bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
                              const std::string& blueprintPath,
                              unsigned randomSeed) {
-    database_.clear();
     out = {};
 
-    // autoBlueprints.xml is part of the canonical base ftl.dat and contains
-    // the generated/enemy ship definitions used by normal gameplay.
-    std::vector<std::string> sources{blueprintPath, "data/autoBlueprints.xml"};
-    if (advancedEdition_) {
-        sources.push_back("data/dlcBlueprints.xml");
-        sources.push_back("data/dlcBlueprintsOverwrite.xml");
-        sources.push_back("data/dlcPirateBlueprints.xml");
+    // Player and enemy ships share the same canonical blueprint database
+    // during a session. Avoid reparsing the XML archive entries for every
+    // ship load; AE mode changes invalidate this cache.
+    if (!databaseLoaded_ || databaseBlueprintPath_ != blueprintPath) {
+        database_.clear();
+
+        // autoBlueprints.xml is part of the canonical base ftl.dat and contains
+        // the generated/enemy ship definitions used by normal gameplay.
+        std::vector<std::string> sources{blueprintPath, "data/autoBlueprints.xml"};
+        if (advancedEdition_) {
+            sources.push_back("data/dlcBlueprints.xml");
+            sources.push_back("data/dlcBlueprintsOverwrite.xml");
+            sources.push_back("data/dlcPirateBlueprints.xml");
+        }
+        if (database_.loadShipBlueprints(sources) == 0) {
+            databaseLoaded_ = false;
+            databaseBlueprintPath_.clear();
+            return false;
+        }
+        databaseLoaded_ = true;
+        databaseBlueprintPath_ = blueprintPath;
     }
-    if (database_.loadShipBlueprints(sources) == 0) return false;
     const ShipBlueprint* blueprint = database_.findShip(shipId);
     if (!blueprint || blueprint->layout.empty()) return false;
 
