@@ -139,38 +139,11 @@ public:
                     ",route_nodes=" + std::to_string(flagshipRoute_.size()));
             }
             selectedBeacon_ = sectorGraph_.startNode();
-            RuntimeDiagnostics::checkpoint("player_ship_load_begin");
-            if (!content_.loadPlayerShip()) {
-                startupError_ = "Player ship blueprint could not be loaded";
-                return;
-            }
-            RuntimeDiagnostics::checkpoint("player_ship_loaded");
-            if (!runtime_.load(content_)) {
-                startupError_ = "Ship runtime initialization failed";
-                return;
-            }
-            RuntimeDiagnostics::checkpoint("player_runtime_loaded");
-            // Do not construct a combat encounter during startup. Vanilla begins
-            // in ship/sector navigation; the enemy ship and combat runtime are
-            // created only when an actual beacon encounter starts. This also
-            // avoids an arbitrary enemy selection from the unordered blueprint
-            // database and keeps startup memory proportional to the initial scene.
-            RuntimeDiagnostics::checkpoint("room_texture_discovery_begin");
-            discoverRoomTextures();
-            RuntimeDiagnostics::checkpoint("room_texture_discovery_complete",
-                "player=" + std::to_string(roomTextureNames_.size()) +
-                ",enemy=" + std::to_string(enemyRoomTextureNames_.size()));
-
-            RuntimeDiagnostics::checkpoint("crew_texture_discovery_begin");
-            discoverCrewTextures();
-            RuntimeDiagnostics::checkpoint("crew_texture_discovery_complete",
-                "crew=" + std::to_string(crewTextureNames_.size()));
-
-            RuntimeDiagnostics::checkpoint("ship_texture_discovery_begin");
-            discoverShipTexture();
-            RuntimeDiagnostics::checkpoint("ship_texture_discovery_complete",
-                shipTextureName_.empty() ? "not_found" : shipTextureName_);
-
+            // Ship selection is the first interactive scene. Do not build the
+            // selected ship runtime or upload its room/crew/hull textures until
+            // the player actually confirms a ship; the selection screen only
+            // needs the canonical blueprint metadata.
+            RuntimeDiagnostics::checkpoint("player_ship_deferred");
             RuntimeDiagnostics::checkpoint("ship_selection_build_begin");
             buildShipSelection();
             RuntimeDiagnostics::checkpoint("ship_selection_built",
@@ -208,9 +181,8 @@ public:
         assignSectorBeaconEvents();
         sectorGraph_.setFleetCoverageFromPosition(fleetPursuitPosition_);
         selectedBeacon_ = sectorGraph_.startNode();
-        if (!content_.loadPlayerShip()) return false;
-        if (!runtime_.load(content_)) return false;
-        combat_.player = runtime_;
+        // The ship-selection screen only needs the rebuilt canonical blueprint
+        // lists. The actual player ship/runtime is loaded by applySelectedShip().
         // Keep combat uninitialized until a real beacon encounter starts.
         // Reloading AE content must not synthesize an arbitrary enemy ship.
         combatMode_ = false;
