@@ -457,6 +457,7 @@ bool EventDatabase::load() {
         const auto* bytes = assets_.getBytes(name);
         if (!bytes || bytes->empty()) continue;
         try { collectEvents(bxml::read(*bytes)); } catch (...) {}
+        assets_.releaseBytes(name);
     }
     // The vanilla sector_data.xml refers to the special NEBULA pool, but
     // the pool itself is not serialized as an <eventList name="NEBULA"> in
@@ -498,12 +499,14 @@ bool EventDatabase::load() {
             const auto* bytes = assets_.getBytes(name);
             if (!bytes || bytes->empty()) continue;
             try { collectEvents(bxml::read(*bytes)); } catch (...) {}
+            assets_.releaseBytes(name);
         }
         const auto* overwrite = assets_.getBytes("data/dlcEventsOverwrite.xml");
         if (overwrite && !overwrite->empty()) {
             replacingPools_ = true;
             replacingEvents_ = true;
             try { collectEvents(bxml::read(*overwrite)); } catch (...) {}
+            assets_.releaseBytes("data/dlcEventsOverwrite.xml");
             replacingEvents_ = false;
             replacingPools_ = false;
         }
