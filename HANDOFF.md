@@ -978,3 +978,10 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - first_game_render_begin 後にログが止まるため、まず startup_error_render_begin → background_begin → background_complete の境界を追加。
 - 修正コミット: 6c98f7a4d0e307088e94ed608ce788af61415a74
 - 次回ログでエラー画面の最初の描画操作（fillRectを含む）まで到達するか確認し、VitaGL描画側のnative crashかPVF後処理かを切り分ける。
+
+
+## 2026-10-03 Vita startup render follow-up
+- Commit `6863170345c4e09c2a91b4db798057c3877d4f88` changes Vita rectangle/texture rendering from `GL_QUADS` to `GL_TRIANGLE_STRIP` with corrected vertex/UV order.
+- This is a targeted native-crash mitigation after the real-device dump stopped immediately after `startup_error_background_begin`; the previous instrumentation showed the first failing area was `Graphics::fillRect()`.
+- The change does not alter game data or the archive/DLC model; it only changes the rendering primitive used to draw the same rectangles.
+- Next real-device check: use the VPK built from this commit and inspect whether startup advances past the startup-error background. If it still crashes, use the existing fill_rect checkpoints to identify the exact GL call before changing further rendering code.
