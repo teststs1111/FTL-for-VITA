@@ -12,8 +12,10 @@ bool BlueprintDatabase::loadShipBlueprint(const std::string& assetPath) {
     try {
         root = bxml::read(*data);
     } catch (...) {
+        assets_.releaseBytes(assetPath);
         return false;
     }
+    assets_.releaseBytes(assetPath);
 
     ShipBlueprint ship;
     if (!parseShipBlueprint(root, ship) || ship.id.empty()) return false;
@@ -31,7 +33,8 @@ std::size_t BlueprintDatabase::loadShipBlueprints(const std::vector<std::string>
         const auto* data = assets_.getBytes(assetPath);
         if (!data) continue;
         bxml::Node root;
-        try { root = bxml::read(*data); } catch (...) { continue; }
+        try { root = bxml::read(*data); } catch (...) { assets_.releaseBytes(assetPath); continue; }
+        assets_.releaseBytes(assetPath);
         std::function<void(const bxml::Node&)> visit = [&](const bxml::Node& node) {
             if (node.name == "blueprintList") {
                 const auto it = node.attributes.find("name");
