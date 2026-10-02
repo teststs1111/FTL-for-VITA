@@ -181,7 +181,10 @@ public:
             // Decode/upload exploration music lazily on the first update.  The
             // archive contains the full OGG, so doing this in the constructor
             // needlessly extends the Vita boot-critical path.
-            exploreMusicPending_ = true;
+            // Leave the first two frames free of OGG decoding. The first
+            // rendered frame is the useful hardware-startup checkpoint; audio
+            // can begin immediately afterward without changing gameplay.
+            exploreMusicPending_ = 2;
             RuntimeDiagnostics::checkpoint("explore_music_deferred");
         RuntimeDiagnostics::checkpoint("ship_scene_ready", "scene=" + std::to_string(static_cast<int>(sceneMode_)));
         }
@@ -3096,11 +3099,13 @@ public:
     }
 
     void update(float dt) override {
-        if (exploreMusicPending_) {
-            exploreMusicPending_ = false;
-            RuntimeDiagnostics::checkpoint("explore_music_begin");
-            playExploreMusic();
-            RuntimeDiagnostics::checkpoint("explore_music_ready");
+        if (exploreMusicPending_ > 0) {
+            --exploreMusicPending_;
+            if (exploreMusicPending_ == 0) {
+                RuntimeDiagnostics::checkpoint("explore_music_begin");
+                playExploreMusic();
+                RuntimeDiagnostics::checkpoint("explore_music_ready");
+            }
         }
         if ((diagnosticFrameCounter_++ % 60u) == 0u) {
             RuntimeDiagnostics::checkpoint("heartbeat",
@@ -4190,7 +4195,7 @@ public:
 private:
     std::string archivePath_;
     bool aeEnabled_{true};
-    bool exploreMusicPending_{false};
+    int exploreMusicPending_{0};
     Difficulty difficulty_{Difficulty::Normal};
 
     Graphics& graphics_;
