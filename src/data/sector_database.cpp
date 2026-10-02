@@ -51,6 +51,7 @@ bool SectorDatabase::load() {
         const auto* bytes=assets_.getBytes(n);
         if(!bytes || bytes->empty()) continue;
         try { collect(bxml::read(*bytes)); } catch(...) {}
+        assets_.releaseBytes(n);
     }
     return !sectors_.empty();
 }
