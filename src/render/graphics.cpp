@@ -49,8 +49,19 @@ void Graphics::endFrame() {
 void Graphics::fillRect(float x,float y,float w,float h,const Color& c) {
     if (!initialized_) return;
 #ifdef __vita__
-    glColor4f(c.r,c.g,c.b,c.a); glBegin(GL_QUADS);
-    glVertex2f(x,y); glVertex2f(x+w,y); glVertex2f(x+w,y+h); glVertex2f(x,y+h); glEnd();
+    RuntimeDiagnostics::checkpoint("fill_rect_color_begin");
+    glColor4f(c.r,c.g,c.b,c.a);
+    RuntimeDiagnostics::checkpoint("fill_rect_color_complete");
+    RuntimeDiagnostics::checkpoint("fill_rect_begin_begin");
+    glBegin(GL_QUADS);
+    RuntimeDiagnostics::checkpoint("fill_rect_begin_complete");
+    glVertex2f(x,y);
+    glVertex2f(x+w,y);
+    glVertex2f(x+w,y+h);
+    glVertex2f(x,y+h);
+    RuntimeDiagnostics::checkpoint("fill_rect_vertices_complete");
+    glEnd();
+    RuntimeDiagnostics::checkpoint("fill_rect_end_complete");
 #else
     (void)x;(void)y;(void)w;(void)h;(void)c;
 #endif
