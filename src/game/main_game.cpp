@@ -206,16 +206,9 @@ public:
         if (!content_.loadPlayerShip()) return false;
         if (!runtime_.load(content_)) return false;
         combat_.player = runtime_;
-            syncCombatAugments();
-        LoadedShip enemy;
-        const LoadedShip* player = content_.playerShip();
-        std::string enemyId;
-        if (player) for (const auto& entry : content_.blueprints().ships())
-            if (entry.first != player->blueprint.id) { enemyId = entry.first; break; }
-        if (enemyId.empty() || !content_.loadEnemyShip(enemyId, enemy, sector_ + 1, static_cast<int>(difficulty_),
-                seed_ + static_cast<unsigned>(std::max(0, currentBeacon_)) + static_cast<unsigned>(visitedBeacons_) * 131u,
-                "data/blueprints.xml", currentSectorType_)) return false;
-        if (!combat_.load(content_, enemy)) return false;
+        // Keep combat uninitialized until a real beacon encounter starts.
+        // Reloading AE content must not synthesize an arbitrary enemy ship.
+        combatMode_ = false;
         syncCombatAugments();
         buildShipSelection();
         discoverRoomTextures(); discoverCrewTextures(); discoverShipTexture();
