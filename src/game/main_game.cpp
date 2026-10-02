@@ -178,9 +178,11 @@ public:
 
             sceneMode_ = shipChoices_.empty() ? SceneMode::SectorMap : SceneMode::ShipSelect;
             RuntimeDiagnostics::checkpoint("scene_assets_ready");
-            RuntimeDiagnostics::checkpoint("explore_music_begin");
-            playExploreMusic();
-            RuntimeDiagnostics::checkpoint("explore_music_ready");
+            // Decode/upload exploration music lazily on the first update.  The
+            // archive contains the full OGG, so doing this in the constructor
+            // needlessly extends the Vita boot-critical path.
+            exploreMusicPending_ = true;
+            RuntimeDiagnostics::checkpoint("explore_music_deferred");
         RuntimeDiagnostics::checkpoint("ship_scene_ready", "scene=" + std::to_string(static_cast<int>(sceneMode_)));
         }
     }
@@ -3094,6 +3096,12 @@ public:
     }
 
     void update(float dt) override {
+        if (exploreMusicPending_) {
+            exploreMusicPending_ = false;
+            RuntimeDiagnostics::checkpoint("explore_music_begin");
+            playExploreMusic();
+            RuntimeDiagnostics::checkpoint("explore_music_ready");
+        }
         if ((diagnosticFrameCounter_++ % 60u) == 0u) {
             RuntimeDiagnostics::checkpoint("heartbeat",
                 "scene=" + std::to_string(static_cast<int>(sceneMode_)) +
@@ -4182,6 +4190,7 @@ public:
 private:
     std::string archivePath_;
     bool aeEnabled_{true};
+    bool exploreMusicPending_{false};
     Difficulty difficulty_{Difficulty::Normal};
 
     Graphics& graphics_;
