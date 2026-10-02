@@ -14,6 +14,16 @@ bool Graphics::init() {
     const GLboolean vglResult = vglInitExtended(0, 960, 544, 0x1800000, SCE_GXM_MULTISAMPLE_NONE);
     RuntimeDiagnostics::checkpoint("vgl_init_returned","result=" + std::to_string(static_cast<int>(vglResult)));
     if (vglResult != GL_FALSE) { RuntimeDiagnostics::checkpoint("graphics_init_failed","vitaGL rejected 960x544"); return false; }
+    RuntimeDiagnostics::checkpoint("vita_render_state_begin");
+    glViewport(0, 0, 960, 544);
+    RuntimeDiagnostics::checkpoint("vita_viewport_complete");
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrthof(0.f, 960.f, 544.f, 0.f, -1.f, 1.f);
+    RuntimeDiagnostics::checkpoint("vita_projection_complete");
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    RuntimeDiagnostics::checkpoint("vita_modelview_complete");
     vglUseTripleBuffering(GL_FALSE);
     vglWaitVblankStart(GL_TRUE);
 #endif
