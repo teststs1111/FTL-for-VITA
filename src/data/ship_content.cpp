@@ -415,8 +415,10 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
                     return a < b;
                 });
             const int remaining = count - allocated;
-            for (int n = 0; n < remaining; ++n)
-                ++amounts[order[static_cast<std::size_t>(n % order.size())]];
+            if (!order.empty()) {
+                for (int n = 0; n < remaining; ++n)
+                    ++amounts[order[static_cast<std::size_t>(n % order.size())]];
+            }
         }
 
         for (std::size_t i = 0; i < generated.size(); ++i) {
