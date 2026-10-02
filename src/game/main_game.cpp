@@ -397,7 +397,8 @@ public:
         std::string kind = result.weaponType;
         std::string name = result.weaponName;
         std::transform(kind.begin(), kind.end(), kind.begin(), [](unsigned char c) {
-            return static_cast<char>(std::tolower(c));        });
+            return static_cast<char>(std::tolower(c));
+        });
         std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c) {
             return static_cast<char>(std::tolower(c));
         });
@@ -796,7 +797,8 @@ public:
         out << "ship " << std::quoted(runtime_.content.blueprint.id) << "\n";
         out << "seed " << seed_ << "\n";
         out << "sector " << sector_ << "\n";
-        out << "flagship " << flagshipPhase_ << "\n";        out << "flagship_state " << flagshipNode_ << ' ' << flagshipBaseNode_ << ' '
+        out << "flagship " << flagshipPhase_ << "\n";
+        out << "flagship_state " << flagshipNode_ << ' ' << flagshipBaseNode_ << ' '
             << flagshipRouteIndex_ << ' ' << flagshipJumpCounter_ << ' '
             << flagshipBaseTurns_ << ' ' << flagshipWaitTurns_ << "\n";
         out << "flagship_route " << flagshipRoute_.size() << "\n";
@@ -1195,7 +1197,8 @@ public:
         configureBeaconNebulaState();
 
         // v10/v11 stores the Last Stand route because it is generated once per
-        // sector. Validate it against the regenerated deterministic graph        // before trusting the saved indices. A malformed/obsolete route must
+        // sector. Validate it against the regenerated deterministic graph
+        // before trusting the saved indices. A malformed/obsolete route must
         // never leave the Flagship pointing at an invalid beacon.
         bool validSavedFlagshipState = (saveV10 || saveV11 || saveV13 || saveV14) && sector_ >= 7 &&
             !flagshipRoute_.empty() &&
@@ -1594,7 +1597,8 @@ public:
         // fallbacks for alternate datasets, but prefer the real blueprint.
         static constexpr const char* preferred[] = {
             "REBEL_SKINNY_ELITE", "REBEL_SKINNY_ELITE_DLC",
-            "REBEL_FIGHTER", "REBEL_SCOUT", "REBEL_ELITE"        };
+            "REBEL_FIGHTER", "REBEL_SCOUT", "REBEL_ELITE"
+        };
         const bool noFuelFleetEncounter = fuel_ <= 0;
         std::string rebelShipId;
         if (noFuelFleetEncounter && content_.blueprints().findShip("REBEL_FLEET_FUEL")) {
@@ -1994,6 +1998,7 @@ public:
 
         for (const auto& effect : removals)
             runtime_.removeCrewByRace(effect.race, effect.clone);
+
         combat_.player = runtime_;
 
 
@@ -2392,7 +2397,8 @@ public:
 
         const auto& choice = event->choices[static_cast<std::size_t>(activeEventChoice_)];
         RuntimeDiagnostics::checkpoint("event_choice_selected",
-            "event=" + activeEventId_ + ",choice=" + std::to_string(activeEventChoice_) +            ",load=" + choice.load + ",hostile=" + std::to_string(choice.hostile ? 1 : 0));
+            "event=" + activeEventId_ + ",choice=" + std::to_string(activeEventChoice_) +
+            ",load=" + choice.load + ",hostile=" + std::to_string(choice.hostile ? 1 : 0));
         if (!choice.questTargetId.empty()) {
             // Choice-level quest nodes in the real data also usually omit a
             // quest name. Keep the originating event as the stable quest key.
@@ -2791,7 +2797,8 @@ public:
         }
         if (input_.pressed(Button::Circle)) {
             sceneMode_ = SceneMode::Ship;
-            return;        }
+            return;
+        }
     }
 
     void configureBeaconNebulaState() {
@@ -3190,7 +3197,8 @@ public:
                     ",beacon=" + std::to_string(currentBeacon_));
                 // Persist all combat-side changes, not just hull damage:
                 // systems, crew, weapons, missiles, shields, fires and breaches
-                // must survive the return to the ship scene.                runtime_ = combat_.player;
+                // must survive the return to the ship scene.
+                runtime_ = combat_.player;
                 RuntimeDiagnostics::checkpoint("combat_state_persisted", "hull=" + std::to_string(runtime_.hull) + ",fuel=" + std::to_string(fuel_) + ",scrap=" + std::to_string(scrap_) + ",missiles=" + std::to_string(runtime_.missiles));
                 if (combat_.playerDeployedCombatDrone() && hasAugment("DRONE_RECOVERY_ARM")) {
                     droneParts_ = std::min(99, droneParts_ + 1);
@@ -3589,7 +3597,8 @@ public:
             if (jumpCharge_ >= jumpChargeTime) {
                 --fuel_;
                 advanceRebelFleetAfterJump();
-                runtime_ = combat_.player;                combatMode_ = false;
+                runtime_ = combat_.player;
+                combatMode_ = false;
                 rebelFleetEncounter_ = false;
                 jumpCharging_ = false;
                 jumpReady_ = false;
@@ -3988,7 +3997,8 @@ public:
             graphics_.fillRect(leftX, 488.f, 280.f * ratio, 8.f,
                 {0.35f, 0.78f, 1.0f, 1.0f});
             text_.draw(graphics_, std::to_string(static_cast<int>(jumpCharge_)) + " / 10秒",
-                leftX + 290.f, 494.f, 11.f, {0.65f, 0.78f, 0.90f, 1.0f});        } else {
+                leftX + 290.f, 494.f, 11.f, {0.65f, 0.78f, 0.90f, 1.0f});
+        } else {
             text_.draw(graphics_, "○ FTLジャンプ", leftX, 488.f, 13.f,
                 {0.55f, 0.68f, 0.80f, 1.0f});
         }
