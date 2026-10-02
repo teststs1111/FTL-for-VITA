@@ -1,4 +1,5 @@
 #include "render/text_renderer.hpp"
+#include "platform/runtime_diagnostics.hpp"
 #include <algorithm>
 #include <cstdint>
 #include <string>
@@ -34,17 +35,29 @@ bool TextRenderer::init() {
     impl_ = new Impl();
 
 #ifdef __vita__
+    RuntimeDiagnostics::checkpoint("pvf_init_begin");
     ScePvfInitRec init{};
     init.maxNumFonts = 2;
     impl_->lib = scePvfNewLib(&init, &impl_->error);
+    RuntimeDiagnostics::checkpoint("pvf_newlib_complete",
+        "lib=" + std::to_string(reinterpret_cast<std::uintptr_t>(impl_->lib)) +
+        " error=" + std::to_string(static_cast<int>(impl_->error)));
     if (!impl_->lib) {
         delete impl_;
         impl_ = nullptr;
         return false;
     }
 
+    RuntimeDiagnostics::checkpoint("pvf_open_japanese_begin");
     impl_->japanese = scePvfOpenDefaultJapaneseFontOnSharedMemory(impl_->lib, &impl_->error);
+    RuntimeDiagnostics::checkpoint("pvf_open_japanese_complete",
+        "font=" + std::to_string(reinterpret_cast<std::uintptr_t>(impl_->japanese)) +
+        " error=" + std::to_string(static_cast<int>(impl_->error)));
+    RuntimeDiagnostics::checkpoint("pvf_open_latin_begin");
     impl_->latin = scePvfOpenDefaultLatinFontOnSharedMemory(impl_->lib, &impl_->error);
+    RuntimeDiagnostics::checkpoint("pvf_open_latin_complete",
+        "font=" + std::to_string(reinterpret_cast<std::uintptr_t>(impl_->latin)) +
+        " error=" + std::to_string(static_cast<int>(impl_->error)));
     if (!impl_->japanese && !impl_->latin) {
         scePvfDoneLib(impl_->lib);
         delete impl_;
@@ -96,8 +109,6 @@ static std::vector<std::uint16_t> utf8ToUtf16(std::string_view text) {
             out.push_back(static_cast<std::uint16_t>(cp));
             i += 3;
         } else {
-            // Current UI strings are BMP Japanese/Latin. Replace unsupported
-            // sequences rather than walking past malformed UTF-8.
             out.push_back(static_cast<std::uint16_t>('?'));
             ++i;
         }
@@ -118,6 +129,8 @@ void TextRenderer::draw(Graphics& graphics, std::string_view text, float x, floa
 #ifdef __vita__
     const int size = std::max(1, static_cast<int>(pixelSize));
     if (impl_->cachedText != text || impl_->cachedSize != size) {
+        RuntimeDiagnostics::checkpoint("text_texture_build_begin",
+            "chars=" + std::to_string(text.size()) + " size=" + std::to_string(size));
         graphics.destroyTexture(impl_->texture);
 
         const auto chars = utf8ToUtf16(text);
@@ -186,7 +199,11 @@ void TextRenderer::draw(Graphics& graphics, std::string_view text, float x, floa
             penX += std::max(1, static_cast<int>(info.glyphMetrics.horizontalAdvance64 / 64));
         }
 
+        RuntimeDiagnostics::checkpoint("text_texture_upload_begin",
+            "width=" + std::to_string(width) + " height=" + std::to_string(maxHeight));
         impl_->texture = graphics.createTexture(rgba, width, maxHeight);
+        RuntimeDiagnostics::checkpoint("text_texture_upload_complete",
+            "valid=" + std::to_string(impl_->texture.valid() ? 1 : 0));
         impl_->cachedText = std::string(text);
         impl_->cachedSize = size;
         impl_->width = width;
