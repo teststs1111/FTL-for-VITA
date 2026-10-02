@@ -366,18 +366,46 @@ bool ShipContent::loadEnemyShip(const std::string& shipId, LoadedShip& out, int 
 
         out.blueprint.crew.clear();
         int generatedIndex = 0;
-        for (const auto& overrideEntry : generated) {
-            if (overrideEntry.race.empty()) continue;
-            int amount = 0;
-            if (overrideEntry.proportion > 0.0) {
-                // Proportional overrides must never create crew beyond the
-                // generated count. In particular, a zero-count ship must
-                // remain empty rather than gaining one crew member.
-                amount = std::max(0, static_cast<int>(overrideEntry.proportion * count));
+        std::vector<int> amounts(generated.size(), 0);
+        std::vector<double> fractions(generated.size(), 0.0);
+        int allocated = 0;
+        for (std::size_t i = 0; i < generated.size(); ++i) {
+            const auto& entry = generated[i];
+            if (entry.race.empty()) continue;
+            if (entry.proportion > 0.0) {
+                const double exact = entry.proportion * static_cast<double>(count);
+                amounts[i] = std::max(0, static_cast<int>(exact));
+                fractions[i] = exact - static_cast<double>(amounts[i]);
+                allocated += amounts[i];
             } else {
-                amount = std::max(0, static_cast<int>(-overrideEntry.proportion));
+                amounts[i] = std::max(0, static_cast<int>(-entry.proportion));
+                allocated += amounts[i];
             }
-            for (int i = 0; i < amount; ++i) {
+        }
+        // Match the game's proportional crew allocation: floor each share,
+        // then distribute the remaining generated crew to the largest
+        // fractional remainders. Never allocate proportional crew when the
+        // generated count is zero.
+        if (count > allocated) {
+            std::vector<std::size_t> order;
+            for (std::size_t i = 0; i < generated.size(); ++i) {
+                if (generated[i].proportion > 0.0 && !generated[i].race.empty())
+                    order.push_back(i);
+            }
+            std::stable_sort(order.begin(), order.end(),
+                [&](std::size_t a, std::size_t b) {
+                    if (fractions[a] != fractions[b])
+                        return fractions[a] > fractions[b];
+                    return a < b;
+                });
+            const int remaining = count - allocated;
+            for (int n = 0; n < remaining; ++n)
+                ++amounts[order[static_cast<std::size_t>(n % order.size())]];
+        }
+
+        for (std::size_t i = 0; i < generated.size(); ++i) {
+            const auto& overrideEntry = generated[i];
+            for (int n = 0; n < amounts[i]; ++n) {
                 std::string race = overrideEntry.race;
                 if (race == "random")
                     race = randomRace(rng);
