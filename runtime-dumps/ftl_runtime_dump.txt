@@ -1,81 +1,122 @@
 
-=== FTL runtime session 2026-10-03 20:56:02 ===
+=== FTL runtime session 2026-10-03 21:23:11 ===
 platform=vita
 executable=eboot.bin
 archive=ux0:data/wormhole/ftl.dat
 previous_session=unknown
 NOTE=For native crashes, also collect the Vita .psp2dmp from ux0:data; this file records game context immediately before the crash.
-[2026-10-03 20:56:02] stage=process_start
-[2026-10-03 20:56:02] stage=graphics_init_begin
-[2026-10-03 20:56:05] stage=vgl_init_returned result=0
-[2026-10-03 20:56:05] stage=vita_render_state_begin
-[2026-10-03 20:56:05] stage=vita_viewport_complete
-[2026-10-03 20:56:05] stage=vita_projection_complete
-[2026-10-03 20:56:05] stage=vita_modelview_complete
-[2026-10-03 20:56:05] stage=graphics_ready
-[2026-10-03 20:56:05] stage=graphics_ready
-[2026-10-03 20:56:05] stage=input_object_ready
-[2026-10-03 20:56:05] stage=main_game_object_ready
-[2026-10-03 20:56:05] stage=main_game_init_begin ux0:data/wormhole/ftl.dat
-[2026-10-03 20:56:05] stage=audio_init_begin
-[2026-10-03 20:56:05] stage=audio_port_opened port=7 volume_result=-2144993271
-[2026-10-03 20:56:05] stage=audio_ready
-[2026-10-03 20:56:05] stage=ship_scene_construct_begin
-[2026-10-03 20:56:05] stage=ship_scene_text_init
-[2026-10-03 20:56:05] stage=pvf_init_begin
-[2026-10-03 20:56:05] stage=pvf_newlib_complete lib=2170590488 error=0
-[2026-10-03 20:56:05] stage=pvf_open_japanese_begin
-[2026-10-03 20:56:05] stage=pvf_open_japanese_complete font=2170591616 error=0
-[2026-10-03 20:56:05] stage=pvf_open_latin_begin
-[2026-10-03 20:56:05] stage=pvf_open_latin_complete font=2170591748 error=0
-[2026-10-03 20:56:05] stage=archive_open_begin ux0:data/wormhole/ftl.dat
-[2026-10-03 20:56:05] stage=archive_opened
-[2026-10-03 20:56:05] stage=localization_load_begin
-[2026-10-03 20:56:09] stage=localization_load_complete
-[2026-10-03 20:56:09] stage=event_database_load_begin
-[2026-10-03 20:56:12] stage=event_database_loaded events=939
-[2026-10-03 20:56:12] stage=sector_database_load_begin
-[2026-10-03 20:56:12] stage=sector_database_loaded
-[2026-10-03 20:56:12] stage=sector_definition_begin
-[2026-10-03 20:56:12] stage=sector_definition_loaded type=CIVILIAN_SECTOR
-[2026-10-03 20:56:12] stage=fleet_state_init_begin
-[2026-10-03 20:56:12] stage=fleet_state_initialized delay=0,position=-959.000000
-[2026-10-03 20:56:12] stage=sector_graph_generate_begin sector=0,seed=85948961
-[2026-10-03 20:56:12] stage=sector_graph_generated nodes=22,start=1
-[2026-10-03 20:56:12] stage=beacon_nebula_state_begin
-[2026-10-03 20:56:12] stage=beacon_nebula_state_ready
-[2026-10-03 20:56:12] stage=beacon_event_assignment_begin
-[2026-10-03 20:56:12] stage=beacon_event_assignment_ready assignments=20
-[2026-10-03 20:56:12] stage=sector_data_ready sector=0
-[2026-10-03 20:56:12] stage=fleet_coverage_begin
-[2026-10-03 20:56:12] stage=fleet_coverage_ready
-[2026-10-03 20:56:13] stage=player_ship_deferred
-[2026-10-03 20:56:13] stage=ship_selection_build_begin
-[2026-10-03 20:56:13] stage=ship_selection_built choices=0
-[2026-10-03 20:56:13] stage=scene_assets_ready
-[2026-10-03 20:56:13] stage=explore_music_deferred
-[2026-10-03 20:56:13] stage=ship_scene_ready scene=1
-[2026-10-03 20:56:13] stage=ship_scene_construct_complete
-[2026-10-03 20:56:13] stage=main_game_initialized
-[2026-10-03 20:56:13] stage=game_init_returned
-[2026-10-03 20:56:13] stage=first_frame_begin
-[2026-10-03 20:56:13] stage=first_input_poll_complete
-[2026-10-03 20:56:13] stage=first_begin_frame_begin
-[2026-10-03 20:56:13] stage=begin_frame_clear_begin
-[2026-10-03 20:56:13] stage=begin_frame_clear_color_complete
-[2026-10-03 20:56:13] stage=begin_frame_clear_complete
-[2026-10-03 20:56:13] stage=first_begin_frame_complete
-[2026-10-03 20:56:13] stage=first_game_update_begin
-[2026-10-03 20:56:13] stage=heartbeat scene=1 sector=0 beacon=-1 fuel=16 combat=0
-[2026-10-03 20:56:13] stage=first_game_update_complete
-[2026-10-03 20:56:13] stage=first_game_render_begin
-[2026-10-03 20:56:13] stage=fill_rect_color_begin
-[2026-10-03 20:56:13] stage=fill_rect_color_complete
-[2026-10-03 20:56:13] stage=fill_rect_begin_begin
-[2026-10-03 20:56:13] stage=fill_rect_array_begin
-[2026-10-03 20:56:13] stage=fill_rect_draw_begin
-[2026-10-03 20:56:13] stage=fill_rect_draw_complete
-[2026-10-03 20:56:13] stage=fill_rect_array_complete
-[2026-10-03 20:56:13] stage=text_texture_build_begin chars=22 size=24
-[2026-10-03 20:56:13] stage=text_texture_upload_begin width=453 height=24
-[2026-10-03 20:56:13] stage=text_texture_upload_complete valid=1 cache=1
+[2026-10-03 21:23:11] stage=process_start
+[2026-10-03 21:23:11] stage=graphics_init_begin
+[2026-10-03 21:23:13] stage=vgl_init_returned result=0
+[2026-10-03 21:23:13] stage=vita_render_state_begin
+[2026-10-03 21:23:13] stage=vita_viewport_complete
+[2026-10-03 21:23:13] stage=vita_projection_complete
+[2026-10-03 21:23:13] stage=vita_modelview_complete
+[2026-10-03 21:23:13] stage=graphics_ready
+[2026-10-03 21:23:13] stage=graphics_ready
+[2026-10-03 21:23:13] stage=input_object_ready
+[2026-10-03 21:23:13] stage=main_game_object_ready
+[2026-10-03 21:23:13] stage=main_game_init_begin ux0:data/wormhole/ftl.dat
+[2026-10-03 21:23:13] stage=audio_init_begin
+[2026-10-03 21:23:13] stage=audio_port_opened port=7 volume_result=-2144993271
+[2026-10-03 21:23:13] stage=audio_ready
+[2026-10-03 21:23:14] stage=ship_scene_construct_begin
+[2026-10-03 21:23:14] stage=ship_scene_text_init
+[2026-10-03 21:23:14] stage=pvf_init_begin
+[2026-10-03 21:23:14] stage=pvf_newlib_complete lib=2170590488 error=0
+[2026-10-03 21:23:14] stage=pvf_open_japanese_begin
+[2026-10-03 21:23:14] stage=pvf_open_japanese_complete font=2170591616 error=0
+[2026-10-03 21:23:14] stage=pvf_open_latin_begin
+[2026-10-03 21:23:14] stage=pvf_open_latin_complete font=2170591748 error=0
+[2026-10-03 21:23:14] stage=archive_open_begin ux0:data/wormhole/ftl.dat
+[2026-10-03 21:23:14] stage=archive_opened
+[2026-10-03 21:23:14] stage=localization_load_begin
+[2026-10-03 21:23:18] stage=localization_load_complete
+[2026-10-03 21:23:18] stage=event_database_load_begin
+[2026-10-03 21:23:21] stage=event_database_loaded events=939
+[2026-10-03 21:23:21] stage=sector_database_load_begin
+[2026-10-03 21:23:21] stage=sector_database_loaded
+[2026-10-03 21:23:21] stage=sector_definition_begin
+[2026-10-03 21:23:21] stage=sector_definition_loaded type=CIVILIAN_SECTOR
+[2026-10-03 21:23:21] stage=fleet_state_init_begin
+[2026-10-03 21:23:21] stage=fleet_state_initialized delay=0,position=-959.000000
+[2026-10-03 21:23:21] stage=sector_graph_generate_begin sector=0,seed=85948961
+[2026-10-03 21:23:21] stage=sector_graph_generated nodes=22,start=1
+[2026-10-03 21:23:21] stage=beacon_nebula_state_begin
+[2026-10-03 21:23:21] stage=beacon_nebula_state_ready
+[2026-10-03 21:23:21] stage=beacon_event_assignment_begin
+[2026-10-03 21:23:21] stage=beacon_event_assignment_ready assignments=20
+[2026-10-03 21:23:21] stage=sector_data_ready sector=0
+[2026-10-03 21:23:21] stage=fleet_coverage_begin
+[2026-10-03 21:23:21] stage=fleet_coverage_ready
+[2026-10-03 21:23:21] stage=player_ship_deferred
+[2026-10-03 21:23:21] stage=ship_selection_build_begin
+[2026-10-03 21:23:21] stage=ship_selection_built choices=0
+[2026-10-03 21:23:21] stage=scene_assets_ready
+[2026-10-03 21:23:21] stage=explore_music_deferred
+[2026-10-03 21:23:21] stage=ship_scene_ready scene=1
+[2026-10-03 21:23:21] stage=ship_scene_construct_complete
+[2026-10-03 21:23:21] stage=main_game_initialized
+[2026-10-03 21:23:21] stage=game_init_returned
+[2026-10-03 21:23:21] stage=first_frame_begin
+[2026-10-03 21:23:21] stage=first_input_poll_complete
+[2026-10-03 21:23:21] stage=first_begin_frame_begin
+[2026-10-03 21:23:21] stage=begin_frame_clear_begin
+[2026-10-03 21:23:21] stage=begin_frame_clear_color_complete
+[2026-10-03 21:23:21] stage=begin_frame_clear_complete
+[2026-10-03 21:23:21] stage=first_begin_frame_complete
+[2026-10-03 21:23:21] stage=first_game_update_begin
+[2026-10-03 21:23:21] stage=heartbeat scene=1 sector=0 beacon=-1 fuel=16 combat=0
+[2026-10-03 21:23:21] stage=first_game_update_complete
+[2026-10-03 21:23:21] stage=first_game_render_begin
+[2026-10-03 21:23:21] stage=fill_rect_color_begin
+[2026-10-03 21:23:21] stage=fill_rect_color_complete
+[2026-10-03 21:23:21] stage=fill_rect_begin_begin
+[2026-10-03 21:23:21] stage=fill_rect_array_begin
+[2026-10-03 21:23:21] stage=fill_rect_draw_begin
+[2026-10-03 21:23:21] stage=fill_rect_draw_complete
+[2026-10-03 21:23:21] stage=fill_rect_array_complete
+[2026-10-03 21:23:21] stage=text_texture_build_begin chars=22 size=24
+[2026-10-03 21:23:21] stage=text_texture_upload_begin width=453 height=24
+[2026-10-03 21:23:21] stage=text_texture_upload_complete valid=1 cache=1
+[2026-10-03 21:23:21] stage=draw_texture_begin
+[2026-10-03 21:23:21] stage=draw_texture_enable_complete
+[2026-10-03 21:23:21] stage=draw_texture_bind_complete
+[2026-10-03 21:23:21] stage=draw_texture_color_complete
+[2026-10-03 21:23:21] stage=draw_texture_arrays_begin
+[2026-10-03 21:23:21] stage=draw_texture_draw_begin
+[2026-10-03 21:23:22] stage=draw_texture_draw_complete
+[2026-10-03 21:23:22] stage=draw_texture_complete
+[2026-10-03 21:23:22] stage=text_texture_build_begin chars=18 size=15
+[2026-10-03 21:23:22] stage=text_texture_upload_begin width=175 height=15
+[2026-10-03 21:23:22] stage=text_texture_upload_complete valid=1 cache=2
+[2026-10-03 21:23:22] stage=draw_texture_begin
+[2026-10-03 21:23:22] stage=draw_texture_enable_complete
+[2026-10-03 21:23:22] stage=draw_texture_bind_complete
+[2026-10-03 21:23:23] stage=draw_texture_color_complete
+[2026-10-03 21:23:23] stage=draw_texture_arrays_begin
+[2026-10-03 21:23:23] stage=draw_texture_draw_begin
+[2026-10-03 21:23:23] stage=draw_texture_draw_complete
+[2026-10-03 21:23:23] stage=draw_texture_complete
+[2026-10-03 21:23:23] stage=text_texture_build_begin chars=26 size=14
+[2026-10-03 21:23:23] stage=text_texture_upload_begin width=232 height=14
+[2026-10-03 21:23:23] stage=text_texture_upload_complete valid=1 cache=3
+[2026-10-03 21:23:23] stage=draw_texture_begin
+[2026-10-03 21:23:23] stage=draw_texture_enable_complete
+[2026-10-03 21:23:23] stage=draw_texture_bind_complete
+[2026-10-03 21:23:23] stage=draw_texture_color_complete
+[2026-10-03 21:23:23] stage=draw_texture_arrays_begin
+[2026-10-03 21:23:23] stage=draw_texture_draw_begin
+[2026-10-03 21:23:23] stage=draw_texture_draw_complete
+[2026-10-03 21:23:23] stage=draw_texture_complete
+[2026-10-03 21:23:23] stage=text_texture_build_begin chars=34 size=14
+[2026-10-03 21:23:23] stage=text_texture_upload_begin width=288 height=14
+[2026-10-03 21:23:23] stage=text_texture_upload_complete valid=1 cache=4
+[2026-10-03 21:23:23] stage=draw_texture_begin
+[2026-10-03 21:23:23] stage=draw_texture_enable_complete
+[2026-10-03 21:23:23] stage=draw_texture_bind_complete
+[2026-10-03 21:23:23] stage=draw_texture_color_complete
+[2026-10-03 21:23:23] stage=draw_texture_arrays_begin
+[2026-10-03 21:23:23] stage=draw_texture_draw_begin
+[2026-10-03 21:23:23] stage=draw_texture_draw_complete
+[2026-10-03 21:23:23] stage=draw_texture_complete
