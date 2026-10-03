@@ -1060,3 +1060,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - The first title-screen render intentionally avoids ship/map texture uploads so the hardware startup path remains lightweight and stable.
 - Commit: 045f3563786a65960f426ea5b7c354c3ea0861cc.
 - This is the first title-screen implementation; original FTL artwork/asset matching remains a subsequent fidelity pass after the screen/entry flow is confirmed on Vita.
+
+
+## 2026-10-04 Canonical title screen assets
+- Replaced the provisional synthetic Vita title screen with the actual localized Japanese title-menu artwork contained in `ftl.dat`.
+- Uses `img/main_menus/main_base2.png` as the canonical 1280x720 background and the `img/loc-ja/main_menus/*` button assets for New Game, Continue, Tutorial, Stats, Options, Credits and Quit.
+- Vita rendering fits the original 16:9 artwork to 960x540 with the remaining 4 vertical pixels reserved by the Vita surface.
+- Title-screen music now uses the archive's `audio/music/bp_MUS_TitleScreen.ogg`; exploration music is suppressed while the title scene is active.
+- The previous text/starfield placeholder is no longer used as the normal title presentation.
+- Commit: `e9a2b2f650874e54ef47a58b89e9b5c3fdc74ae6`.
