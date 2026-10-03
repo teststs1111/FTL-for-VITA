@@ -1007,3 +1007,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Next real-device check: confirm that the first frame advances past `startup_error_background_complete`. If it does, investigate the Vita immediate-mode rectangle implementation separately before restoring it to normal gameplay rendering.
 
 - After the startup-error background bypass, `Graphics::beginFrame()` now records checkpoints around Vita `glClearColor/glClear` so the next device run can distinguish clear-path faults from the removed immediate-mode rectangle path.
+
+
+## 2026-10-03 — Vita PVF startup blocker fixed
+- Real-device runtime dump `ftl_runtime_dump(2).txt` showed the renderer no longer crashes: the Vita clear path and startup-error frame rendered repeatedly.
+- The remaining startup error was identified precisely: `ShipScene` sets `startupError_` to `Text renderer initialization failed` because `scePvfNewLib()` returned `SCE_PVF_ERROR_ARG`.
+- VitaSDK documents `ScePvfInitRec` with allocator callbacks, and the libvita2d reference implementation supplies explicit alloc/realloc/free callbacks when calling `scePvfNewLib()`. The Vita port previously left those callbacks null.
+- Commit `f3dc3ee3386e9c80e9d502e887c5485e328c49c9` now initializes the PVF record with explicit aligned-size malloc/realloc/free callbacks, matching the proven Vita/libvita2d pattern.
+- Next real-device test target: the VPK from the successful Vita build for this commit. Do not treat the older runtime dump as validation of this change.
