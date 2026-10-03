@@ -1005,3 +1005,5 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - The startup-error screen is entered because Vita PVF initialization still returns `lib=0 error=-2142896125`. This is a separate text-renderer blocker.
 - To isolate the native vertex path without another equivalent `glVertex*` experiment, the Vita startup-error background now uses `Graphics::beginFrame()`/color-buffer clear instead of `Graphics::fillRect()`. The non-Vita path retains the rectangle implementation.
 - Next real-device check: confirm that the first frame advances past `startup_error_background_complete`. If it does, investigate the Vita immediate-mode rectangle implementation separately before restoring it to normal gameplay rendering.
+
+- After the startup-error background bypass, `Graphics::beginFrame()` now records checkpoints around Vita `glClearColor/glClear` so the next device run can distinguish clear-path faults from the removed immediate-mode rectangle path.
