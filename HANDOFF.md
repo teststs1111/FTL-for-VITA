@@ -985,3 +985,15 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - This is a targeted native-crash mitigation after the real-device dump stopped immediately after `startup_error_background_begin`; the previous instrumentation showed the first failing area was `Graphics::fillRect()`.
 - The change does not alter game data or the archive/DLC model; it only changes the rendering primitive used to draw the same rectangles.
 - Next real-device check: use the VPK built from this commit and inspect whether startup advances past the startup-error background. If it still crashes, use the existing fill_rect checkpoints to identify the exact GL call before changing further rendering code.
+
+
+## 2026-10-03 Vita .psp2dmp analysis
+- The uploaded `psp2core-1790955000-0x0000043acd-eboot.bin.psp2dmp` is a valid gzip-compressed Vita core dump (3,243,152 bytes after decompression).
+- It is from the pre-`bfe52efe5b952b671fbc2954bf4181eee78d545c` build: the dump timestamp is 2026-10-03 00:29:57 JST, while the explicit-`glVertex3f` commit was built later. Do not use this dump as evidence about the latest `glVertex3f` VPK.
+- Crashed thread: `FTLV00001` / UID `0x40010003`; stop reason `0x30004` (ARM Data Abort). PC=`0x810e937e`, LR=`0x0`, DFSR=`0x000008c7`, DFAR=`0x0`.
+- The main executable runtime RX segment is `0x810532c0`; the crash PC is therefore offset `0x960be` into the app code segment.
+- The matching pre-`bfe52...` VPK was reconstructed internally and its embedded ELF was extracted for disassembly. At PC `0x810e937e`, the instruction is Thumb `ldr r0, [r7, #0x8]`. The CPSR has Thumb state enabled.
+- The dump's DFSR value `0x8c7` indicates an asynchronous/external-abort style fault rather than a normal directly-addressable null-pointer data abort; DFAR is consequently not a reliable fault address here. The PC should not be treated as proof that this `ldr` itself caused the hardware fault.
+- The crash-frame memory shows `r7=0x81580228`; its nearby values are the exact startup-error rectangle arguments (40, 40, 880, 464) in the spilled float-argument area. This ties the failing execution path to the `Graphics::fillRect()` startup-error background path.
+- Conclusion: this dump strongly supports the existing hypothesis that the native fault is triggered by the Vita rendering path around the first rectangle vertex submission, but the OS dump shows an asynchronous/external abort, so the exact synchronous instruction inside vitaGL cannot be identified from this dump alone.
+- Next device test must use the VPK from commit `bfe52efe5b952b671fbc2954bf4181eee78d545c` (the explicit `glVertex3f(x,y,0.f)` isolation change). If that still crashes at the same checkpoint, the next change should remove immediate-mode vertex submission from the solid-rectangle startup path rather than making another equivalent `glVertex*` variant.
