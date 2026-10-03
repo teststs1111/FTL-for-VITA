@@ -33,8 +33,11 @@ void Graphics::shutdown() { initialized_ = false; }
 void Graphics::beginFrame(const Color& clear) {
     if (!initialized_) return;
 #ifdef __vita__
+    RuntimeDiagnostics::checkpoint("begin_frame_clear_begin");
     glClearColor(clear.r, clear.g, clear.b, clear.a);
+    RuntimeDiagnostics::checkpoint("begin_frame_clear_color_complete");
     glClear(GL_COLOR_BUFFER_BIT);
+    RuntimeDiagnostics::checkpoint("begin_frame_clear_complete");
 #else
     (void)clear;
 #endif
