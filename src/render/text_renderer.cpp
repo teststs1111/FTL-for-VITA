@@ -1,7 +1,8 @@
 #include "render/text_renderer.hpp"
 #include "platform/runtime_diagnostics.hpp"
 #include <algorithm>
-#include <cstdint>\n#include <cstdlib>
+#include <cstdint>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
