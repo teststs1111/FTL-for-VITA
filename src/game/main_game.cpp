@@ -13,6 +13,7 @@
 #include "platform/input.hpp"
 #include "platform/runtime_diagnostics.hpp"
 #include <algorithm>
+#include <exception>
 #include <functional>
 #include <cmath>
 #include <cctype>
@@ -345,6 +346,8 @@ public:
     }
 
     void playExploreMusic() {
+        RuntimeDiagnostics::checkpoint("explore_music_load_begin");
+        try {
         std::string type = currentSectorType_;
         std::transform(type.begin(), type.end(), type.begin(),
             [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
@@ -365,8 +368,19 @@ public:
         else if (type.find("cosmos") != std::string::npos) track = "CosmosEXPLORE";
         const std::string name = "audio/music/bp_MUS_" + track + ".ogg";
         if (const auto* bytes = content_.assets().getBytes(name)) {
-            audio_.playAsset(*bytes, name, 0.42f, true);
+            RuntimeDiagnostics::checkpoint("explore_music_asset_loaded",
+                "bytes=" + std::to_string(bytes->size()));
+            const bool played = audio_.playAsset(*bytes, name, 0.42f, true);
+            RuntimeDiagnostics::checkpoint("explore_music_asset_complete",
+                "played=" + std::to_string(played ? 1 : 0));
             content_.assets().releaseBytes(name);
+        } else {
+            RuntimeDiagnostics::checkpoint("explore_music_asset_missing", name);
+        }
+        } catch (const std::exception& e) {
+            RuntimeDiagnostics::checkpoint("explore_music_exception", e.what());
+        } catch (...) {
+            RuntimeDiagnostics::checkpoint("explore_music_exception", "unknown");
         }
     }
 
