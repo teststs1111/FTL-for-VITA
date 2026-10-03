@@ -4023,7 +4023,12 @@ public:
         if (!startupError_.empty()) {
             RuntimeDiagnostics::checkpoint("startup_error_render_begin");
             RuntimeDiagnostics::checkpoint("startup_error_background_begin");
+#ifdef __vita__
+            // Keep the native-crash isolation path free of immediate-mode vertex submission.
+            graphics_.beginFrame({0.06f, 0.07f, 0.10f, 1.f});
+#else
             graphics_.fillRect(40.f, 40.f, 880.f, 464.f, {0.06f, 0.07f, 0.10f, 1.f});
+#endif
             RuntimeDiagnostics::checkpoint("startup_error_background_complete");
             RuntimeDiagnostics::checkpoint("startup_error_title_begin");
             text_.draw(graphics_, "FTL: Faster Than Light", 70.f, 95.f, 30.f,
