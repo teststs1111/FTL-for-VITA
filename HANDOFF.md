@@ -1052,3 +1052,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Added exception containment and checkpoints around the explore-music asset/decode call so a memory/decode allocation failure no longer terminates the game and the exact failure can be identified on the next run.
 - Commit: `60619fa14d5fd2dd0b7a81426d0c02a13f096137`.
 - This is a stabilization step; the final original-faithful audio implementation should stream music rather than permanently decoding an entire OGG into one voice buffer.
+
+
+## 2026-10-04 — Title screen priority
+- The Vita boot flow now enters a dedicated SceneMode::Title after archive/data initialization instead of opening ship selection or the sector map directly.
+- Title screen is the first interactive scene. Up/Down selects New Game or Continue; Cross/Start confirms. Continue uses the existing save loader and falls back to a no-save message when no save exists.
+- The first title-screen render intentionally avoids ship/map texture uploads so the hardware startup path remains lightweight and stable.
+- Commit: 045f3563786a65960f426ea5b7c354c3ea0861cc.
+- This is the first title-screen implementation; original FTL artwork/asset matching remains a subsequent fidelity pass after the screen/entry flow is confirmed on Vita.
