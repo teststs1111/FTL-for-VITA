@@ -76,11 +76,21 @@ void Graphics::fillRect(float x,float y,float w,float h,const Color& c) {
 void Graphics::drawLine(float x1,float y1,float x2,float y2,const Color& c) {
     if (!initialized_) return;
 #ifdef __vita__
+    RuntimeDiagnostics::checkpoint("draw_line_begin");
     glColor4f(c.r,c.g,c.b,c.a);
-    glBegin(GL_LINES);
-    glVertex2f(x1,y1);
-    glVertex2f(x2,y2);
-    glEnd();
+    RuntimeDiagnostics::checkpoint("draw_line_color_complete");
+    const GLfloat vertices[] = {
+        x1, y1,
+        x2, y2
+    };
+    RuntimeDiagnostics::checkpoint("draw_line_array_begin");
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_FLOAT, 0, vertices);
+    RuntimeDiagnostics::checkpoint("draw_line_draw_begin");
+    glDrawArrays(GL_LINES, 0, 2);
+    RuntimeDiagnostics::checkpoint("draw_line_draw_complete");
+    glDisableClientState(GL_VERTEX_ARRAY);
+    RuntimeDiagnostics::checkpoint("draw_line_complete");
 #else
     (void)x1;(void)y1;(void)x2;(void)y2;(void)c;
 #endif
