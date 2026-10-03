@@ -1015,3 +1015,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - VitaSDK documents `ScePvfInitRec` with allocator callbacks, and the libvita2d reference implementation supplies explicit alloc/realloc/free callbacks when calling `scePvfNewLib()`. The Vita port previously left those callbacks null.
 - Commit `f3dc3ee3386e9c80e9d502e887c5485e328c49c9` now initializes the PVF record with explicit aligned-size malloc/realloc/free callbacks, matching the proven Vita/libvita2d pattern.
 - Next real-device test target: the VPK from the successful Vita build for this commit. Do not treat the older runtime dump as validation of this change.
+
+
+## 2026-10-03 — Vita solid-rectangle vertex path adjusted
+- Latest real-device runtime log reaches full game initialization and the first frame, confirming the PVF allocator fix: PVF library and both Japanese/Latin fonts now initialize successfully.
+- `ftl.dat` opens successfully; localization, 939 events, sector data, sector graph, beacon assignments, fleet state, and scene initialization all complete.
+- The remaining crash boundary is the first solid rectangle vertex: `fill_rect_vertex_1_begin` is the last recorded checkpoint.
+- `Graphics::fillRect()` was changed from `glVertex3f()` to the same `glVertex2f()` path already used by Vita texture rendering, keeping the triangle-strip geometry unchanged.
+- Commit: `51db3876f0b4a38762b16f111634b06110e2a4d8`.
+- Next real-device test should use a build containing this commit. The new dump itself already proves the previous PVF startup blocker is resolved.
