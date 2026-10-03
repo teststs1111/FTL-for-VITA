@@ -149,11 +149,30 @@ void Graphics::drawTexture(const Texture& texture,float x,float y,float w,float 
 void Graphics::drawTextureRegion(const Texture& texture,float x,float y,float w,float h,float u0,float v0,float u1,float v1,const Color& c) {
     if (!initialized_ || !texture.valid()) return;
 #ifdef __vita__
-    glEnable(GL_TEXTURE_2D); glBindTexture(GL_TEXTURE_2D,static_cast<GLuint>(texture.handle()));
-    glColor4f(c.r,c.g,c.b,c.a); glBegin(GL_TRIANGLE_STRIP);
-    glTexCoord2f(u0,v0); glVertex2f(x,y); glTexCoord2f(u1,v0); glVertex2f(x+w,y);
-    glTexCoord2f(u0,v1); glVertex2f(x,y+h); glTexCoord2f(u1,v1); glVertex2f(x+w,y+h);
-    glEnd(); glBindTexture(GL_TEXTURE_2D,0); glDisable(GL_TEXTURE_2D);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D,static_cast<GLuint>(texture.handle()));
+    glColor4f(c.r,c.g,c.b,c.a);
+    const GLfloat vertices[] = {
+        x, y,
+        x + w, y,
+        x, y + h,
+        x + w, y + h
+    };
+    const GLfloat texcoords[] = {
+        u0, v0,
+        u1, v0,
+        u0, v1,
+        u1, v1
+    };
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glVertexPointer(2, GL_FLOAT, 0, vertices);
+    glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glBindTexture(GL_TEXTURE_2D,0);
+    glDisable(GL_TEXTURE_2D);
 #else
     (void)texture;(void)x;(void)y;(void)w;(void)h;(void)u0;(void)v0;(void)u1;(void)v1;(void)c;
 #endif
