@@ -1033,3 +1033,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - To remove the remaining Vita immediate-mode texture path as another native-rendering variable, `Graphics::drawTextureRegion()` now uses the same vertex/texture-coordinate arrays plus `glDrawArrays(GL_TRIANGLE_STRIP)` as `drawTexture()`.
 - Commit: `f4eea9dc2ab7f0e7f4e52f05fb07b77e10eb2951`.
 - Next device target: verify that rendering advances beyond the current fourth text draw and capture the next dump/log boundary if it still stops.
+
+
+## 2026-10-04 — Vita line rendering isolation
+- A newer device run is present in `runtime-dumps/`: `psp2core-1791039825-0x0000a125f9-eboot.bin.psp2dmp`.
+- The accompanying runtime log is a fresh 2026-10-04 session and reaches four complete `drawTexture()` calls, then stops before the next visible rendering operation.
+- `Graphics::drawLine()` was still using Vita immediate-mode `glBegin(GL_LINES)` / `glVertex2f()`, while rectangle and texture paths had already been converted to client arrays.
+- Replaced Vita line rendering with a two-vertex array and `glDrawArrays(GL_LINES)`, with runtime checkpoints around the draw.
+- Commit: `8d93e501a03801f4d479fd4c6f26d0ea73f5b067`.
+- Next device target: verify whether rendering advances beyond the previous fourth texture draw and reaches `draw_line_draw_complete`.
