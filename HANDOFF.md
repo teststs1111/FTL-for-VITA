@@ -997,3 +997,11 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - The crash-frame memory shows `r7=0x81580228`; its nearby values are the exact startup-error rectangle arguments (40, 40, 880, 464) in the spilled float-argument area. This ties the failing execution path to the `Graphics::fillRect()` startup-error background path.
 - Conclusion: this dump strongly supports the existing hypothesis that the native fault is triggered by the Vita rendering path around the first rectangle vertex submission, but the OS dump shows an asynchronous/external abort, so the exact synchronous instruction inside vitaGL cannot be identified from this dump alone.
 - Next device test must use the VPK from commit `bfe52efe5b952b671fbc2954bf4181eee78d545c` (the explicit `glVertex3f(x,y,0.f)` isolation change). If that still crashes at the same checkpoint, the next change should remove immediate-mode vertex submission from the solid-rectangle startup path rather than making another equivalent `glVertex*` variant.
+
+
+## 2026-10-03 Vita startup render follow-up
+- The new real-device session at 2026-10-03 19:23:00 JST still reaches `fill_rect_vertex_1_begin` and stops there; the runtime log is therefore consistent with the same native rendering boundary even after the explicit `glVertex3f` isolation change.
+- `ftl.dat` is still opened from `ux0:data/wormhole/ftl.dat`, graphics initialization completes, and the first game update completes before the startup-error render path.
+- The startup-error screen is entered because Vita PVF initialization still returns `lib=0 error=-2142896125`. This is a separate text-renderer blocker.
+- To isolate the native vertex path without another equivalent `glVertex*` experiment, the Vita startup-error background now uses `Graphics::beginFrame()`/color-buffer clear instead of `Graphics::fillRect()`. The non-Vita path retains the rectangle implementation.
+- Next real-device check: confirm that the first frame advances past `startup_error_background_complete`. If it does, investigate the Vita immediate-mode rectangle implementation separately before restoring it to normal gameplay rendering.
