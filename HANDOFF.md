@@ -1042,3 +1042,13 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Replaced Vita line rendering with a two-vertex array and `glDrawArrays(GL_LINES)`, with runtime checkpoints around the draw.
 - Commit: `8d93e501a03801f4d479fd4c6f26d0ea73f5b067`.
 - Next device target: verify whether rendering advances beyond the previous fourth texture draw and reaches `draw_line_draw_complete`.
+
+
+## 2026-10-04 — Vita startup rendering now reaches explore music
+- New device run `psp2core-1791040483-0x0001432f09-eboot.bin.psp2dmp` is present.
+- The fresh runtime log now passes the entire first-frame render, including `first_frame_render_complete`, then starts the next frame and reaches `explore_music_begin`.
+- The previous line-rendering crash boundary is therefore cleared.
+- The next native termination occurs during the first explore-music load/play path. That path currently reads an OGG from `ftl.dat` and expands the complete track to PCM, creating a potentially large temporary allocation on Vita.
+- Added exception containment and checkpoints around the explore-music asset/decode call so a memory/decode allocation failure no longer terminates the game and the exact failure can be identified on the next run.
+- Commit: `60619fa14d5fd2dd0b7a81426d0c02a13f096137`.
+- This is a stabilization step; the final original-faithful audio implementation should stream music rather than permanently decoding an entire OGG into one voice buffer.
