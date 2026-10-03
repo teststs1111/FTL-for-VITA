@@ -1,7 +1,7 @@
 #include "render/text_renderer.hpp"
 #include "platform/runtime_diagnostics.hpp"
 #include <algorithm>
-#include <cstdint>
+#include <cstdint>\n#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -38,8 +38,23 @@ bool TextRenderer::init() {
     impl_ = new Impl();
 #ifdef __vita__
     RuntimeDiagnostics::checkpoint("pvf_init_begin");
+    // PVF requires explicit allocator callbacks. libvita2d uses the same
+    // pattern; leaving these callbacks null makes scePvfNewLib return
+    // SCE_PVF_ERROR_ARG on real hardware.
     ScePvfInitRec init{};
+    init.userData = nullptr;
     init.maxNumFonts = SCE_PVF_MAX_OPEN;
+    init.cache = nullptr;
+    init.reserved = nullptr;
+    init.allocFunc = [](ScePvfPointer, unsigned int size) -> ScePvfPointer {
+        return std::malloc((size + sizeof(int) - 1) / sizeof(int) * sizeof(int));
+    };
+    init.reallocFunc = [](ScePvfPointer, ScePvfPointer ptr, unsigned int size) -> ScePvfPointer {
+        return std::realloc(ptr, (size + sizeof(int) - 1) / sizeof(int) * sizeof(int));
+    };
+    init.freeFunc = [](ScePvfPointer, ScePvfPointer ptr) {
+        std::free(ptr);
+    };
     impl_->lib = scePvfNewLib(&init, &impl_->error);
     RuntimeDiagnostics::checkpoint("pvf_newlib_complete",
         "lib=" + std::to_string(reinterpret_cast<std::uintptr_t>(impl_->lib)) +
