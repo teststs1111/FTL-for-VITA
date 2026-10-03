@@ -1024,3 +1024,12 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - `Graphics::fillRect()` was changed from `glVertex3f()` to the same `glVertex2f()` path already used by Vita texture rendering, keeping the triangle-strip geometry unchanged.
 - Commit: `51db3876f0b4a38762b16f111634b06110e2a4d8`.
 - Next real-device test should use a build containing this commit. The new dump itself already proves the previous PVF startup blocker is resolved.
+
+
+## 2026-10-03 — Vita texture draw path completed
+- Latest real-device runtime log reaches four consecutive text texture uploads/draws through `draw_texture_draw_complete` and `draw_texture_complete`; the previous texture-array path therefore survives repeated text rendering.
+- The session also confirms the full startup/data path: `ux0:data/wormhole/ftl.dat`, localization, 939 events, sector data, sector graph, beacon assignments, fleet state, and scene initialization all complete before first-frame rendering.
+- The log stops after the fourth text draw, so the exact native crash PC still needs correlation with the newest `.psp2dmp`; the log alone does not prove which later render call fails.
+- To remove the remaining Vita immediate-mode texture path as another native-rendering variable, `Graphics::drawTextureRegion()` now uses the same vertex/texture-coordinate arrays plus `glDrawArrays(GL_TRIANGLE_STRIP)` as `drawTexture()`.
+- Commit: `f4eea9dc2ab7f0e7f4e52f05fb07b77e10eb2951`.
+- Next device target: verify that rendering advances beyond the current fourth text draw and capture the next dump/log boundary if it still stops.
