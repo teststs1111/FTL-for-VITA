@@ -55,22 +55,20 @@ void Graphics::fillRect(float x,float y,float w,float h,const Color& c) {
     glColor4f(c.r,c.g,c.b,c.a);
     RuntimeDiagnostics::checkpoint("fill_rect_color_complete");
     RuntimeDiagnostics::checkpoint("fill_rect_begin_begin");
-    glBegin(GL_TRIANGLE_STRIP);
-    RuntimeDiagnostics::checkpoint("fill_rect_begin_complete");
-    RuntimeDiagnostics::checkpoint("fill_rect_vertex_1_begin");
-    glVertex2f(x,y);
-    RuntimeDiagnostics::checkpoint("fill_rect_vertex_1_complete");
-    RuntimeDiagnostics::checkpoint("fill_rect_vertex_2_begin");
-    glVertex2f(x+w,y);
-    RuntimeDiagnostics::checkpoint("fill_rect_vertex_2_complete");
-    RuntimeDiagnostics::checkpoint("fill_rect_vertex_3_begin");
-    glVertex2f(x,y+h);
-    RuntimeDiagnostics::checkpoint("fill_rect_vertex_3_complete");
-    RuntimeDiagnostics::checkpoint("fill_rect_vertex_4_begin");
-    glVertex2f(x+w,y+h);
-    RuntimeDiagnostics::checkpoint("fill_rect_vertex_4_complete");
-    glEnd();
-    RuntimeDiagnostics::checkpoint("fill_rect_end_complete");
+    const GLfloat vertices[] = {
+        x, y,
+        x + w, y,
+        x, y + h,
+        x + w, y + h
+    };
+    RuntimeDiagnostics::checkpoint("fill_rect_array_begin");
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_FLOAT, 0, vertices);
+    RuntimeDiagnostics::checkpoint("fill_rect_draw_begin");
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    RuntimeDiagnostics::checkpoint("fill_rect_draw_complete");
+    glDisableClientState(GL_VERTEX_ARRAY);
+    RuntimeDiagnostics::checkpoint("fill_rect_array_complete");
 #else
     (void)x;(void)y;(void)w;(void)h;(void)c;
 #endif
