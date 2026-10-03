@@ -150,7 +150,7 @@ public:
             RuntimeDiagnostics::checkpoint("ship_selection_built",
                 "choices=" + std::to_string(shipChoices_.size()));
 
-            sceneMode_ = shipChoices_.empty() ? SceneMode::SectorMap : SceneMode::ShipSelect;
+            sceneMode_ = SceneMode::Title;
             RuntimeDiagnostics::checkpoint("scene_assets_ready");
             // Decode/upload exploration music lazily on the first update.  The
             // archive contains the full OGG, so doing this in the constructor
@@ -776,7 +776,7 @@ public:
             text_.draw(graphics_, combatFeedback_, 550.f, 475.f, 14.f, {0.95f, 0.76f, 0.40f, 1.f});
     }
 
-    enum class SceneMode { ShipSelect, SectorMap, Ship, Event, Combat, Pause, GameOver, Victory };
+    enum class SceneMode { Title, ShipSelect, SectorMap, Ship, Event, Combat, Pause, GameOver, Victory };
 
 
     static constexpr const char* savePath() { return "ux0:data/wormhole/save.dat"; }
@@ -1307,6 +1307,76 @@ public:
             ",start=" + std::to_string(selectedBeacon_));
         sceneMode_ = SceneMode::SectorMap;
         return true;
+    }
+
+    void updateTitle() {
+        if (input_.pressed(Button::Up) || input_.pressed(Button::Down))
+            titleSelection_ = titleSelection_ == 0 ? 1 : 0;
+
+        if (input_.pressed(Button::Cross) || input_.pressed(Button::Start)) {
+            if (titleSelection_ == 0) {
+                if (shipChoices_.empty()) {
+                    sceneMode_ = SceneMode::SectorMap;
+                } else {
+                    sceneMode_ = SceneMode::ShipSelect;
+                }
+                RuntimeDiagnostics::checkpoint("title_new_game_selected");
+            } else {
+                if (hasSaveGame() && loadGame()) {
+                    RuntimeDiagnostics::checkpoint("title_continue_selected");
+                } else {
+                    combatFeedback_ = "セーブデータがありません";
+                    combatFeedbackTimer_ = 1.5f;
+                }
+            }
+        }
+    }
+
+    void renderTitle() {
+        RuntimeDiagnostics::checkpoint("title_render_begin");
+
+        // Keep the first title-screen path deliberately simple and Vita-safe:
+        // no ship/map texture uploads are required before the player chooses
+        // New Game or Continue. The data archive is already loaded.
+        graphics_.fillRect(0.f, 0.f, 960.f, 544.f, {0.018f, 0.024f, 0.040f, 1.f});
+
+        // Star-field / panel treatment matching the restrained FTL menu
+        // presentation without depending on a specific optional texture name.
+        for (int i = 0; i < 18; ++i) {
+            const float x = 28.f + static_cast<float>((i * 137) % 900);
+            const float y = 35.f + static_cast<float>((i * 83) % 410);
+            graphics_.fillRect(x, y, 2.f, 2.f, {0.42f, 0.52f, 0.68f, 0.65f});
+        }
+
+        text_.draw(graphics_, "FTL", 330.f, 120.f, 72.f, {0.86f, 0.91f, 1.f, 1.f});
+        text_.draw(graphics_, "FASTER THAN LIGHT", 286.f, 195.f, 25.f, {0.60f, 0.73f, 0.88f, 1.f});
+
+        const Color newGame = titleSelection_ == 0
+            ? Color{1.f, 0.84f, 0.42f, 1.f}
+            : Color{0.70f, 0.77f, 0.88f, 1.f};
+        const Color cont = titleSelection_ == 1
+            ? Color{1.f, 0.84f, 0.42f, 1.f}
+            : Color{0.70f, 0.77f, 0.88f, 1.f};
+
+        text_.draw(graphics_, titleSelection_ == 0 ? "> NEW GAME" : "  NEW GAME",
+            365.f, 295.f, 20.f, newGame);
+        text_.draw(graphics_, titleSelection_ == 1 ? "> CONTINUE" : "  CONTINUE",
+            365.f, 335.f, 20.f, cont);
+
+        if (!hasSaveGame())
+            text_.draw(graphics_, "(no save data)", 545.f, 335.f, 13.f,
+                {0.42f, 0.48f, 0.58f, 1.f});
+
+        text_.draw(graphics_, "↑↓: SELECT    × / START: CONFIRM", 320.f, 445.f, 14.f,
+            {0.54f, 0.63f, 0.75f, 1.f});
+        text_.draw(graphics_, "Faster Than Light - Vita", 365.f, 480.f, 12.f,
+            {0.38f, 0.45f, 0.56f, 1.f});
+
+        if (!combatFeedback_.empty() && combatFeedbackTimer_ > 0.f)
+            text_.draw(graphics_, combatFeedback_, 365.f, 380.f, 14.f,
+                {1.f, 0.70f, 0.35f, 1.f});
+
+        RuntimeDiagnostics::checkpoint("title_render_complete");
     }
 
     void updateShipSelect() {
@@ -3136,6 +3206,11 @@ public:
             updatePause();
             return;
         }
+        if (sceneMode_ == SceneMode::Title) {
+            combatFeedbackTimer_ = std::max(0.0f, combatFeedbackTimer_ - dt);
+            updateTitle();
+            return;
+        }
         if (sceneMode_ == SceneMode::ShipSelect) {
             updateShipSelect();
             return;
@@ -4058,6 +4133,10 @@ public:
             RuntimeDiagnostics::checkpoint("startup_error_message_complete");
             return;
         }
+        if (sceneMode_ == SceneMode::Title) {
+            renderTitle();
+            return;
+        }
         if (sceneMode_ == SceneMode::ShipSelect) {
             renderShipSelect();
             return;
@@ -4270,6 +4349,7 @@ private:
     int droneParts_{0};
     std::vector<std::string> shipChoices_;
     int shipSelection_{0};
+    int titleSelection_{0};
     std::vector<std::string> activeQuestIds_;
     std::vector<RuntimeCrew> pendingBoarders_;
     CombatEnvironment pendingEnvironment_{CombatEnvironment::None};
