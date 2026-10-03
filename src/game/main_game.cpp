@@ -158,8 +158,11 @@ public:
             // Leave the first two frames free of OGG decoding. The first
             // rendered frame is the useful hardware-startup checkpoint; audio
             // can begin immediately afterward without changing gameplay.
-            exploreMusicPending_ = 3;
+            // Title music belongs to the title scene; do not start
+            // exploration music underneath the main menu.
+            exploreMusicPending_ = 0;
             RuntimeDiagnostics::checkpoint("explore_music_deferred");
+            RuntimeDiagnostics::checkpoint("title_music_deferred");
         RuntimeDiagnostics::checkpoint("ship_scene_ready", "scene=" + std::to_string(static_cast<int>(sceneMode_)));
         }
     }
@@ -1309,71 +1312,121 @@ public:
         return true;
     }
 
+    void ensureTitleTextures() {
+        if (titleTexturesReady_) return;
+        RuntimeDiagnostics::checkpoint("title_assets_begin");
+        const char* assets[] = {
+            "img/main_menus/main_base2.png",
+            "img/loc-ja/main_menus/start_off.png",
+            "img/loc-ja/main_menus/start_on.png",
+            "img/loc-ja/main_menus/continue_off.png",
+            "img/loc-ja/main_menus/continue_on.png",
+            "img/loc-ja/main_menus/tutorial_off.png",
+            "img/loc-ja/main_menus/tutorial_on.png",
+            "img/loc-ja/main_menus/stats_off.png",
+            "img/loc-ja/main_menus/stats_on.png",
+            "img/loc-ja/main_menus/options_off.png",
+            "img/loc-ja/main_menus/options_on.png",
+            "img/loc-ja/main_menus/credits_off.png",
+            "img/loc-ja/main_menus/credits_on.png",
+            "img/loc-ja/main_menus/quit_off.png",
+            "img/loc-ja/main_menus/quit_on.png"
+        };
+        bool ready = true;
+        for (const char* name : assets) {
+            if (!textures_.load(graphics_, content_.assets(), name))
+                ready = false;
+        }
+        titleTexturesReady_ = ready;
+        RuntimeDiagnostics::checkpoint("title_assets_ready",
+            std::string("ready=") + (ready ? "1" : "0"));
+    }
+
     void updateTitle() {
-        if (input_.pressed(Button::Up) || input_.pressed(Button::Down))
-            titleSelection_ = titleSelection_ == 0 ? 1 : 0;
+        // The real FTL title screen has seven menu entries. Keep navigation
+        // tied to the archive's actual localized button artwork rather than
+        // replacing the menu with synthetic text.
+        if (input_.pressed(Button::Up)) {
+            titleSelection_ = (titleSelection_ + 6) % 7;
+        } else if (input_.pressed(Button::Down)) {
+            titleSelection_ = (titleSelection_ + 1) % 7;
+        }
 
         if (input_.pressed(Button::Cross) || input_.pressed(Button::Start)) {
-            if (titleSelection_ == 0) {
+            switch (titleSelection_) {
+            case 0:
                 if (shipChoices_.empty()) {
-                    sceneMode_ = SceneMode::SectorMap;
+                    combatFeedback_ = "艦データを読み込めません";
+                    combatFeedbackTimer_ = 1.5f;
                 } else {
                     sceneMode_ = SceneMode::ShipSelect;
+                    RuntimeDiagnostics::checkpoint("title_new_game_selected");
                 }
-                RuntimeDiagnostics::checkpoint("title_new_game_selected");
-            } else {
+                break;
+            case 1:
                 if (hasSaveGame() && loadGame()) {
                     RuntimeDiagnostics::checkpoint("title_continue_selected");
                 } else {
                     combatFeedback_ = "セーブデータがありません";
                     combatFeedbackTimer_ = 1.5f;
                 }
+                break;
+            default:
+                // The remaining title-menu scenes are implemented after the
+                // canonical title artwork/path is established. Do not leave
+                // the title screen or invent a substitute screen here.
+                combatFeedback_ = "このメニューは次段階で実装します";
+                combatFeedbackTimer_ = 1.5f;
+                break;
             }
         }
     }
 
     void renderTitle() {
         RuntimeDiagnostics::checkpoint("title_render_begin");
+        ensureTitleTextures();
 
-        // Keep the first title-screen path deliberately simple and Vita-safe:
-        // no ship/map texture uploads are required before the player chooses
-        // New Game or Continue. The data archive is already loaded.
-        graphics_.fillRect(0.f, 0.f, 960.f, 544.f, {0.018f, 0.024f, 0.040f, 1.f});
-
-        // Star-field / panel treatment matching the restrained FTL menu
-        // presentation without depending on a specific optional texture name.
-        for (int i = 0; i < 18; ++i) {
-            const float x = 28.f + static_cast<float>((i * 137) % 900);
-            const float y = 35.f + static_cast<float>((i * 83) % 410);
-            graphics_.fillRect(x, y, 2.f, 2.f, {0.42f, 0.52f, 0.68f, 0.65f});
+        const Texture* background = textures_.get("img/main_menus/main_base2.png");
+        if (background && background->width() > 0 && background->height() > 0) {
+            // main_base2 is the canonical 1280x720 title background. Fit it
+            // to Vita's 960x544 surface while preserving the source aspect.
+            constexpr float targetW = 960.f;
+            constexpr float targetH = 540.f;
+            graphics_.drawTexture(*background, 0.f, 2.f, targetW, targetH);
+        } else {
+            graphics_.fillRect(0.f, 0.f, 960.f, 544.f, {0.018f, 0.024f, 0.040f, 1.f});
         }
 
-        text_.draw(graphics_, "FTL", 330.f, 120.f, 72.f, {0.86f, 0.91f, 1.f, 1.f});
-        text_.draw(graphics_, "FASTER THAN LIGHT", 286.f, 195.f, 25.f, {0.60f, 0.73f, 0.88f, 1.f});
+        const int selected = titleSelection_;
+        struct MenuArt { const char* off; const char* on; float w; float h; float x; float y; };
+        const MenuArt menu[] = {
+            {"img/loc-ja/main_menus/start_off.png",    "img/loc-ja/main_menus/start_on.png",    161.f, 57.f, 660.f, 315.f},
+            {"img/loc-ja/main_menus/continue_off.png","img/loc-ja/main_menus/continue_on.png",124.f, 57.f, 790.f, 315.f},
+            {"img/loc-ja/main_menus/tutorial_off.png","img/loc-ja/main_menus/tutorial_on.png", 277.f, 57.f, 620.f, 360.f},
+            {"img/loc-ja/main_menus/stats_off.png",   "img/loc-ja/main_menus/stats_on.png",    201.f, 57.f, 790.f, 360.f},
+            {"img/loc-ja/main_menus/options_off.png", "img/loc-ja/main_menus/options_on.png",  199.f, 57.f, 620.f, 405.f},
+            {"img/loc-ja/main_menus/credits_off.png", "img/loc-ja/main_menus/credits_on.png",  195.f, 57.f, 790.f, 405.f},
+            {"img/loc-ja/main_menus/quit_off.png",    "img/loc-ja/main_menus/quit_on.png",      86.f, 57.f, 620.f, 450.f}
+        };
 
-        const Color newGame = titleSelection_ == 0
-            ? Color{1.f, 0.84f, 0.42f, 1.f}
-            : Color{0.70f, 0.77f, 0.88f, 1.f};
-        const Color cont = titleSelection_ == 1
-            ? Color{1.f, 0.84f, 0.42f, 1.f}
-            : Color{0.70f, 0.77f, 0.88f, 1.f};
+        // Menu artwork is authored for 1280x720. Scale its coordinates and
+        // dimensions by 0.75 to match the 960x540 render surface.
+        for (int i = 0; i < 7; ++i) {
+            const MenuArt& item = menu[i];
+            const char* asset = (selected == i) ? item.on : item.off;
+            const Texture* texture = textures_.get(asset);
+            if (!texture) continue;
+            graphics_.drawTexture(*texture, item.x * 0.75f, 2.f + item.y * 0.75f,
+                item.w * 0.75f, item.h * 0.75f);
+        }
 
-        text_.draw(graphics_, titleSelection_ == 0 ? "> NEW GAME" : "  NEW GAME",
-            365.f, 295.f, 20.f, newGame);
-        text_.draw(graphics_, titleSelection_ == 1 ? "> CONTINUE" : "  CONTINUE",
-            365.f, 335.f, 20.f, cont);
-
-        if (!hasSaveGame())
-            text_.draw(graphics_, "(no save data)", 545.f, 335.f, 13.f,
-                {0.42f, 0.48f, 0.58f, 1.f});
-
-        text_.draw(graphics_, "↑↓: SELECT    × / START: CONFIRM", 320.f, 445.f, 14.f,
-            {0.54f, 0.63f, 0.75f, 1.f});
-        text_.draw(graphics_, "Faster Than Light - Vita", 365.f, 480.f, 12.f,
-            {0.38f, 0.45f, 0.56f, 1.f});
+        if (!hasSaveGame()) {
+            text_.draw(graphics_, "セーブデータなし", 745.f, 355.f, 11.f,
+                {0.55f, 0.60f, 0.68f, 1.f});
+        }
 
         if (!combatFeedback_.empty() && combatFeedbackTimer_ > 0.f)
-            text_.draw(graphics_, combatFeedback_, 365.f, 380.f, 14.f,
+            text_.draw(graphics_, combatFeedback_, 610.f, 505.f, 12.f,
                 {1.f, 0.70f, 0.35f, 1.f});
 
         RuntimeDiagnostics::checkpoint("title_render_complete");
@@ -3174,9 +3227,28 @@ public:
     }
 
     void update(float dt) override {
+        if (sceneMode_ == SceneMode::Title) {
+            if (!titleMusicStarted_) {
+                RuntimeDiagnostics::checkpoint("title_music_begin");
+                const std::string name = "audio/music/bp_MUS_TitleScreen.ogg";
+                if (const auto* bytes = content_.assets().getBytes(name)) {
+                    const bool played = audio_.playAsset(*bytes, name, 0.42f, true);
+                    RuntimeDiagnostics::checkpoint("title_music_ready",
+                        std::string("played=") + (played ? "1" : "0"));
+                    content_.assets().releaseBytes(name);
+                } else {
+                    RuntimeDiagnostics::checkpoint("title_music_missing", name);
+                }
+                titleMusicStarted_ = true;
+            }
+        } else if (titleMusicStarted_) {
+            audio_.stopMusic();
+            titleMusicStarted_ = false;
+        }
+
         if (exploreMusicPending_ > 0) {
             --exploreMusicPending_;
-            if (exploreMusicPending_ == 0) {
+            if (exploreMusicPending_ == 0 && sceneMode_ != SceneMode::Title) {
                 RuntimeDiagnostics::checkpoint("explore_music_begin");
                 playExploreMusic();
                 RuntimeDiagnostics::checkpoint("explore_music_ready");
@@ -4309,6 +4381,7 @@ private:
     CombatResult lastCombatResult_{};
     bool combatMode_{false};
     bool audioCombatMode_{false};
+    bool titleMusicStarted_{false};
     int combatTargetRoom_{0};
     int selectedRoom_{0};
     int selectedCrew_{0};
@@ -4322,6 +4395,7 @@ private:
     std::unordered_map<std::string, std::string> crewTextureNames_;
     std::string shipTextureName_;
     bool shipViewTexturesReady_{false};
+    bool titleTexturesReady_{false};
     std::string startupError_;
     std::string combatFeedback_;
     std::string saveFeedback_;
