@@ -38,7 +38,7 @@ if(VITA)
     target_link_libraries(vita_wormhole_prototype PRIVATE vitaGL vitashark SceShaccCgExt taihen_stub mathneon m
         SceAppMgr_stub SceIofilemgr_stub SceCommonDialog_stub SceCtrl_stub SceDisplay_stub
         SceGxm_stub SceKernelDmacMgr_stub SceShaccCg_stub SceTouch_stub SceAudio_stub)
-    target_link_options(vita_wormhole_prototype PRIVATE -Wl,-z,max-page-size=0x20000 -Wl,-z,common-page-size=0x1000)
+    target_link_options(vita_wormhole_prototype PRIVATE -Wl,-z,max-page-size=0x1000 -Wl,-z,common-page-size=0x1000)
     vita_create_self(eboot.bin vita_wormhole_prototype UNSAFE STRIPPED)
     vita_create_vpk(FTL-for-VITA.vpk ${VITA_TITLEID} eboot.bin VERSION ${VITA_VERSION} NAME ${VITA_APP_NAME})
 endif()
