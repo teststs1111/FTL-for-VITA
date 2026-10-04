@@ -85,22 +85,65 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
  if(!info||info->channels<1||info->rate<=0){ov_clear(&vf);return false;}
  const int channels=info->channels;
  const int sourceRate=info->rate;
- std::vector<std::int16_t> pcm;
  const ogg_int64_t total=ov_pcm_total(&vf,-1);
- if(loop && total>0){
+
+ // Long looping music is the memory-sensitive case on real Vita hardware.
+ // Decode music as mono at 24 kHz, then expand to the stereo mixer only once
+ // at the end. This keeps the resident music buffer roughly one quarter of
+ // the previous 48 kHz stereo representation while preserving playback.
+ const bool compactMusic = loop && total > 0;
+ if(compactMusic){
    const std::uint64_t sourceFrames=static_cast<std::uint64_t>(total);
-   const std::uint64_t estimatedFrames=(sourceFrames*static_cast<unsigned>(sampleRate_))/
-                                        static_cast<unsigned>(sourceRate);
-   const std::uint64_t estimatedBytes=estimatedFrames*2u*sizeof(std::int16_t);
+   const std::uint64_t compactFrames=(sourceFrames*24000u)/static_cast<unsigned>(sourceRate);
+   const std::uint64_t compactBytes=compactFrames*sizeof(std::int16_t);
    constexpr std::uint64_t maxResidentMusicBytes=24u*1024u*1024u;
-   if(estimatedBytes>maxResidentMusicBytes){
+   if(compactBytes>maxResidentMusicBytes){
      ov_clear(&vf);
      RuntimeDiagnostics::checkpoint("audio_ogg_deferred",
-       "decoded_bytes=" + std::to_string(estimatedBytes) +
+       "decoded_bytes=" + std::to_string(compactBytes) +
        " compressed_bytes=" + std::to_string(bytes.size()));
      return false;
    }
+
+   std::vector<std::int16_t> mono;
+   if(compactFrames>0 && compactFrames<static_cast<std::uint64_t>(std::numeric_limits<std::size_t>::max()))
+     mono.reserve(static_cast<std::size_t>(compactFrames));
+   std::array<char,4096> buffer{};
+   int bitstream=0;
+   std::uint64_t sourceFrame=0;
+   for(;;){
+     const long got=ov_read(&vf,buffer.data(),static_cast<int>(buffer.size()),0,2,1,&bitstream);
+     if(got==0)break;
+     if(got<0){ov_clear(&vf);return false;}
+     const std::size_t samples=static_cast<std::size_t>(got)/2;
+     const auto* src=reinterpret_cast<const std::int16_t*>(buffer.data());
+     const std::size_t frames=samples/static_cast<std::size_t>(channels);
+     for(std::size_t i=0;i<frames;++i,++sourceFrame){
+       if((sourceFrame*24000u)/static_cast<unsigned>(sourceRate) <=
+          ((sourceFrame == 0) ? 0u : static_cast<std::uint64_t>(mono.size()-1))) continue;
+       std::int32_t sum=0;
+       for(int c=0;c<channels;++c) sum += src[i*static_cast<std::size_t>(channels)+static_cast<std::size_t>(c)];
+       mono.push_back(static_cast<std::int16_t>(sum/channels));
+     }
+   }
+   ov_clear(&vf);
+   if(mono.empty())return false;
+
+   std::vector<std::int16_t> pcm(mono.size()*2);
+   for(std::size_t i=0;i<mono.size();++i){
+     pcm[i*2]=mono[i];
+     pcm[i*2+1]=mono[i];
+   }
+   Voice x; x.samples=std::move(pcm); x.volume=std::clamp(v,0.f,1.f); x.loop=true; x.music=true;
+   if(loop)stopMusic();
+   voices_.push_back(std::move(x));
+   RuntimeDiagnostics::checkpoint("audio_ogg_compact_ready",
+     "source_rate=" + std::to_string(sourceRate) +
+     ",frames=" + std::to_string(mono.size()));
+   return true;
  }
+
+ std::vector<std::int16_t> pcm;
  if(total>0&&total<static_cast<ogg_int64_t>(std::numeric_limits<std::size_t>::max()/2))
      pcm.reserve(static_cast<std::size_t>(total)*2);
  std::array<char,4096> buffer{};
@@ -146,7 +189,6 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
   return false;
  }
 }
-
 bool Audio::playAsset(const std::vector<std::uint8_t>& bytes,const std::string& name,float v,bool loop){
  const auto dot=name.find_last_of('.');
  if(dot==std::string::npos)return false;
