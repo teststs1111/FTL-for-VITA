@@ -67,6 +67,7 @@ int main() {
         if (firstFrame) wormhole::RuntimeDiagnostics::checkpoint("first_game_update_begin");
         game.update(1.0f / 60.0f);
         if (firstFrame) wormhole::RuntimeDiagnostics::checkpoint("first_game_update_complete");
+        if (game.wantsExit()) break;
 
         if (firstFrame) wormhole::RuntimeDiagnostics::checkpoint("first_game_render_begin");
         game.render();
