@@ -120,15 +120,11 @@ void Graphics::destroyTexture(Texture& texture) {
 void Graphics::drawTexture(const Texture& texture,float x,float y,float w,float h,const Color& c) {
     if (!initialized_ || !texture.valid()) return;
 #ifdef __vita__
-    RuntimeDiagnostics::checkpoint("draw_texture_begin");
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    RuntimeDiagnostics::checkpoint("draw_texture_enable_complete");
     glBindTexture(GL_TEXTURE_2D,static_cast<GLuint>(texture.handle()));
-    RuntimeDiagnostics::checkpoint("draw_texture_bind_complete");
     glColor4f(c.r,c.g,c.b,c.a);
-    RuntimeDiagnostics::checkpoint("draw_texture_color_complete");
     const GLfloat vertices[] = {
         x, y,
         x + w, y,
@@ -141,20 +137,16 @@ void Graphics::drawTexture(const Texture& texture,float x,float y,float w,float 
         0.f, 1.f,
         1.f, 1.f
     };
-    RuntimeDiagnostics::checkpoint("draw_texture_arrays_begin");
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glVertexPointer(2, GL_FLOAT, 0, vertices);
     glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
-    RuntimeDiagnostics::checkpoint("draw_texture_draw_begin");
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    RuntimeDiagnostics::checkpoint("draw_texture_draw_complete");
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
     glBindTexture(GL_TEXTURE_2D,0);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
-    RuntimeDiagnostics::checkpoint("draw_texture_complete");
 #else
     (void)texture;(void)x;(void)y;(void)w;(void)h;(void)c;
 #endif
