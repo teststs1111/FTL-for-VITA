@@ -118,8 +118,9 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
    if(got==0)break;
    if(got<0){ov_clear(&vf);return false;}
    const std::size_t samples=static_cast<std::size_t>(got)/2;
+   const std::size_t frames=samples/static_cast<std::size_t>(channels);
    const auto* src=reinterpret_cast<const std::int16_t*>(buffer.data());
-   for(std::size_t i=0;i<samples;++i){
+   for(std::size_t i=0;i<frames;++i){
       if(compactMusic) {
          pcm.push_back(src[i*channels]);
       } else if(channels==1){pcm.push_back(src[i]);pcm.push_back(src[i]);}
