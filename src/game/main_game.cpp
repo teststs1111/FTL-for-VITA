@@ -1368,7 +1368,7 @@ public:
             titleSelection_ = (titleSelection_ + 1) % 7;
         }
 
-        if (input_.pressed(Button::Cross) || input_.pressed(Button::Start)) {
+        if (input_.pressed(Button::Circle) || input_.pressed(Button::Start)) {
             switch (titleSelection_) {
             case 0: // Continue
                 if (hasSaveGame() && loadGame()) {
@@ -1417,12 +1417,12 @@ public:
         struct MenuArt { const char* off; const char* on; float w; float h; float x; float y; };
         const MenuArt menu[] = {
             {"img/loc-ja/main_menus/continue_off.png","img/loc-ja/main_menus/continue_on.png",124.f,57.f,1106.f,285.f},
-            {"img/loc-ja/main_menus/start_off.png",   "img/loc-ja/main_menus/start_on.png",   161.f,57.f,1069.f,330.f},
-            {"img/loc-ja/main_menus/tutorial_off.png","img/loc-ja/main_menus/tutorial_on.png",277.f,57.f,953.f,375.f},
-            {"img/loc-ja/main_menus/stats_off.png",   "img/loc-ja/main_menus/stats_on.png",   201.f,57.f,1029.f,420.f},
-            {"img/loc-ja/main_menus/options_off.png", "img/loc-ja/main_menus/options_on.png", 199.f,57.f,1031.f,465.f},
+            {"img/loc-ja/main_menus/start_off.png",   "img/loc-ja/main_menus/start_on.png",   161.f,57.f,1069.f,340.f},
+            {"img/loc-ja/main_menus/tutorial_off.png","img/loc-ja/main_menus/tutorial_on.png",277.f,57.f,953.f,400.f},
+            {"img/loc-ja/main_menus/stats_off.png",   "img/loc-ja/main_menus/stats_on.png",   201.f,57.f,1029.f,460.f},
+            {"img/loc-ja/main_menus/options_off.png", "img/loc-ja/main_menus/options_on.png", 199.f,57.f,1031.f,520.f},
             {"img/loc-ja/main_menus/credits_off.png", "img/loc-ja/main_menus/credits_on.png",195.f,57.f,1035.f,510.f},
-            {"img/loc-ja/main_menus/quit_off.png",   "img/loc-ja/main_menus/quit_on.png",    86.f,57.f,1144.f,555.f}
+            {"img/loc-ja/main_menus/quit_off.png",   "img/loc-ja/main_menus/quit_on.png",    86.f,57.f,1144.f,640.f}
         };
 
         // Menu artwork is authored for 1280x720. Scale its coordinates and
@@ -1433,7 +1433,7 @@ public:
             const char* asset = (selected == i) ? item.on : item.off;
             const Texture* texture = textures_.get(asset);
             if (!texture) continue;
-            graphics_.drawTexture(*texture, (1218.f - item.w) * 0.75f, 2.f + item.y * 0.75f,
+            graphics_.drawTexture(*texture, (1185.f - item.w) * 0.75f, 2.f + item.y * 0.75f,
                 item.w * 0.75f, item.h * 0.75f);
         }
 
@@ -1508,7 +1508,7 @@ public:
         }
         RuntimeDiagnostics::checkpoint("ship_select_entries_complete");
         text_.draw(graphics_, "Advanced Edition: " + std::string(aeEnabled_ ? "ON" : "OFF"), 75.f, 448.f, 13.f, {0.55f, 0.85f, 1.f, 1.f});
-        text_.draw(graphics_, "↑↓: 選択   ×: この艦で開始   △: AE ON/OFF   □: セーブから再開", 75.f, 475.f, 15.f, {0.68f, 0.76f, 0.86f, 1.f});
+        text_.draw(graphics_, "↑↓: 選択   ○: この艦で開始   △: AE ON/OFF   □: セーブから再開", 75.f, 475.f, 15.f, {0.68f, 0.76f, 0.86f, 1.f});
         if (hasSaveGame())
             text_.draw(graphics_, "セーブデータあり", 700.f, 105.f, 14.f, {0.82f, 0.78f, 0.48f, 1.f});
         RuntimeDiagnostics::checkpoint("ship_select_render_complete");
