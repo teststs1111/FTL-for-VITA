@@ -78,6 +78,16 @@ void RuntimeDiagnostics::startSession(const std::string& executable, const std::
 }
 
 void RuntimeDiagnostics::checkpoint(const std::string& stage, const std::string& detail) {
+    // These stages are called once per rendered frame. Reopening, writing, and
+    // flushing a file for every frame can stall the Vita's render loop badly.
+    // Keep startup/crash diagnostics intact, but never persist the frame-loop
+    // bookkeeping stages.
+    if (stage == "begin_frame_clear_begin" ||
+        stage == "begin_frame_clear_color_complete" ||
+        stage == "begin_frame_clear_complete" ||
+        stage == "first_frame_render_complete")
+        return;
+
     std::lock_guard<std::mutex> lock(gMutex);
     if (!gStarted) gStarted = true;
     std::ostringstream ss;
