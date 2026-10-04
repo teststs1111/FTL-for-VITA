@@ -3,7 +3,7 @@
 #include "audio/audio.hpp"
 #include <memory>
 
-namespace wormhole { class Input; }
+namespace wormhole { class Input; class GameState; }
 namespace wormhole {
 enum class Difficulty { Easy, Normal, Hard };
 class GameState;
@@ -16,6 +16,7 @@ public:
     void update(float dt);
     void render();
     void shutdown();
+    bool wantsExit() const { return state_ && state_->wantsExit(); }
     void setState(std::unique_ptr<GameState> state);
 
     // Japanese is the default Vita locale; the renderer/UI can use this
