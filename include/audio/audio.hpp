@@ -18,7 +18,7 @@ public:
     void stopMusic();
     bool initialized() const { return initialized_; }
 private:
-    struct Voice { std::vector<std::int16_t> samples; std::size_t frame{0}; float volume{1.0f}; bool loop{false}; bool music{false}; };
+    struct Voice { std::vector<std::int16_t> samples; std::size_t frame{0}; float volume{1.0f}; bool loop{false}; bool music{false}; bool mono{false}; };
     bool initialized_{false};
     std::vector<Voice> voices_;
 #ifdef __vita__
