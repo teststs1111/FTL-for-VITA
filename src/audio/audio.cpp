@@ -43,7 +43,7 @@ void Audio::shutdown(){voices_.clear();
 }
 bool Audio::playPcm16Stereo(const std::vector<std::int16_t>& s,float v){
  if(!initialized_||s.empty()||(s.size()&1u)||voices_.size()>=16)return false;
- Voice x; x.samples=s; x.volume=std::clamp(v,0.f,1.f); voices_.push_back(std::move(x)); return true;
+ Voice x; x.samples=s; x.volume=std::clamp(v,0.f,1.f); x.mono=false; voices_.push_back(std::move(x)); return true;
 }
 
 #ifdef __vita__
@@ -97,18 +97,18 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
    const std::uint64_t sourceFrames=static_cast<std::uint64_t>(total);
    const std::uint64_t estimatedFrames=(sourceFrames*static_cast<unsigned>(sampleRate_))/
                                         static_cast<unsigned>(sourceRate);
-   const std::uint64_t estimatedBytes=estimatedFrames*2u*sizeof(std::int16_t);
+   const std::uint64_t estimatedStereoBytes=estimatedFrames*2u*sizeof(std::int16_t);
    constexpr std::uint64_t maxResidentMusicBytes=24u*1024u*1024u;
-   if(estimatedBytes>maxResidentMusicBytes){
-     ov_clear(&vf);
-     RuntimeDiagnostics::checkpoint("audio_ogg_deferred",
-       "decoded_bytes=" + std::to_string(estimatedBytes) +
+   const bool compactMusic=estimatedStereoBytes>maxResidentMusicBytes;
+   if(compactMusic)
+     RuntimeDiagnostics::checkpoint("audio_ogg_compact",
+       "decoded_stereo_bytes=" + std::to_string(estimatedStereoBytes) +
        " compressed_bytes=" + std::to_string(bytes.size()));
-     return false;
-   }
+   if(compactMusic && estimatedFrames>std::numeric_limits<std::size_t>::max())
+     { ov_clear(&vf); return false; }
  }
  if(total>0&&total<static_cast<ogg_int64_t>(std::numeric_limits<std::size_t>::max()/2))
-     pcm.reserve(static_cast<std::size_t>(total)*2);
+     pcm.reserve(static_cast<std::size_t>(compactMusic ? estimatedFrames : total*2));
  std::array<char,4096> buffer{};
  int bitstream=0;
  for(;;){
@@ -118,14 +118,16 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
    const std::size_t samples=static_cast<std::size_t>(got)/2;
    const auto* src=reinterpret_cast<const std::int16_t*>(buffer.data());
    for(std::size_t i=0;i<samples;++i){
-      if(channels==1){pcm.push_back(src[i]);pcm.push_back(src[i]);}
+      if(compactMusic) {
+         pcm.push_back(src[i*channels]);
+      } else if(channels==1){pcm.push_back(src[i]);pcm.push_back(src[i]);}
       else {pcm.push_back(src[i*channels]);pcm.push_back(src[i*channels+1]);}
    }
  }
  ov_clear(&vf);
  if(pcm.empty())return false;
  if(sourceRate!=sampleRate_){
-   const std::size_t inFrames=pcm.size()/2;
+   const std::size_t inFrames=compactMusic ? pcm.size() : pcm.size()/2;
    const std::size_t outFrames=std::max<std::size_t>(1,(std::uint64_t(inFrames)*sampleRate_)/static_cast<unsigned>(sourceRate));
    std::vector<std::int16_t> resampled(outFrames*2);
    for(std::size_t i=0;i<outFrames;++i){
@@ -192,15 +194,19 @@ void Audio::update(){
  if(port_<0||outputBuffer_.empty()||sceAudioOutGetRestSample(port_)>bufferFrames_)return;
  std::fill(outputBuffer_.begin(),outputBuffer_.end(),0);
  for(auto it=voices_.begin();it!=voices_.end();){
-  auto& v=*it; const std::size_t avail=v.samples.size()/2-v.frame,count=std::min<std::size_t>(bufferFrames_,avail);
-  for(std::size_t i=0;i<count;++i){const auto s=(v.frame+i)*2,d=i*2;
-   const int l=int(outputBuffer_[d])+int(std::lround(v.samples[s]*v.volume));
-   const int r=int(outputBuffer_[d+1])+int(std::lround(v.samples[s+1]*v.volume));
+  auto& v=*it; const std::size_t totalFrames=v.mono?v.samples.size():v.samples.size()/2;
+  const std::size_t avail=totalFrames-v.frame,count=std::min<std::size_t>(bufferFrames_,avail);
+  for(std::size_t i=0;i<count;++i){
+   const std::size_t d=i*2;
+   const int leftSample=v.mono ? v.samples[v.frame+i] : v.samples[(v.frame+i)*2];
+   const int rightSample=v.mono ? leftSample : v.samples[(v.frame+i)*2+1];
+   const int l=int(outputBuffer_[d])+int(std::lround(leftSample*v.volume));
+   const int r=int(outputBuffer_[d+1])+int(std::lround(rightSample*v.volume));
    outputBuffer_[d]=std::int16_t(std::clamp(l,int(std::numeric_limits<std::int16_t>::min()),int(std::numeric_limits<std::int16_t>::max())));
    outputBuffer_[d+1]=std::int16_t(std::clamp(r,int(std::numeric_limits<std::int16_t>::min()),int(std::numeric_limits<std::int16_t>::max())));
   }
   v.frame+=count;
-  if(v.frame>=v.samples.size()/2){
+  if(v.frame>=totalFrames){
    if(v.loop) v.frame=0;
    else it=voices_.erase(it);
   } else ++it;
