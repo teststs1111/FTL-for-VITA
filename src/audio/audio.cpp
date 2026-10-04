@@ -106,11 +106,10 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
    }
 
    std::vector<std::int16_t> mono;
-   if(compactFrames>0 && compactFrames<static_cast<std::uint64_t>(std::numeric_limits<std::size_t>::max()))
-     mono.reserve(static_cast<std::size_t>(compactFrames));
+   if(total>0 && total<static_cast<ogg_int64_t>(std::numeric_limits<std::size_t>::max()))
+     mono.reserve(static_cast<std::size_t>(total));
    std::array<char,4096> buffer{};
    int bitstream=0;
-   std::uint64_t sourceFrame=0;
    for(;;){
      const long got=ov_read(&vf,buffer.data(),static_cast<int>(buffer.size()),0,2,1,&bitstream);
      if(got==0)break;
@@ -118,21 +117,28 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
      const std::size_t samples=static_cast<std::size_t>(got)/2;
      const auto* src=reinterpret_cast<const std::int16_t*>(buffer.data());
      const std::size_t frames=samples/static_cast<std::size_t>(channels);
-     for(std::size_t i=0;i<frames;++i,++sourceFrame){
-       if((sourceFrame*24000u)/static_cast<unsigned>(sourceRate) <=
-          ((sourceFrame == 0) ? 0u : static_cast<std::uint64_t>(mono.size()-1))) continue;
+     for(std::size_t i=0;i<frames;++i){
        std::int32_t sum=0;
-       for(int c=0;c<channels;++c) sum += src[i*static_cast<std::size_t>(channels)+static_cast<std::size_t>(c)];
+       for(int c=0;c<channels;++c)
+         sum += src[i*static_cast<std::size_t>(channels)+static_cast<std::size_t>(c)];
        mono.push_back(static_cast<std::int16_t>(sum/channels));
      }
    }
    ov_clear(&vf);
    if(mono.empty())return false;
 
-   std::vector<std::int16_t> pcm(mono.size()*2);
-   for(std::size_t i=0;i<mono.size();++i){
-     pcm[i*2]=mono[i];
-     pcm[i*2+1]=mono[i];
+   const std::size_t outFrames=std::max<std::size_t>(1,
+     (static_cast<std::uint64_t>(mono.size())*24000u)/static_cast<unsigned>(sourceRate));
+   std::vector<std::int16_t> compact(outFrames);
+   for(std::size_t i=0;i<outFrames;++i){
+     const std::size_t src=std::min(mono.size()-1,
+       static_cast<std::size_t>((static_cast<std::uint64_t>(i)*static_cast<unsigned>(sourceRate))/24000u));
+     compact[i]=mono[src];
+   }
+   std::vector<std::int16_t> pcm(compact.size()*2);
+   for(std::size_t i=0;i<compact.size();++i){
+     pcm[i*2]=compact[i];
+     pcm[i*2+1]=compact[i];
    }
    Voice x; x.samples=std::move(pcm); x.volume=std::clamp(v,0.f,1.f); x.loop=true; x.music=true;
    if(loop)stopMusic();
