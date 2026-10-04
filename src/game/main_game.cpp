@@ -1406,17 +1406,18 @@ public:
         const int selected = titleSelection_;
         struct MenuArt { const char* off; const char* on; float w; float h; float x; float y; };
         const MenuArt menu[] = {
-            {"img/loc-ja/main_menus/start_off.png",    "img/loc-ja/main_menus/start_on.png",    161.f, 57.f, 660.f, 315.f},
-            {"img/loc-ja/main_menus/continue_off.png","img/loc-ja/main_menus/continue_on.png",124.f, 57.f, 790.f, 315.f},
-            {"img/loc-ja/main_menus/tutorial_off.png","img/loc-ja/main_menus/tutorial_on.png", 277.f, 57.f, 620.f, 360.f},
-            {"img/loc-ja/main_menus/stats_off.png",   "img/loc-ja/main_menus/stats_on.png",    201.f, 57.f, 790.f, 360.f},
-            {"img/loc-ja/main_menus/options_off.png", "img/loc-ja/main_menus/options_on.png",  199.f, 57.f, 620.f, 405.f},
-            {"img/loc-ja/main_menus/credits_off.png", "img/loc-ja/main_menus/credits_on.png",  195.f, 57.f, 790.f, 405.f},
-            {"img/loc-ja/main_menus/quit_off.png",    "img/loc-ja/main_menus/quit_on.png",      86.f, 57.f, 620.f, 450.f}
+            {"img/loc-ja/main_menus/continue_off.png","img/loc-ja/main_menus/continue_on.png",124.f,57.f, 920.f,285.f},
+            {"img/loc-ja/main_menus/start_off.png",   "img/loc-ja/main_menus/start_on.png",   161.f,57.f, 905.f,330.f},
+            {"img/loc-ja/main_menus/tutorial_off.png","img/loc-ja/main_menus/tutorial_on.png",277.f,57.f, 790.f,375.f},
+            {"img/loc-ja/main_menus/stats_off.png",   "img/loc-ja/main_menus/stats_on.png",   201.f,57.f, 875.f,420.f},
+            {"img/loc-ja/main_menus/options_off.png", "img/loc-ja/main_menus/options_on.png", 199.f,57.f, 880.f,465.f},
+            {"img/loc-ja/main_menus/credits_off.png", "img/loc-ja/main_menus/credits_on.png",195.f,57.f, 885.f,510.f},
+            {"img/loc-ja/main_menus/quit_off.png",   "img/loc-ja/main_menus/quit_on.png",    86.f,57.f, 935.f,555.f}
         };
 
         // Menu artwork is authored for 1280x720. Scale its coordinates and
-        // dimensions by 0.75 to match the 960x540 render surface.
+        // dimensions by 0.75 to match the 960x540 render surface. The source
+        // menu is a single vertical column on the right side of the screen.
         for (int i = 0; i < 7; ++i) {
             const MenuArt& item = menu[i];
             const char* asset = (selected == i) ? item.on : item.off;
