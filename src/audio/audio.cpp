@@ -8,6 +8,7 @@
 #include <cctype>
 #include <cstdio>
 #include <string>
+#include <exception>
 #ifdef __vita__
 #include <psp2/audioout.h>
 #include <vorbis/vorbisfile.h>
@@ -74,6 +75,10 @@ long oggTell(void* datasource){return static_cast<long>(static_cast<OggMemory*>(
 
 bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
  if(!initialized_||bytes.empty()||voices_.size()>=16)return false;
+ // Vita startup must remain alive even when a full-track decode cannot fit in the
+ // native heap.  The title screen can continue without music; streaming decode is
+ // handled as a follow-up rather than allowing std::bad_alloc to terminate eboot.bin.
+ try {
 #ifdef __vita__
  OggMemory memory{bytes.data(),bytes.size(),0};
  OggVorbis_File vf{};
@@ -118,6 +123,13 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
 #else
  (void)bytes;(void)v;(void)loop; return false;
 #endif
+ } catch (const std::bad_alloc&) {
+  RuntimeDiagnostics::checkpoint("audio_ogg_alloc_failed", "bytes=" + std::to_string(bytes.size()));
+  return false;
+ } catch (const std::exception& e) {
+  RuntimeDiagnostics::checkpoint("audio_ogg_exception", e.what());
+  return false;
+ }
 }
 
 bool Audio::playAsset(const std::vector<std::uint8_t>& bytes,const std::string& name,float v,bool loop){
