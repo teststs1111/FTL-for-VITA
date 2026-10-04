@@ -1405,13 +1405,13 @@ public:
         const int selected = titleSelection_;
         struct MenuArt { const char* off; const char* on; float w; float h; float x; float y; };
         const MenuArt menu[] = {
-            {"img/loc-ja/main_menus/continue_off.png","img/loc-ja/main_menus/continue_on.png",124.f,57.f,1106.f,400.f},
-            {"img/loc-ja/main_menus/start_off.png",   "img/loc-ja/main_menus/start_on.png",   161.f,57.f,1069.f,445.f},
-            {"img/loc-ja/main_menus/tutorial_off.png","img/loc-ja/main_menus/tutorial_on.png",277.f,57.f,953.f,490.f},
-            {"img/loc-ja/main_menus/stats_off.png",   "img/loc-ja/main_menus/stats_on.png",   201.f,57.f,1029.f,535.f},
-            {"img/loc-ja/main_menus/options_off.png", "img/loc-ja/main_menus/options_on.png", 199.f,57.f,1031.f,580.f},
-            {"img/loc-ja/main_menus/credits_off.png", "img/loc-ja/main_menus/credits_on.png",195.f,57.f,1035.f,625.f},
-            {"img/loc-ja/main_menus/quit_off.png",   "img/loc-ja/main_menus/quit_on.png",    86.f,57.f,1144.f,670.f}
+            {"img/loc-ja/main_menus/continue_off.png","img/loc-ja/main_menus/continue_on.png",124.f,57.f,1106.f,285.f},
+            {"img/loc-ja/main_menus/start_off.png",   "img/loc-ja/main_menus/start_on.png",   161.f,57.f,1069.f,330.f},
+            {"img/loc-ja/main_menus/tutorial_off.png","img/loc-ja/main_menus/tutorial_on.png",277.f,57.f,953.f,375.f},
+            {"img/loc-ja/main_menus/stats_off.png",   "img/loc-ja/main_menus/stats_on.png",   201.f,57.f,1029.f,420.f},
+            {"img/loc-ja/main_menus/options_off.png", "img/loc-ja/main_menus/options_on.png", 199.f,57.f,1031.f,465.f},
+            {"img/loc-ja/main_menus/credits_off.png", "img/loc-ja/main_menus/credits_on.png",195.f,57.f,1035.f,510.f},
+            {"img/loc-ja/main_menus/quit_off.png",   "img/loc-ja/main_menus/quit_on.png",    86.f,57.f,1144.f,555.f}
         };
 
         // Menu artwork is authored for 1280x720. Scale its coordinates and
