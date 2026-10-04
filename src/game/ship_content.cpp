@@ -20,6 +20,23 @@ bool ShipContent::openArchives(const std::vector<std::string>& archivePaths) {
     return assets_.openArchives(archivePaths);
 }
 
+bool ShipContent::loadBlueprintDatabase(const std::string& blueprintPath) {
+    if (databaseLoaded_ && databaseBlueprintPath_ == blueprintPath) return true;
+
+    database_.clear();
+    std::vector<std::string> sources{blueprintPath, "data/autoBlueprints.xml"};
+    if (advancedEdition_) {
+        sources.push_back("data/dlcBlueprints.xml");
+        sources.push_back("data/dlcBlueprintsOverwrite.xml");
+        sources.push_back("data/dlcPirateBlueprints.xml");
+    }
+
+    const std::size_t loaded = database_.loadShipBlueprints(sources);
+    databaseLoaded_ = loaded > 0;
+    databaseBlueprintPath_ = databaseLoaded_ ? blueprintPath : std::string{};
+    return databaseLoaded_;
+}
+
 bool ShipContent::loadShip(const std::string& shipId, LoadedShip& out,
                              const std::string& blueprintPath,
                              unsigned randomSeed) {
