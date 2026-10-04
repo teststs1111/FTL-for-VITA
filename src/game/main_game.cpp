@@ -1389,7 +1389,6 @@ public:
     }
 
     void renderTitle() {
-        RuntimeDiagnostics::checkpoint("title_render_begin");
         ensureTitleTextures();
 
         const Texture* background = textures_.get("img/main_menus/main_base2.png");
@@ -1436,7 +1435,6 @@ public:
             text_.draw(graphics_, combatFeedback_, 610.f, 505.f, 12.f,
                 {1.f, 0.70f, 0.35f, 1.f});
 
-        RuntimeDiagnostics::checkpoint("title_render_complete");
     }
 
     void updateShipSelect() {
