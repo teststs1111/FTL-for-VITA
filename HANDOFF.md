@@ -1069,3 +1069,10 @@ Approximation remains in exact Flagship/Base placement, takeover timing/selectio
 - Title-screen music now uses the archive's `audio/music/bp_MUS_TitleScreen.ogg`; exploration music is suppressed while the title scene is active.
 - The previous text/starfield placeholder is no longer used as the normal title presentation.
 - Commit: `e9a2b2f650874e54ef47a58b89e9b5c3fdc74ae6`.
+
+
+## 2026-10-04 title runtime and ship-selection follow-up
+- Fresh Vita runtime reaches the canonical title renderer repeatedly without FATAL_TERMINATE.
+- Canonical title assets load successfully (title_assets_ready=1) and title_render_complete continues for minutes.
+- Title OGG is 11,621,658 bytes; full PCM expansion cannot fit the Vita heap and is intentionally rejected by the guarded audio path (played=0). Streaming OGG playback remains required for faithful title audio.
+- The runtime also exposed a real data-flow bug: ship selection was built before the blueprint database had been populated, producing choices=0. ShipContent now exposes canonical blueprint-database loading and MainGame populates it from data/blueprints.xml, data/autoBlueprints.xml, and the AE XMLs already contained in ftl.dat before building the selection list.
