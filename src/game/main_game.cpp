@@ -1248,6 +1248,12 @@ public:
 
     void buildShipSelection() {
         shipChoices_.clear();
+        if (!content_.loadBlueprintDatabase("data/blueprints.xml")) {
+            RuntimeDiagnostics::checkpoint("ship_selection_blueprints_failed");
+            return;
+        }
+        RuntimeDiagnostics::checkpoint("ship_selection_blueprints_ready",
+            "ships=" + std::to_string(content_.blueprints().ships().size()));
         for (const auto& entry : content_.blueprints().ships()) {
             if (entry.first.rfind("PLAYER_SHIP_", 0) != 0) continue;
             if (entry.second.maxHealth <= 0 || entry.second.layout.empty()) continue;
