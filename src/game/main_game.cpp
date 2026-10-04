@@ -3285,7 +3285,7 @@ public:
             audioCombatMode_ = combatMode_;
         }
 
-        if (input_.pressed(Button::Start) && sceneMode_ != SceneMode::Pause) {
+        if (input_.pressed(Button::Start) && sceneMode_ != SceneMode::Pause && sceneMode_ != SceneMode::Title) {
             sceneMode_ = SceneMode::Pause;
             saveFeedback_.clear();
             return;
