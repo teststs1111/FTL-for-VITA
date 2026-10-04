@@ -1356,6 +1356,8 @@ public:
             std::string("ready=") + (ready ? "1" : "0"));
     }
 
+    bool wantsExit() const override { return exitRequested_; }
+
     void updateTitle() {
         // The real FTL title screen has seven menu entries. Keep navigation
         // tied to the archive's actual localized button artwork rather than
@@ -1368,7 +1370,15 @@ public:
 
         if (input_.pressed(Button::Cross) || input_.pressed(Button::Start)) {
             switch (titleSelection_) {
-            case 0:
+            case 0: // Continue
+                if (hasSaveGame() && loadGame()) {
+                    RuntimeDiagnostics::checkpoint("title_continue_selected");
+                } else {
+                    combatFeedback_ = "セーブデータがありません";
+                    combatFeedbackTimer_ = 1.5f;
+                }
+                break;
+            case 1: // Start
                 if (shipChoices_.empty()) {
                     combatFeedback_ = "艦データを読み込めません";
                     combatFeedbackTimer_ = 1.5f;
@@ -1377,18 +1387,11 @@ public:
                     RuntimeDiagnostics::checkpoint("title_new_game_selected");
                 }
                 break;
-            case 1:
-                if (hasSaveGame() && loadGame()) {
-                    RuntimeDiagnostics::checkpoint("title_continue_selected");
-                } else {
-                    combatFeedback_ = "セーブデータがありません";
-                    combatFeedbackTimer_ = 1.5f;
-                }
+            case 6: // Quit
+                exitRequested_ = true;
+                RuntimeDiagnostics::checkpoint("title_quit_selected");
                 break;
             default:
-                // The remaining title-menu scenes are implemented after the
-                // canonical title artwork/path is established. Do not leave
-                // the title screen or invent a substitute screen here.
                 combatFeedback_ = "このメニューは次段階で実装します";
                 combatFeedbackTimer_ = 1.5f;
                 break;
@@ -1430,7 +1433,7 @@ public:
             const char* asset = (selected == i) ? item.on : item.off;
             const Texture* texture = textures_.get(asset);
             if (!texture) continue;
-            graphics_.drawTexture(*texture, (1230.f - item.w) * 0.75f, 2.f + item.y * 0.75f,
+            graphics_.drawTexture(*texture, (1218.f - item.w) * 0.75f, 2.f + item.y * 0.75f,
                 item.w * 0.75f, item.h * 0.75f);
         }
 
@@ -4409,6 +4412,7 @@ private:
     std::string shipTextureName_;
     bool shipViewTexturesReady_{false};
     bool titleTexturesReady_{false};
+    bool exitRequested_{false};
     std::string startupError_;
     std::string combatFeedback_;
     std::string saveFeedback_;
