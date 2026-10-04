@@ -131,15 +131,16 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
  if(sourceRate!=sampleRate_){
    const std::size_t inFrames=compactMusic ? pcm.size() : pcm.size()/2;
    const std::size_t outFrames=std::max<std::size_t>(1,(std::uint64_t(inFrames)*sampleRate_)/static_cast<unsigned>(sourceRate));
-   std::vector<std::int16_t> resampled(outFrames*2);
+   std::vector<std::int16_t> resampled(compactMusic ? outFrames : outFrames*2);
    for(std::size_t i=0;i<outFrames;++i){
       const std::size_t src=std::min(inFrames-1,std::size_t((std::uint64_t(i)*sourceRate)/sampleRate_));
-      resampled[i*2]=pcm[src*2]; resampled[i*2+1]=pcm[src*2+1];
+      if (compactMusic) resampled[i]=pcm[src];
+      else { resampled[i*2]=pcm[src*2]; resampled[i*2+1]=pcm[src*2+1]; }
    }
    pcm.swap(resampled);
  }
  if(loop)stopMusic();
- Voice x; x.samples=std::move(pcm); x.volume=std::clamp(v,0.f,1.f); x.loop=loop; x.music=loop;
+ Voice x; x.samples=std::move(pcm); x.volume=std::clamp(v,0.f,1.f); x.loop=loop; x.music=loop; x.mono=compactMusic;
  voices_.push_back(std::move(x)); return true;
 #else
  (void)bytes;(void)v;(void)loop; return false;
