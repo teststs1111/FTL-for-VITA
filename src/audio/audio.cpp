@@ -9,6 +9,8 @@
 #include <cstdio>
 #include <string>
 #include <exception>
+#include <new>
+#include <utility>
 #ifdef __vita__
 #include <psp2/audioout.h>
 #include <vorbis/vorbisfile.h>
