@@ -122,6 +122,8 @@ void Graphics::drawTexture(const Texture& texture,float x,float y,float w,float 
 #ifdef __vita__
     RuntimeDiagnostics::checkpoint("draw_texture_begin");
     glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     RuntimeDiagnostics::checkpoint("draw_texture_enable_complete");
     glBindTexture(GL_TEXTURE_2D,static_cast<GLuint>(texture.handle()));
     RuntimeDiagnostics::checkpoint("draw_texture_bind_complete");
@@ -151,6 +153,7 @@ void Graphics::drawTexture(const Texture& texture,float x,float y,float w,float 
     glDisableClientState(GL_VERTEX_ARRAY);
     glBindTexture(GL_TEXTURE_2D,0);
     glDisable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
     RuntimeDiagnostics::checkpoint("draw_texture_complete");
 #else
     (void)texture;(void)x;(void)y;(void)w;(void)h;(void)c;
@@ -160,6 +163,8 @@ void Graphics::drawTextureRegion(const Texture& texture,float x,float y,float w,
     if (!initialized_ || !texture.valid()) return;
 #ifdef __vita__
     glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBindTexture(GL_TEXTURE_2D,static_cast<GLuint>(texture.handle()));
     glColor4f(c.r,c.g,c.b,c.a);
     const GLfloat vertices[] = {
@@ -183,6 +188,7 @@ void Graphics::drawTextureRegion(const Texture& texture,float x,float y,float w,
     glDisableClientState(GL_VERTEX_ARRAY);
     glBindTexture(GL_TEXTURE_2D,0);
     glDisable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
 #else
     (void)texture;(void)x;(void)y;(void)w;(void)h;(void)u0;(void)v0;(void)u1;(void)v1;(void)c;
 #endif
