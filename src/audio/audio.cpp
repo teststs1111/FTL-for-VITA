@@ -89,17 +89,19 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
  const int channels=info->channels;
  const int sourceRate=info->rate;
  std::vector<std::int16_t> pcm;
+ bool compactMusic=false;
+ std::uint64_t estimatedFrames=0;
  const ogg_int64_t total=ov_pcm_total(&vf,-1);
  // Full-track PCM expansion is too large for Vita startup memory. Keep short
  // effects on the existing path, but refuse large music tracks before reserve()
  // so a multi-second allocation attempt cannot stall the title screen.
  if(loop && total>0){
    const std::uint64_t sourceFrames=static_cast<std::uint64_t>(total);
-   const std::uint64_t estimatedFrames=(sourceFrames*static_cast<unsigned>(sampleRate_))/
-                                        static_cast<unsigned>(sourceRate);
+   estimatedFrames=(sourceFrames*static_cast<unsigned>(sampleRate_))/
+                    static_cast<unsigned>(sourceRate);
    const std::uint64_t estimatedStereoBytes=estimatedFrames*2u*sizeof(std::int16_t);
    constexpr std::uint64_t maxResidentMusicBytes=24u*1024u*1024u;
-   const bool compactMusic=estimatedStereoBytes>maxResidentMusicBytes;
+   compactMusic=estimatedStereoBytes>maxResidentMusicBytes;
    if(compactMusic)
      RuntimeDiagnostics::checkpoint("audio_ogg_compact",
        "decoded_stereo_bytes=" + std::to_string(estimatedStereoBytes) +
