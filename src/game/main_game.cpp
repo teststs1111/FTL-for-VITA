@@ -785,8 +785,16 @@ public:
     static constexpr const char* savePath() { return "ux0:data/wormhole/save.dat"; }
 
     bool hasSaveGame() const {
+        // Do not open save.dat from the title renderer every frame. On Vita,
+        // even this tiny filesystem query can occasionally stall the render
+        // loop. Refresh at most once per 30 calls while keeping the visible
+        // state responsive enough for save creation/removal.
+        if (saveCheckFrames_++ < 30)
+            return saveGameAvailable_;
+        saveCheckFrames_ = 0;
         std::ifstream in(savePath());
-        return in.good();
+        saveGameAvailable_ = in.good();
+        return saveGameAvailable_;
     }
 
     bool saveGame() {
@@ -4429,6 +4437,8 @@ private:
     std::vector<std::string> shipChoices_;
     int shipSelection_{0};
     int titleSelection_{0};
+    mutable int saveCheckFrames_{30};
+    mutable bool saveGameAvailable_{false};
     std::vector<std::string> activeQuestIds_;
     std::vector<RuntimeCrew> pendingBoarders_;
     CombatEnvironment pendingEnvironment_{CombatEnvironment::None};
