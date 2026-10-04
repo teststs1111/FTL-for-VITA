@@ -43,7 +43,7 @@ void Audio::shutdown(){voices_.clear();
 }
 bool Audio::playPcm16Stereo(const std::vector<std::int16_t>& s,float v){
  if(!initialized_||s.empty()||(s.size()&1u)||voices_.size()>=16)return false;
- Voice x; x.samples=s; x.volume=std::clamp(v,0.f,1.f); x.mono=false; voices_.push_back(std::move(x)); return true;
+ Voice x; x.samples=s; x.volume=std::clamp(v,0.f,1.f); voices_.push_back(std::move(x)); return true;
 }
 
 #ifdef __vita__
