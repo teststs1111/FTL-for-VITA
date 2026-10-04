@@ -1,6 +1,7 @@
 #pragma once
 #include "i18n/localization.hpp"
 #include "audio/audio.hpp"
+#include "game/game_state.hpp"
 #include <memory>
 
 namespace wormhole { class Input; class GameState; }
