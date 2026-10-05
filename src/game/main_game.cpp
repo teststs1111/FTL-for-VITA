@@ -1421,7 +1421,7 @@ public:
             {"img/loc-ja/main_menus/tutorial_off.png","img/loc-ja/main_menus/tutorial_on.png",277.f,57.f,953.f,400.f},
             {"img/loc-ja/main_menus/stats_off.png",   "img/loc-ja/main_menus/stats_on.png",   201.f,57.f,1029.f,460.f},
             {"img/loc-ja/main_menus/options_off.png", "img/loc-ja/main_menus/options_on.png", 199.f,57.f,1031.f,520.f},
-            {"img/loc-ja/main_menus/credits_off.png", "img/loc-ja/main_menus/credits_on.png",195.f,57.f,1035.f,510.f},
+            {"img/loc-ja/main_menus/credits_off.png", "img/loc-ja/main_menus/credits_on.png",195.f,57.f,1035.f,580.f},
             {"img/loc-ja/main_menus/quit_off.png",   "img/loc-ja/main_menus/quit_on.png",    86.f,57.f,1144.f,640.f}
         };
 
