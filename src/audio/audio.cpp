@@ -88,14 +88,14 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
  const ogg_int64_t total=ov_pcm_total(&vf,-1);
 
  // Long looping music is the memory-sensitive case on real Vita hardware.
- // Decode music as mono at 24 kHz, then expand to the stereo mixer only once
- // at the end. This keeps the resident music buffer roughly one quarter of
- // the previous 48 kHz stereo representation while preserving playback.
+ // Decode music as mono at 32 kHz, then expand to the stereo mixer only once
+ // at the end. This keeps resident music substantially below the previous
+ // 48 kHz stereo representation while improving high-frequency detail.
  const bool compactMusic = loop && total > 0;
  if(compactMusic){
    const std::uint64_t sourceFrames=static_cast<std::uint64_t>(total);
-   const std::uint64_t compactFrames=(sourceFrames*24000u)/static_cast<unsigned>(sourceRate);
-   const std::uint64_t compactBytes=compactFrames*sizeof(std::int16_t);
+   const std::uint64_t compactFrames=(sourceFrames*32000u)/static_cast<unsigned>(sourceRate);
+   const std::uint64_t compactBytes=compactFrames*sizeof(std::int16_t)*2u;
    constexpr std::uint64_t maxResidentMusicBytes=24u*1024u*1024u;
    if(compactBytes>maxResidentMusicBytes){
      ov_clear(&vf);
@@ -128,11 +128,11 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
    if(mono.empty())return false;
 
    const std::size_t outFrames=std::max<std::size_t>(1,
-     (static_cast<std::uint64_t>(mono.size())*24000u)/static_cast<unsigned>(sourceRate));
+     (static_cast<std::uint64_t>(mono.size())*32000u)/static_cast<unsigned>(sourceRate));
    std::vector<std::int16_t> compact(outFrames);
    for(std::size_t i=0;i<outFrames;++i){
      const std::size_t src=std::min(mono.size()-1,
-       static_cast<std::size_t>((static_cast<std::uint64_t>(i)*static_cast<unsigned>(sourceRate))/24000u));
+       static_cast<std::size_t>((static_cast<std::uint64_t>(i)*static_cast<unsigned>(sourceRate))/32000u));
      compact[i]=mono[src];
    }
    std::vector<std::int16_t> pcm(compact.size()*2);
@@ -144,7 +144,7 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
    if(loop)stopMusic();
    voices_.push_back(std::move(x));
    RuntimeDiagnostics::checkpoint("audio_ogg_compact_ready",
-     "source_rate=" + std::to_string(sourceRate) +
+     "target_rate=32000,source_rate=" + std::to_string(sourceRate) +
      ",frames=" + std::to_string(mono.size()));
    return true;
  }
