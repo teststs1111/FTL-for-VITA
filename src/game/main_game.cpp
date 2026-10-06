@@ -1465,7 +1465,7 @@ public:
             shipSelection_ = (shipSelection_ + static_cast<int>(shipChoices_.size()) - 1) % static_cast<int>(shipChoices_.size());
         if (input_.pressed(Button::Down))
             shipSelection_ = (shipSelection_ + 1) % static_cast<int>(shipChoices_.size());
-        if (input_.pressed(Button::Cross)) {
+        if (input_.pressed(Button::Circle)) {
             if (!applySelectedShip()) {
                 combatFeedback_ = "艦の読み込みに失敗";
                 combatFeedbackTimer_ = 2.0f;
