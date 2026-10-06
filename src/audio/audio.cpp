@@ -88,14 +88,14 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
  const ogg_int64_t total=ov_pcm_total(&vf,-1);
 
  // Long looping music is the memory-sensitive case on real Vita hardware.
- // Decode music as mono at 32 kHz, then expand to the stereo mixer only once
- // at the end. This keeps resident music substantially below the previous
- // 48 kHz stereo representation while improving high-frequency detail.
+ // Decode looping music as mono at 32 kHz and duplicate the sample into
+ // the stereo output mixer at playback time. This keeps the resident music
+ // buffer roughly half the size of a 32 kHz stereo representation.
  const bool compactMusic = loop && total > 0;
  if(compactMusic){
    const std::uint64_t sourceFrames=static_cast<std::uint64_t>(total);
    const std::uint64_t compactFrames=(sourceFrames*32000u)/static_cast<unsigned>(sourceRate);
-   const std::uint64_t compactBytes=compactFrames*sizeof(std::int16_t)*2u;
+   const std::uint64_t compactBytes=compactFrames*sizeof(std::int16_t);
    constexpr std::uint64_t maxResidentMusicBytes=24u*1024u*1024u;
    if(compactBytes>maxResidentMusicBytes){
      ov_clear(&vf);
@@ -135,12 +135,7 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
        static_cast<std::size_t>((static_cast<std::uint64_t>(i)*static_cast<unsigned>(sourceRate))/32000u));
      compact[i]=mono[src];
    }
-   std::vector<std::int16_t> pcm(compact.size()*2);
-   for(std::size_t i=0;i<compact.size();++i){
-     pcm[i*2]=compact[i];
-     pcm[i*2+1]=compact[i];
-   }
-   Voice x; x.samples=std::move(pcm); x.volume=std::clamp(v,0.f,1.f); x.loop=true; x.music=true;
+   Voice x; x.samples=std::move(compact); x.volume=std::clamp(v,0.f,1.f); x.loop=true; x.music=true; x.mono=true;
    if(loop)stopMusic();
    voices_.push_back(std::move(x));
    RuntimeDiagnostics::checkpoint("audio_ogg_compact_ready",
@@ -240,17 +235,17 @@ void Audio::update(){
  if(port_<0||outputBuffer_.empty()||sceAudioOutGetRestSample(port_)>bufferFrames_)return;
  std::fill(outputBuffer_.begin(),outputBuffer_.end(),0);
  for(auto it=voices_.begin();it!=voices_.end();){
-  auto& v=*it; const std::size_t avail=v.samples.size()/2-v.frame,count=std::min<std::size_t>(bufferFrames_,avail);
-  for(std::size_t i=0;i<count;++i){const auto s=(v.frame+i)*2,d=i*2;
+  auto& v=*it; const std::size_t channels=v.mono?1u:2u; const std::size_t avail=v.samples.size()/channels-v.frame,count=std::min<std::size_t>(bufferFrames_,avail);
+  for(std::size_t i=0;i<count;++i){const auto s=(v.frame+i)*channels,d=i*2;
    const int leftSample=v.samples[s];
-   const int rightSample=v.samples[s+1];
+   const int rightSample=v.mono?leftSample:v.samples[s+1];
    const int l=int(outputBuffer_[d])+int(std::lround(leftSample*v.volume));
    const int r=int(outputBuffer_[d+1])+int(std::lround(rightSample*v.volume));
    outputBuffer_[d]=std::int16_t(std::clamp(l,int(std::numeric_limits<std::int16_t>::min()),int(std::numeric_limits<std::int16_t>::max())));
    outputBuffer_[d+1]=std::int16_t(std::clamp(r,int(std::numeric_limits<std::int16_t>::min()),int(std::numeric_limits<std::int16_t>::max())));
   }
   v.frame+=count;
-  if(v.frame>=v.samples.size()/2){
+  if(v.frame>=v.samples.size()/channels){
    if(v.loop) v.frame=0;
    else it=voices_.erase(it);
   } else ++it;
