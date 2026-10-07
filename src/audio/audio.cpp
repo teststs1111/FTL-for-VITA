@@ -88,13 +88,16 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
  const ogg_int64_t total=ov_pcm_total(&vf,-1);
 
  // Long looping music is the memory-sensitive case on real Vita hardware.
- // Decode looping music as mono at 32 kHz and duplicate the sample into
- // the stereo output mixer at playback time. This keeps the resident music
+ // Decode looping music as mono at 44.1 kHz and duplicate the sample into
+ // the stereo output mixer at playback time. Keeping the original 44.1 kHz
+ // rate avoids the audible high-frequency loss of the previous 32 kHz path
+ // while retaining the same roughly 24 MiB resident-memory budget. This keeps the resident music
  // buffer roughly half the size of a 32 kHz stereo representation.
  const bool compactMusic = loop && total > 0;
  if(compactMusic){
    const std::uint64_t sourceFrames=static_cast<std::uint64_t>(total);
-   const std::uint64_t compactFrames=(sourceFrames*32000u)/static_cast<unsigned>(sourceRate);
+   constexpr unsigned compactRate=44100u;
+   const std::uint64_t compactFrames=(sourceFrames*compactRate)/static_cast<unsigned>(sourceRate);
    const std::uint64_t compactBytes=compactFrames*sizeof(std::int16_t);
    constexpr std::uint64_t maxResidentMusicBytes=24u*1024u*1024u;
    if(compactBytes>maxResidentMusicBytes){
@@ -128,18 +131,28 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
    if(mono.empty())return false;
 
    const std::size_t outFrames=std::max<std::size_t>(1,
-     (static_cast<std::uint64_t>(mono.size())*32000u)/static_cast<unsigned>(sourceRate));
+     (static_cast<std::uint64_t>(mono.size())*compactRate)/static_cast<unsigned>(sourceRate));
    std::vector<std::int16_t> compact(outFrames);
-   for(std::size_t i=0;i<outFrames;++i){
-     const std::size_t src=std::min(mono.size()-1,
-       static_cast<std::size_t>((static_cast<std::uint64_t>(i)*static_cast<unsigned>(sourceRate))/32000u));
-     compact[i]=mono[src];
+   if(sourceRate==static_cast<int>(compactRate)){
+     compact=std::move(mono);
+   } else {
+     // Linear interpolation is inexpensive on Vita and removes the harsh
+     // nearest-neighbour stepping from the old resampler.
+     for(std::size_t i=0;i<outFrames;++i){
+       const std::uint64_t pos=static_cast<std::uint64_t>(i)*static_cast<unsigned>(sourceRate);
+       const std::size_t src=std::min(mono.size()-1,
+         static_cast<std::size_t>(pos/compactRate));
+       const std::size_t next=std::min(mono.size()-1,src+1);
+       const unsigned frac=static_cast<unsigned>(pos%compactRate);
+       const std::int32_t a=mono[src], b=mono[next];
+       compact[i]=static_cast<std::int16_t>(a + ((b-a)*static_cast<std::int64_t>(frac))/compactRate);
+     }
    }
    Voice x; x.samples=std::move(compact); x.volume=std::clamp(v,0.f,1.f); x.loop=true; x.music=true; x.mono=true;
    if(loop)stopMusic();
    voices_.push_back(std::move(x));
    RuntimeDiagnostics::checkpoint("audio_ogg_compact_ready",
-     "target_rate=32000,source_rate=" + std::to_string(sourceRate) +
+     "target_rate=44100,source_rate=" + std::to_string(sourceRate) +
      ",frames=" + std::to_string(mono.size()));
    return true;
  }
