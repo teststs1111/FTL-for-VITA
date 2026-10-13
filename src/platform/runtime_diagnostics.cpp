@@ -12,14 +12,14 @@
 #include <mutex>
 #include <sstream>
 #include <string>
-#include <unordered_set>
 
 namespace wormhole {
 namespace {
 std::mutex gMutex;
 std::string gPath;
 bool gStarted = false;
-std::unordered_set<std::string> gDrawStagesSeen;
+bool gSawFillRect = false;
+bool gSawDrawLine = false;
 
 std::string hostPath() {
 #ifdef __vita__
@@ -61,7 +61,8 @@ void RuntimeDiagnostics::startSession(const std::string& executable, const std::
     sceIoMkdir("ux0:data/wormhole", 0777);
 #endif
     gPath = hostPath();
-    gDrawStagesSeen.clear();
+    gSawFillRect = false;
+    gSawDrawLine = false;
 
     std::ofstream out(gPath, std::ios::app);
     if (!out) return;
@@ -92,9 +93,16 @@ void RuntimeDiagnostics::checkpoint(const std::string& stage, const std::string&
         return;
 
     std::lock_guard<std::mutex> lock(gMutex);
-    if ((stage.rfind("fill_rect_", 0) == 0 || stage.rfind("draw_line_", 0) == 0) &&
-        !gDrawStagesSeen.insert(stage).second)
-        return;
+    // Keep just one sample of each primitive family. Avoid dynamic
+    // containers here: this code runs in the Vita startup path, where reducing
+    // static initialization and executable size is valuable.
+    if (stage.rfind("fill_rect_", 0) == 0) {
+        if (gSawFillRect) return;
+        gSawFillRect = true;
+    } else if (stage.rfind("draw_line_", 0) == 0) {
+        if (gSawDrawLine) return;
+        gSawDrawLine = true;
+    }
     if (!gStarted) gStarted = true;
     std::ostringstream ss;
     ss << "[" << timestamp() << "] stage=" << stage;
