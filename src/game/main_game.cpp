@@ -3126,11 +3126,18 @@ public:
         text_.draw(graphics_, "スクラップ " + std::to_string(scrap_) +
             "   ドローン " + std::to_string(droneParts_),620.f,66.f,14.f,{0.82f,0.76f,0.58f,1.f});
 
-                for (const auto& n : sectorGraph_.nodes()) {
-            const float x=n.x, y=n.y;
-            for (const int to:n.links) {
-                const auto* dst=sectorGraph_.node(to);
-                if(dst) graphics_.drawLine(x,y,dst->x,dst->y,{0.20f,0.34f,0.46f,1.f});
+        // Sector links are stored in both directions. Draw each undirected
+        // edge once to avoid redundant Vita GPU work on every map frame.
+        const auto& mapNodes = sectorGraph_.nodes();
+        for (std::size_t fromIndex = 0; fromIndex < mapNodes.size(); ++fromIndex) {
+            const auto& from = mapNodes[fromIndex];
+            for (const int toIndex : from.links) {
+                if (toIndex < 0 || static_cast<std::size_t>(toIndex) <= fromIndex)
+                    continue;
+                const auto* to = sectorGraph_.node(toIndex);
+                if (to)
+                    graphics_.drawLine(from.x, from.y, to->x, to->y,
+                        {0.20f, 0.34f, 0.46f, 1.f});
             }
         }
         // Vanilla Last Stand shows the Flagship's next destination on the map.
