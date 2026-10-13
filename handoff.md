@@ -44,6 +44,8 @@
 
 
 ## 2026-10-14 runtime follow-up
-- Commit `39cb98f0e88fe1403c02d7b7d453b06d4fcabb7d` limits repeated `fill_rect_*` and `draw_line_*` diagnostics to their first occurrence per runtime session. This preserves the first draw-stage crash boundary while avoiding per-primitive file open/flush work that can stall Vita rendering.
+- Commit `cf4cb7859230d6052be1ac8bd8be8bf0136d5057` replaces dynamic draw-stage tracking with two fixed flags. Only the first `fill_rect_*` and first `draw_line_*` checkpoint per session are persisted; frame-loop bookkeeping checkpoints are skipped. This reduces file-open/flush pressure during the Vita render loop and avoids dynamic-container initialization in the diagnostic path.
 - Commit `c4b446d29927fcac3771921bdb51c4ab4cef4440` changes sector-map D-pad navigation from stepping through the link list to selecting the nearest connected beacon in the pressed screen direction.
-- These changes require the Vita build and integrated build to pass before producing a new real-device test package. They do not establish hardware success by themselves.
+- Commit `234fc8569190b966b7be36d5af9525fc0f2ec994` adds regression coverage for duplicate draw-stage suppression. Host build, integrated build, and Vita build all completed successfully for this commit; the Vita VPK was produced. This is build verification only, not proof of physical-device success.
+- Commit `e2cd5fd40f037bef337464ad1e0e3f5f65cc2e80` makes the diagnostics test remove its previous host dump before checking counts, preventing false failures on repeated local runs.
+- Next priority remains testing the render-loop stall fix on hardware from the dump's last known point (`first_playable_map_ready` followed by repeated rectangle diagnostics), then using the new dump/PSP2DMP to locate the next blocker. Do not claim hardware success until a physical Vita reaches later frame checkpoints.
