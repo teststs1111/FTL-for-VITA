@@ -1,10 +1,14 @@
 #include "platform/runtime_diagnostics.hpp"
 
 #include <cassert>
+#include <cstdio>
 #include <fstream>
 #include <string>
 
 int main() {
+    // The diagnostic file is append-only in production. Isolate this test so
+    // repeated local runs do not count records from an earlier invocation.
+    std::remove(wormhole::RuntimeDiagnostics::path().c_str());
     wormhole::RuntimeDiagnostics::startSession("test", "ftl.dat");
     wormhole::RuntimeDiagnostics::checkpoint("test_stage", "sector=1");
     wormhole::RuntimeDiagnostics::checkpoint("fill_rect_test_begin");
