@@ -18,8 +18,7 @@ namespace {
 std::mutex gMutex;
 std::string gPath;
 bool gStarted = false;
-bool gSawFillRect = false;
-bool gSawDrawLine = false;
+unsigned int gDrawStageMask = 0;
 
 std::string hostPath() {
 #ifdef __vita__
@@ -61,8 +60,7 @@ void RuntimeDiagnostics::startSession(const std::string& executable, const std::
     sceIoMkdir("ux0:data/wormhole", 0777);
 #endif
     gPath = hostPath();
-    gSawFillRect = false;
-    gSawDrawLine = false;
+    gDrawStageMask = 0;
 
     std::ofstream out(gPath, std::ios::app);
     if (!out) return;
@@ -93,15 +91,26 @@ void RuntimeDiagnostics::checkpoint(const std::string& stage, const std::string&
         return;
 
     std::lock_guard<std::mutex> lock(gMutex);
-    // Keep just one sample of each primitive family. Avoid dynamic
-    // containers here: this code runs in the Vita startup path, where reducing
-    // static initialization and executable size is valuable.
-    if (stage.rfind("fill_rect_", 0) == 0) {
-        if (gSawFillRect) return;
-        gSawFillRect = true;
-    } else if (stage.rfind("draw_line_", 0) == 0) {
-        if (gSawDrawLine) return;
-        gSawDrawLine = true;
+    // Persist each known primitive checkpoint only once per session. A fixed
+    // bitmask keeps the individual GL crash boundaries visible without a
+    // dynamic container or repeated file open/flush for every rectangle.
+    unsigned int drawStageBit = 0;
+    if (stage == "fill_rect_color_begin") drawStageBit = 1u << 0;
+    else if (stage == "fill_rect_color_complete") drawStageBit = 1u << 1;
+    else if (stage == "fill_rect_begin_begin") drawStageBit = 1u << 2;
+    else if (stage == "fill_rect_array_begin") drawStageBit = 1u << 3;
+    else if (stage == "fill_rect_draw_begin") drawStageBit = 1u << 4;
+    else if (stage == "fill_rect_draw_complete") drawStageBit = 1u << 5;
+    else if (stage == "fill_rect_array_complete") drawStageBit = 1u << 6;
+    else if (stage == "draw_line_begin") drawStageBit = 1u << 7;
+    else if (stage == "draw_line_color_complete") drawStageBit = 1u << 8;
+    else if (stage == "draw_line_array_begin") drawStageBit = 1u << 9;
+    else if (stage == "draw_line_draw_begin") drawStageBit = 1u << 10;
+    else if (stage == "draw_line_draw_complete") drawStageBit = 1u << 11;
+    else if (stage == "draw_line_complete") drawStageBit = 1u << 12;
+    if (drawStageBit != 0) {
+        if ((gDrawStageMask & drawStageBit) != 0) return;
+        gDrawStageMask |= drawStageBit;
     }
     if (!gStarted) gStarted = true;
     std::ostringstream ss;
