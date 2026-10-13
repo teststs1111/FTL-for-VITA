@@ -11,10 +11,14 @@ int main() {
     std::remove(wormhole::RuntimeDiagnostics::path().c_str());
     wormhole::RuntimeDiagnostics::startSession("test", "ftl.dat");
     wormhole::RuntimeDiagnostics::checkpoint("test_stage", "sector=1");
-    wormhole::RuntimeDiagnostics::checkpoint("fill_rect_test_begin");
-    wormhole::RuntimeDiagnostics::checkpoint("fill_rect_test_begin");
-    wormhole::RuntimeDiagnostics::checkpoint("draw_line_test_begin");
-    wormhole::RuntimeDiagnostics::checkpoint("draw_line_test_begin");
+    wormhole::RuntimeDiagnostics::checkpoint("fill_rect_color_begin");
+    wormhole::RuntimeDiagnostics::checkpoint("fill_rect_color_begin");
+    wormhole::RuntimeDiagnostics::checkpoint("fill_rect_color_complete");
+    wormhole::RuntimeDiagnostics::checkpoint("fill_rect_color_complete");
+    wormhole::RuntimeDiagnostics::checkpoint("draw_line_begin");
+    wormhole::RuntimeDiagnostics::checkpoint("draw_line_begin");
+    wormhole::RuntimeDiagnostics::checkpoint("draw_line_color_complete");
+    wormhole::RuntimeDiagnostics::checkpoint("draw_line_color_complete");
     wormhole::RuntimeDiagnostics::markCleanShutdown();
 
     std::ifstream in(wormhole::RuntimeDiagnostics::path());
@@ -23,17 +27,23 @@ int main() {
     std::string line;
     bool foundStage = false;
     bool foundClean = false;
-    int fillRectCount = 0;
-    int drawLineCount = 0;
+    int fillRectBeginCount = 0;
+    int fillRectCompleteCount = 0;
+    int drawLineBeginCount = 0;
+    int drawLineCompleteCount = 0;
     while (std::getline(in, line)) {
         if (line.find("stage=test_stage") != std::string::npos) foundStage = true;
         if (line == "CLEAN_SHUTDOWN") foundClean = true;
-        if (line.find("stage=fill_rect_test_begin") != std::string::npos) ++fillRectCount;
-        if (line.find("stage=draw_line_test_begin") != std::string::npos) ++drawLineCount;
+        if (line.find("stage=fill_rect_color_begin") != std::string::npos) ++fillRectBeginCount;
+        if (line.find("stage=fill_rect_color_complete") != std::string::npos) ++fillRectCompleteCount;
+        if (line.find("stage=draw_line_begin") != std::string::npos) ++drawLineBeginCount;
+        if (line.find("stage=draw_line_color_complete") != std::string::npos) ++drawLineCompleteCount;
     }
     assert(foundStage);
     assert(foundClean);
-    assert(fillRectCount == 1);
-    assert(drawLineCount == 1);
+    assert(fillRectBeginCount == 1);
+    assert(fillRectCompleteCount == 1);
+    assert(drawLineBeginCount == 1);
+    assert(drawLineCompleteCount == 1);
     return 0;
 }
