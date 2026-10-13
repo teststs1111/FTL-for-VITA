@@ -2797,11 +2797,35 @@ public:
         // from the original sectorDescription/event XML.
         const auto choices = sectorGraph_.selectable(currentBeacon_, fleetRow_);
         if (!choices.empty()) {
-            auto it = std::find(choices.begin(), choices.end(), selectedBeacon_);
-            int pos = it == choices.end() ? 0 : static_cast<int>(it - choices.begin());
-            if (input_.pressed(Button::Left) || input_.pressed(Button::Up)) pos = std::max(0, pos - 1);
-            if (input_.pressed(Button::Right) || input_.pressed(Button::Down)) pos = std::min(static_cast<int>(choices.size()) - 1, pos + 1);
-            selectedBeacon_ = choices[static_cast<std::size_t>(pos)];
+            if (std::find(choices.begin(), choices.end(), selectedBeacon_) == choices.end())
+                selectedBeacon_ = choices.front();
+            int dx = 0;
+            int dy = 0;
+            if (input_.pressed(Button::Left)) dx = -1;
+            else if (input_.pressed(Button::Right)) dx = 1;
+            else if (input_.pressed(Button::Up)) dy = -1;
+            else if (input_.pressed(Button::Down)) dy = 1;
+            if (dx || dy) {
+                const auto* from = sectorGraph_.node(selectedBeacon_);
+                int next = -1;
+                float score = 1.0e30f;
+                if (from) for (const int candidate : choices) {
+                    if (candidate == selectedBeacon_) continue;
+                    const auto* to = sectorGraph_.node(candidate);
+                    if (!to) continue;
+                    const float x = to->x - from->x;
+                    const float y = to->y - from->y;
+                    const float forward = x * dx + y * dy;
+                    if (forward <= 0.0f) continue;
+                    const float side = std::abs(x * dy - y * dx);
+                    const float candidateScore = forward + side * 1.5f;
+                    if (candidateScore < score) {
+                        score = candidateScore;
+                        next = candidate;
+                    }
+                }
+                if (next >= 0) selectedBeacon_ = next;
+            }
         }
         if (sector_ < 7 && input_.pressed(Button::Triangle)) {
             distressBeaconActive_ = !distressBeaconActive_;
