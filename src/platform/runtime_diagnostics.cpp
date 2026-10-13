@@ -86,8 +86,7 @@ void RuntimeDiagnostics::checkpoint(const std::string& stage, const std::string&
     // bookkeeping stages.
     if (stage == "begin_frame_clear_begin" ||
         stage == "begin_frame_clear_color_complete" ||
-        stage == "begin_frame_clear_complete" ||
-        stage == "first_frame_render_complete")
+        stage == "begin_frame_clear_complete")
         return;
 
     std::lock_guard<std::mutex> lock(gMutex);
