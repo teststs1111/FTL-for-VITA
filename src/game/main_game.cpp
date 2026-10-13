@@ -2636,7 +2636,17 @@ public:
             if (!translated.empty() && translated != event->textKey) message = translated;
         }
         if (message.empty()) message = "このビーコンでは特に何も起きなかった。";
-        if (message.size() > 180) message.resize(180);
+        // Event text is UTF-8 (including Japanese localization). A raw byte
+        // resize can split a multibyte character and feed malformed text into
+        // the Vita glyph renderer. Keep the existing byte budget, but move the
+        // cut point back to the beginning of any character crossing the limit.
+        if (message.size() > 180) {
+            std::size_t cut = 180;
+            while (cut > 0 &&
+                   (static_cast<unsigned char>(message[cut]) & 0xC0u) == 0x80u)
+                --cut;
+            message.resize(cut);
+        }
         text_.draw(graphics_, message, 105.f, 150.f, 16.f, {0.82f, 0.86f, 0.92f, 1.f});
         if (event->choices.empty()) {
             text_.draw(graphics_, "×: 続行", 105.f, 410.f, 16.f, {0.95f, 0.82f, 0.42f, 1.f});
