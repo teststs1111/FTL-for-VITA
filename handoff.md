@@ -41,3 +41,9 @@
 ## 2026-10-03 Vita fixed-function render state
 - Commit `46bff11b438158321d2352069fea69a77d92cc65` initializes the Vita viewport and orthographic projection/modelview state immediately after vitaGL initialization, before the first immediate-mode vertex is submitted.
 - This targets the real-device crash boundary observed at `fill_rect_vertex_1_begin`; no gameplay/data/archive behavior is changed.
+
+
+## 2026-10-14 runtime follow-up
+- Commit `39cb98f0e88fe1403c02d7b7d453b06d4fcabb7d` limits repeated `fill_rect_*` and `draw_line_*` diagnostics to their first occurrence per runtime session. This preserves the first draw-stage crash boundary while avoiding per-primitive file open/flush work that can stall Vita rendering.
+- Commit `c4b446d29927fcac3771921bdb51c4ab4cef4440` changes sector-map D-pad navigation from stepping through the link list to selecting the nearest connected beacon in the pressed screen direction.
+- These changes require the Vita build and integrated build to pass before producing a new real-device test package. They do not establish hardware success by themselves.
