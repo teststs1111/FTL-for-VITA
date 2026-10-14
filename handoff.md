@@ -59,3 +59,6 @@
 - Event descriptions are now split into UTF-8-safe lines in the event panel. The renderer does not wrap text itself, so long Japanese descriptions previously ran beyond the panel edge.
 - The display shows up to three lines before the event-choice area; the existing 180-byte safety limit remains in place.
 - Commit: `f2df575`. Host regression, integrated build, and Vita build results must be checked for this revision.
+
+
+- Follow-up: long event-choice labels also truncate at a UTF-8 character boundary; the previous 90-byte resize could corrupt Japanese text. Commit: `037e694`.
