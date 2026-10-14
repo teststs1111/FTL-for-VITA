@@ -53,3 +53,9 @@
 ## 2026-10-14 event text safety follow-up
 - Beacon event text was previously truncated with a raw 180-byte string resize. Since event/localized text may contain Japanese UTF-8, this could cut a multibyte character and send malformed text into the glyph renderer.
 - Commit `7f8cbd3` moves the truncation boundary back to the start of a character crossing the byte limit. Host, integrated, and Vita workflows are running for this source revision; do not treat them as passed until their conclusions are successful.
+
+
+## 2026-10-14 beacon event text layout
+- Event descriptions are now split into UTF-8-safe lines in the event panel. The renderer does not wrap text itself, so long Japanese descriptions previously ran beyond the panel edge.
+- The display shows up to three lines before the event-choice area; the existing 180-byte safety limit remains in place.
+- Commit: `f2df575`. Host regression, integrated build, and Vita build results must be checked for this revision.
