@@ -2705,7 +2705,13 @@ public:
                 if (label.empty()) label = choice.load.empty() ? "続行" : "次へ";
                 if (choice.blue && !choice.requirement.empty()) label = "[青] " + label;
                 if (!available && !choice.requirement.empty()) label += "  (条件未達)";
-                if (label.size() > 90) label.resize(90);
+                if (label.size() > 90) {
+                    std::size_t cut = 90;
+                    while (cut > 0 &&
+                           (static_cast<unsigned char>(label[cut]) & 0xC0u) == 0x80u)
+                        --cut;
+                    label.resize(cut);
+                }
                 const Color normal = available
                     ? Color{0.78f,0.83f,0.90f,1.f}
                     : Color{0.42f,0.45f,0.50f,1.f};
