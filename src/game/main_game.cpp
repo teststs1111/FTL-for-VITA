@@ -2647,7 +2647,41 @@ public:
                 --cut;
             message.resize(cut);
         }
-        text_.draw(graphics_, message, 105.f, 150.f, 16.f, {0.82f, 0.86f, 0.92f, 1.f});
+        // The Vita text renderer creates one texture per string and does not
+        // wrap automatically. Split UTF-8 at code-point boundaries so long
+        // Japanese event descriptions remain readable instead of running off
+        // the right edge of the event panel.
+        std::vector<std::string> messageLines;
+        std::string line;
+        std::size_t codepoints = 0;
+        for (std::size_t i = 0; i < message.size();) {
+            const auto c = static_cast<unsigned char>(message[i]);
+            const std::size_t bytes = (c < 0x80u) ? 1u :
+                ((c & 0xE0u) == 0xC0u) ? 2u :
+                ((c & 0xF0u) == 0xE0u) ? 3u :
+                ((c & 0xF8u) == 0xF0u) ? 4u : 1u;
+            if (c == '\n') {
+                messageLines.push_back(std::move(line));
+                line.clear();
+                codepoints = 0;
+                ++i;
+                continue;
+            }
+            const std::size_t count = std::min(bytes, message.size() - i);
+            if (codepoints >= 44u) {
+                messageLines.push_back(std::move(line));
+                line.clear();
+                codepoints = 0;
+            }
+            line.append(message, i, count);
+            i += count;
+            ++codepoints;
+        }
+        if (!line.empty() || messageLines.empty()) messageLines.push_back(std::move(line));
+        constexpr std::size_t maxVisibleMessageLines = 3;
+        for (std::size_t i = 0; i < messageLines.size() && i < maxVisibleMessageLines; ++i)
+            text_.draw(graphics_, messageLines[i], 105.f, 150.f + static_cast<float>(i) * 23.f,
+                       16.f, {0.82f, 0.86f, 0.92f, 1.f});
         if (event->choices.empty()) {
             text_.draw(graphics_, "×: 続行", 105.f, 410.f, 16.f, {0.95f, 0.82f, 0.42f, 1.f});
         } else {
