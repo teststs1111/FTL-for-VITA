@@ -181,8 +181,15 @@ bool Audio::playOgg(const std::vector<std::uint8_t>& bytes,float v,bool loop){
    const std::size_t outFrames=std::max<std::size_t>(1,(std::uint64_t(inFrames)*sampleRate_)/static_cast<unsigned>(sourceRate));
    std::vector<std::int16_t> resampled(outFrames*2);
    for(std::size_t i=0;i<outFrames;++i){
-      const std::size_t src=std::min(inFrames-1,std::size_t((std::uint64_t(i)*sourceRate)/sampleRate_));
-      resampled[i*2]=pcm[src*2]; resampled[i*2+1]=pcm[src*2+1];
+      const std::uint64_t position=static_cast<std::uint64_t>(i)*static_cast<unsigned>(sourceRate);
+      const std::size_t src=std::min(inFrames-1,static_cast<std::size_t>(position/sampleRate_));
+      const std::size_t next=std::min(inFrames-1,src+1);
+      const std::uint64_t fraction=position%sampleRate_;
+      for(std::size_t channel=0;channel<2;++channel){
+        const std::int32_t a=pcm[src*2+channel], b=pcm[next*2+channel];
+        resampled[i*2+channel]=static_cast<std::int16_t>(
+          a+((b-a)*static_cast<std::int64_t>(fraction))/sampleRate_);
+      }
    }
    pcm.swap(resampled);
  }
@@ -236,7 +243,17 @@ bool Audio::playWav(const std::vector<std::uint8_t>& b,float v){
  if(rate!=48000){
   const std::size_t out=std::max<std::size_t>(1,std::size_t((std::uint64_t(frames)*48000u)/rate));
   std::vector<std::int16_t> r(out*2);
-  for(std::size_t i=0;i<out;++i){const auto src=std::min(frames-1,std::size_t((std::uint64_t(i)*rate)/48000u));r[i*2]=pcm[src*2];r[i*2+1]=pcm[src*2+1];}
+  for(std::size_t i=0;i<out;++i){
+   const std::uint64_t position=static_cast<std::uint64_t>(i)*rate;
+   const std::size_t src=std::min(frames-1,static_cast<std::size_t>(position/48000u));
+   const std::size_t next=std::min(frames-1,src+1);
+   const std::uint64_t fraction=position%48000u;
+   for(std::size_t channel=0;channel<2;++channel){
+    const std::int32_t a=pcm[src*2+channel],b=pcm[next*2+channel];
+    r[i*2+channel]=static_cast<std::int16_t>(
+      a+((b-a)*static_cast<std::int64_t>(fraction))/48000u);
+   }
+  }
   pcm.swap(r);
  }
  return playPcm16Stereo(pcm,v);
