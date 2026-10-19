@@ -33,6 +33,11 @@
 - This prevents supplementary-plane characters in event labels and other text from becoming a run of question marks. Actual glyph availability still depends on the Vita's selected PVF fonts.
 - Source commit: `ac819dd`.
 
+## Audio resampling
+- Non-looping OGG and WAV playback now uses linear interpolation for both stereo channels when converting to the Vita's 48 kHz output rate, replacing nearest-neighbor sampling that could add audible stepping/aliasing.
+- Looping music still uses the existing memory-bounded mono decode path; stereo streaming remains a separate fidelity improvement.
+- Source commit: `80858ac`.
+
 ## Reporting
 - Keep progress reports concise.
 - Do not repeatedly report that `ftl.dat` was checked or that CI is being checked.
