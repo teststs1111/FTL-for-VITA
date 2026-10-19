@@ -28,6 +28,11 @@
 - Transient XML/PNG/OGG source bytes are released after parsing/upload/decode where possible.
 - There is still no claim of real-device boot success until a physical Vita test reaches the first-frame checkpoints.
 
+## Vita text encoding
+- The PVF UTF-8 conversion now validates multibyte sequences and converts valid four-byte UTF-8 code points into UTF-16 surrogate pairs. Invalid or truncated sequences produce a replacement question mark rather than being interpreted as malformed code points.
+- This prevents supplementary-plane characters in event labels and other text from becoming a run of question marks. Actual glyph availability still depends on the Vita's selected PVF fonts.
+- Source commit: `ac819dd`.
+
 ## Reporting
 - Keep progress reports concise.
 - Do not repeatedly report that `ftl.dat` was checked or that CI is being checked.
