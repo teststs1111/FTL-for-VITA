@@ -97,19 +97,52 @@ void TextRenderer::shutdown(Graphics& graphics) {
 #ifdef __vita__
 static std::vector<std::uint16_t> utf8ToUtf16(std::string_view text) {
     std::vector<std::uint16_t> out;
+    out.reserve(text.size());
     for (std::size_t i = 0; i < text.size();) {
-        const auto c = static_cast<unsigned char>(text[i]);
-        if (c < 0x80) { out.push_back(c); ++i; }
-        else if ((c & 0xe0) == 0xc0 && i + 1 < text.size()) {
-            const auto cp = static_cast<std::uint32_t>(c & 0x1f) << 6 |
-                            (static_cast<unsigned char>(text[i + 1]) & 0x3f);
-            out.push_back(static_cast<std::uint16_t>(cp)); i += 2;
-        } else if ((c & 0xf0) == 0xe0 && i + 2 < text.size()) {
-            const auto cp = static_cast<std::uint32_t>(c & 0x0f) << 12 |
-                            (static_cast<unsigned char>(text[i + 1]) & 0x3f) << 6 |
-                            (static_cast<unsigned char>(text[i + 2]) & 0x3f);
-            out.push_back(static_cast<std::uint16_t>(cp)); i += 3;
-        } else { out.push_back(static_cast<std::uint16_t>('?')); ++i; }
+        const auto lead = static_cast<unsigned char>(text[i]);
+        if (lead < 0x80) {
+            out.push_back(lead);
+            ++i;
+            continue;
+        }
+
+        std::uint32_t cp = 0;
+        std::size_t count = 0;
+        if ((lead & 0xe0) == 0xc0) { cp = lead & 0x1f; count = 2; }
+        else if ((lead & 0xf0) == 0xe0) { cp = lead & 0x0f; count = 3; }
+        else if ((lead & 0xf8) == 0xf0) { cp = lead & 0x07; count = 4; }
+
+        bool valid = count != 0 && i + count <= text.size();
+        if (valid) {
+            for (std::size_t j = 1; j < count; ++j) {
+                const auto next = static_cast<unsigned char>(text[i + j]);
+                if ((next & 0xc0) != 0x80) {
+                    valid = false;
+                    break;
+                }
+                cp = (cp << 6) | (next & 0x3f);
+            }
+        }
+        if (valid) {
+            const std::uint32_t minimum = count == 2 ? 0x80u :
+                                          count == 3 ? 0x800u : 0x10000u;
+            valid = cp >= minimum && cp <= 0x10ffffu &&
+                    !(cp >= 0xd800u && cp <= 0xdfffu);
+        }
+        if (!valid) {
+            out.push_back(static_cast<std::uint16_t>('?'));
+            ++i;
+            continue;
+        }
+
+        if (cp <= 0xffffu) {
+            out.push_back(static_cast<std::uint16_t>(cp));
+        } else {
+            cp -= 0x10000u;
+            out.push_back(static_cast<std::uint16_t>(0xd800u + (cp >> 10)));
+            out.push_back(static_cast<std::uint16_t>(0xdc00u + (cp & 0x3ffu)));
+        }
+        i += count;
     }
     return out;
 }
