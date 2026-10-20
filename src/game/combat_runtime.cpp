@@ -50,13 +50,17 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
 
     // Enemy AI prototype: prefer the player weapon room, then engines, then room 0.
     enemyTargetRoom = 0;
+    bool foundWeaponTarget = false;
     for (const auto& system : player.systems) {
         if (system.type == "weapons" && system.room >= 0) {
             enemyTargetRoom = system.room;
+            foundWeaponTarget = true;
             break;
         }
     }
-    if (enemyTargetRoom == 0) {
+    // Room 0 is a valid target, not a sentinel. Only fall back to engines when
+    // the player has no usable weapons-room assignment.
+    if (!foundWeaponTarget) {
         for (const auto& system : player.systems) {
             if (system.type == "engines" && system.room >= 0) {
                 enemyTargetRoom = system.room;
