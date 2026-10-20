@@ -355,7 +355,11 @@ public:
         std::transform(type.begin(), type.end(), type.begin(),
             [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
         std::string track = "CivilEXPLORE";
-        if (type.find("engi") != std::string::npos) track = "EngiEXPLORE";
+        // Sector 8 is the Last Stand regardless of the sector type label.
+        // Keep this check first: otherwise a generic type such as "Civilian"
+        // can incorrectly select an ordinary exploration track in the finale.
+        if (sector_ >= 7) track = "LastStand";
+        else if (type.find("engi") != std::string::npos) track = "EngiEXPLORE";
         else if (type.find("mantis") != std::string::npos) track = "MantisEXPLORE";
         else if (type.find("rock") != std::string::npos) track = "RockmenEXPLORE";
         else if (type.find("slug") != std::string::npos) track = "SlugEXPLORE";
@@ -363,7 +367,6 @@ public:
         else if (type.find("nebula") != std::string::npos) track = "DeepspaceEXPLORE";
         else if (type.find("lost") != std::string::npos) track = "LostShipEXPLORE";
         else if (type.find("shrike") != std::string::npos) track = "ShrikeEXPLORE";
-        else if (sector_ >= 7) track = "LastStand";
         else if (type.find("wasteland") != std::string::npos) track = "WastelandEXPLORE";
         else if (type.find("colonial") != std::string::npos) track = "ColonialEXPLORE";
         else if (type.find("void") != std::string::npos) track = "VoidEXPLORE";
