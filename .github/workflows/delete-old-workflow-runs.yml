@@ -4,15 +4,18 @@ on:
   workflow_dispatch:
     inputs:
       keep_latest:
-        description: "Keep this many newest runs per workflow"
+        description: "Keep this many newest completed runs per workflow"
         required: true
-        default: "10"
+        default: "30"
         type: string
       target_workflow:
         description: "Workflow file name to target (blank = all workflows)"
         required: false
         default: ""
         type: string
+  schedule:
+    # Weekly at 03:00 JST on Monday (GitHub cron uses UTC).
+    - cron: "0 18 * * 0"
 
 permissions:
   actions: write
@@ -25,7 +28,7 @@ jobs:
       - name: Delete old workflow runs
         env:
           GH_TOKEN: ${{ github.token }}
-          KEEP_LATEST: ${{ inputs.keep_latest }}
+          KEEP_LATEST: ${{ inputs.keep_latest || '30' }}
           TARGET_WORKFLOW: ${{ inputs.target_workflow }}
           REPO: ${{ github.repository }}
         run: |
@@ -44,17 +47,18 @@ jobs:
             echo "Cleaning workflow: $workflow_name"
 
             while true; do
+              # The API returns newest runs first. Re-read page 1 after deletions
+              # so deleting runs cannot shift pagination and skip older entries.
               mapfile -t runs < <(
-                gh api --paginate --slurp \
+                gh api \
                   -H "Accept: application/vnd.github+json" \
                   "/repos/${REPO}/actions/workflows/${workflow_name}/runs?per_page=100&status=completed" |
-                jq -r 'add | .workflow_runs[] | [.id,.run_number] | @tsv' |
-                head -n 100
+                jq -r '.workflow_runs[] | [.id,.run_number] | @tsv'
               )
 
               count=${#runs[@]}
               if (( count <= keep )); then
-                echo "Nothing more to delete ($count runs remain in this page)."
+                echo "Nothing more to delete ($count completed runs remain in the first page)."
                 break
               fi
 
@@ -69,7 +73,7 @@ jobs:
                 ((delete_count+=1))
               done
 
-              echo "Deleted $delete_count run(s); re-reading page 1 to avoid pagination shifts."
+              echo "Deleted $delete_count run(s); re-reading page 1."
             done
           }
 
