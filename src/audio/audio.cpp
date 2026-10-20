@@ -226,15 +226,33 @@ void Audio::stopMusic(){
 
 bool Audio::playWav(const std::vector<std::uint8_t>& b,float v){
  if(!initialized_||b.size()<44||!tag(b,0,"RIFF")||!tag(b,8,"WAVE"))return false;
- std::uint16_t ch=0,bits=0; std::uint32_t rate=0; std::size_t off=0,size=0,p=12;
+ std::uint16_t ch=0,bits=0; std::uint32_t rate=0;
+ std::size_t off=0,size=0,p=12;
+ bool haveFormat=false,haveData=false;
  while(p+8<=b.size()){
-  const std::uint32_t n=u32(b,p+4); const std::size_t q=p+8; if(q>b.size()||n>b.size()-q)return false;
-  if(tag(b,p,"fmt ")){if(n<16)return false; if(u16(b,q)!=1)return false; ch=u16(b,q+2);rate=u32(b,q+4);bits=u16(b,q+14);if((ch!=1&&ch!=2)||(bits!=8&&bits!=16)||!rate)return false;}
-  else if(tag(b,p,"data")){off=q;size=n;break;}
-  p=q+n+(n&1u);
+  const std::uint32_t n=u32(b,p+4);
+  const std::size_t q=p+8;
+  if(q>b.size()||n>b.size()-q)return false;
+  if(tag(b,p,"fmt ")){
+   if(n<16||u16(b,q)!=1)return false;
+   ch=u16(b,q+2);rate=u32(b,q+4);bits=u16(b,q+14);
+   if((ch!=1&&ch!=2)||(bits!=8&&bits!=16)||!rate)return false;
+   haveFormat=true;
+  } else if(tag(b,p,"data")&&!haveData){
+   off=q;size=n;haveData=true;
+  }
+  const std::size_t next=q+static_cast<std::size_t>(n)+(n&1u);
+  if(next>b.size()){
+   if(q+static_cast<std::size_t>(n)==b.size())break;
+   return false;
+  }
+  p=next;
  }
- if(!off||!size)return false;
- const std::size_t bps=bits/8, frames=size/(bps*ch); if(!frames)return false;
+ if(!haveFormat||!haveData||!size)return false;
+ const std::size_t bps=bits/8, frameBytes=bps*ch;
+ if(!frameBytes||size%frameBytes!=0)return false;
+ const std::size_t frames=size/frameBytes;
+ if(!frames)return false;
  std::vector<std::int16_t> pcm(frames*2);
  for(std::size_t i=0;i<frames;++i){
   auto sample=[&](std::size_t c){const std::size_t x=off+(i*ch+c)*bps;return bits==16?std::int16_t(std::uint16_t(b[x])|(std::uint16_t(b[x+1])<<8)):std::int16_t((int(b[x])-128)*257);};

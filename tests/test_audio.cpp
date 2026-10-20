@@ -1,10 +1,78 @@
 #include "audio/audio.hpp"
+
 #include <cassert>
 #include <cstdint>
 #include <vector>
-int main(){
- wormhole::Audio a; assert(a.init());
- std::vector<std::uint8_t> w(48,0); auto p16=[&](std::size_t p,std::uint16_t v){w[p]=v&255;w[p+1]=v>>8;}; auto p32=[&](std::size_t p,std::uint32_t v){w[p]=v&255;w[p+1]=(v>>8)&255;w[p+2]=(v>>16)&255;w[p+3]=v>>24;};
- w[0]='R';w[1]='I';w[2]='F';w[3]='F';p32(4,40);w[8]='W';w[9]='A';w[10]='V';w[11]='E';w[12]='f';w[13]='m';w[14]='t';w[15]=' ';p32(16,16);p16(20,1);p16(22,1);p32(24,24000);p32(28,24000);p16(32,1);p16(34,8);w[36]='d';w[37]='a';w[38]='t';w[39]='a';p32(40,4);w[44]=128;w[45]=160;w[46]=96;w[47]=128;
- assert(a.playWav(w)); a.update(); a.shutdown(); return 0;
+
+namespace {
+void append16(std::vector<std::uint8_t>& out, std::uint16_t value) {
+    out.push_back(static_cast<std::uint8_t>(value & 0xff));
+    out.push_back(static_cast<std::uint8_t>(value >> 8));
+}
+void append32(std::vector<std::uint8_t>& out, std::uint32_t value) {
+    for (unsigned shift = 0; shift < 32; shift += 8)
+        out.push_back(static_cast<std::uint8_t>((value >> shift) & 0xff));
+}
+void appendTag(std::vector<std::uint8_t>& out, const char* tag) {
+    out.insert(out.end(), tag, tag + 4);
+}
+std::vector<std::uint8_t> chunk(const char* tag, const std::vector<std::uint8_t>& payload) {
+    std::vector<std::uint8_t> out;
+    appendTag(out, tag);
+    append32(out, static_cast<std::uint32_t>(payload.size()));
+    out.insert(out.end(), payload.begin(), payload.end());
+    if (payload.size() & 1u) out.push_back(0);
+    return out;
+}
+std::vector<std::uint8_t> pcmFormat(std::uint16_t channels, std::uint32_t rate,
+                                    std::uint16_t bits) {
+    std::vector<std::uint8_t> out;
+    append16(out, 1);
+    append16(out, channels);
+    append32(out, rate);
+    append32(out, rate * channels * (bits / 8));
+    append16(out, static_cast<std::uint16_t>(channels * (bits / 8)));
+    append16(out, bits);
+    return out;
+}
+std::vector<std::uint8_t> wav(const std::vector<std::vector<std::uint8_t>>& chunks) {
+    std::vector<std::uint8_t> body;
+    for (const auto& part : chunks) body.insert(body.end(), part.begin(), part.end());
+    std::vector<std::uint8_t> out;
+    appendTag(out, "RIFF");
+    append32(out, static_cast<std::uint32_t>(body.size() + 4));
+    appendTag(out, "WAVE");
+    out.insert(out.end(), body.begin(), body.end());
+    return out;
+}
+}
+
+int main() {
+    wormhole::Audio audio;
+    assert(audio.init());
+
+    const auto fmt8 = chunk("fmt ", pcmFormat(1, 24000, 8));
+    const auto validData = chunk("data", {128, 160, 96, 128});
+
+    // Standard fmt-before-data ordering remains supported.
+    assert(audio.playWav(wav({fmt8, validData})));
+
+    // A valid RIFF/WAVE may place data before fmt; the parser must scan all chunks.
+    assert(audio.playWav(wav({validData, fmt8})));
+
+    // Missing format metadata must be rejected safely.
+    assert(!audio.playWav(wav({validData})));
+
+    // PCM data must contain complete sample frames.
+    const auto fmt16 = chunk("fmt ", pcmFormat(1, 24000, 16));
+    assert(!audio.playWav(wav({fmt16, chunk("data", {0x34})})));
+
+    // A truncated chunk payload must fail validation.
+    auto truncated = wav({fmt8, validData});
+    truncated.pop_back();
+    assert(!audio.playWav(truncated));
+
+    audio.update();
+    audio.shutdown();
+    return 0;
 }
