@@ -72,3 +72,8 @@
 
 
 - Follow-up: long event-choice labels also truncate at a UTF-8 character boundary; the previous 90-byte resize could corrupt Japanese text. Commit: `037e694`.
+
+
+## 2026-10-21 final-sector music fidelity
+- Commit `b4b29491a7eb50c6d2713696ca2d68d35e7e5517` prioritizes the sector-8 Last Stand music before sector-type matching. Previously, a generic sector type such as `Civilian` could select a normal exploration track before the final-sector condition was reached.
+- Verify Host, integrated, and Vita workflows for this revision before considering the fix build-validated.
