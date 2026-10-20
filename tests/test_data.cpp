@@ -418,7 +418,7 @@ static void testShipRuntime() {
         "<shipBlueprint name=\"PLAYER_SHIP_HARD\" shipName=\"Kestrel\" layout=\"kestrel\">"
         "<health amount=\"30\"/><maxPower amount=\"8\"/>"
         "<weaponList missiles=\"7\"><weapon name=\"LASER_TEST\"/></weaponList><droneList><drone name=\"COMBAT_TEST\"/><drone name=\"DEFENSE_TEST\"/></droneList>"
-        "<systemList><engines room=\"0\" power=\"2\"/><shields room=\"1\" power=\"2\"/><weapons room=\"0\" power=\"1\" start=\"false\"/></systemList>"
+        "<systemList><engines room=\"2\" power=\"2\"/><shields room=\"1\" power=\"2\"/><weapons room=\"0\" power=\"1\" start=\"false\"/></systemList>"
         "<crew species=\"human\" name=\"Alice\" room=\"0\"/>"
         "<crew species=\"engi\" name=\"Bob\" room=\"1\"/>"
         "</shipBlueprint>";
