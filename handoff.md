@@ -77,3 +77,11 @@
 ## 2026-10-21 final-sector music fidelity
 - Commit `b4b29491a7eb50c6d2713696ca2d68d35e7e5517` prioritizes the sector-8 Last Stand music before sector-type matching. Previously, a generic sector type such as `Civilian` could select a normal exploration track before the final-sector condition was reached.
 - Verify Host, integrated, and Vita workflows for this revision before considering the fix build-validated.
+
+
+## Autonomous development operating protocol
+- A recurring ChatGPT task named `FTL Vita 自律開発` was created on 2026-10-21. It runs daily on a flexible schedule (Asia/Tokyo, target morning) and is intended to make real code/test changes rather than send progress-only reports.
+- Each run should inspect the current `main` state and latest Host/Vita/integrated GitHub Actions results before choosing one highest-priority, non-duplicate task. Fix failed builds before expanding features.
+- Keep commits small and independently verifiable. After source changes, record meaningful decisions and the next blocker here. Never claim a physical Vita test passed without user-provided device evidence.
+- Stop and notify the user when a physical-device observation is the critical next step; give exact steps and the expected diagnostic evidence. Continue unrelated code/test work where possible.
+- Platform limitation: the recurring task is a scheduled work session, not a permanently running process; its cadence is daily and timing is flexible. GitHub Actions validates commits but cannot independently author/fix C++ without an AI agent runner and explicitly configured credentials. Do not create self-triggering infinite workflows or use secrets in source.
