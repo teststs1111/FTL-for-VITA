@@ -572,8 +572,15 @@ static void testShipRuntime() {
     assert(droneImpact.shotsFired == 1);
     assert(droneImpact.hullDamage == 1);
     assert(combat.enemy.hull == droneHullBefore - 1);
+    assert(combat.playerDeployedCombatDrone());
     assert(combat.player.setDronePowered(0, false));
     assert(combat.player.setDronePowered(1, false));
+    const auto phaseOneCrew = combat.enemy.crew;
+    assert(combat.loadFlagshipPhase(content, enemyForCombat, phaseOneCrew));
+    assert(combat.playerDeployedCombatDrone());
+    assert(combat.load(content, enemyForCombat));
+    assert(!combat.playerDeployedCombatDrone());
+    assert(!combat.enemyDefeatedByCrewDamage());
     assert(combat.load(content, enemyForCombat));
     assert(combat.setTargetRoom(0));
     // Isolate the Defense Drone regression from the prototype enemy-AI scheduler:
@@ -1006,6 +1013,19 @@ static void testShipRuntime() {
     assert(combat.outcome == wormhole::CombatOutcome::Ongoing);
     combat.update(0.25f);
     assert(combat.outcome == wormhole::CombatOutcome::EnemyDestroyed);
+
+    // A crew-kill result must not leak into the next encounter's reward lookup.
+    assert(combat.load(content, enemyForCombat));
+    assert(!combat.enemy.crew.empty());
+    for (auto& crew : combat.enemy.crew) {
+        crew.alive = false;
+        crew.health = 0;
+    }
+    combat.update(0.01f);
+    assert(combat.enemyDefeatedByCrewDamage());
+    assert(combat.load(content, enemyForCombat));
+    assert(!combat.enemyDefeatedByCrewDamage());
+
     // Direct room status regression: fire, breach and system stun are temporary/persistent states.
     assert(runtime.setRoomFire(0, false));
     assert(runtime.setRoomFire(0, true));

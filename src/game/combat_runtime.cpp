@@ -39,6 +39,9 @@ bool CombatRuntime::load(ShipContent& contentSource, const LoadedShip& enemyShip
     flagshipSurgeWarning_ = false;
     flagshipSurgePendingShots_ = 0;
     flagshipSurgeShotSerial_ = 0;
+    // These results belong to one encounter; never leak them into the next fight.
+    playerDeployedCombatDrone_ = false;
+    enemyDefeatedByCrew_ = false;
 
     const LoadedShip* playerShip = contentSource.playerShip();
     if (!playerShip) return false;
@@ -77,7 +80,10 @@ void CombatRuntime::setEnemyEscapeTimer(float seconds) {
 
 bool CombatRuntime::loadFlagshipPhase(ShipContent& contentSource, const LoadedShip& enemyShip,
                                       const std::vector<RuntimeCrew>& previousCrew) {
+    // A new phase is the same Flagship encounter for drone-recovery accounting.
+    const bool deployedCombatDrone = playerDeployedCombatDrone_;
     if (!load(contentSource, enemyShip)) return false;
+    playerDeployedCombatDrone_ = deployedCombatDrone;
 
     // Flagship phases use separate blueprints, but crew casualties persist
     // between phases. Match by name/race and carry health/alive state forward.
