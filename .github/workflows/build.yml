@@ -5,6 +5,10 @@ on:
     branches: ["**"]
   pull_request:
   workflow_dispatch:
+  # Daily main-branch health check (06:30 JST / 21:30 UTC).
+  # This validates code; autonomous code changes remain the ChatGPT task's responsibility.
+  schedule:
+    - cron: "30 21 * * *"
 
 jobs:
   host:
