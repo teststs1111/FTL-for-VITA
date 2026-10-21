@@ -1,3 +1,8 @@
+## 2026-10-21 encounter-scoped combat flags
+- `CombatRuntime::load()` now resets the drone-deployed and crew-defeat result flags for a fresh encounter; `loadFlagshipPhase()` preserves drone deployment across phases of the same Flagship fight.
+- `tests/test_data.cpp` covers new-encounter reset, Flagship phase carry-over, and crew-defeat flag reset.
+- Branch `auto/reset-combat-encounter-flags`; commits `1bbf08e` and `dd37db2`. Awaiting Host/Vita/integrated Actions; no physical Vita claim.
+
 # FTL-for-VITA handoff
 
 ## Current direction
