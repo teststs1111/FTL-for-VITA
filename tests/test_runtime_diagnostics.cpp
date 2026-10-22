@@ -22,6 +22,17 @@ int main() {
     wormhole::RuntimeDiagnostics::checkpoint("draw_line_color_complete");
     wormhole::RuntimeDiagnostics::markCleanShutdown();
 
+    // A new process/session should identify the previous clean exit from the
+    // persisted log, not from the current process's static state.
+    wormhole::RuntimeDiagnostics::startSession("test-clean", "ftl.dat");
+    wormhole::RuntimeDiagnostics::markCleanShutdown();
+
+    // Simulate a crash by starting another session without writing
+    // CLEAN_SHUTDOWN, then verify the next session reports it as unclean.
+    wormhole::RuntimeDiagnostics::startSession("test-unclean", "ftl.dat");
+    wormhole::RuntimeDiagnostics::startSession("test-after-unclean", "ftl.dat");
+    wormhole::RuntimeDiagnostics::markCleanShutdown();
+
     std::ifstream in(wormhole::RuntimeDiagnostics::path());
     assert(in.good());
 
@@ -29,6 +40,9 @@ int main() {
     bool foundStage = false;
     bool foundFirstFrame = false;
     bool foundClean = false;
+    bool foundUnknownPreviousSession = false;
+    bool foundCleanPreviousSession = false;
+    bool foundUncleanPreviousSession = false;
     int fillRectBeginCount = 0;
     int fillRectCompleteCount = 0;
     int drawLineBeginCount = 0;
@@ -37,6 +51,9 @@ int main() {
         if (line.find("stage=test_stage") != std::string::npos) foundStage = true;
         if (line.find("stage=first_frame_render_complete") != std::string::npos) foundFirstFrame = true;
         if (line == "CLEAN_SHUTDOWN") foundClean = true;
+        if (line == "previous_session=unknown") foundUnknownPreviousSession = true;
+        if (line == "previous_session=clean") foundCleanPreviousSession = true;
+        if (line == "previous_session=unclean") foundUncleanPreviousSession = true;
         if (line.find("stage=fill_rect_color_begin") != std::string::npos) ++fillRectBeginCount;
         if (line.find("stage=fill_rect_color_complete") != std::string::npos) ++fillRectCompleteCount;
         if (line.find("stage=draw_line_begin") != std::string::npos) ++drawLineBeginCount;
@@ -45,6 +62,9 @@ int main() {
     assert(foundStage);
     assert(foundFirstFrame);
     assert(foundClean);
+    assert(foundUnknownPreviousSession);
+    assert(foundCleanPreviousSession);
+    assert(foundUncleanPreviousSession);
     assert(fillRectBeginCount == 1);
     assert(fillRectCompleteCount == 1);
     assert(drawLineBeginCount == 1);
