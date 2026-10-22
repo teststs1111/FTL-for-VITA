@@ -85,3 +85,12 @@
 - Keep commits small and independently verifiable. After source changes, record meaningful decisions and the next blocker here. Never claim a physical Vita test passed without user-provided device evidence.
 - Stop and notify the user when a physical-device observation is the critical next step; give exact steps and the expected diagnostic evidence. Continue unrelated code/test work where possible.
 - Platform limitation: the recurring task is a scheduled work session, not a permanently running process; its cadence is daily and timing is flexible. GitHub Actions validates commits but cannot independently author/fix C++ without an AI agent runner and explicitly configured credentials. Do not create self-triggering infinite workflows or use secrets in source.
+
+
+## 2026-10-22 room texture underlay follow-up
+- Commit `ef02d9741608a66bbdd8c916d5f8a613b42f6d47` updates `src/game/main_game.cpp` on `auto/room-texture-background`.
+- Room rendering now fills an opaque selected/damaged/normal underlay before drawing a valid room texture, so transparent pixels in an interior PNG do not expose the frame clear color.
+- Selected and damaged room overlays are also drawn after the texture with partial alpha, keeping state visible when a room texture exists.
+- Verified through GitHub Contents API that the committed file contains both the underlay and overlay changes. This is source-level verification only; no compile, regression test, CI pass, or physical Vita success is claimed yet.
+- Next: check the commit's Host/Vita/integrated Actions runs; add/adjust regression coverage for textured room rendering if the render abstraction allows it; inspect screenshots/device output for overlay blending and transparency; fix any build/test failures before merging.
+- Write-path note: GitHub `update_file` succeeded for `src/game/main_game.cpp` on this branch without changing repository permissions. Previous refusal is not reproduced by this operation; no settings changes were needed.

@@ -4371,12 +4371,23 @@ public:
             const auto textureIt = roomTextureNames_.find(room.id);
             const Texture* roomTexture = textureIt == roomTextureNames_.end()
                 ? nullptr : textures_.get(textureIt->second);
+
+            // Always establish an opaque room underlay first. Interior PNGs may
+            // contain transparent pixels; drawing them over the cleared frame
+            // otherwise exposes the clear color instead of the room background.
+            graphics_.fillRect(x, y, w, h, selected
+                ? Color{0.18f, 0.32f, 0.42f, 1.f}
+                : (damage > 0 ? Color{0.28f, 0.12f, 0.12f, 1.f} : Color{0.10f, 0.18f, 0.25f, 1.f}));
+
             if (roomTexture && roomTexture->width() > 0 && roomTexture->height() > 0) {
                 graphics_.drawTexture(*roomTexture, x, y, w, h);
-            } else {
+            }
+
+            // Preserve state visibility even when an interior texture exists.
+            if (selected || damage > 0) {
                 graphics_.fillRect(x, y, w, h, selected
-                    ? Color{0.18f, 0.32f, 0.42f, 1.f}
-                    : (damage > 0 ? Color{0.28f, 0.12f, 0.12f, 1.f} : Color{0.10f, 0.18f, 0.25f, 1.f}));
+                    ? Color{0.18f, 0.32f, 0.42f, 0.28f}
+                    : Color{0.55f, 0.08f, 0.08f, 0.30f});
             }
             graphics_.drawLine(x, y, x + w, y, {0.35f, 0.65f, 0.85f, 1.f});
             graphics_.drawLine(x + w, y, x + w, y + h, {0.35f, 0.65f, 0.85f, 1.f});
