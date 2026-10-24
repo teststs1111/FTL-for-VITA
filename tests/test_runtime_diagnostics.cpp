@@ -33,6 +33,10 @@ int main() {
     wormhole::RuntimeDiagnostics::startSession("test-after-unclean", "ftl.dat");
     wormhole::RuntimeDiagnostics::markCleanShutdown();
 
+    // The clean exit of the newest session must supersede an older unclean one.
+    wormhole::RuntimeDiagnostics::startSession("test-after-clean-after-unclean", "ftl.dat");
+    wormhole::RuntimeDiagnostics::markCleanShutdown();
+
     // If the previous session header has aged out of the bounded tail scan,
     // the next run must report unknown instead of reusing stale history.
     {
@@ -58,10 +62,17 @@ int main() {
     int drawLineBeginCount = 0;
     int drawLineCompleteCount = 0;
     std::string latestPreviousSession;
+    std::string currentExecutable;
+    std::string cleanAfterUncleanPreviousSession;
     while (std::getline(in, line)) {
         if (line.rfind("=== FTL runtime session ", 0) == 0) latestPreviousSession.clear();
-        if (line.rfind("previous_session=", 0) == 0)
+        if (line.rfind("executable=", 0) == 0)
+            currentExecutable = line.substr(std::string("executable=").size());
+        if (line.rfind("previous_session=", 0) == 0) {
             latestPreviousSession = line.substr(std::string("previous_session=").size());
+            if (currentExecutable == "test-after-clean-after-unclean")
+                cleanAfterUncleanPreviousSession = latestPreviousSession;
+        }
         if (line.find("stage=test_stage") != std::string::npos) foundStage = true;
         if (line.find("stage=first_frame_render_complete") != std::string::npos) foundFirstFrame = true;
         if (line == "CLEAN_SHUTDOWN") foundClean = true;
@@ -83,6 +94,7 @@ int main() {
     assert(fillRectCompleteCount == 1);
     assert(drawLineBeginCount == 1);
     assert(drawLineCompleteCount == 1);
+    assert(cleanAfterUncleanPreviousSession == "clean");
     assert(latestPreviousSession == "unknown");
     return 0;
 }
