@@ -93,3 +93,5 @@
 - Commit `590a1b67a912a4c82aa17887dc51448cd8414827` extends `tests/test_runtime_diagnostics.cpp`: it appends a 70 KiB diagnostic line, starts another session, and asserts that the newest `previous_session` value is `unknown`. This covers the bounded-tail fallback rather than merely finding an `unknown` value somewhere earlier in the log.
 - The new regression test and this handoff update are pending fresh CI validation. Branch: `auto/previous-session-crash-detection`; no PR had been opened at the time of this entry.
 - Remaining runtime blocker: the previously reported sector-map/render-loop stall still requires a physical Vita observation and a fresh `ftl_runtime_dump.txt` plus `.psp2dmp` if it recurs. No device success is claimed.
+
+- Follow-up: draft PR #7, `https://github.com/teststs1111/FTL-for-VITA/pull/7`, was opened against `main` after the above entry. At creation, the push-triggered Host/Vita workflows and PR-triggered integrated/Host workflows were queued or running; final results must be read from Actions before merge.
