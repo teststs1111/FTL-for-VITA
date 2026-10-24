@@ -95,3 +95,5 @@
 - Remaining runtime blocker: the previously reported sector-map/render-loop stall still requires a physical Vita observation and a fresh `ftl_runtime_dump.txt` plus `.psp2dmp` if it recurs. No device success is claimed.
 
 - Follow-up: draft PR #7, `https://github.com/teststs1111/FTL-for-VITA/pull/7`, was opened against `main` after the above entry. At creation, the push-triggered Host/Vita workflows and PR-triggered integrated/Host workflows were queued or running; final results must be read from Actions before merge.
+
+- Test follow-up commit `d3b16fa25a91b45f327d9be7af697923696e7c9f` also verifies that a clean shutdown after an older unclean session is reported as `clean`; the 70 KiB tail-window case remains asserted as `unknown`. Fresh CI for this added assertion is pending.
