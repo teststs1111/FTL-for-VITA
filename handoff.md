@@ -85,3 +85,15 @@
 - Keep commits small and independently verifiable. After source changes, record meaningful decisions and the next blocker here. Never claim a physical Vita test passed without user-provided device evidence.
 - Stop and notify the user when a physical-device observation is the critical next step; give exact steps and the expected diagnostic evidence. Continue unrelated code/test work where possible.
 - Platform limitation: the recurring task is a scheduled work session, not a permanently running process; its cadence is daily and timing is flexible. GitHub Actions validates commits but cannot independently author/fix C++ without an AI agent runner and explicitly configured credentials. Do not create self-triggering infinite workflows or use secrets in source.
+
+
+## 2026-10-24 bounded previous-session history regression
+- The runtime diagnostic parser intentionally scans only the final 64 KiB of the append-only log. If no session header remains in that bounded window, the correct classification is `unknown`; it must not reuse an older session's clean/unclean result.
+- Existing branch commits `64113230266c44b6cdfd87e61044d86973a771ad` and `08646da2ce43c6db55d3faa88eafca7840fc52b3` add persisted previous-session classification. Actions run `39732331849` for `08646da` completed Host regression and PS Vita build jobs successfully; run `39732309511` for `6411323` also completed those jobs successfully. These are CI results only, not physical Vita validation.
+- Commit `590a1b67a912a4c82aa17887dc51448cd8414827` extends `tests/test_runtime_diagnostics.cpp`: it appends a 70 KiB diagnostic line, starts another session, and asserts that the newest `previous_session` value is `unknown`. This covers the bounded-tail fallback rather than merely finding an `unknown` value somewhere earlier in the log.
+- The new regression test and this handoff update are pending fresh CI validation. Branch: `auto/previous-session-crash-detection`; no PR had been opened at the time of this entry.
+- Remaining runtime blocker: the previously reported sector-map/render-loop stall still requires a physical Vita observation and a fresh `ftl_runtime_dump.txt` plus `.psp2dmp` if it recurs. No device success is claimed.
+
+- Follow-up: draft PR #7, `https://github.com/teststs1111/FTL-for-VITA/pull/7`, was opened against `main` after the above entry. At creation, the push-triggered Host/Vita workflows and PR-triggered integrated/Host workflows were queued or running; final results must be read from Actions before merge.
+
+- Test follow-up commit `d3b16fa25a91b45f327d9be7af697923696e7c9f` also verifies that a clean shutdown after an older unclean session is reported as `clean`; the 70 KiB tail-window case remains asserted as `unknown`. Fresh CI for this added assertion is pending.

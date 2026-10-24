@@ -48,6 +48,39 @@ std::string timestamp() {
     ss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
     return ss.str();
 }
+
+// Inspect only the tail so an append-only diagnostic log cannot make startup
+// increasingly expensive. If the previous session header is outside this
+// window, report "unknown" rather than guessing.
+std::string previousSessionStatus(const std::string& path) {
+    std::ifstream in(path, std::ios::binary);
+    if (!in) return "unknown";
+
+    in.seekg(0, std::ios::end);
+    const std::streamoff size = in.tellg();
+    if (size <= 0) return "unknown";
+
+    constexpr std::streamoff kScanLimit = 64 * 1024;
+    const std::streamoff start = size > kScanLimit ? size - kScanLimit : 0;
+    in.seekg(start, std::ios::beg);
+    if (start > 0) {
+        std::string partialLine;
+        std::getline(in, partialLine);
+    }
+
+    bool foundSession = false;
+    std::string status = "unknown";
+    std::string line;
+    while (std::getline(in, line)) {
+        if (line.rfind("=== FTL runtime session ", 0) == 0) {
+            foundSession = true;
+            status = "unclean";
+        } else if (foundSession && line == "CLEAN_SHUTDOWN") {
+            status = "clean";
+        }
+    }
+    return foundSession ? status : "unknown";
+}
 }
 
 void RuntimeDiagnostics::startSession(const std::string& executable, const std::string& archivePath) {
@@ -61,6 +94,7 @@ void RuntimeDiagnostics::startSession(const std::string& executable, const std::
 #endif
     gPath = hostPath();
     gDrawStageMask = 0;
+    const std::string previousStatus = previousSessionStatus(gPath);
 
     std::ofstream out(gPath, std::ios::app);
     if (!out) return;
@@ -73,7 +107,7 @@ void RuntimeDiagnostics::startSession(const std::string& executable, const std::
 #endif
     out << "executable=" << executable << "\n";
     out << "archive=" << archivePath << "\n";
-    out << "previous_session=" << (gStarted ? "active" : "unknown") << "\n";
+    out << "previous_session=" << previousStatus << "\n";
     out << "NOTE=For native crashes, also collect the Vita .psp2dmp from ux0:data; this file records game context immediately before the crash.\n";
     out.flush();
     gStarted = true;
