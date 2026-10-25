@@ -63,6 +63,8 @@ int main() {
     int drawLineCompleteCount = 0;
     std::string latestPreviousSession;
     std::string currentExecutable;
+    std::string initialPreviousSession;
+    std::string uncleanAfterCrashSession;
     std::string cleanAfterUncleanPreviousSession;
     while (std::getline(in, line)) {
         if (line.rfind("=== FTL runtime session ", 0) == 0) latestPreviousSession.clear();
@@ -70,6 +72,10 @@ int main() {
             currentExecutable = line.substr(std::string("executable=").size());
         if (line.rfind("previous_session=", 0) == 0) {
             latestPreviousSession = line.substr(std::string("previous_session=").size());
+            if (currentExecutable == "test")
+                initialPreviousSession = latestPreviousSession;
+            if (currentExecutable == "test-after-unclean")
+                uncleanAfterCrashSession = latestPreviousSession;
             if (currentExecutable == "test-after-clean-after-unclean")
                 cleanAfterUncleanPreviousSession = latestPreviousSession;
         }
@@ -94,6 +100,8 @@ int main() {
     assert(fillRectCompleteCount == 1);
     assert(drawLineBeginCount == 1);
     assert(drawLineCompleteCount == 1);
+    assert(initialPreviousSession == "unknown");
+    assert(uncleanAfterCrashSession == "unclean");
     assert(cleanAfterUncleanPreviousSession == "clean");
     assert(latestPreviousSession == "unknown");
     return 0;
