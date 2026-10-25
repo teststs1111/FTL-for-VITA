@@ -97,3 +97,11 @@
 - Follow-up: draft PR #7, `https://github.com/teststs1111/FTL-for-VITA/pull/7`, was opened against `main` after the above entry. At creation, the push-triggered Host/Vita workflows and PR-triggered integrated/Host workflows were queued or running; final results must be read from Actions before merge.
 
 - Test follow-up commit `d3b16fa25a91b45f327d9be7af697923696e7c9f` also verifies that a clean shutdown after an older unclean session is reported as `clean`; the 70 KiB tail-window case remains asserted as `unknown`. Fresh CI for this added assertion is pending.
+
+
+## 2026-10-25 exact previous-session classification assertions
+- Reviewed PR #7 and its latest head `951a0f920f6d09cd23ffc8398d0539d649df95bb`. The push-triggered Vita build (`40072086063`) completed successfully, including `Build Vita VPK`, `Verify VPK`, and artifact upload; the PR-triggered combined build (`40072090643`) completed successfully for both PS Vita build and Host regression jobs; the separate Host run (`40072090646`) also passed. No failed jobs or steps were present in these runs. These are CI/build results only, not physical Vita validation.
+- PR #7 is open as a draft and GitHub reports it mergeable with a clean merge state. The latest head before this follow-up was `951a0f9`.
+- Review found that the runtime diagnostics test only asserted that an `unclean` value occurred somewhere in the log. It did not bind that value to the session that immediately followed the simulated crash. Commit `cae2a14dfdd771ad5c46eed19673e0ce96ca6b98` strengthens `tests/test_runtime_diagnostics.cpp` to assert the exact session-associated values: a missing initial log yields `unknown`, the session after an unclean exit yields `unclean`, a new session after that session exits cleanly yields `clean`, and a session whose header has fallen outside the 64 KiB tail yields `unknown`.
+- Fresh Host/Vita/integrated CI for `cae2a14` is pending. PR #7 remains the review vehicle; no merge was performed.
+- Remaining blocker: the sector-map/render-loop stall still needs physical Vita reproduction or confirmation. If it recurs, collect a fresh `ux0:data/wormhole/ftl_runtime_dump.txt` and the corresponding `.psp2dmp` from `ux0:data`. Do not infer device success from VPK verification.
