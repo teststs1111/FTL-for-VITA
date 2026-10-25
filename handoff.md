@@ -85,3 +85,23 @@
 - Keep commits small and independently verifiable. After source changes, record meaningful decisions and the next blocker here. Never claim a physical Vita test passed without user-provided device evidence.
 - Stop and notify the user when a physical-device observation is the critical next step; give exact steps and the expected diagnostic evidence. Continue unrelated code/test work where possible.
 - Platform limitation: the recurring task is a scheduled work session, not a permanently running process; its cadence is daily and timing is flexible. GitHub Actions validates commits but cannot independently author/fix C++ without an AI agent runner and explicitly configured credentials. Do not create self-triggering infinite workflows or use secrets in source.
+
+
+## 2026-10-24 bounded previous-session history regression
+- The runtime diagnostic parser intentionally scans only the final 64 KiB of the append-only log. If no session header remains in that bounded window, the correct classification is `unknown`; it must not reuse an older session's clean/unclean result.
+- Existing branch commits `64113230266c44b6cdfd87e61044d86973a771ad` and `08646da2ce43c6db55d3faa88eafca7840fc52b3` add persisted previous-session classification. Actions run `39732331849` for `08646da` completed Host regression and PS Vita build jobs successfully; run `39732309511` for `6411323` also completed those jobs successfully. These are CI results only, not physical Vita validation.
+- Commit `590a1b67a912a4c82aa17887dc51448cd8414827` extends `tests/test_runtime_diagnostics.cpp`: it appends a 70 KiB diagnostic line, starts another session, and asserts that the newest `previous_session` value is `unknown`. This covers the bounded-tail fallback rather than merely finding an `unknown` value somewhere earlier in the log.
+- The new regression test and this handoff update are pending fresh CI validation. Branch: `auto/previous-session-crash-detection`; no PR had been opened at the time of this entry.
+- Remaining runtime blocker: the previously reported sector-map/render-loop stall still requires a physical Vita observation and a fresh `ftl_runtime_dump.txt` plus `.psp2dmp` if it recurs. No device success is claimed.
+
+- Follow-up: draft PR #7, `https://github.com/teststs1111/FTL-for-VITA/pull/7`, was opened against `main` after the above entry. At creation, the push-triggered Host/Vita workflows and PR-triggered integrated/Host workflows were queued or running; final results must be read from Actions before merge.
+
+- Test follow-up commit `d3b16fa25a91b45f327d9be7af697923696e7c9f` also verifies that a clean shutdown after an older unclean session is reported as `clean`; the 70 KiB tail-window case remains asserted as `unknown`. Fresh CI for this added assertion is pending.
+
+
+## 2026-10-25 exact previous-session classification assertions
+- Reviewed PR #7 and its latest head `951a0f920f6d09cd23ffc8398d0539d649df95bb`. The push-triggered Vita build (`40072086063`) completed successfully, including `Build Vita VPK`, `Verify VPK`, and artifact upload; the PR-triggered combined build (`40072090643`) completed successfully for both PS Vita build and Host regression jobs; the separate Host run (`40072090646`) also passed. No failed jobs or steps were present in these runs. These are CI/build results only, not physical Vita validation.
+- PR #7 is open as a draft and GitHub reports it mergeable with a clean merge state. The latest head before this follow-up was `951a0f9`.
+- Review found that the runtime diagnostics test only asserted that an `unclean` value occurred somewhere in the log. It did not bind that value to the session that immediately followed the simulated crash. Commit `cae2a14dfdd771ad5c46eed19673e0ce96ca6b98` strengthens `tests/test_runtime_diagnostics.cpp` to assert the exact session-associated values: a missing initial log yields `unknown`, the session after an unclean exit yields `unclean`, a new session after that session exits cleanly yields `clean`, and a session whose header has fallen outside the 64 KiB tail yields `unknown`.
+- Fresh Host/Vita/integrated CI for `cae2a14` is pending. PR #7 remains the review vehicle; no merge was performed.
+- Remaining blocker: the sector-map/render-loop stall still needs physical Vita reproduction or confirmation. If it recurs, collect a fresh `ux0:data/wormhole/ftl_runtime_dump.txt` and the corresponding `.psp2dmp` from `ux0:data`. Do not infer device success from VPK verification.
