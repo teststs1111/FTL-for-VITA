@@ -4592,6 +4592,10 @@ void MainGame::render() {
 }
 
 void MainGame::shutdown() {
+    // main() explicitly shuts the game down before marking the runtime log
+    // clean; the destructor calls shutdown() again. Make that second call a
+    // no-op so it cannot append diagnostics after CLEAN_SHUTDOWN.
+    if (!initialized_ && !audioInitialized_ && !state_) return;
     RuntimeDiagnostics::checkpoint("main_game_shutdown_begin");
     state_.reset();
     audio_.shutdown();
