@@ -25,6 +25,8 @@ jobs:
             gdb -batch -ex run -ex bt --args ./build/test_data || true
             exit 1
           }
+      - name: Test workflow cleanup retries
+        run: bash tests/test_cleanup_old_workflow_runs.sh
 
   vita:
     name: PS Vita build
