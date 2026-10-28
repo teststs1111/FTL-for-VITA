@@ -45,7 +45,7 @@ printf '%s\n' "$output"
 grep -Fq "GitHub API returned invalid JSON" <<< "$output"
 grep -Fq "Delete request for run #1 failed" <<< "$output"
 grep -Fq "Run #1 (id 123) is already absent" <<< "$output"
-grep -Fq "Workflow cleanup completed." <<< "$output"
+grep -Fq "Workflow history cleanup completed." <<< "$output"
 [[ "$(cat "$tmp/get-count")" == "3" ]]
 [[ "$(cat "$tmp/delete-count")" == "2" ]]
 
