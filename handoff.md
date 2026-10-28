@@ -104,3 +104,9 @@
 - The cleanup retry implementation remains only on PR #9 and has not been merged to `main`; the live scheduled cleanup failure is therefore not yet fixed on the default branch. Do not manually dispatch the destructive cleanup just to test it.
 - PRs #7, #8, and #9 remain separate draft branches against `main`. PR #7 and PR #8 both change `src/platform/runtime_diagnostics.cpp` and `tests/test_runtime_diagnostics.cpp`; review their combined integration carefully so merging one does not discard the other's session-history or post-clean-shutdown guard.
 - The unresolved Vita render/sector-map stall still cannot be localized from the October 6 historical text log alone. Physical Vita reproduction and a fresh matching runtime dump plus PSP2DMP remain necessary; no real-device success is claimed. No `ftl.dat` was added.
+
+
+## 2026-10-28 cleanup regression assertion correction
+- The first CI run for the added safety tests (`40642028085`, job `122662119196`) built successfully and passed all 15 C++ tests, but the `Test workflow cleanup retries` shell step failed immediately after the mocked cleanup completed. The job log showed the script's actual terminal message is `Workflow history cleanup completed.`; the new test had incorrectly expected `Workflow cleanup completed.`. This was a test expectation mismatch, not a cleanup implementation failure.
+- Updated the assertion to match the existing script's exact completion message in commit `94149fb44d8575ac7f4d882c3683b4a9894b0e3d`. The 30-run retention, malformed response fail-closed, and persistent HTTP 403 cases are unchanged.
+- A fresh integrated Host/Vita workflow and push build for the corrected test are pending. Do not claim the expanded CI suite passed until those runs finish. The local shell harness should be rerun against the exact checked-out script/test pair if another mismatch appears.
