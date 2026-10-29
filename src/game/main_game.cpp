@@ -4591,8 +4591,20 @@ void MainGame::update(float dt) {
     const bool sample = (frame % 300u) == 0u;
     if (sample)
         RuntimeDiagnostics::checkpoint("main_update_begin", "frame=" + std::to_string(frame));
-    if (state_) state_->update(dt);
-    if (audioInitialized_) audio_.update();
+    if (state_) {
+        if (sample)
+            RuntimeDiagnostics::checkpoint("main_scene_update_begin", "frame=" + std::to_string(frame));
+        state_->update(dt);
+        if (sample)
+            RuntimeDiagnostics::checkpoint("main_scene_update_complete", "frame=" + std::to_string(frame));
+    }
+    if (audioInitialized_) {
+        if (sample)
+            RuntimeDiagnostics::checkpoint("main_audio_update_begin", "frame=" + std::to_string(frame));
+        audio_.update();
+        if (sample)
+            RuntimeDiagnostics::checkpoint("main_audio_update_complete", "frame=" + std::to_string(frame));
+    }
     if (sample)
         RuntimeDiagnostics::checkpoint("main_update_complete", "frame=" + std::to_string(frame));
 }

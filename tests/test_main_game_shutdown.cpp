@@ -50,6 +50,14 @@ int main() {
         lastLine = line;
         const auto stagePos = line.find("stage=main_update_begin");
         if (stagePos != std::string::npos) phaseMarkers.push_back(line.substr(stagePos));
+        const auto sceneBeginPos = line.find("stage=main_scene_update_begin");
+        if (sceneBeginPos != std::string::npos) phaseMarkers.push_back(line.substr(sceneBeginPos));
+        const auto sceneCompletePos = line.find("stage=main_scene_update_complete");
+        if (sceneCompletePos != std::string::npos) phaseMarkers.push_back(line.substr(sceneCompletePos));
+        const auto audioBeginPos = line.find("stage=main_audio_update_begin");
+        if (audioBeginPos != std::string::npos) phaseMarkers.push_back(line.substr(audioBeginPos));
+        const auto audioCompletePos = line.find("stage=main_audio_update_complete");
+        if (audioCompletePos != std::string::npos) phaseMarkers.push_back(line.substr(audioCompletePos));
         const auto updateCompletePos = line.find("stage=main_update_complete");
         if (updateCompletePos != std::string::npos) phaseMarkers.push_back(line.substr(updateCompletePos));
         const auto renderBeginPos = line.find("stage=main_render_begin");
@@ -65,10 +73,18 @@ int main() {
 
     const std::vector<std::string> expectedPhaseMarkers = {
         "stage=main_update_begin frame=0",
+        "stage=main_scene_update_begin frame=0",
+        "stage=main_scene_update_complete frame=0",
+        "stage=main_audio_update_begin frame=0",
+        "stage=main_audio_update_complete frame=0",
         "stage=main_update_complete frame=0",
         "stage=main_render_begin frame=0",
         "stage=main_render_complete frame=0",
         "stage=main_update_begin frame=300",
+        "stage=main_scene_update_begin frame=300",
+        "stage=main_scene_update_complete frame=300",
+        "stage=main_audio_update_begin frame=300",
+        "stage=main_audio_update_complete frame=300",
         "stage=main_update_complete frame=300",
         "stage=main_render_begin frame=300",
         "stage=main_render_complete frame=300"
