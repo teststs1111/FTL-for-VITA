@@ -4563,6 +4563,8 @@ MainGame::~MainGame() { shutdown(); }
 
 void MainGame::init(Graphics& graphics, Input& input, const char* archivePath) {
     if (initialized_) return;
+    diagnosticUpdateFrameCounter_ = 0;
+    diagnosticRenderFrameCounter_ = 0;
     RuntimeDiagnostics::checkpoint("main_game_init_begin", archivePath ? archivePath : "<null>");
     audioInitialized_ = audio_.init();
     try {
@@ -4583,15 +4585,47 @@ void MainGame::init(Graphics& graphics, Input& input, const char* archivePath) {
 }
 
 void MainGame::update(float dt) {
-    if (state_) state_->update(dt);
-    if (audioInitialized_) audio_.update();
+    // Sample the update boundary every five seconds at the target 60 Hz.
+    // A missing completion marker then identifies a stall inside update().
+    const unsigned int frame = diagnosticUpdateFrameCounter_++;
+    const bool sample = (frame % 300u) == 0u;
+    if (sample)
+        RuntimeDiagnostics::checkpoint("main_update_begin", "frame=" + std::to_string(frame));
+    if (state_) {
+        if (sample)
+            RuntimeDiagnostics::checkpoint("main_scene_update_begin", "frame=" + std::to_string(frame));
+        state_->update(dt);
+        if (sample)
+            RuntimeDiagnostics::checkpoint("main_scene_update_complete", "frame=" + std::to_string(frame));
+    }
+    if (audioInitialized_) {
+        if (sample)
+            RuntimeDiagnostics::checkpoint("main_audio_update_begin", "frame=" + std::to_string(frame));
+        audio_.update();
+        if (sample)
+            RuntimeDiagnostics::checkpoint("main_audio_update_complete", "frame=" + std::to_string(frame));
+    }
+    if (sample)
+        RuntimeDiagnostics::checkpoint("main_update_complete", "frame=" + std::to_string(frame));
 }
 
 void MainGame::render() {
+    // Pair render markers with update markers so a missing completion record
+    // distinguishes an update stall from a render stall in the next device dump.
+    const unsigned int frame = diagnosticRenderFrameCounter_++;
+    const bool sample = (frame % 300u) == 0u;
+    if (sample)
+        RuntimeDiagnostics::checkpoint("main_render_begin", "frame=" + std::to_string(frame));
     if (state_) state_->render();
+    if (sample)
+        RuntimeDiagnostics::checkpoint("main_render_complete", "frame=" + std::to_string(frame));
 }
 
 void MainGame::shutdown() {
+    // main() explicitly shuts the game down before marking the runtime log
+    // clean; the destructor calls shutdown() again. Make that second call a
+    // no-op so it cannot append diagnostics after CLEAN_SHUTDOWN.
+    if (!initialized_ && !audioInitialized_ && !state_) return;
     RuntimeDiagnostics::checkpoint("main_game_shutdown_begin");
     state_.reset();
     audio_.shutdown();

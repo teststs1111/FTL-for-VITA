@@ -18,6 +18,9 @@ namespace {
 std::mutex gMutex;
 std::string gPath;
 bool gStarted = false;
+// Once a session is marked clean, ignore late destructor checkpoints until
+// startSession() explicitly begins another session.
+bool gCleanShutdown = false;
 unsigned int gDrawStageMask = 0;
 
 std::string hostPath() {
@@ -65,6 +68,7 @@ void RuntimeDiagnostics::startSession(const std::string& executable, const std::
     std::ofstream out(gPath, std::ios::app);
     if (!out) return;
 
+    gCleanShutdown = false;
     out << "\n=== FTL runtime session " << timestamp() << " ===\n";
 #ifdef __vita__
     out << "platform=vita\n";
@@ -90,6 +94,7 @@ void RuntimeDiagnostics::checkpoint(const std::string& stage, const std::string&
         return;
 
     std::lock_guard<std::mutex> lock(gMutex);
+    if (gCleanShutdown) return;
     // Persist each known primitive checkpoint only once per session. A fixed
     // bitmask keeps the individual GL crash boundaries visible without a
     // dynamic container or repeated file open/flush for every rectangle.
@@ -123,6 +128,7 @@ void RuntimeDiagnostics::markCleanShutdown() {
     if (!gStarted) return;
     writeLineLocked("CLEAN_SHUTDOWN");
     gStarted = false;
+    gCleanShutdown = true;
 }
 
 void RuntimeDiagnostics::terminateHandler() {
