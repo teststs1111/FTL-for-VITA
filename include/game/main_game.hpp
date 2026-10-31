@@ -33,5 +33,7 @@ private:
     Difficulty difficulty_{Difficulty::Normal};
     Audio audio_;
     bool audioInitialized_{false};
+    unsigned int diagnosticUpdateFrameCounter_{0};
+    unsigned int diagnosticRenderFrameCounter_{0};
 };
 }

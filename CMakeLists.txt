@@ -50,7 +50,7 @@ if(BUILD_TESTS AND NOT VITA)
         test_data test_input test_localization test_real_ftl_dat test_ftl_pkg test_sector_graph
         test_rebel_fleet_environment test_last_stand_state test_reactor_power_sources
         test_plasma_storm_power test_layout_room_lookup test_flak_scatter test_flak_fake_projectiles
-        test_audio test_runtime_diagnostics)
+        test_audio test_runtime_diagnostics test_main_game_shutdown)
     add_executable(test_data tests/test_data.cpp)
     add_executable(test_input tests/test_input.cpp)
     add_executable(test_localization tests/test_localization.cpp)
@@ -66,6 +66,7 @@ if(BUILD_TESTS AND NOT VITA)
     add_executable(test_flak_fake_projectiles tests/test_flak_fake_projectiles.cpp)
     add_executable(test_audio tests/test_audio.cpp)
     add_executable(test_runtime_diagnostics tests/test_runtime_diagnostics.cpp)
+    add_executable(test_main_game_shutdown tests/test_main_game_shutdown.cpp)
     foreach(test_target IN LISTS WORMHOLE_TESTS)
         target_link_libraries(${test_target} PRIVATE wormhole_core)
         target_compile_options(${test_target} PRIVATE -UNDEBUG)
