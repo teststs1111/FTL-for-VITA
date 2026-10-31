@@ -13,6 +13,10 @@ int main() {
     wormhole::RuntimeDiagnostics::startSession("test", "ftl.dat");
     wormhole::RuntimeDiagnostics::checkpoint("test_stage", "sector=1");
     wormhole::RuntimeDiagnostics::checkpoint("first_frame_render_complete");
+    // The Vita main loop currently reports this milestone on every frame.
+    // It must remain a one-shot persisted checkpoint for the whole session.
+    wormhole::RuntimeDiagnostics::checkpoint("first_frame_render_complete");
+    wormhole::RuntimeDiagnostics::checkpoint("first_frame_render_complete");
     wormhole::RuntimeDiagnostics::checkpoint("fill_rect_color_begin");
     wormhole::RuntimeDiagnostics::checkpoint("fill_rect_color_begin");
     wormhole::RuntimeDiagnostics::checkpoint("fill_rect_color_complete");
@@ -72,6 +76,7 @@ int main() {
     int fillRectCompleteCount = 0;
     int drawLineBeginCount = 0;
     int drawLineCompleteCount = 0;
+    int firstFrameCompleteCount = 0;
 
     while (std::getline(in, line)) {
         if (!line.empty()) lastLine = line;
@@ -105,6 +110,8 @@ int main() {
             ++drawLineBeginCount;
         if (line.find("stage=draw_line_color_complete") != std::string::npos)
             ++drawLineCompleteCount;
+        if (line.find("stage=first_frame_render_complete") != std::string::npos)
+            ++firstFrameCompleteCount;
     }
 
     assert(foundStage);
@@ -117,6 +124,7 @@ int main() {
     assert(fillRectCompleteCount == 1);
     assert(drawLineBeginCount == 1);
     assert(drawLineCompleteCount == 1);
+    assert(firstFrameCompleteCount == 1);
 
     assert(initialPreviousSession == "unknown");
     assert(cleanPreviousSession == "clean");
