@@ -130,9 +130,10 @@ void RuntimeDiagnostics::checkpoint(const std::string& stage, const std::string&
 
     std::lock_guard<std::mutex> lock(gMutex);
     if (gCleanShutdown) return;
-    // Persist each known primitive checkpoint only once per session. A fixed
-    // bitmask keeps the individual GL crash boundaries visible without a
-    // dynamic container or repeated file open/flush for every rectangle.
+    // Persist known one-shot draw/frame checkpoints only once per session.
+    // The Vita loop currently emits first_frame_render_complete on every
+    // iteration; suppress repeats here to avoid synchronous per-frame file I/O.
+    // A fixed bitmask keeps this bounded without a dynamic container.
     unsigned int drawStageBit = 0;
     if (stage == "fill_rect_color_begin") drawStageBit = 1u << 0;
     else if (stage == "fill_rect_color_complete") drawStageBit = 1u << 1;
@@ -147,6 +148,7 @@ void RuntimeDiagnostics::checkpoint(const std::string& stage, const std::string&
     else if (stage == "draw_line_draw_begin") drawStageBit = 1u << 10;
     else if (stage == "draw_line_draw_complete") drawStageBit = 1u << 11;
     else if (stage == "draw_line_complete") drawStageBit = 1u << 12;
+    else if (stage == "first_frame_render_complete") drawStageBit = 1u << 13;
     if (drawStageBit != 0) {
         if ((gDrawStageMask & drawStageBit) != 0) return;
         gDrawStageMask |= drawStageBit;
